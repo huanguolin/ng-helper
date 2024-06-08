@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "workspaceContains:.vscode/ng-helper.json"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -23,7 +25,7 @@
         {
           "command": "ng-helper.createComponent",
           "group": "2_workspace@1",
-          "when": "activeViewlet == 'workbench.view.explorer' && explorerResourceIsFolder && resourcePath =~ /components$/"
+          "when": "activeViewlet == 'workbench.view.explorer' && explorerResourceIsFolder && resourcePath =~ /components$/ && ng-helper.activated"
         }
       ]
     }
