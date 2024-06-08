@@ -24,7 +24,7 @@
       "explorer/context": [
         {
           "command": "ng-helper.createComponent",
-          "group": "2_workspace@1",
+          "group": "1_ngHelper@1",
           "when": "activeViewlet == 'workbench.view.explorer' && explorerResourceIsFolder && resourcePath =~ /components$/ && ng-helper.activated"
         }
       ]
