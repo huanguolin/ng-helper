@@ -1,3 +1,4 @@
+import { start } from 'repl';
 import * as vscode from 'vscode';
 
 export function registerComponentCompletions(context: vscode.ExtensionContext) {
@@ -24,36 +25,42 @@ function dotCompletion() {
                 // remove .html add .ts
                 const file = document.fileName.slice(0, -5) + '.ts';
 
-                return vscode.commands
-                    .executeCommand("typescript.tsserverRequest", "completionInfo", {
-                        file,
-                        line: 37,
-                        offset: 18,
-                        triggerCharacter: '.',
-                    }).then((list: any) => {
-                        console.log('completionInfo: ', list);
-                        // return list;
+                return activateTsServer(file)
+                    .then(() => {
+                        return vscode.commands
+                            .executeCommand("typescript.tsserverRequest",
+                                "completionInfo",
+                                {
+                                    file,
+                                    line: 37,
+                                    offset: 18,
+                                    triggerCharacter: '.',
+                                }).then((list: any) => {
+                                    console.log('completionInfo: ', list);
+                                    // return list;
 
-                        type CompletionItemInfo = {
-                            name: string;
-                            kindModifiers: string;
-                            kind: string;
-                        };
+                                    type CompletionItemInfo = {
+                                        name: string;
+                                        kindModifiers: string;
+                                        kind: string;
+                                    };
 
-                        return list.body.entries
-                            .filter((x: CompletionItemInfo) =>
-                                !x.kindModifiers.includes('private') &&
-                                ['method', 'property'].includes(x.kind) &&
-                                !x.name.startsWith('$'))
-                            .map((x: CompletionItemInfo) =>
-                                new vscode.CompletionItem(x.name,
-                                    x.kind === 'method'
-                                    ? vscode.CompletionItemKind.Method
-                                    : vscode.CompletionItemKind.Field));
-                    }, (err) => {
-                        console.log('completionInfo error: ', err);
-                        return;
+                                    return list.body.entries
+                                        .filter((x: CompletionItemInfo) =>
+                                            !x.kindModifiers.includes('private') &&
+                                            ['method', 'property'].includes(x.kind) &&
+                                            !x.name.startsWith('$'))
+                                        .map((x: CompletionItemInfo) =>
+                                            new vscode.CompletionItem(x.name,
+                                                x.kind === 'method'
+                                                    ? vscode.CompletionItemKind.Method
+                                                    : vscode.CompletionItemKind.Field));
+                                }, (err) => {
+                                    console.log('completionInfo error: ', err);
+                                    return;
+                                });
                     });
+
             }
         },
         '.',
@@ -120,4 +127,11 @@ function getNgDirectiveList() {
         'ng-mouseleave',
         'ng-mouseenter',
     ];
+}
+
+function activateTsServer(tsFilePath: string) {
+    return vscode.workspace.openTextDocument(tsFilePath).then(doc => {
+        doc.getText();
+        return vscode.languages.setTextDocumentLanguage(doc, 'typescript');
+    });
 }
