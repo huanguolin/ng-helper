@@ -2,45 +2,8 @@ import * as vscode from 'vscode';
 
 export function registerComponentCompletions(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        bracketCompletion(),
-        dotCompletion());
-}
-
-function bracketCompletion() {
-    return vscode.languages.registerCompletionItemProvider(
-        'html',
-        {
-            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-                if (!isComponentHtml(document)) {
-                    return undefined;
-                }
-
-                const snippetCompletion = new vscode.CompletionItem('{{translate}}');
-                snippetCompletion.insertText = new vscode.SnippetString(' \'${1}\' | translate ');
-                snippetCompletion.documentation = new vscode.MarkdownString("Inserts translate snippet.");
-
-                // a completion item that can be accepted by a commit character,
-                // the `commitCharacters`-property is set which means that the completion will
-                // be inserted and then the character will be typed.
-                // const commitCharacterCompletion = new vscode.CompletionItem(' \'\' | translate ');
-                // commitCharacterCompletion.commitCharacters = ['\''];
-                // commitCharacterCompletion.documentation = new vscode.MarkdownString('Press `.` to get `console.`');
-
-                // a completion item that retriggers IntelliSense when being accepted,
-                // the `command`-property is set which the editor will execute after 
-                // completion has been inserted. Also, the `insertText` is set so that 
-                // a space is inserted after `new`
-                // const commandCompletion = new vscode.CompletionItem('new');
-                // commandCompletion.kind = vscode.CompletionItemKind.Keyword;
-                // commandCompletion.insertText = 'new ';
-                // commandCompletion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
-                // return all completion items as array
-                return [
-                    snippetCompletion,
-                ];
-            }
-        },
-    );
+        dotCompletion(),
+        ngCompletion());
 }
 
 function dotCompletion() {
@@ -58,17 +21,103 @@ function dotCompletion() {
                 // 	return undefined;
                 // }
 
-                return [
-                    new vscode.CompletionItem('log', vscode.CompletionItemKind.Method),
-                    new vscode.CompletionItem('warn', vscode.CompletionItemKind.Method),
-                    new vscode.CompletionItem('error', vscode.CompletionItemKind.Method),
-                ];
+                // remove .html add .ts
+                const file = document.fileName.slice(0, -5) + '.ts';
+
+                return vscode.commands
+                    .executeCommand("typescript.tsserverRequest", "completionInfo", {
+                        file,
+                        line: 37,
+                        offset: 18,
+                        triggerCharacter: '.',
+                    }).then((list: any) => {
+                        console.log('completionInfo: ', list);
+                        // return list;
+
+                        type CompletionItemInfo = {
+                            name: string;
+                            kindModifiers: string;
+                            kind: string;
+                        };
+
+                        return list.body.entries
+                            .filter((x: CompletionItemInfo) =>
+                                !x.kindModifiers.includes('private') &&
+                                ['method', 'property'].includes(x.kind) &&
+                                !x.name.startsWith('$'))
+                            .map((x: CompletionItemInfo) =>
+                                new vscode.CompletionItem(x.name,
+                                    x.kind === 'method'
+                                    ? vscode.CompletionItemKind.Method
+                                    : vscode.CompletionItemKind.Field));
+                    }, (err) => {
+                        console.log('completionInfo error: ', err);
+                        return;
+                    });
             }
         },
         '.',
     );
 }
 
+function ngCompletion() {
+    return vscode.languages.registerCompletionItemProvider(
+        'html',
+        {
+            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
+                if (!isComponentHtml(document)) {
+                    return undefined;
+                }
+
+                return getNgDirectiveList()
+                    .map(x => new vscode.CompletionItem(x));
+            }
+        },
+    );
+}
+
 function isComponentHtml(document: vscode.TextDocument) {
     return document.fileName.endsWith('.component.html');
+}
+
+function getNgDirectiveList() {
+    return [
+        'ng-click',
+        'ng-if',
+        'ng-model',
+        'ng-class',
+        'ng-disabled',
+        'ng-show',
+        'ng-repeat',
+        'ng-init',
+        'ng-controller',
+        'ng-options',
+        'ng-change',
+        'ng-pattern',
+        'ng-bind',
+        'ng-required',
+        'ng-maxlength',
+        'ng-hide',
+        'ng-style',
+        'ng-list',
+        'ng-dblclick',
+        'ng-submit',
+        'ng-src',
+        'ng-href',
+        'ng-checked',
+        'ng-include',
+        'ng-cloak',
+        'ng-transclude',
+        'ng-app',
+        'ng-value',
+        'ng-blur',
+        'ng-keypress',
+        'ng-selected',
+        'ng-readonly',
+        'ng-keydown',
+        'ng-form',
+        'ng-mouseover',
+        'ng-mouseleave',
+        'ng-mouseenter',
+    ];
 }
