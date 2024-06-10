@@ -26,9 +26,7 @@
                 "run",
                 "watch:esbuild",
                 "-w",
-                "ng-helper",
-                "-w",
-                "@ng-helper/typescript-plugin"
+                "ng-helper"
             ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
@@ -47,8 +45,6 @@
                 "watch:tsc",
                 "-w",
                 "ng-helper",
-                "-w",
-                "@ng-helper/typescript-plugin"
             ],
             "group": "build",
             "problemMatcher": "$tsc-watch",

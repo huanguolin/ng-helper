@@ -1,13 +1,8 @@
-import { start } from 'repl';
+
 import * as vscode from 'vscode';
+import { buildNgHelperTsPluginCmd, isComponentHtml } from './utils';
 
-export function registerComponentCompletions(context: vscode.ExtensionContext) {
-    context.subscriptions.push(
-        dotCompletion(),
-        ngCompletion());
-}
-
-function dotCompletion() {
+export function dotCompletion() {
     return vscode.languages.registerCompletionItemProvider(
         'html',
         {
@@ -25,7 +20,7 @@ function dotCompletion() {
                 // remove .html add .ts
                 const file = document.fileName.slice(0, -5) + '.ts';
 
-                return activateTsServer(file)
+                return queryTypeFromTsServer(file)
                     .then(() => {
                         return vscode.commands
                             .executeCommand("typescript.tsserverRequest",
@@ -67,71 +62,63 @@ function dotCompletion() {
     );
 }
 
-function ngCompletion() {
-    return vscode.languages.registerCompletionItemProvider(
-        'html',
+const CONTROLLER_COLON_TEXT = " controller :";
+
+async function queryTypeFromTsServer(tsFilePath: string) {
+    const doc = await vscode.workspace.openTextDocument(tsFilePath);
+    const text = doc.getText();
+    const pi = text.indexOf(CONTROLLER_COLON_TEXT);
+    if (pi < 0) {
+        // TODO: only completion binds
+        return undefined;
+    }
+
+    const preText = text.slice(0, pi);
+    const lines = preText.split('\n');
+    const line = lines.length - 1;
+    const linePos = (lines.pop()?.length || 0) + CONTROLLER_COLON_TEXT.length - 1;
+
+    const pos = new vscode.Position(line, linePos);
+    const controllerClassNamePosition = doc.getWordRangeAtPosition(pos);
+    if (!controllerClassNamePosition) {
+        return undefined;
+    }
+
+    // this will make sure tsserver running
+    await vscode.languages.setTextDocumentLanguage(doc, 'typescript');
+
+    const list = await vscode.commands.executeCommand(
+        "typescript.tsserverRequest",
+        "completionInfo",
         {
-            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-                if (!isComponentHtml(document)) {
-                    return undefined;
-                }
+            tsFilePath,
+            // fixed value
+            line: 1,
+            offset: 1,
+            /**
+             * We override the "triggerCharacter" property here as a hack so
+             * that we can send custom commands to TSServer
+             */
+            triggerCharacter: buildNgHelperTsPluginCmd('component', controllerClassNamePosition),
+        });
+    console.log('completionInfo: ', list);
 
-                return getNgDirectiveList()
-                    .map(x => new vscode.CompletionItem(x));
-            }
-        },
-    );
+    return [];
+
+    // return list.body.entries
+    //     .filter((x: CompletionItemInfo) =>
+    //         !x.kindModifiers.includes('private') &&
+    //         ['method', 'property'].includes(x.kind) &&
+    //         !x.name.startsWith('$'))
+    //     .map((x: CompletionItemInfo) =>
+    //         new vscode.CompletionItem(x.name,
+    //             x.kind === 'method'
+    //                 ? vscode.CompletionItemKind.Method
+    //                 : vscode.CompletionItemKind.Field));
 }
 
-function isComponentHtml(document: vscode.TextDocument) {
-    return document.fileName.endsWith('.component.html');
-}
-
-function getNgDirectiveList() {
-    return [
-        'ng-click',
-        'ng-if',
-        'ng-model',
-        'ng-class',
-        'ng-disabled',
-        'ng-show',
-        'ng-repeat',
-        'ng-init',
-        'ng-controller',
-        'ng-options',
-        'ng-change',
-        'ng-pattern',
-        'ng-bind',
-        'ng-required',
-        'ng-maxlength',
-        'ng-hide',
-        'ng-style',
-        'ng-list',
-        'ng-dblclick',
-        'ng-submit',
-        'ng-src',
-        'ng-href',
-        'ng-checked',
-        'ng-include',
-        'ng-cloak',
-        'ng-transclude',
-        'ng-app',
-        'ng-value',
-        'ng-blur',
-        'ng-keypress',
-        'ng-selected',
-        'ng-readonly',
-        'ng-keydown',
-        'ng-form',
-        'ng-mouseover',
-        'ng-mouseleave',
-        'ng-mouseenter',
-    ];
-}
-
-function activateTsServer(tsFilePath: string) {
-    return vscode.workspace.openTextDocument(tsFilePath).then(doc => {
-        doc.getText();
-        return vscode.languages.setTextDocumentLanguage(doc, 'typescript');
-    });
-}
+type CompletionItemInfo = {
+    name: string;
+    kindModifiers: string;
+    kind: string;
+};

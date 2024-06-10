@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { createComponentCommand } from './createComponent';
-import { registerComponentCompletions } from './componentCompletion';
+import { registerComponentCompletions } from './completion';
 
 const EXT_CONF_PATH = '.vscode/ng-helper.json';
 const EXT_IS_ACTIVATED = 'ng-helper.activated';
