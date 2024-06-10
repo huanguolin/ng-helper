@@ -1,0 +1,11 @@
+{
+  "name": "@ng-helper/typescript-plugin",
+  "version": "0.0.1",
+  "main": "./dist",
+  "type": "commonjs",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

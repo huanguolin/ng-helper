@@ -18,32 +18,36 @@
             }
         },
         {
-            "type": "npm",
-            "script": "watch:esbuild",
+            "label": "npm: watch:esbuild",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch:esbuild", "-w", "ng-helper"],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
             "isBackground": true,
-            "label": "npm: watch:esbuild",
             "presentation": {
                 "group": "watch",
                 "reveal": "never"
             }
         },
 		{
-            "type": "npm",
-            "script": "watch:tsc",
+            "label": "npm: watch:tsc",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch:tsc", "-w", "ng-helper"],
             "group": "build",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
-            "label": "npm: watch:tsc",
             "presentation": {
                 "group": "watch",
                 "reveal": "never"
             }
         },
 		{
-			"type": "npm",
-			"script": "watch-tests",
+            "label": "npm: watch-tests",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch-tests", "-w", "ng-helper"],
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
