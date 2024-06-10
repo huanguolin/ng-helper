@@ -15,7 +15,11 @@
 			"outFiles": [
 				"${workspaceFolder}/packages/ng-helper-vscode/dist/**/*.js"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "${defaultBuildTask}",
+			"env": {
+				// enable tsserver log
+				"TSS_LOG": "-logToFile true -file ${workspaceFolder}/logs/tsserver.log -level verbose"
+			}
 		}
 	]
 }

@@ -1,13 +1,14 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
+    "version": "2.0.0",
+    "tasks": [
+        {
             "label": "watch",
             "dependsOn": [
-                "npm: watch:tsc",
-                "npm: watch:esbuild"
+                "plugin:watch:esbuild",
+                "watch:tsc",
+                "watch:esbuild"
             ],
             "presentation": {
                 "reveal": "never"
@@ -18,10 +19,17 @@
             }
         },
         {
-            "label": "npm: watch:esbuild",
+            "label": "watch:esbuild",
             "type": "shell",
             "command": "npm",
-            "args": ["run", "watch:esbuild", "-w", "ng-helper"],
+            "args": [
+                "run",
+                "watch:esbuild",
+                "-w",
+                "ng-helper",
+                "-w",
+                "@ng-helper/typescript-plugin"
+            ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
             "isBackground": true,
@@ -30,11 +38,18 @@
                 "reveal": "never"
             }
         },
-		{
-            "label": "npm: watch:tsc",
+        {
+            "label": "watch:tsc",
             "type": "shell",
             "command": "npm",
-            "args": ["run", "watch:tsc", "-w", "ng-helper"],
+            "args": [
+                "run",
+                "watch:tsc",
+                "-w",
+                "ng-helper",
+                "-w",
+                "@ng-helper/typescript-plugin"
+            ],
             "group": "build",
             "problemMatcher": "$tsc-watch",
             "isBackground": true,
@@ -43,26 +58,49 @@
                 "reveal": "never"
             }
         },
-		{
-            "label": "npm: watch-tests",
+        {
+            "label": "plugin:watch:esbuild",
             "type": "shell",
             "command": "npm",
-            "args": ["run", "watch-tests", "-w", "ng-helper"],
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "watchers"
-			},
-			"group": "build"
-		},
-		{
-			"label": "tasks: watch-tests",
-			"dependsOn": [
-				"npm: watch",
-				"npm: watch-tests"
-			],
-			"problemMatcher": []
-		}
-	]
+            "args": [
+                "run",
+                "watch:esbuild",
+                "-w",
+                "@ng-helper/typescript-plugin"
+            ],
+            "group": "build",
+            "problemMatcher": "$esbuild-watch",
+            "isBackground": true,
+            "presentation": {
+                "group": "watch",
+                "reveal": "never"
+            }
+        },
+        {
+            "label": "watch-tests",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "watch-tests",
+                "-w",
+                "ng-helper"
+            ],
+            "problemMatcher": "$tsc-watch",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never",
+                "group": "watchers"
+            },
+            "group": "build"
+        },
+        {
+            "label": "tests ",
+            "dependsOn": [
+                "watch",
+                "watch-tests"
+            ],
+            "problemMatcher": []
+        }
+    ]
 }
