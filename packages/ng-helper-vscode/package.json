@@ -3,6 +3,7 @@
   "displayName": "Angular.js Helper",
   "description": "Angular.js Helper for VSCode.",
   "version": "0.0.1",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.60.0"
   },

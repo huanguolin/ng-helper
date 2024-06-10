@@ -4,7 +4,8 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "private": "true",
   "description": "",
   "workspaces": [
       "packages/*"
