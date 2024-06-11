@@ -1,5 +1,5 @@
 {
-  "name": "ng-helper",
+  "name": "angular-js-helper",
   "version": "0.0.1",
   "main": "index.js",
   "keywords": [],
@@ -8,7 +8,7 @@
   "private": "true",
   "description": "",
   "workspaces": [
-      "packages/*"
+    "packages/*"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -7,16 +7,24 @@ export function ngCompletion() {
         'html',
         {
             provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-                if (!isComponentHtml(document)) {
-                    return undefined;
+                if (isComponentHtml(document) && isInStartTag(document, position)) {
+                    return getNgDirectiveList()
+                        .map(x => new vscode.CompletionItem(x));
                 }
 
-                return getNgDirectiveList()
-                    .map(x => new vscode.CompletionItem(x));
+                return undefined;
             }
         }
     );
 }
+
+function isInStartTag(document: vscode.TextDocument, position: vscode.Position) {
+    const beforeText = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
+    const lastStartTag = beforeText.lastIndexOf('<');
+    const lastCloseTag = Math.max(beforeText.lastIndexOf('>'), beforeText.lastIndexOf('</'));
+    return lastCloseTag < lastStartTag;
+}
+
 function getNgDirectiveList() {
     return [
         'ng-click',

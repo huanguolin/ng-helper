@@ -21,40 +21,40 @@ export function dotCompletion() {
                 const file = document.fileName.slice(0, -5) + '.ts';
 
                 return queryTypeFromTsServer(file)
-                    .then(() => {
-                        return vscode.commands
-                            .executeCommand("typescript.tsserverRequest",
-                                "completionInfo",
-                                {
-                                    file,
-                                    line: 37,
-                                    offset: 18,
-                                    triggerCharacter: '.',
-                                }).then((list: any) => {
-                                    console.log('completionInfo: ', list);
-                                    // return list;
+                    // .then(() => {
+                    //     return vscode.commands
+                    //         .executeCommand("typescript.tsserverRequest",
+                    //             "completionInfo",
+                    //             {
+                    //                 file,
+                    //                 line: 37,
+                    //                 offset: 18,
+                    //                 triggerCharacter: '.',
+                    //             }).then((list: any) => {
+                    //                 console.log('completionInfo: ', list);
+                    //                 // return list;
 
-                                    type CompletionItemInfo = {
-                                        name: string;
-                                        kindModifiers: string;
-                                        kind: string;
-                                    };
+                    //                 type CompletionItemInfo = {
+                    //                     name: string;
+                    //                     kindModifiers: string;
+                    //                     kind: string;
+                    //                 };
 
-                                    return list.body.entries
-                                        .filter((x: CompletionItemInfo) =>
-                                            !x.kindModifiers.includes('private') &&
-                                            ['method', 'property'].includes(x.kind) &&
-                                            !x.name.startsWith('$'))
-                                        .map((x: CompletionItemInfo) =>
-                                            new vscode.CompletionItem(x.name,
-                                                x.kind === 'method'
-                                                    ? vscode.CompletionItemKind.Method
-                                                    : vscode.CompletionItemKind.Field));
-                                }, (err) => {
-                                    console.log('completionInfo error: ', err);
-                                    return;
-                                });
-                    });
+                    //                 return list.body.entries
+                    //                     .filter((x: CompletionItemInfo) =>
+                    //                         !x.kindModifiers.includes('private') &&
+                    //                         ['method', 'property'].includes(x.kind) &&
+                    //                         !x.name.startsWith('$'))
+                    //                     .map((x: CompletionItemInfo) =>
+                    //                         new vscode.CompletionItem(x.name,
+                    //                             x.kind === 'method'
+                    //                                 ? vscode.CompletionItemKind.Method
+                    //                                 : vscode.CompletionItemKind.Field));
+                    //             }, (err) => {
+                    //                 console.log('completionInfo error: ', err);
+                    //                 return;
+                    //             });
+                    // });
 
             }
         },
@@ -68,6 +68,7 @@ async function queryTypeFromTsServer(tsFilePath: string) {
     const doc = await vscode.workspace.openTextDocument(tsFilePath);
     const text = doc.getText();
     const pi = text.indexOf(CONTROLLER_COLON_TEXT);
+    console.log('====> pi: ', pi);
     if (pi < 0) {
         // TODO: only completion binds
         return undefined;
