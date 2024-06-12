@@ -1,3 +1,4 @@
+import { isInStartTagAnd, canCompletionInStartTag } from "@ng-helper/utils/lib/html";
 import * as vscode from "vscode";
 
 export function isComponentHtml(document: vscode.TextDocument) {
@@ -10,5 +11,9 @@ export function buildNgHelperTsPluginCmd(cmdType: 'component', range: vscode.Ran
         cmdType,
         range,
     };
+}
+
+export function isInStartTagAndCanCompletion(textBeforeCursor: string): boolean {
+    return isInStartTagAnd(textBeforeCursor, canCompletionInStartTag);
 }
 

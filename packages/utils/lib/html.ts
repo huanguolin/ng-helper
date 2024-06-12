@@ -1,7 +1,7 @@
 
 export const ASCII_SPACE = '\u0020';
 
-export function isInStartTagAndCanCompletion(textBeforeCursor: string) {
+export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean) {
     const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
     const lastEndTagStart = textBeforeCursor.lastIndexOf('</');
     // |
@@ -26,7 +26,7 @@ export function isInStartTagAndCanCompletion(textBeforeCursor: string) {
      * <|
      */
     const tagTextBeforeCursor = textBeforeCursor.slice(lastStartTagStart);
-    return canCompletionInStartTag(tagTextBeforeCursor);
+    return and(tagTextBeforeCursor);
 }
 
 export function canCompletionInStartTag(tagTextBeforeCursor: string): boolean {

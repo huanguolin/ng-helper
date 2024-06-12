@@ -1,4 +1,22 @@
-import { canCompletionInStartTag } from '../lib/html';
+import { canCompletionInStartTag, isInStartTagAnd } from '../lib/html';
+
+describe('isInStartTagAnd()', () => {
+    it.each([
+        [' ', false],
+        ['<>', false],
+        ['</', false],
+        ['<></', false],
+        ['>', false],
+        ['/>', false],
+        ['<', true],
+        ['><', true],
+        ['/><', true],
+        ['/>< ', true],
+    ])('input: %s => output: %s', (input: string, output: boolean) => {
+        const v = isInStartTagAnd(input, () => true);
+        expect(v).toBe(output);
+    })
+});
 
 describe('canCompletionInStartTag()', () => {
     it.each([

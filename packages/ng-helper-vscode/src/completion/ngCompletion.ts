@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { isComponentHtml } from "./utils";
-import { isInStartTagAndCanCompletion } from "@ng-helper/utils/lib/html";
+import { isComponentHtml, isInStartTagAndCanCompletion } from "./utils";
+import { canCompletionInStartTag, isInStartTagAnd } from "@ng-helper/utils/lib/html";
 
 export function ngCompletion() {
     return vscode.languages.registerCompletionItemProvider(
