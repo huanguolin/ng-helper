@@ -1,4 +1,4 @@
-import { canCompletionAttrValue, canCompletionNgDirective, isInStartTagAnd } from '../lib/html';
+import { canCompletionAttrValue, canCompletionNgDirective, canCompletionTemplate, isInStartTagAnd } from '../lib/html';
 
 describe('isInStartTagAnd()', () => {
     it.each([
@@ -43,7 +43,6 @@ describe('canCompletionNgDirective()', () => {
     })
 });
 
-
 describe('canCompletionAttrValue()', () => {
     it.each([
         ['<', false],
@@ -65,6 +64,21 @@ describe('canCompletionAttrValue()', () => {
         ['<div class="btn" ng-hide ', false],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = canCompletionAttrValue(input);
+        expect(v).toBe(output);
+    })
+});
+
+describe('canCompletionTemplate()', () => {
+    it.each([
+        ['{{', true],
+        ['{{}}', false],
+        ['{{\n}}', false],
+        ['{{}', false],
+        ['{{ ctrl', true],
+        ['<x-c attr-title="{{', true],
+        ['{{ <div', false],
+    ])('input: %s => output: %s', (input: string, output: boolean) => {
+        const v = canCompletionTemplate(input);
         expect(v).toBe(output);
     })
 });

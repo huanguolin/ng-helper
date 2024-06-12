@@ -71,3 +71,25 @@ export function canCompletionAttrValue(tagTextBeforeCursor: string): boolean {
     const quoteCnt = chArr.filter(c => c === '"').length;
     return quoteCnt % 2 != 0;
 }
+
+/**
+* 可否补 Angular.js 模版。
+* 只要在 {{ }} 之间即可。
+* @param tagTextBeforeCursor 文件开始到光标前的字符串。
+* @returns 能否补全模版。
+*/
+export function canCompletionTemplate(textBeforeCursor: string): boolean {
+    const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
+    if (lastLeftBraces < 0) {
+        return false;
+    }
+
+    const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
+    if (templateAreaText.includes('}')
+        || templateAreaText.includes('<')
+        || templateAreaText.includes('>')) {
+        return false;
+    }
+
+    return true;
+}
