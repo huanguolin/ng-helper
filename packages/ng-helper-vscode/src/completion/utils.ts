@@ -11,3 +11,4 @@ export function buildNgHelperTsPluginCmd(cmdType: 'component', range: vscode.Ran
         range,
     };
 }
+
