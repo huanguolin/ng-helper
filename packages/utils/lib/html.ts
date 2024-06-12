@@ -29,19 +29,32 @@ export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCur
     return and(tagTextBeforeCursor);
 }
 
-export function canCompletionInStartTag(tagTextBeforeCursor: string): boolean {
-    // input example: '<div class="a b" title="abc'
+/**
+ * 可否补全提示。
+ * 只有三种情况不补全提示：
+ * 1. 光标前是 '<' 或者 '='
+ * 2. 光标在属性值之中, 即在双引号中
+ * 3. 光标紧挨着 tag 名，比如：'<div'
+ * @param tagTextBeforeCursor 开始标签的起始位置 '<' 到光标前的字符串。
+ * @returns 能否补全提示。
+ */
+export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
+    // input example: '<div class="a b" ng-
     const chArr = Array.from(tagTextBeforeCursor);
     const lastCh = chArr[chArr.length - 1];
 
-    if (lastCh === '<') {
-        return false;
-    }
-
-    if (lastCh !== ASCII_SPACE && lastCh !== '"') {
+    if (lastCh === '<' || lastCh === '=') {
         return false;
     }
 
     const quotePaired = chArr.filter(c => c === '"').length % 2 == 0;
-    return quotePaired;
+    if (!quotePaired) {
+        return false;
+    }
+
+    if (/^<[\w-]+$/.test(tagTextBeforeCursor)) {
+        return false;
+    }
+
+    return true;
 }

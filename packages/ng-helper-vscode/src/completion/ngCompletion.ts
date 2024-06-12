@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { isComponentHtml, isInStartTagAndCanCompletion } from "./utils";
-import { canCompletionInStartTag, isInStartTagAnd } from "@ng-helper/utils/lib/html";
+import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { canCompletionNgDirective, isInStartTagAnd } from "@ng-helper/utils/lib/html";
 
 export function ngCompletion() {
     return vscode.languages.registerCompletionItemProvider(
@@ -12,7 +12,7 @@ export function ngCompletion() {
                 }
 
                 const textBeforeCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
-                if (!isInStartTagAndCanCompletion(textBeforeCursor)) {
+                if (!isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
                     return undefined;
                 }
 

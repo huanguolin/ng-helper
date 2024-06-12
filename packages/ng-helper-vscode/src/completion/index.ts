@@ -5,6 +5,6 @@ import { ngCompletion } from './ngCompletion';
 
 export function registerComponentCompletions(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        dotCompletion(),
+        // dotCompletion(),
         ngCompletion());
 }
