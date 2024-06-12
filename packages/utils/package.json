@@ -1,0 +1,16 @@
+{
+  "name": "@ng-helper/utils",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "lib",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.24.7",
+    "@babel/preset-typescript": "^7.24.7",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "typescript": "^5.4.5"
+  }
+}

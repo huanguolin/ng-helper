@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { isComponentHtml } from "./utils";
-import { isInStartTagAndCanCompletion } from "./pureUtils";
+import { isInStartTagAndCanCompletion } from "@ng-helper/utils/lib/html";
 
 export function ngCompletion() {
     return vscode.languages.registerCompletionItemProvider(
@@ -64,3 +64,4 @@ function getNgDirectiveList() {
         'ng-mouseenter',
     ];
 }
+

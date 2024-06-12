@@ -1,5 +1,3 @@
-import * as vscode from "vscode";
-
 
 export const ASCII_SPACE = '\u0020';
 

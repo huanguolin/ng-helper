@@ -71,32 +71,6 @@
                 "group": "watch",
                 "reveal": "never"
             }
-        },
-        {
-            "label": "watch-tests",
-            "type": "shell",
-            "command": "npm",
-            "args": [
-                "run",
-                "watch-tests",
-                "-w",
-                "ng-helper"
-            ],
-            "problemMatcher": "$tsc-watch",
-            "isBackground": true,
-            "presentation": {
-                "reveal": "never",
-                "group": "watchers"
-            },
-            "group": "build"
-        },
-        {
-            "label": "tests ",
-            "dependsOn": [
-                "watch",
-                "watch-tests"
-            ],
-            "problemMatcher": []
         }
     ]
 }
