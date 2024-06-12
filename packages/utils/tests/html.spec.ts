@@ -18,7 +18,7 @@ describe('isInStartTagAnd()', () => {
     })
 });
 
-describe('canCompletionInStartTag()', () => {
+describe('canCompletionNgDirective()', () => {
     it.each([
         ['<', false],
         ['<di', false],
