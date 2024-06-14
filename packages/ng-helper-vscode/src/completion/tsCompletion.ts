@@ -1,12 +1,12 @@
 
-import * as vscode from 'vscode';
+import { languages, TextDocument, Position, workspace, commands } from 'vscode';
 import { buildNgHelperTsPluginCmd, isComponentHtml } from './utils';
 
 export function dotCompletion() {
-    return vscode.languages.registerCompletionItemProvider(
+    return languages.registerCompletionItemProvider(
         'html',
         {
-            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
+            provideCompletionItems(document: TextDocument, position: Position) {
                 if (!isComponentHtml(document)) {
                     return undefined;
                 }
@@ -22,7 +22,7 @@ export function dotCompletion() {
 
                 return queryTypeFromTsServer(file)
                     // .then(() => {
-                    //     return vscode.commands
+                    //     return commands
                     //         .executeCommand("typescript.tsserverRequest",
                     //             "completionInfo",
                     //             {
@@ -46,10 +46,10 @@ export function dotCompletion() {
                     //                         ['method', 'property'].includes(x.kind) &&
                     //                         !x.name.startsWith('$'))
                     //                     .map((x: CompletionItemInfo) =>
-                    //                         new vscode.CompletionItem(x.name,
+                    //                         new CompletionItem(x.name,
                     //                             x.kind === 'method'
-                    //                                 ? vscode.CompletionItemKind.Method
-                    //                                 : vscode.CompletionItemKind.Field));
+                    //                                 ? CompletionItemKind.Method
+                    //                                 : CompletionItemKind.Field));
                     //             }, (err) => {
                     //                 console.log('completionInfo error: ', err);
                     //                 return;
@@ -65,7 +65,7 @@ export function dotCompletion() {
 const CONTROLLER_COLON_TEXT = " controller :";
 
 async function queryTypeFromTsServer(tsFilePath: string) {
-    const doc = await vscode.workspace.openTextDocument(tsFilePath);
+    const doc = await workspace.openTextDocument(tsFilePath);
     const text = doc.getText();
     const pi = text.indexOf(CONTROLLER_COLON_TEXT);
     console.log('====> pi: ', pi);
@@ -79,16 +79,16 @@ async function queryTypeFromTsServer(tsFilePath: string) {
     const line = lines.length - 1;
     const linePos = (lines.pop()?.length || 0) + CONTROLLER_COLON_TEXT.length - 1;
 
-    const pos = new vscode.Position(line, linePos);
+    const pos = new Position(line, linePos);
     const controllerClassNamePosition = doc.getWordRangeAtPosition(pos);
     if (!controllerClassNamePosition) {
         return undefined;
     }
 
     // this will make sure tsserver running
-    await vscode.languages.setTextDocumentLanguage(doc, 'typescript');
+    await languages.setTextDocumentLanguage(doc, 'typescript');
 
-    const list = await vscode.commands.executeCommand(
+    const list = await commands.executeCommand(
         "typescript.tsserverRequest",
         "completionInfo",
         {
@@ -112,10 +112,10 @@ async function queryTypeFromTsServer(tsFilePath: string) {
     //         ['method', 'property'].includes(x.kind) &&
     //         !x.name.startsWith('$'))
     //     .map((x: CompletionItemInfo) =>
-    //         new vscode.CompletionItem(x.name,
+    //         new CompletionItem(x.name,
     //             x.kind === 'method'
-    //                 ? vscode.CompletionItemKind.Method
-    //                 : vscode.CompletionItemKind.Field));
+    //                 ? CompletionItemKind.Method
+    //                 : CompletionItemKind.Field));
 }
 
 type CompletionItemInfo = {

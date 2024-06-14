@@ -1,11 +1,11 @@
 import { isInStartTagAnd, canCompletionNgDirective } from "@ng-helper/utils/lib/html";
-import * as vscode from "vscode";
+import { TextDocument, Range } from "vscode";
 
-export function isComponentHtml(document: vscode.TextDocument) {
+export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
-export function buildNgHelperTsPluginCmd(cmdType: 'component', range: vscode.Range) {
+export function buildNgHelperTsPluginCmd(cmdType: 'component', range: Range) {
     return {
         id: '@ng-helper/typescript-plugin',
         cmdType,
