@@ -34,34 +34,42 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
             }
         }
 
+        info.project.projectService.logger.info(
+            "===> @ng-helper/typescript-plugin init"
+        );
+
         // Remove specified entries from completion list
         proxy.getCompletionsAtPosition = (fileName, position, options) => {
-            const prior = info.languageService.getCompletionsAtPosition(fileName, position, options);
-            if (!isNgHelperTsPluginCmd(options)) {
-                return prior;
-            }
-
-            const ctx = getContext(fileName);
-            if (!ctx) {
-                return;
-            }
-
-            const cmd = options as unknown as Cmd;
-
-            const sourceFile = ctx.program.getSourceFile(fileName);
-            if (!sourceFile) return undefined;
-
-            const startPos = sourceFile.getPositionOfLineAndCharacter(
-                cmd.range.start.line,
-                cmd.range.start.character
+            info.project.projectService.logger.info(
+                `===> @ng-helper/typescript-plugin completion: ${fileName}, position: ${JSON.stringify(position)}, options: ${JSON.stringify(options)}`
             );
 
-            (prior as ts.WithMetadata<ts.CompletionInfo> & { __info: {
-                startPos: number;
-            }}).__info = {
-                startPos,
-            };
-            return prior;
+            return info.languageService.getCompletionsAtPosition(fileName, position, options);
+            // if (!isNgHelperTsPluginCmd(options)) {
+            //     return prior;
+            // }
+
+            // const ctx = getContext(fileName);
+            // if (!ctx) {
+            //     return;
+            // }
+
+            // const cmd = options as unknown as Cmd;
+
+            // const sourceFile = ctx.program.getSourceFile(fileName);
+            // if (!sourceFile) return undefined;
+
+            // const startPos = sourceFile.getPositionOfLineAndCharacter(
+            //     cmd.range.start.line,
+            //     cmd.range.start.character
+            // );
+
+            // (prior as ts.WithMetadata<ts.CompletionInfo> & { __info: {
+            //     startPos: number;
+            // }}).__info = {
+            //     startPos,
+            // };
+            // return prior;
         };
 
         return proxy;
