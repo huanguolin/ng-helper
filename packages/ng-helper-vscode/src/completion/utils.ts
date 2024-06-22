@@ -5,11 +5,10 @@ export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
-export function buildNgHelperTsPluginCmd(cmdType: 'component', range: Range) {
+export function buildNgHelperTsPluginCmd(cmdType: 'component') {
     return {
         id: '@ng-helper/typescript-plugin',
         cmdType,
-        range,
     };
 }
 

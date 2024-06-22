@@ -11,12 +11,6 @@ export function dotCompletion() {
                     return undefined;
                 }
 
-                // const line = document.lineAt(position).text;
-                // const linePrefix = line.slice(0, position.character);
-                // if (!linePrefix.endsWith('{{')) {
-                // 	return undefined;
-                // }
-
                 // remove .html add .ts
                 const file = document.fileName.slice(0, -5) + '.ts';
 
@@ -62,28 +56,8 @@ export function dotCompletion() {
     );
 }
 
-const CONTROLLER_COLON_TEXT = " controller :";
-
 async function queryTypeFromTsServer(tsFilePath: string) {
     const doc = await workspace.openTextDocument(tsFilePath);
-    const text = doc.getText();
-    const pi = text.indexOf(CONTROLLER_COLON_TEXT);
-    console.log('====> pi: ', pi);
-    if (pi < 0) {
-        // TODO: only completion binds
-        return undefined;
-    }
-
-    const preText = text.slice(0, pi);
-    const lines = preText.split('\n');
-    const line = lines.length - 1;
-    const linePos = (lines.pop()?.length || 0) + CONTROLLER_COLON_TEXT.length - 1;
-
-    const pos = new Position(line, linePos);
-    const controllerClassNamePosition = doc.getWordRangeAtPosition(pos);
-    if (!controllerClassNamePosition) {
-        return undefined;
-    }
 
     // this will make sure tsserver running
     await languages.setTextDocumentLanguage(doc, 'typescript');
@@ -92,7 +66,7 @@ async function queryTypeFromTsServer(tsFilePath: string) {
         "typescript.tsserverRequest",
         "completionInfo",
         {
-            tsFilePath,
+            file: tsFilePath,
             // fixed value
             line: 1,
             offset: 1,
@@ -100,9 +74,14 @@ async function queryTypeFromTsServer(tsFilePath: string) {
              * We override the "triggerCharacter" property here as a hack so
              * that we can send custom commands to TSServer
              */
-            triggerCharacter: buildNgHelperTsPluginCmd('component', controllerClassNamePosition),
+            triggerCharacter: buildNgHelperTsPluginCmd('component'),
+            // triggerCharacter: '',
+        }).then((res) => {
+            console.log('completionInfo: ', res);
+            return res;
+        }, (err) => {
+            console.log('completionInfo err: ', err);
         });
-    console.log('completionInfo: ', list);
 
     return [];
 

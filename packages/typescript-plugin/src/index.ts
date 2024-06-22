@@ -1,6 +1,7 @@
 import ts, { CompletionInfoFlags } from "typescript";
 import { isNgHelperTsPluginCmd } from "./utils";
-import { Cmd, SourceFileTypescriptContext } from "./type";
+import { Cmd, NgHelperResponse, SourceFileTypescriptContext } from "./type";
+import { getComponentCompletions } from "./completion";
 
 function init(modules: { typescript: typeof import("typescript/lib/tsserverlibrary") }) {
 
@@ -34,42 +35,46 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
             }
         }
 
-        info.project.projectService.logger.info(
-            "===> @ng-helper/typescript-plugin init"
-        );
+        info.project.projectService.logger.info("===> @ng-helper/typescript-plugin init");
 
         // Remove specified entries from completion list
-        proxy.getCompletionsAtPosition = (fileName, position, options) => {
+        proxy.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
             info.project.projectService.logger.info(
                 `===> @ng-helper/typescript-plugin completion: ${fileName}, position: ${JSON.stringify(position)}, options: ${JSON.stringify(options)}`
             );
 
-            return info.languageService.getCompletionsAtPosition(fileName, position, options);
-            // if (!isNgHelperTsPluginCmd(options)) {
-            //     return prior;
-            // }
+            if (!isNgHelperTsPluginCmd(options)) {
+                return info.languageService.getCompletionsAtPosition(fileName, position, options, formattingSettings);
+            }
 
-            // const ctx = getContext(fileName);
-            // if (!ctx) {
-            //     return;
-            // }
+            const ctx = getContext(fileName);
+            if (!ctx) {
+                return undefined;
+            }
 
-            // const cmd = options as unknown as Cmd;
+            const prior: NgHelperResponse = {
+                isGlobalCompletion: false,
+                isMemberCompletion: false,
+                isNewIdentifierLocation: false,
+                entries: [],
+            };
 
-            // const sourceFile = ctx.program.getSourceFile(fileName);
-            // if (!sourceFile) return undefined;
+            try {
+                const response = getComponentCompletions(ctx, fileName);
+                if (response) {
+                    prior.__ngHelperCompletions = {
+                        type: 'data',
+                        data: response,
+                    };
+                }
+            } catch (error) {
+                prior.__ngHelperCompletions = {
+                    type: 'error',
+                    error,
+                };
+            }
 
-            // const startPos = sourceFile.getPositionOfLineAndCharacter(
-            //     cmd.range.start.line,
-            //     cmd.range.start.character
-            // );
-
-            // (prior as ts.WithMetadata<ts.CompletionInfo> & { __info: {
-            //     startPos: number;
-            // }}).__info = {
-            //     startPos,
-            // };
-            // return prior;
+            return prior;
         };
 
         return proxy;

@@ -1,5 +1,8 @@
-export function isNgHelperTsPluginCmd(obj: unknown): boolean {
-    if (typeof obj !== 'object') {
+export function isNgHelperTsPluginCmd(obj: any): boolean {
+    if (!obj
+        || typeof obj !== 'object'
+        || !obj.triggerCharacter
+        || typeof obj.triggerCharacter !== 'object') {
         return false;
     }
 

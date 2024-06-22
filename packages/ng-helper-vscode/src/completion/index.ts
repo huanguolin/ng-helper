@@ -5,6 +5,6 @@ import { ExtensionContext } from 'vscode';
 
 export function registerComponentCompletions(context: ExtensionContext) {
     context.subscriptions.push(
-        // dotCompletion(),
+        dotCompletion(),
         ngCompletion());
 }

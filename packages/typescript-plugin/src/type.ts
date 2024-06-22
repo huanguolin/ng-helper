@@ -19,6 +19,15 @@ export type Cmd = {
     };
 }
 
+export type NgHelperResponse = ts.WithMetadata<ts.CompletionInfo> & {
+    __ngHelperCompletions?: {
+        type: 'data' | 'error';
+        dataType?: 'component';
+        data?: any;
+        error?: any;
+    }
+};
+
 export type Position = {
     line: number;
     character: number;
