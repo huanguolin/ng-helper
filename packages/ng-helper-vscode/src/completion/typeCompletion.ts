@@ -1,5 +1,5 @@
 import { CancellationToken, CompletionContext, CompletionItem, CompletionItemProvider, CompletionList, Position, ProviderResult, TextDocument, languages, workspace } from "vscode";
-import { isComponentHtml } from "./utils";
+import { ensureTsServerRunning, isComponentHtml } from "./utils";
 import { getComponentCompletion } from "../service/api";
 
 export function typeCompletion(port: number) {
@@ -11,20 +11,12 @@ export function typeCompletion(port: number) {
 }
 
 class TypeCompletionProvider implements CompletionItemProvider {
-    private tsRunning = false;
 
     constructor(private port: number) {
     }
 
     provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
-        if (!isComponentHtml(document)) {
-            return undefined;
-        }
-
-        // remove .html add .ts
-        const tsFilePath = document.fileName.slice(0, -5) + '.ts';
-
-        return this.makeSureTsServerRunning(tsFilePath).then(() => getComponentCompletion(tsFilePath, this.port)).then((res) => {
+        return this.getCompletionItems(document, position).then((res) => {
             console.log('completionInfo: ', res);
             return null;
         }, (err) => {
@@ -37,14 +29,16 @@ class TypeCompletionProvider implements CompletionItemProvider {
         return item;
     }
 
-    private async makeSureTsServerRunning(tsFilePath: string) {
-        if (this.tsRunning) {
-            return;
+    private async getCompletionItems(document: TextDocument, position: Position) {
+        if (!isComponentHtml(document)) {
+            return undefined;
         }
 
-        const doc = await workspace.openTextDocument(tsFilePath);
-        // this will make sure tsserver running
-        await languages.setTextDocumentLanguage(doc, 'typescript');
-        this.tsRunning = true;
+        // remove .html add .ts
+        const tsFilePath = document.fileName.slice(0, -5) + '.ts';
+
+        await ensureTsServerRunning(tsFilePath, this.port);
+
+        return getComponentCompletion(tsFilePath, this.port);
     }
 }

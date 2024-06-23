@@ -6,6 +6,8 @@ export function initHttpServer(getContext: (fileName: string) => TypeScriptConte
     const app = express();
     app.use(express.json());
 
+    app.get('/ng-helper/hc', (_, res) => res.send());
+
     app.post('/ng-helper/command', (req, res) => {
         const body = req.body as { fileName: string; };
         try {
@@ -19,5 +21,6 @@ export function initHttpServer(getContext: (fileName: string) => TypeScriptConte
             res.status(500).send({});
         }
     });
+
     return app;
 }
