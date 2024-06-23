@@ -1,7 +1,7 @@
 import ts from "typescript";
-import { SourceFileTypescriptContext } from "./type";
+import { TypeScriptContextWithSourceFile } from "./type";
 
-export function getComponentCompletions(ctx: SourceFileTypescriptContext): string[] | undefined {
+export function getComponentCompletions(ctx: TypeScriptContextWithSourceFile): string[] | undefined {
     if (!ctx.sourceFile) {
         return undefined;
     }

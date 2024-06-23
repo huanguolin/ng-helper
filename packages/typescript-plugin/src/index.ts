@@ -1,10 +1,8 @@
-import ts, { CompletionInfoFlags } from "typescript";
-import { isNgHelperTsPluginCmd } from "./utils";
+import ts from "typescript";
 import { PluginConfiguration } from '@ng-helper/shared/lib/plugin';
-import { SourceFileTypescriptContext } from "./type";
-import { getComponentCompletions } from "./completion";
-import express from 'express';
+import { TypeScriptContextWithSourceFile } from "./type";
 import * as http from 'http';
+import { initHttpServer } from "./httpServer";
 
 function init(modules: { typescript: typeof import("typescript/lib/tsserverlibrary") }) {
 
@@ -15,22 +13,7 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
         create(info: ts.server.PluginCreateInfo) {
             info.project.projectService.logger.info("===> @ng-helper/typescript-plugin init");
 
-            const app = express();
-            app.use(express.json());
-
-            app.post('/ng-helper/command', (req, res) => {
-                const body = req.body as { fileName: string };
-                try {
-                    const ctx = getContext(body.fileName);
-                    if (!ctx) {
-                        return res.send();
-                    }
-                    const response = getComponentCompletions(ctx);
-                    res.send(response);
-                } catch {
-                    res.status(500).send({});
-                }
-            });
+            const app = initHttpServer(getContext);
 
             start = port => {
                 server?.close();
@@ -51,7 +34,7 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
 
             function getContext(
                 fileName: string
-            ): SourceFileTypescriptContext | undefined {
+            ): TypeScriptContextWithSourceFile | undefined {
                 const program = info.project["program"] as ts.Program | undefined
 
                 if (!program) return undefined
@@ -78,3 +61,4 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
 }
 
 export = init;
+
