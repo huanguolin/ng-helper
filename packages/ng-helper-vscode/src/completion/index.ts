@@ -1,10 +1,11 @@
-import { dotCompletion } from './tsCompletion';
 import { ngCompletion } from './ngCompletion';
 import { ExtensionContext } from 'vscode';
+import { typeCompletion } from './typeCompletion';
 
-
-export function registerComponentCompletions(context: ExtensionContext) {
+export function registerComponentCompletions(
+    context: ExtensionContext,
+    port: number) {
     context.subscriptions.push(
-        dotCompletion(),
+        typeCompletion(port),
         ngCompletion());
 }

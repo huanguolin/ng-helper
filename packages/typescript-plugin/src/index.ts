@@ -1,86 +1,80 @@
 import ts, { CompletionInfoFlags } from "typescript";
 import { isNgHelperTsPluginCmd } from "./utils";
-import { Cmd, NgHelperResponse, SourceFileTypescriptContext } from "./type";
+import { PluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { SourceFileTypescriptContext } from "./type";
 import { getComponentCompletions } from "./completion";
+import express from 'express';
+import * as http from 'http';
 
 function init(modules: { typescript: typeof import("typescript/lib/tsserverlibrary") }) {
 
-    function create(info: ts.server.PluginCreateInfo) {
+    let server: http.Server | undefined;
+    let start: ((port: number) => void) | undefined;
 
-        // Set up decorator object
-        const proxy: ts.LanguageService = Object.create(null);
-        for (let k of Object.keys(info.languageService) as Array<keyof ts.LanguageService>) {
-            const x = info.languageService[k]!;
-            // @ts-expect-error - JS runtime trickery which is tricky to type tersely
-            proxy[k] = (...args: Array<{}>) => x.apply(info.languageService, args);
-        }
+    return {
+        create(info: ts.server.PluginCreateInfo) {
+            info.project.projectService.logger.info("===> @ng-helper/typescript-plugin init");
 
-        function getContext(
-            fileName: string
-        ): SourceFileTypescriptContext | undefined {
-            const program = info.project["program"] as ts.Program | undefined
+            const app = express();
+            app.use(express.json());
 
-            if (!program) return undefined
+            app.post('/ng-helper/command', (req, res) => {
+                const body = req.body as { fileName: string };
+                try {
+                    const ctx = getContext(body.fileName);
+                    if (!ctx) {
+                        return res.send();
+                    }
+                    const response = getComponentCompletions(ctx);
+                    res.send(response);
+                } catch {
+                    res.status(500).send({});
+                }
+            });
 
-            const typeChecker = program.getTypeChecker()
-            const sourceFile = program.getSourceFile(fileName)
-
-            if (!sourceFile) return undefined
-
-            return {
-                program,
-                typeChecker,
-                sourceFile,
-                ts: modules.typescript,
-            }
-        }
-
-        info.project.projectService.logger.info("===> @ng-helper/typescript-plugin init");
-
-        // Remove specified entries from completion list
-        proxy.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
-            info.project.projectService.logger.info(
-                `===> @ng-helper/typescript-plugin completion: ${fileName}, position: ${JSON.stringify(position)}, options: ${JSON.stringify(options)}`
-            );
-
-            if (!isNgHelperTsPluginCmd(options)) {
-                return info.languageService.getCompletionsAtPosition(fileName, position, options, formattingSettings);
-            }
-
-            const ctx = getContext(fileName);
-            if (!ctx) {
-                return undefined;
-            }
-
-            const prior: NgHelperResponse = {
-                isGlobalCompletion: false,
-                isMemberCompletion: false,
-                isNewIdentifierLocation: false,
-                entries: [],
+            start = port => {
+                server?.close();
+                server = app.listen(port, () => {
+                    info.project.projectService.logger.info(`===> @ng-helper/typescript-plugin listening on port ${port}`);
+                });
             };
 
-            try {
-                const response = getComponentCompletions(ctx, fileName);
-                if (response) {
-                    prior.__ngHelperCompletions = {
-                        type: 'data',
-                        data: response,
-                    };
-                }
-            } catch (error) {
-                prior.__ngHelperCompletions = {
-                    type: 'error',
-                    error,
-                };
+            const config = info.config as
+                | Partial<PluginConfiguration>
+                | undefined;
+
+            if (config?.port) {
+                start(config.port);
             }
 
-            return prior;
-        };
+            return info.languageService;
 
-        return proxy;
-    }
+            function getContext(
+                fileName: string
+            ): SourceFileTypescriptContext | undefined {
+                const program = info.project["program"] as ts.Program | undefined
 
-    return { create };
+                if (!program) return undefined
+
+                const typeChecker = program.getTypeChecker()
+                const sourceFile = program.getSourceFile(fileName)
+
+                if (!sourceFile) return undefined
+
+                return {
+                    program,
+                    typeChecker,
+                    sourceFile,
+                    ts: modules.typescript,
+                }
+            }
+        },
+        onConfigurationChanged(config: Partial<PluginConfiguration>) {
+            if (config.port && start) {
+                start(config.port);
+            }
+        }
+    };
 }
 
 export = init;

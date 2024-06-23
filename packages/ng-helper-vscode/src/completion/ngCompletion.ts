@@ -1,6 +1,6 @@
 import { languages, TextDocument, Position, Range, CompletionItem } from "vscode";
 import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
-import { canCompletionNgDirective, isInStartTagAnd } from "@ng-helper/utils/lib/html";
+import { canCompletionNgDirective, isInStartTagAnd } from "@ng-helper/shared/lib/html";
 
 export function ngCompletion() {
     return languages.registerCompletionItemProvider(

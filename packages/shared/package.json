@@ -1,5 +1,5 @@
 {
-  "name": "@ng-helper/utils",
+  "name": "@ng-helper/shared",
   "version": "0.0.1",
   "license": "MIT",
   "main": "lib",

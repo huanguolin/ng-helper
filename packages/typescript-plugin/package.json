@@ -13,7 +13,12 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src --ext ts"
   },
+  "dependencies": {
+    "@ng-helper/shared": "^0.0.1",
+    "express": "^4.17.3"
+  },
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/node": "18.x",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",

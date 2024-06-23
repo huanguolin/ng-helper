@@ -1,4 +1,4 @@
-import { isInStartTagAnd, canCompletionNgDirective } from "@ng-helper/utils/lib/html";
+import { isInStartTagAnd, canCompletionNgDirective } from "@ng-helper/shared/lib/html";
 import { TextDocument, Range } from "vscode";
 
 export function isComponentHtml(document: TextDocument) {
