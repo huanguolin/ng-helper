@@ -1,15 +1,16 @@
-import { TypeScriptContextWithSourceFile } from "./type";
+import { PluginContext } from "./type";
 import { getComponentCompletions } from "./completion";
 import express from 'express';
+import { CompletionRequest } from "@ng-helper/shared/lib/plugin";
 
-export function initHttpServer(getContext: (fileName: string) => TypeScriptContextWithSourceFile | undefined) {
+export function initHttpServer(getContext: (fileName: string) => PluginContext | undefined) {
     const app = express();
     app.use(express.json());
 
     app.get('/ng-helper/hc', (_, res) => res.send());
 
-    app.post('/ng-helper/command', (req, res) => {
-        const body = req.body as { fileName: string; };
+    app.post('/ng-helper/completion', (req, res) => {
+        const body = req.body as CompletionRequest;
         try {
             const ctx = getContext(body.fileName);
             if (!ctx) {
@@ -17,8 +18,8 @@ export function initHttpServer(getContext: (fileName: string) => TypeScriptConte
             }
             const response = getComponentCompletions(ctx);
             res.send(response);
-        } catch {
-            res.status(500).send({});
+        } catch (error) {
+            res.status(500).send(error);
         }
     });
 

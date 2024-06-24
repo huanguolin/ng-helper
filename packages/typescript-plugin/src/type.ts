@@ -1,11 +1,10 @@
-import ts from "typescript"
+import type ts from "typescript";
 
-export type TypeScriptContext = {
-    program: ts.Program
-    typeChecker: ts.TypeChecker
+export type PluginContext = {
+    program: ts.Program;
+    typeChecker: ts.TypeChecker;
     ts: typeof import("typescript/lib/tsserverlibrary")
-}
+    sourceFile: ts.SourceFile;
+    logger: ts.server.Logger;
+};
 
-export type TypeScriptContextWithSourceFile = TypeScriptContext & {
-    sourceFile: ts.SourceFile
-}

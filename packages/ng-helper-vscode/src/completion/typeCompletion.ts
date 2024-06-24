@@ -19,9 +19,6 @@ class TypeCompletionProvider implements CompletionItemProvider {
         return this.getCompletionItems(document, position).then((res) => {
             console.log('completionInfo: ', res);
             return null;
-        }, (err) => {
-            console.log('completionInfo err: ', err);
-            return null;
         });
     }
 
@@ -39,6 +36,6 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         await ensureTsServerRunning(tsFilePath, this.port);
 
-        return getComponentCompletion(tsFilePath, this.port);
+        return getComponentCompletion(this.port, { fileName: tsFilePath, prefix: '.' });
     }
 }

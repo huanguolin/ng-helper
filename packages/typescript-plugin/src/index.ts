@@ -1,24 +1,27 @@
-import ts from "typescript";
 import { PluginConfiguration } from '@ng-helper/shared/lib/plugin';
-import { TypeScriptContextWithSourceFile } from "./type";
+import { PluginContext } from "./type";
 import * as http from 'http';
 import { initHttpServer } from "./httpServer";
+import { buildLogMsg } from "./utils";
 
 function init(modules: { typescript: typeof import("typescript/lib/tsserverlibrary") }) {
+    // got ts type
+    const ts = modules.typescript;
 
     let server: http.Server | undefined;
     let start: ((port: number) => void) | undefined;
 
     return {
         create(info: ts.server.PluginCreateInfo) {
-            info.project.projectService.logger.info("===> @ng-helper/typescript-plugin init");
+            const logger = info.project.projectService.logger;
+            logger.info(buildLogMsg('init'));
 
             const app = initHttpServer(getContext);
 
             start = port => {
                 server?.close();
                 server = app.listen(port, () => {
-                    info.project.projectService.logger.info(`===> @ng-helper/typescript-plugin listening on port ${port}`);
+                    logger.info(buildLogMsg('listening on port', port));
                 });
             };
 
@@ -34,7 +37,7 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
 
             function getContext(
                 fileName: string
-            ): TypeScriptContextWithSourceFile | undefined {
+            ): PluginContext | undefined {
                 const program = info.project["program"] as ts.Program | undefined
 
                 if (!program) return undefined
@@ -49,9 +52,14 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
                     typeChecker,
                     sourceFile,
                     ts: modules.typescript,
+                    logger,
                 }
             }
         },
+        // TODO
+        // onabort() {
+        //     server?.close();
+        // },
         onConfigurationChanged(config: Partial<PluginConfiguration>) {
             if (config.port && start) {
                 start(config.port);
