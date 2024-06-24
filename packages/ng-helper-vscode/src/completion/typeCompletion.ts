@@ -1,4 +1,4 @@
-import { CancellationToken, CompletionContext, CompletionItem, CompletionItemProvider, CompletionList, Position, ProviderResult, TextDocument, languages, workspace } from "vscode";
+import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, ProviderResult, TextDocument, languages } from "vscode";
 import { ensureTsServerRunning, isComponentHtml } from "./utils";
 import { getComponentCompletion } from "../service/api";
 
@@ -15,18 +15,26 @@ class TypeCompletionProvider implements CompletionItemProvider {
     constructor(private port: number) {
     }
 
-    provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
-        return this.getCompletionItems(document, position).then((res) => {
-            console.log('completionInfo: ', res);
-            return null;
-        });
+    provideCompletionItems(
+        document: TextDocument,
+        position: Position,
+        token: CancellationToken,
+        context: CompletionContext,
+    ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
+        return this.getCompletionItems(document, position);
     }
 
-    resolveCompletionItem?(item: CompletionItem, token: CancellationToken): ProviderResult<CompletionItem> {
+    resolveCompletionItem?(
+        item: CompletionItem,
+        token: CancellationToken,
+    ): ProviderResult<CompletionItem> {
         return item;
     }
 
-    private async getCompletionItems(document: TextDocument, position: Position) {
+    private async getCompletionItems(
+        document: TextDocument,
+        position: Position,
+    ): Promise<CompletionItem[] | undefined> {
         if (!isComponentHtml(document)) {
             return undefined;
         }
@@ -36,6 +44,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         await ensureTsServerRunning(tsFilePath, this.port);
 
-        return getComponentCompletion(this.port, { fileName: tsFilePath, prefix: '.' });
+        const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix: '.' });
+        if (res) {
+            return res.map(x => {
+                const item = new CompletionItem(x.name, x.kind === 'method' ? CompletionItemKind.Method : CompletionItemKind.Field);
+                item.detail = `(${x.kind}) ${x.name}: ${x.typeInfo}`;
+                item.documentation = x.document;
+                return item;
+            });
+        }
     }
 }

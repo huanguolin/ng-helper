@@ -1,24 +1,22 @@
 import type ts from "typescript";
 import { PluginContext } from "./type";
 import { buildLogMsg, listPublicMembers } from "./utils";
+import { CompletionResponse } from "@ng-helper/shared/lib/plugin";
 
-export function getComponentCompletions(ctx: PluginContext): string[] | undefined {
+export function getComponentCompletions(ctx: PluginContext): CompletionResponse{
     if (!ctx.sourceFile) {
         return;
     }
 
     try {
-        ctx.logger.info(buildLogMsg('start find controller type'));
         const ct = findControllerType(ctx);
         if (ct) {
             const res = listPublicMembers(ctx, ct);
-            ctx.logger.info(buildLogMsg('resolve:', res));
             return res;
         }
     } catch (error) {
         ctx.logger.info(buildLogMsg('getComponentCompletions error: ', (error as any)?.message));
     }
-    return;
 }
 
 function findControllerType(ctx: PluginContext): ts.Type | undefined {
@@ -27,11 +25,9 @@ function findControllerType(ctx: PluginContext): ts.Type | undefined {
     return controllerType;
 
     function visit(node: ts.Node) {
-        // 查找对象字面量
         if (isAngularComponentRegisterNode(ctx, node)) {
-            ctx.logger.info(buildLogMsg('find angular component:'));
+            // 第二个参数是对象字面量
             let objNode = node.arguments[1];
-            ctx.logger.info(buildLogMsg('objNode:'));
             if (ctx.ts.isObjectLiteralExpression(objNode)) {
                 for (const prop of objNode.properties) {
                     if (ctx.ts.isPropertyAssignment(prop) && ctx.ts.isIdentifier(prop.name)) {
@@ -41,7 +37,7 @@ function findControllerType(ctx: PluginContext): ts.Type | undefined {
                             if (symbol) {
                                 controllerType = typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration!);
                                 if (controllerType.isClass()) {
-                                    return;
+                                    break;
                                 }
                             }
                         }

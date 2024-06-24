@@ -1,14 +1,13 @@
 
-import { CompletionRequest } from '@ng-helper/shared/lib/plugin';
+import { CompletionRequest, CompletionResponse } from '@ng-helper/shared/lib/plugin';
 import axios from 'axios';
 
 export async function getComponentCompletion(port: number, info: CompletionRequest) {
     try {
-        const result = await axios.post<string[] | undefined>(buildUrl(port, 'completion'), info);
+        const result = await axios.post<CompletionResponse>(buildUrl(port, 'completion'), info);
         return result.data;
     } catch (error) {
-        console.log('===> ng-helper connect ts server failed: ', error);
-        return;
+        console.log('getComponentCompletion failed: ', error);
     }
 }
 

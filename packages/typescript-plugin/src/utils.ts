@@ -1,13 +1,14 @@
 import type ts from "typescript";
 import { PluginContext } from "./type";
+import { CompletionResponse, CompletionResponseItem } from "@ng-helper/shared/lib/plugin";
 
-export function listPublicMembers(ctx: PluginContext, type: ts.Type): string[] | undefined {
+export function listPublicMembers(ctx: PluginContext, type: ts.Type): CompletionResponse {
     const symbol = type.getSymbol();
     if (symbol) {
         const members = symbol.members;
 
         if (members) {
-            const result: string[] = [];
+            const result: CompletionResponseItem[] = [];
             members.forEach(member => {
                 if (!member.valueDeclaration) {
                     return;
@@ -20,19 +21,30 @@ export function listPublicMembers(ctx: PluginContext, type: ts.Type): string[] |
 
                 if (member.flags & ctx.ts.SymbolFlags.Method || member.flags & ctx.ts.SymbolFlags.Property) {
                     const memberName = member.getName();
+
+                    // angular.js 内部方法属性过滤掉
+                    if (memberName.startsWith('$')) {
+                        return;
+                    }
+
                     const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
                     const memberTypeString = ctx.typeChecker.typeToString(memberType);
-                    if (member.flags & ctx.ts.SymbolFlags.Method) {
-                        result.push(`Method: ${memberName}: ${memberTypeString}`);
-                    } else {
-                        result.push(`Property: ${memberName}: ${memberTypeString}`);
-                    }
+                    result.push({
+                        kind: member.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
+                        name: memberName,
+                        typeInfo: memberTypeString,
+                        document: getSymbolDocument(ctx, member),
+                    });
                 }
             });
             return result;
         }
     }
     return undefined;
+}
+
+export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string {
+    return ctx.ts.displayPartsToString(symbol.getDocumentationComment(ctx.typeChecker));
 }
 
 const LOG_PREFIX = '[@ng-helper/typescript-plugin]';
