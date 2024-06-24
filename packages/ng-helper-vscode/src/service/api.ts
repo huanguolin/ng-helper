@@ -5,6 +5,7 @@ import axios from 'axios';
 export async function getComponentCompletion(port: number, info: CompletionRequest) {
     try {
         const result = await axios.post<CompletionResponse>(buildUrl(port, 'completion'), info);
+        console.log('getComponentCompletion result: ', result.data);
         return result.data;
     } catch (error) {
         console.log('getComponentCompletion failed: ', error);

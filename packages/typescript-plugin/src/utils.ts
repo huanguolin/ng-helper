@@ -2,13 +2,54 @@ import type ts from "typescript";
 import { PluginContext } from "./type";
 import { CompletionResponse, CompletionResponseItem } from "@ng-helper/shared/lib/plugin";
 
-export function listPublicMembers(ctx: PluginContext, type: ts.Type): CompletionResponse {
+export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map<string, string>): CompletionResponse {
+    if (!bindingsMap.size) {
+        return;
+    }
+
+    const result: CompletionResponseItem[] = [];
+    for (const [k, v] of bindingsMap) {
+        const typeInfo = getBindType(v);
+        result.push({
+            kind: typeInfo.type === 'function' ? 'method' : 'property',
+            name: k,
+            typeInfo: typeInfo.typeString,
+            document: `bindings config: ${v}`,
+        });
+    }
+    return result;
+
+    function getBindType(s: string) {
+        const result: {
+            type: 'unknown' | 'string' | 'function';
+            optional: boolean;
+            typeString: string;
+        } = {
+            type: 'unknown',
+            optional: s.includes('?'),
+            typeString: 'unknown',
+        };
+
+        if (s.includes('@')) {
+            result.type = 'string';
+            result.typeString = 'string';
+        } else if (s.includes('&')) {
+            result.type = 'function';
+            result.typeString = '(...args: unknown[]) => unknown';
+        }
+
+        return result;
+    }
+}
+
+export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Type): CompletionResponse {
     const symbol = type.getSymbol();
     if (symbol) {
         const members = symbol.members;
 
         if (members) {
             const result: CompletionResponseItem[] = [];
+
             members.forEach(member => {
                 if (!member.valueDeclaration) {
                     return;
@@ -37,10 +78,10 @@ export function listPublicMembers(ctx: PluginContext, type: ts.Type): Completion
                     });
                 }
             });
+
             return result;
         }
     }
-    return undefined;
 }
 
 export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string {

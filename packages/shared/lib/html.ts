@@ -60,12 +60,11 @@ export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
 }
 
 /**
- * 可否补全属性值。
- * 只要在引号之间即可。
- * @param tagTextBeforeCursor 开始标签的起始位置 '<' 到光标前的字符串。
- * @returns 能否补全属性值。
+ * 是否在双引号 "" 中。
+ * @param tagTextBeforeCursor 光标前的字符串。
+ * @returns 是否在其中。
  */
-export function canCompletionAttrValue(tagTextBeforeCursor: string): boolean {
+export function isInDbQuote(tagTextBeforeCursor: string): boolean {
     // input example: '<div class="a b" ng-if="
     const chArr = Array.from(tagTextBeforeCursor);
     const quoteCnt = chArr.filter(c => c === '"').length;
@@ -73,23 +72,27 @@ export function canCompletionAttrValue(tagTextBeforeCursor: string): boolean {
 }
 
 /**
-* 可否补 Angular.js 模版。
+* 是否在 Angular.js 模版 {{}} 中。
 * 只要在 {{ }} 之间即可。
 * @param tagTextBeforeCursor 文件开始到光标前的字符串。
-* @returns 能否补全模版。
+* @returns 是否在其中。
 */
-export function canCompletionTemplate(textBeforeCursor: string): boolean {
+export function isInTemplate(textBeforeCursor: string): boolean {
+    return !!getFromTemplateStart(textBeforeCursor);
+}
+
+export function getFromTemplateStart(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
     if (lastLeftBraces < 0) {
-        return false;
+        return;
     }
 
     const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
     if (templateAreaText.includes('}')
         || templateAreaText.includes('<')
         || templateAreaText.includes('>')) {
-        return false;
+        return;
     }
 
-    return true;
+    return templateAreaText;
 }

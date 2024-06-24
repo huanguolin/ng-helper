@@ -2,6 +2,7 @@ import { PluginContext } from "./type";
 import { getComponentCompletions } from "./completion";
 import express from 'express';
 import { CompletionRequest } from "@ng-helper/shared/lib/plugin";
+import { buildLogMsg } from "./utils";
 
 export function initHttpServer(getContext: (fileName: string) => PluginContext | undefined) {
     const app = express();
@@ -16,7 +17,9 @@ export function initHttpServer(getContext: (fileName: string) => PluginContext |
             if (!ctx) {
                 return res.send();
             }
-            const response = getComponentCompletions(ctx);
+            ctx.logger.info(buildLogMsg('completion request:', body));
+            const response = getComponentCompletions(ctx, body.prefix);
+            ctx.logger.info(buildLogMsg('completion response:', response));
             res.send(response);
         } catch (error) {
             res.status(500).send(error);

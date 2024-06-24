@@ -1,19 +1,19 @@
-import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, ProviderResult, TextDocument, languages } from "vscode";
-import { ensureTsServerRunning, isComponentHtml } from "./utils";
+import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, ProviderResult, Range, TextDocument, languages } from "vscode";
+import { ensureTsServerRunning, isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
 import { getComponentCompletion } from "../service/api";
+import { getFromTemplateStart, isInTemplate } from "@ng-helper/shared/lib/html";
 
 export function typeCompletion(port: number) {
     return languages.registerCompletionItemProvider(
         'html',
         new TypeCompletionProvider(port),
         '.'
-    )
+    );
 }
 
 class TypeCompletionProvider implements CompletionItemProvider {
 
-    constructor(private port: number) {
-    }
+    constructor(private port: number) { }
 
     provideCompletionItems(
         document: TextDocument,
@@ -21,19 +21,26 @@ class TypeCompletionProvider implements CompletionItemProvider {
         token: CancellationToken,
         context: CompletionContext,
     ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
-        return this.getCompletionItems(document, position);
+        const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
+        if (isInTemplate(textBeforeCursor)) {
+            const prefix = this.getTemplatePrefix(textBeforeCursor);
+            if (prefix) {
+                return this.getCompletionItems(document, prefix);
+            }
+        }
     }
 
-    resolveCompletionItem?(
-        item: CompletionItem,
-        token: CancellationToken,
-    ): ProviderResult<CompletionItem> {
-        return item;
+    private getTemplatePrefix(textBeforeCursor: string): string {
+        const text = getFromTemplateStart(textBeforeCursor)!;
+        return text
+            .trim()
+            .replace(/(^{{|\.$)/g, '')
+            .trim();
     }
 
     private async getCompletionItems(
         document: TextDocument,
-        position: Position,
+        prefix: string,
     ): Promise<CompletionItem[] | undefined> {
         if (!isComponentHtml(document)) {
             return undefined;
@@ -44,7 +51,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         await ensureTsServerRunning(tsFilePath, this.port);
 
-        const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix: '.' });
+        const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
             return res.map(x => {
                 const item = new CompletionItem(x.name, x.kind === 'method' ? CompletionItemKind.Method : CompletionItemKind.Field);

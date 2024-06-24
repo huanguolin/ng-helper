@@ -1,6 +1,6 @@
 import { languages, TextDocument, Position, Range, CompletionItem } from "vscode";
 import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
-import { canCompletionNgDirective, isInStartTagAnd } from "@ng-helper/shared/lib/html";
+import { canCompletionNgDirective, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
 
 export function ngCompletion() {
     return languages.registerCompletionItemProvider(
@@ -8,16 +8,18 @@ export function ngCompletion() {
         {
             provideCompletionItems(document: TextDocument, position: Position) {
                 if (!isComponentHtml(document)) {
-                    return undefined;
+                    return;
                 }
 
                 const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-                if (!isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
-                    return undefined;
+                if (isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
+                    return getNgDirectiveList()
+                        .map(x => new CompletionItem(x));
                 }
 
-                return getNgDirectiveList()
-                    .map(x => new CompletionItem(x));
+                if (isInTemplate(textBeforeCursor)) {
+                    return [new CompletionItem('ctrl')];
+                }
             }
         }
     );

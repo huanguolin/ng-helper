@@ -1,4 +1,4 @@
-import { canCompletionAttrValue, canCompletionNgDirective, canCompletionTemplate, isInStartTagAnd } from '../lib/html';
+import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd } from '../lib/html';
 
 describe('isInStartTagAnd()', () => {
     it.each([
@@ -45,10 +45,10 @@ describe('canCompletionNgDirective()', () => {
 
 describe('canCompletionAttrValue()', () => {
     it.each([
-        ['<', false],
-        ['<di', false],
-        ['<div', false],
-        ['<div ', false],
+        ['"', true],
+        ['""', false],
+        ['{{ "', true],
+        ['"a" "', true],
         ['<div class', false],
         ['<div class=', false],
         ['<div class="', true],
@@ -63,7 +63,7 @@ describe('canCompletionAttrValue()', () => {
         ['<div class="btn" ng-hide', false],
         ['<div class="btn" ng-hide ', false],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = canCompletionAttrValue(input);
+        const v = isInDbQuote(input);
         expect(v).toBe(output);
     })
 });
@@ -78,7 +78,7 @@ describe('canCompletionTemplate()', () => {
         ['<x-c attr-title="{{', true],
         ['{{ <div', false],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = canCompletionTemplate(input);
+        const v = isInTemplate(input);
         expect(v).toBe(output);
     })
 });
