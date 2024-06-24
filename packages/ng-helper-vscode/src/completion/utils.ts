@@ -12,6 +12,10 @@ export function isInStartTagAndCanCompletionNgX(textBeforeCursor: string): boole
 
 let tsRunning = false;
 export async function ensureTsServerRunning(tsFilePath: string, port: number) {
+    if (tsRunning) {
+        return;
+    }
+
     tsRunning = await healthCheck(port);
     if (tsRunning) {
         return;
@@ -23,6 +27,5 @@ export async function ensureTsServerRunning(tsFilePath: string, port: number) {
     await window.showTextDocument(document);
 
     tsRunning = true;
-    console.log('====> ensure tsRunning: ', tsRunning);
 }
 
