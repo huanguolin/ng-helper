@@ -21,10 +21,14 @@ export async function ensureTsServerRunning(tsFilePath: string, port: number) {
         return;
     }
 
-    // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
-    // 带来的问题是，第一次会打开一个 ts 文件，影响编辑。
-    const document = await workspace.openTextDocument(Uri.file(tsFilePath));
-    await window.showTextDocument(document);
+    const selection = await window.showWarningMessage(
+        "To access features like auto-completion, you need to open a TypeScript file at least once. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
+        'OK');
+    if (selection === 'OK') {
+        // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
+        const document = await workspace.openTextDocument(Uri.file(tsFilePath));
+        await window.showTextDocument(document);
+    }
 
     tsRunning = true;
 }
