@@ -1,6 +1,19 @@
 import type ts from "typescript";
-import { PluginContext } from "./type";
+import { PluginContext, PrefixItem } from "./type";
 import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/shared/lib/plugin";
+
+export function scanPrefix(prefix: string): PrefixItem[] {
+    // TODO 要考虑的情况有
+    // 对象访问 ctrl.a.
+    // 函数调用1 ctrl.b(1, ctrl.c).
+    // 函数调用2 ctrl.g(ctrl.h, ctrl.i.
+    // 数组访问 ctrl.d[0].
+    // 二元运算符 ctrl.e + ctrl.f.
+    // 三元表达式 ctrl.j ? ctrl.k : ctrl.l.
+    // filter (ctrl.m + 'abc') | xxx
+    // repeat item in ctrl.n.
+    return [];
+}
 
 export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map<string, string>): NgCompletionResponse {
     if (!bindingsMap.size) {
