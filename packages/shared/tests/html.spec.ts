@@ -1,4 +1,4 @@
-import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd } from '../lib/html';
+import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd, getFromTemplateStart } from '../lib/html';
 
 describe('isInStartTagAnd()', () => {
     it.each([
@@ -81,4 +81,18 @@ describe('canCompletionTemplate()', () => {
         const v = isInTemplate(input);
         expect(v).toBe(output);
     })
+});
+
+describe('getFromTemplateStart()', () => {
+    it.each([
+        ['some text before {{template', '{{template'], // 正常情况
+        ['text without template markers', undefined], // 无模板起始标记
+        ['text with {{illegal}} character}', undefined], // 含非法字符
+        ['text with {{<html>', undefined], // 含非法字符
+        ['start {{ignore this}} end {{template start', '{{template start'], // 多个模板起始标记
+        ['', undefined], // 空字符串输入
+        // 可以继续添加更多测试数据对
+    ])('given input "%s", should return "%s"', (input, expectedOutput) => {
+        expect(getFromTemplateStart(input)).toBe(expectedOutput);
+    });
 });
