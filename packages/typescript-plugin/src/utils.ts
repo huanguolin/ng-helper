@@ -5,13 +5,22 @@ import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/share
 export function scanPrefix(prefix: string): PrefixItem[] {
     // TODO 要考虑的情况有
     // 对象访问 ctrl.a.
-    // 函数调用1 ctrl.b(1, ctrl.c).
-    // 函数调用2 ctrl.g(ctrl.h, ctrl.i.
-    // 数组访问 ctrl.d[0].
+    // 函数调用1 ctrl.b(1, ctrl.c). 特殊处理，判断点前面有右括号 ')'
+    // 函数调用2 ctrl.b(1, ctrl.c).m. 复杂 case 暂不处理
+    // 函数调用3 ctrl.g(ctrl.h, ctrl.i.
+    // 函数调用4 ctrl.g({ a: ctrl.i.
+    // 数组访问1 ctrl.d[0].
+    // 数组访问2 ctrl.d[ctrl.j]. 特殊处理，判断点前面有右括号 ']'
+    // 数组访问3 ctrl.d[1 + ctrl.i]. 特殊处理，判断点前面有右括号 ']'
+    // 数组访问4 ctrl.d[ctrl.
+    // 数组访问4 ctrl.d[1 + ctrl.i].m. 复杂 case 暂不处理
     // 二元运算符 ctrl.e + ctrl.f.
     // 三元表达式 ctrl.j ? ctrl.k : ctrl.l.
     // filter (ctrl.m + 'abc') | xxx
     // repeat item in ctrl.n.
+    //
+    // 特殊处理点前 ）和 ] 的情况，复杂情况暂不对应
+    // 其他情况使用分割符分割，分隔符包括：空白符、逗号、冒号、【二元操作符(含=)】、！、大括号、小括号、中括号、？
     return [];
 }
 
