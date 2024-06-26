@@ -1,5 +1,6 @@
 import { languages, TextDocument, Position, Range, CompletionItem, CompletionList } from "vscode";
-import { ensureTsServerRunning, isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { ensureTsServerRunning } from "../utils";
 import { canCompletionNgDirective, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
 import { getComponentControllerAs } from "../service/api";
 

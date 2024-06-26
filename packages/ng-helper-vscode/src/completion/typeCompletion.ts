@@ -1,5 +1,6 @@
 import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, ProviderResult, Range, TextDocument, languages } from "vscode";
-import { ensureTsServerRunning, isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { ensureTsServerRunning } from "../utils";
 import { getComponentCompletion } from "../service/api";
 import { getFromTemplateStart, isInTemplate } from "@ng-helper/shared/lib/html";
 
