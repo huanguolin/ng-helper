@@ -20,7 +20,15 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): Com
         }
 
         if (info.controllerType) {
-            return buildCompletionFromPublicMembers(ctx, info.controllerType);
+            const items = buildCompletionFromPublicMembers(ctx, info.controllerType);
+            if (items) {
+                // 把 init 函数删除，因为它不会给 component html 用
+                const initFnIndex = items.findIndex(x => x.name === 'init' && x.kind === 'method');
+                if (initFnIndex >= 0) {
+                    items.splice(initFnIndex, 1);
+                }
+            }
+            return items;
         }
 
         return buildCompletionFromBindings(ctx, info.bindings);

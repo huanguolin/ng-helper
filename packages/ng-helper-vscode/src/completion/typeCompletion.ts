@@ -41,7 +41,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
     private async getCompletionItems(
         document: TextDocument,
         prefix: string,
-    ): Promise<CompletionItem[] | undefined> {
+    ): Promise<CompletionList<CompletionItem> | undefined> {
         if (!isComponentHtml(document)) {
             return undefined;
         }
@@ -53,12 +53,13 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
-            return res.map(x => {
+            const items = res.map(x => {
                 const item = new CompletionItem(x.name, x.kind === 'method' ? CompletionItemKind.Method : CompletionItemKind.Field);
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeInfo}`;
                 item.documentation = x.document;
                 return item;
             });
+            return new CompletionList(items, false);
         }
     }
 }
