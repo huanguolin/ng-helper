@@ -1,8 +1,9 @@
-import { languages, TextDocument, Position, Range, CompletionItem } from "vscode";
-import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
+import { languages, TextDocument, Position, Range, CompletionItem, CompletionList } from "vscode";
+import { ensureTsServerRunning, isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
 import { canCompletionNgDirective, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
+import { getComponentControllerAs } from "../service/api";
 
-export function ngCompletion() {
+export function ngCompletion(port: number) {
     return languages.registerCompletionItemProvider(
         'html',
         {
@@ -13,16 +14,28 @@ export function ngCompletion() {
 
                 const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
                 if (isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
-                    return getNgDirectiveList()
-                        .map(x => new CompletionItem(x));
+                    // TODO improve
+                    return getNgDirectiveList().map(x => new CompletionItem(x));
                 }
 
                 if (isInTemplate(textBeforeCursor)) {
-                    return [new CompletionItem('ctrl')];
+                    return getComponentControllerAsCompletion(document, port);
                 }
             }
         }
     );
+}
+
+async function getComponentControllerAsCompletion(document: TextDocument, port: number) {
+    // remove .html add .ts
+    const tsFilePath = document.fileName.slice(0, -5) + '.ts';
+
+    await ensureTsServerRunning(tsFilePath, port);
+
+    const res = await getComponentControllerAs(port, { fileName: tsFilePath });
+    if (res) {
+        return new CompletionList([new CompletionItem(res)], false);
+    }
 }
 
 function getNgDirectiveList() {

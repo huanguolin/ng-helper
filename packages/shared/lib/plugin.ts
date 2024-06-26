@@ -1,17 +1,20 @@
-export interface PluginConfiguration {
+export interface NgPluginConfiguration {
     port: number;
 }
 
-export interface CompletionRequest {
+export interface NgRequest {
     fileName: string;
+}
+
+export interface NgCompletionRequest extends NgRequest {
     prefix: string;
 }
 
-export interface CompletionResponseItem {
+export interface NgCompletionResponseItem {
     kind: 'property' | 'method';
     name: string;
     typeInfo: string;
     document: string;
 }
 
-export type CompletionResponse = CompletionResponseItem[] | undefined;
+export type NgCompletionResponse = NgCompletionResponseItem[] | undefined;

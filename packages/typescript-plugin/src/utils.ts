@@ -1,13 +1,13 @@
 import type ts from "typescript";
 import { PluginContext } from "./type";
-import { CompletionResponse, CompletionResponseItem } from "@ng-helper/shared/lib/plugin";
+import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/shared/lib/plugin";
 
-export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map<string, string>): CompletionResponse {
+export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map<string, string>): NgCompletionResponse {
     if (!bindingsMap.size) {
         return;
     }
 
-    const result: CompletionResponseItem[] = [];
+    const result: NgCompletionResponseItem[] = [];
     for (const [k, v] of bindingsMap) {
         const typeInfo = getBindType(v);
         result.push({
@@ -42,13 +42,13 @@ export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map
     }
 }
 
-export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Type): CompletionResponse {
+export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
     const symbol = type.getSymbol();
     if (symbol) {
         const members = symbol.members;
 
         if (members) {
-            const result: CompletionResponseItem[] = [];
+            const result: NgCompletionResponseItem[] = [];
 
             members.forEach(member => {
                 if (!member.valueDeclaration) {

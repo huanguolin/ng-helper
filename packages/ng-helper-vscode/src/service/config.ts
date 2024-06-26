@@ -2,7 +2,7 @@
 import getPort from 'get-port';
 import * as vscode from 'vscode';
 import { pluginId, typeScriptExtensionId } from '../constants';
-import { PluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 
 declare class ApiV0 {
     configurePlugin(pluginId: string, configuration: unknown): void;
@@ -32,7 +32,7 @@ export async function configTsPluginConfiguration(defaultPort: number) {
     const port = await getPort({
         port: defaultPort
     });
-    const configuration: PluginConfiguration = {
+    const configuration: NgPluginConfiguration = {
         port
     };
     api.configurePlugin(pluginId, configuration);

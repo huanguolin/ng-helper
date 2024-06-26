@@ -1,9 +1,27 @@
 import type ts from "typescript";
 import { PluginContext } from "./type";
 import { buildLogMsg, buildCompletionFromPublicMembers, buildCompletionFromBindings } from "./utils";
-import { CompletionResponse } from "@ng-helper/shared/lib/plugin";
+import { NgCompletionResponse } from "@ng-helper/shared/lib/plugin";
 
-export function getComponentCompletions(ctx: PluginContext, prefix: string): CompletionResponse {
+export function getComponentControllerAs(ctx: PluginContext): string | undefined {
+    if (!ctx.sourceFile) {
+        return;
+    }
+
+    try {
+        const componentLiteralNode = getComponentLiteralNode(ctx);
+        if (!componentLiteralNode) {
+            return;
+        }
+
+        const info = getComponentCoreInfo(ctx, componentLiteralNode);
+        return info.controllerAs;
+    } catch (error) {
+        ctx.logger.info(buildLogMsg('getComponentControllerAs error:', (error as any)?.message));
+    }
+}
+
+export function getComponentCompletions(ctx: PluginContext, prefix: string): NgCompletionResponse {
     if (!ctx.sourceFile) {
         return;
     }
@@ -20,15 +38,7 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): Com
         }
 
         if (info.controllerType) {
-            const items = buildCompletionFromPublicMembers(ctx, info.controllerType);
-            if (items) {
-                // 把 init 函数删除，因为它不会给 component html 用
-                const initFnIndex = items.findIndex(x => x.name === 'init' && x.kind === 'method');
-                if (initFnIndex >= 0) {
-                    items.splice(initFnIndex, 1);
-                }
-            }
-            return items;
+            return buildCompletionFromPublicMembers(ctx, info.controllerType);
         }
 
         return buildCompletionFromBindings(ctx, info.bindings);

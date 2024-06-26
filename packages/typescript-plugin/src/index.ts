@@ -1,4 +1,4 @@
-import { PluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import { PluginContext } from "./type";
 import * as http from 'http';
 import { initHttpServer } from "./httpServer";
@@ -26,7 +26,7 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
             };
 
             const config = info.config as
-                | Partial<PluginConfiguration>
+                | Partial<NgPluginConfiguration>
                 | undefined;
 
             if (config?.port) {
@@ -60,7 +60,7 @@ function init(modules: { typescript: typeof import("typescript/lib/tsserverlibra
         // onabort() {
         //     server?.close();
         // },
-        onConfigurationChanged(config: Partial<PluginConfiguration>) {
+        onConfigurationChanged(config: Partial<NgPluginConfiguration>) {
             if (config.port && start) {
                 start(config.port);
             }

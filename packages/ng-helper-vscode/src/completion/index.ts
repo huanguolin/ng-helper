@@ -7,5 +7,5 @@ export function registerComponentCompletions(
     port: number) {
     context.subscriptions.push(
         typeCompletion(port),
-        ngCompletion());
+        ngCompletion(port));
 }
