@@ -81,6 +81,12 @@ export function isInTemplate(textBeforeCursor: string): boolean {
     return !!getFromTemplateStart(textBeforeCursor);
 }
 
+/**
+ * 从光标前的文本中获取模板的起始部分。
+ *
+ * @param textBeforeCursor 光标前的文本字符串。
+ * @returns {string | undefined} 返回合规的光标前的模板区域文本(包含模版起始标签)，如果没有找到，则返回undefined。
+ */
 export function getFromTemplateStart(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
     if (lastLeftBraces < 0) {
