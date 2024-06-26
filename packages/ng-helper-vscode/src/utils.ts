@@ -32,6 +32,7 @@ export async function ensureTsServerRunning(tsFilePath: string, port: number) {
 export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
 	try {
 		// 文件不存在会 throw error
+        // 为什么不用 node.js 的 fs 方法？因为它们没有考虑 remote file 等情况。
 		await workspace.fs.stat(fileUri);
 		return true;
 	} catch {
