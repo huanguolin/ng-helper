@@ -6,11 +6,11 @@ import assert from "assert";
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
  * @param ctx 上下文
- * @param startType 起始类型（根类型）
+ * @param rootType 根类型
  * @param minSyntaxNode 查找目标类型的最小语法节点
  * @returns 目标类型
  */
-export function getCompletionType(ctx: PluginContext, startType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
+export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
 
     assert(ctx.ts.isPropertyAccessExpression(minSyntaxNode.node), 'minSyntaxNode.node must be PropertyAccessExpression!');
 
@@ -19,7 +19,7 @@ export function getCompletionType(ctx: PluginContext, startType: ts.Type, minSyn
     function visit(node: ts.Node): ts.Type | undefined {
         if (ctx.ts.isPropertyAccessExpression(node)) {
             if (ctx.ts.isIdentifier(node.expression)) {
-                return getPropertyType(ctx, startType, node.name.text);
+                return getPropertyType(ctx, rootType, node.name.text);
             } else {
                 return visit(node.expression);
             }

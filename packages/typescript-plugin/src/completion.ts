@@ -1,6 +1,6 @@
 import type ts from "typescript";
 import { PluginContext } from "./type";
-import { buildLogMsg, buildCompletionFromPublicMembers, buildCompletionFromBindings } from "./utils";
+import { buildLogMsg, buildCompletionFromPublicMembers, buildCompletionFromBindings, getMinSyntaxNodeForCompletion, getCompletionType } from "./utils";
 import { NgCompletionResponse } from "@ng-helper/shared/lib/plugin";
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
@@ -32,16 +32,36 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
             return;
         }
 
-        const info = getComponentCoreInfo(ctx, componentLiteralNode);
-        if (!prefix.startsWith(info.controllerAs)) {
+        const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefix);
+        if (!minSyntaxNode) {
+            ctx.logger.info(buildLogMsg('getComponentCompletions minSyntaxNode not found'));
             return;
         }
 
-        if (info.controllerType) {
-            return buildCompletionFromPublicMembers(ctx, info.controllerType);
+        const minPrefix = minSyntaxNode.node.getText(minSyntaxNode.sourceFile);
+        ctx.logger.info(buildLogMsg('getComponentCompletions minPrefix:', minPrefix));
+        const info = getComponentCoreInfo(ctx, componentLiteralNode);
+        if (!minPrefix.startsWith(info.controllerAs)) {
+            return;
         }
 
-        return buildCompletionFromBindings(ctx, info.bindings);
+        ctx.logger.info(buildLogMsg('getComponentCompletions minPrefix:', minPrefix));
+
+        // ctrl. 的情况
+        if (minPrefix === info.controllerAs + '.') {
+            ctx.logger.info(buildLogMsg('getComponentCompletions ctrl.'));
+            return info.controllerType ? buildCompletionFromPublicMembers(ctx, info.controllerType) : buildCompletionFromBindings(ctx, info.bindings);
+        }
+
+        ctx.logger.info(buildLogMsg('getComponentCompletions using getCompletionType'));
+        if (info.controllerType) {
+            const targetType = getCompletionType(ctx, info.controllerType, minSyntaxNode);
+            ctx.logger.info(buildLogMsg('getComponentCompletions getCompletionType targetType undefined'));
+            if (!targetType) return;
+
+            ctx.logger.info(buildLogMsg('getComponentCompletions getCompletionType targetType:', ctx.typeChecker.typeToString(targetType)));
+            return buildCompletionFromPublicMembers(ctx, targetType);
+        }
     } catch (error) {
         ctx.logger.info(buildLogMsg('getComponentCompletions error:', (error as any)?.message));
     }
