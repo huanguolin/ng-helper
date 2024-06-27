@@ -23,8 +23,10 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
 
     function visit(node: ts.Node): ts.Type | undefined {
         if (ctx.ts.isPropertyAccessExpression(node)) {
+            ctx.logger.info(buildLogMsg('prop access: node text:', node.getText(minSyntaxNode.sourceFile)));
             const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
             if (nodeType) {
+                ctx.logger.info(buildLogMsg('prop access: node type:', ctx.typeChecker.typeToString(nodeType), 'node.name.text:', node.name.text));
                 return node.name.text ? getPropertyType(ctx, nodeType, node.name.text) : nodeType;
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
@@ -55,6 +57,8 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             if (fnTypes.length > 0) {
                 return fnTypes[0].getReturnType();
             }
+        } else {
+            ctx.logger.info(buildLogMsg('getCompletionType: can be here!'));
         }
     }
 }

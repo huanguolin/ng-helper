@@ -55,6 +55,7 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
 
         ctx.logger.info(buildLogMsg('getComponentCompletions using getCompletionType'));
         if (info.controllerType) {
+            ctx.logger.info(buildLogMsg('getComponentCompletions controllerType:', ctx.typeChecker.typeToString(info.controllerType)));
             const targetType = getCompletionType(ctx, info.controllerType, minSyntaxNode);
             ctx.logger.info(buildLogMsg('getComponentCompletions getCompletionType targetType undefined'));
             if (!targetType) return;

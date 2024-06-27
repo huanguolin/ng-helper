@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { PluginContext } from "../src/type";
 
 export function createTsTestProgram(sourceFiles: Record<string, string>) {
     const compilerHost: ts.CompilerHost = {
@@ -36,5 +37,28 @@ export function prepareSimpleTestData(sourceCode: string, className: string) {
 
     const typeChecker = program.getTypeChecker();
     const type = typeChecker.getTypeAtLocation(myClassNode!);
-    return { program, sourceFile, typeChecker, type };
+
+    const ctx: PluginContext = {
+        program,
+        typeChecker,
+        ts,
+        sourceFile,
+        logger: createDumpLogger(),
+    };
+    return { program, sourceFile, typeChecker, type, ctx };
 }
+
+function createDumpLogger(): ts.server.Logger {
+    const noop = (() => {}) as (...args: any[]) => any;
+    return {
+        close: noop,
+        hasLevel: noop,
+        loggingEnabled: () => true,
+        perftrc: noop,
+        info: noop,
+        startGroup: noop,
+        endGroup: noop,
+        msg: noop,
+        getLogFileName: noop,
+    }
+};
