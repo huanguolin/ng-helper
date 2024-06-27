@@ -1,6 +1,72 @@
 import type ts from "typescript";
 import { PluginContext, SyntaxNodeInfo } from "./type";
 import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/shared/lib/plugin";
+import assert from "assert";
+
+/**
+ * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
+ * @param ctx 上下文
+ * @param startType 起始类型（根类型）
+ * @param minSyntaxNode 查找目标类型的最小语法节点
+ * @returns 目标类型
+ */
+export function getCompletionType(ctx: PluginContext, startType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
+
+    assert(ctx.ts.isPropertyAccessExpression(minSyntaxNode.node), 'minSyntaxNode.node must be PropertyAccessExpression!');
+
+    return visit(minSyntaxNode.node);
+
+    function visit(node: ts.Node): ts.Type | undefined {
+        if (ctx.ts.isPropertyAccessExpression(node)) {
+            if (ctx.ts.isIdentifier(node.expression)) {
+                return getPropertyType(ctx, startType, node.name.text);
+            } else {
+                return visit(node.expression);
+            }
+        } else if (ctx.ts.isElementAccessExpression(node)) {
+            const nodeType = visit(node.expression);
+            if (!nodeType) return;
+
+            if (ctx.typeChecker.isTupleType(nodeType)) {
+                const tupleElementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+                const v = node.argumentExpression;
+                if (ctx.ts.isLiteralExpression(v) && v.kind === ctx.ts.SyntaxKind.NumericLiteral) {
+                    const index = Number.parseInt(v.text);
+                    return tupleElementTypes[index];
+                } else {
+                    // TODO
+                    // return ctx.typeChecker.getUnionType(tupleElementTypes);
+                }
+            } else if (ctx.typeChecker.isArrayType(nodeType)) {
+                const typeArguments = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+                return typeArguments.length > 0 ? typeArguments[0] : undefined;
+            } else if (ctx.typeChecker.isArrayLikeType(nodeType)) {
+                // TODO
+            }
+        } else if (ctx.ts.isCallExpression(node)) {
+            const nodeType = visit(node.expression);
+            if (!nodeType) return;
+
+            const fnTypes = nodeType.getCallSignatures();
+            if (fnTypes.length > 0) {
+                return fnTypes[0].getReturnType();
+            }
+        }
+    }
+}
+
+export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
+    const symbol = type.getProperty(propertyName);
+    if (!symbol || !symbol.valueDeclaration) return;
+
+    // 排除非公开的
+    const modifiers = ctx.ts.getCombinedModifierFlags(symbol.valueDeclaration);
+    if (modifiers & ctx.ts.ModifierFlags.Private || modifiers & ctx.ts.ModifierFlags.Protected) {
+        return;
+    }
+
+    return ctx.typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
+}
 
 /**
  * 获取用于补全的最小语法节点。举例：
@@ -40,6 +106,7 @@ import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/share
  * 多语句
  * ctrl.a = ctrl.b.c; ctrl.d. -> ctrl.d.
  *
+ * @param ctx 上下文
  * @param prefix 补全前缀字符串
  * @returns 最小语法节点
  */
@@ -76,6 +143,7 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
         } else if (ctx.ts.isPropertyAccessExpression(node)) {
             return { sourceFile, node };
         }
+        // 其他情况不支持
     }
 }
 
