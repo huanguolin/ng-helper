@@ -2,7 +2,7 @@ import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKin
 import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
 import { ensureTsServerRunning } from "../utils";
 import { getComponentCompletion } from "../service/api";
-import { getFromTemplateStart, isInTemplate } from "@ng-helper/shared/lib/html";
+import { getTemplateInnerText, isInTemplate } from "@ng-helper/shared/lib/html";
 
 export function typeCompletion(port: number) {
     return languages.registerCompletionItemProvider(
@@ -24,19 +24,11 @@ class TypeCompletionProvider implements CompletionItemProvider {
     ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
         const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
         if (isInTemplate(textBeforeCursor)) {
-            const prefix = this.getTemplatePrefix(textBeforeCursor);
+            const prefix = getTemplateInnerText(textBeforeCursor);
             if (prefix) {
                 return this.getCompletionItems(document, prefix);
             }
         }
-    }
-
-    private getTemplatePrefix(textBeforeCursor: string): string {
-        const text = getFromTemplateStart(textBeforeCursor)!;
-        return text
-            .trim()
-            .replace(/(^{{|\.$)/g, '')
-            .trim();
     }
 
     private async getCompletionItems(

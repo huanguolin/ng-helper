@@ -1,3 +1,4 @@
+// import assert from "assert";
 
 export const ASCII_SPACE = '\u0020';
 
@@ -78,22 +79,22 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
 * @returns 是否在其中。
 */
 export function isInTemplate(textBeforeCursor: string): boolean {
-    return !!getFromTemplateStart(textBeforeCursor);
+    return !!getTemplateInnerText(textBeforeCursor);
 }
 
 /**
- * 从光标前的文本中获取模板的起始部分。
+ * 从光标前的文本中获取模板内部字符串。
  *
  * @param textBeforeCursor 光标前的文本字符串。
- * @returns {string | undefined} 返回合规的光标前的模板区域文本(包含模版起始标签)，如果没有找到，则返回undefined。
+ * @returns {string | undefined} 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
  */
-export function getFromTemplateStart(textBeforeCursor: string): string | undefined {
+export function getTemplateInnerText(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
     if (lastLeftBraces < 0) {
         return;
     }
 
-    const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
+    const templateAreaText = textBeforeCursor.slice(lastLeftBraces + '{{'.length);
     if (templateAreaText.includes('}')
         || templateAreaText.includes('<')
         || templateAreaText.includes('>')) {
