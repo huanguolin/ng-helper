@@ -2,7 +2,7 @@ import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKin
 import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
 import { ensureTsServerRunning } from "../utils";
 import { getComponentCompletion } from "../service/api";
-import { getTemplateInnerText, isInTemplate } from "@ng-helper/shared/lib/html";
+import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from "@ng-helper/shared/lib/html";
 
 export function typeCompletion(port: number) {
     return languages.registerCompletionItemProvider(
@@ -22,10 +22,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
         token: CancellationToken,
         context: CompletionContext,
     ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
+        if (!isComponentHtml(document)) {
+            return undefined;
+        }
+
         const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
         if (isInTemplate(textBeforeCursor)) {
             const prefix = getTemplateInnerText(textBeforeCursor);
-            if (prefix) {
+            if (prefix && !isContainsNgFilter(prefix)) {
                 return this.getCompletionItems(document, prefix);
             }
         }
@@ -35,10 +39,6 @@ class TypeCompletionProvider implements CompletionItemProvider {
         document: TextDocument,
         prefix: string,
     ): Promise<CompletionList<CompletionItem> | undefined> {
-        if (!isComponentHtml(document)) {
-            return undefined;
-        }
-
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 

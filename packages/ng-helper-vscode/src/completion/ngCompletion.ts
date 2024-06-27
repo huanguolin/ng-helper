@@ -1,7 +1,7 @@
 import { languages, TextDocument, Position, Range, CompletionItem, CompletionList } from "vscode";
 import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
 import { ensureTsServerRunning } from "../utils";
-import { canCompletionNgDirective, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
+import { canCompletionNgDirective, getTemplateInnerText, isContainsNgFilter, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
 import { getComponentControllerAs } from "../service/api";
 
 export function ngCompletion(port: number) {
@@ -20,7 +20,10 @@ export function ngCompletion(port: number) {
                 }
 
                 if (isInTemplate(textBeforeCursor)) {
-                    return getComponentControllerAsCompletion(document, port);
+                    const prefix = getTemplateInnerText(textBeforeCursor);
+                    if (prefix && !isContainsNgFilter(prefix)) {
+                        return getComponentControllerAsCompletion(document, port);
+                    }
                 }
             }
         }

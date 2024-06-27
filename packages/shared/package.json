@@ -4,7 +4,8 @@
   "license": "MIT",
   "main": "lib",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",

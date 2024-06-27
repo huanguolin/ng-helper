@@ -1,4 +1,23 @@
-import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd, getTemplateInnerText } from '../lib/html';
+import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd, getTemplateInnerText, isContainsNgFilter, getTemplateText } from '../lib/html';
+
+describe('isContainsNgFilter()', () => {
+    it.each([
+        ['', false],
+        ['  ', false],
+        ['||', false],
+        ['a||', false],
+        ['||b', false],
+        ['a||b', false],
+        ['|', true],
+        ['"A"|', true],
+        ['|date', true],
+        ['"A"|date', true],
+        ['"A" | date', true],
+    ])('input: %s => output: %s', (input: string, output: boolean) => {
+        const v = isContainsNgFilter(input);
+        expect(v).toBe(output);
+    })
+});
 
 describe('isInStartTagAnd()', () => {
     it.each([
@@ -90,9 +109,23 @@ describe('getTemplateInnerText()', () => {
         ['text with {{illegal}} character}', undefined], // 含非法字符
         ['text with {{<html>', undefined], // 含非法字符
         ['start {{ignore this}} end {{template start', 'template start'], // 多个模板起始标记
+        ['{{  ', ''], // trim
         ['', undefined], // 空字符串输入
-        // 可以继续添加更多测试数据对
     ])('given input "%s", should return "%s"', (input, expectedOutput) => {
         expect(getTemplateInnerText(input)).toBe(expectedOutput);
+    });
+});
+
+describe('getTemplateText()', () => {
+    it.each([
+        ['some text before {{template', '{{template'], // 正常情况
+        ['text without template markers', undefined], // 无模板起始标记
+        ['text with {{illegal}} character}', undefined], // 含非法字符
+        ['text with {{<html>', undefined], // 含非法字符
+        ['start {{ignore this}} end {{template start', '{{template start'], // 多个模板起始标记
+        ['{{  ', '{{  '],
+        ['', undefined],
+    ])('given input "%s", should return "%s"', (input, expectedOutput) => {
+        expect(getTemplateText(input)).toBe(expectedOutput);
     });
 });

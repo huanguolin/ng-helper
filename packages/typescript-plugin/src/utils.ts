@@ -1,19 +1,83 @@
 import type ts from "typescript";
-import { PluginContext, PrefixItem } from "./type";
+import { PluginContext, SyntaxNodeInfo } from "./type";
 import { NgCompletionResponse, NgCompletionResponseItem } from "@ng-helper/shared/lib/plugin";
 
 /**
- * 获取用于补全的最小语法节点。
- * 举例：
- * ctrl -> ctrl
- * ctrl.a.b -> ctrl.a.b
- * 
- * @param prefix 
- * @returns 
-//  */
-// export function getMinSyntaxNodeForCompletion(prefix: string): ts.Node | undefined {
-    
-// }
+ * 获取用于补全的最小语法节点。举例：
+ *
+ * 字段访问
+ * ctrl. -> ctrl.
+ * ctrl.a.b. -> ctrl.a.b.
+ * ctrl.a.['b']. -> ctrl.a.['b'].
+ * ctrl.a.[ctrl.prefix + 'b']. -> ctrl.a.[ctrl.prefix + 'b'].
+ *
+ * 数组访问
+ * ctrl.a[ctrl.b.c. -> ctrl.b.c.
+ * ctrl.a[1 + ctrl.b.c]. -> ctrl.a[1 + ctrl.b.c].
+ *
+ * 方法调用
+ * ctrl.a(ctrl.b.c. -> ctrl.b.c.
+ * ctrl.a(1, ctrl.b.c). -> ctrl.a(1, ctrl.b.c).
+ *
+ * 一元表达式
+ * !ctrl.a. -> ctrl.a.
+ * ++ctrl.a. -> ctrl.a.
+ *
+ * 二元表达式
+ * ctrl.a = ctrl.b. -> ctrl.b.
+ * ctrl.a && ctrl.b. -> ctrl.b.
+ *
+ * 括号分组
+ * (ctrl.a. -> ctrl.a.
+ * ((ctrl.a + ctrl.b) / ctrl.c. -> ctrl.c.
+ *
+ * 字面量对象
+ * ({ a:ctrl.b, b:ctrl.c. -> ctrl.c.
+ *
+ * 逗号表达式
+ * ctrl.a = 1, ctrl.b. -> ctrl.b.
+ *
+ * 多语句
+ * ctrl.a = ctrl.b.c; ctrl.d. -> ctrl.d.
+ *
+ * @param prefix 补全前缀字符串
+ * @returns 最小语法节点
+ */
+export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string): SyntaxNodeInfo | undefined {
+    const sourceFile = ctx.ts.createSourceFile(
+        'ng-helper///prefix.ts',
+        prefix,
+        ctx.ts.ScriptTarget.ES5,
+        false,
+        ctx.ts.ScriptKind.JS);
+    return visit(sourceFile);
+
+    function visit(node: ts.Node): SyntaxNodeInfo | undefined {
+        if (ctx.ts.isSourceFile(node)) {
+            return visit(node.statements[node.statements.length-1]);
+        } else if (ctx.ts.isExpressionStatement(node)) {
+            return visit(node.expression);
+        } else if (ctx.ts.isCommaListExpression(node)) {
+            return visit(node.elements[node.elements.length-1]);
+        } else if (ctx.ts.isBinaryExpression(node)) {
+            return visit(node.right);
+        } else if (ctx.ts.isPrefixUnaryExpression(node)) {
+            return visit(node.operand);
+        } else if (ctx.ts.isParenthesizedExpression(node)) {
+            return visit(node.expression);
+        } else if (ctx.ts.isObjectLiteralExpression(node)) {
+            return visit(node.properties[node.properties.length-1]);
+        } else if (ctx.ts.isPropertyAssignment(node)) {
+            return visit(node.initializer);
+        } else if (ctx.ts.isCallExpression(node)) {
+            return visit(node.arguments[node.arguments.length-1]);
+        } else if (ctx.ts.isElementAccessExpression(node)) {
+            return visit(node.argumentExpression);
+        } else if (ctx.ts.isPropertyAccessExpression(node)) {
+            return { sourceFile, node };
+        }
+    }
+}
 
 export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map<string, string>): NgCompletionResponse {
     if (!bindingsMap.size) {

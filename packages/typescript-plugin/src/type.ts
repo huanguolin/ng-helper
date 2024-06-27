@@ -8,7 +8,8 @@ export type PluginContext = {
     logger: ts.server.Logger;
 };
 
-export type PrefixItem = {
-    kind: 'method' | 'property';
-    name: string;
+
+export type SyntaxNodeInfo = {
+    sourceFile: ts.SourceFile;
+    node: ts.Node;
 };

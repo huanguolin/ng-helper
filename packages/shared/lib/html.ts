@@ -1,6 +1,7 @@
-// import assert from "assert";
 
-export const ASCII_SPACE = '\u0020';
+export function isContainsNgFilter(prefix: string): boolean {
+    return /(^|[^|])\|([^|]|$)/.test(prefix);
+}
 
 export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean) {
     const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
@@ -79,7 +80,7 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
 * @returns 是否在其中。
 */
 export function isInTemplate(textBeforeCursor: string): boolean {
-    return !!getTemplateInnerText(textBeforeCursor);
+    return !!getTemplateText(textBeforeCursor);
 }
 
 /**
@@ -89,12 +90,25 @@ export function isInTemplate(textBeforeCursor: string): boolean {
  * @returns {string | undefined} 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
  */
 export function getTemplateInnerText(textBeforeCursor: string): string | undefined {
+    const tplText = getTemplateText(textBeforeCursor);
+    if (tplText) {
+        return tplText.slice('{{'.length).trim();
+    }
+}
+
+/**
+ * 从光标前的文本中获取模板字符串(包含起始的'{{')。
+ *
+ * @param textBeforeCursor 光标前的文本字符串。
+ * @returns {string | undefined} 返回合规的光标前的模板文本，如果没有找到，则返回undefined。
+ */
+export function getTemplateText(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
     if (lastLeftBraces < 0) {
         return;
     }
 
-    const templateAreaText = textBeforeCursor.slice(lastLeftBraces + '{{'.length);
+    const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
     if (templateAreaText.includes('}')
         || templateAreaText.includes('<')
         || templateAreaText.includes('>')) {
