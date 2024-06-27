@@ -1,15 +1,56 @@
 import * as ts from "typescript";
 import { PluginContext } from "../src/type";
-import { getMinSyntaxNodeForCompletion, getPropertyType } from "../src/utils";
-import { createTsTestProgram } from "./helper";
+import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyType } from "../src/utils";
+import { prepareSimpleTestData } from "./helper";
+
+describe('getCompletionType()', () => {
+    const className = 'ComponentController';
+    let type: ts.Type;
+    let ctx: PluginContext;
+
+    beforeAll(() => {
+        const sourceCode = `
+            class ${className} {
+                a = 'abc';
+                b = {
+                    c: {
+                        d: 5,
+                    },
+                    e: [1, 2, 3],
+                };
+            }
+        `;
+        const data = prepareSimpleTestData(sourceCode, className);
+        type = data.type;
+        ctx = {
+            ts,
+            typeChecker: data.typeChecker,
+        } as PluginContext;
+    });
+
+    it.each([
+        ["ctrl.", className],
+        ["ctrl.a.", "string"],
+        ["ctrl.b.c.", "{ d: number; }"],
+        ["ctrl.b.c.d.", "number"],
+        ["ctrl.b.e.", "number[]"],
+        // TODO fill test
+    ])('input: %s => output: %s', (input, output) => {
+        const node = getMinSyntaxNodeForCompletion(ctx, input)!;
+        const result = getCompletionType(ctx, type, node);
+        if (output === undefined) {
+            expect(result).toBeUndefined();
+        } else {
+            expect(ctx.typeChecker.typeToString(result!)).toBe(output)
+        }
+    });
+});
 
 describe('getPropertyType()', () => {
-    let program: ts.Program;
     let type: ts.Type;
     let ctx: any;
 
     beforeAll(() => {
-        const sourceFileName = "test.ts";
         const className = 'MyClass';
         const sourceCode = `
             class ${className} {
@@ -19,23 +60,11 @@ describe('getPropertyType()', () => {
                 protected protectedProperty: string;
             }
         `;
-        const sourceFiles: Record<string, string> = { [sourceFileName]: sourceCode };
-        program = createTsTestProgram(sourceFiles);
-
-        const sourceFile = program.getSourceFile(sourceFileName)!;
-        let myClassNode: ts.ClassDeclaration | undefined;
-        ts.forEachChild(sourceFile, node => {
-            if (ts.isClassDeclaration(node) && node.name && node.name.text === className) {
-                myClassNode = node;
-            }
-        });
-
-        const typeChecker = program.getTypeChecker();
-        type = typeChecker.getTypeAtLocation(myClassNode!);
-
+        const data = prepareSimpleTestData(sourceCode, className);
+        type = data.type;
         ctx = {
             ts,
-            typeChecker,
+            typeChecker: data.typeChecker,
         };
     });
 

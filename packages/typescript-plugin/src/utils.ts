@@ -5,6 +5,11 @@ import assert from "assert";
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
+ * 主要的几种情况：
+ * ctrl.a.b.
+ * ctrl.a.[0].
+ * ctrl.a.[ctrl.prefix + 'b'].
+ * ctrl.a(1, ctrl.b.c).
  * @param ctx 上下文
  * @param rootType 根类型
  * @param minSyntaxNode 查找目标类型的最小语法节点
@@ -18,10 +23,9 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
 
     function visit(node: ts.Node): ts.Type | undefined {
         if (ctx.ts.isPropertyAccessExpression(node)) {
-            if (ctx.ts.isIdentifier(node.expression)) {
-                return getPropertyType(ctx, rootType, node.name.text);
-            } else {
-                return visit(node.expression);
+            const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
+            if (nodeType) {
+                return node.name.text ? getPropertyType(ctx, nodeType, node.name.text) : nodeType;
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
             const nodeType = visit(node.expression);

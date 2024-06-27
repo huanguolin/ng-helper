@@ -20,3 +20,21 @@ export function createTsTestProgram(sourceFiles: Record<string, string>) {
     };
     return ts.createProgram(Object.keys(sourceFiles), {}, compilerHost);
 }
+
+export function prepareSimpleTestData(sourceCode: string, className: string) {
+    const sourceFileName = "test.ts";
+    const sourceFiles: Record<string, string> = { [sourceFileName]: sourceCode };
+    const program = createTsTestProgram(sourceFiles);
+
+    const sourceFile = program.getSourceFile(sourceFileName)!;
+    let myClassNode: ts.ClassDeclaration | undefined;
+    ts.forEachChild(sourceFile, node => {
+        if (ts.isClassDeclaration(node) && node.name && node.name.text === className) {
+            myClassNode = node;
+        }
+    });
+
+    const typeChecker = program.getTypeChecker();
+    const type = typeChecker.getTypeAtLocation(myClassNode!);
+    return { program, sourceFile, typeChecker, type };
+}
