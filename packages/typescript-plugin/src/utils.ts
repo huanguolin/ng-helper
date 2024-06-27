@@ -55,6 +55,13 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
     }
 }
 
+/**
+ * 获取属性的类型。
+ * @param ctx 上下文
+ * @param type 类型
+ * @param propertyName 属性名字
+ * @returns 返回指定属性的类型
+ */
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
     const symbol = type.getProperty(propertyName);
     if (!symbol || !symbol.valueDeclaration) return;
