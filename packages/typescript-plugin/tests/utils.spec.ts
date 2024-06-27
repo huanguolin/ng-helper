@@ -1,6 +1,59 @@
-import ts from "typescript";
+import * as ts from "typescript";
 import { PluginContext } from "../src/type";
-import { getMinSyntaxNodeForCompletion } from "../src/utils";
+import { getMinSyntaxNodeForCompletion, getPropertyType } from "../src/utils";
+import { createTsTestProgram } from "./helper";
+
+describe('getPropertyType()', () => {
+    let program: ts.Program;
+    let type: ts.Type;
+    let ctx: any;
+
+    beforeAll(() => {
+        const sourceFileName = "test.ts";
+        const className = 'MyClass';
+        const sourceCode = `
+            class ${className} {
+                property: number;
+                public publicProperty: string;
+                private privateProperty: boolean;
+                protected protectedProperty: string;
+            }
+        `;
+        const sourceFiles: Record<string, string> = { [sourceFileName]: sourceCode };
+        program = createTsTestProgram(sourceFiles);
+
+        const sourceFile = program.getSourceFile(sourceFileName)!;
+        let myClassNode: ts.ClassDeclaration | undefined;
+        ts.forEachChild(sourceFile, node => {
+            if (ts.isClassDeclaration(node) && node.name && node.name.text === className) {
+                myClassNode = node;
+            }
+        });
+
+        const typeChecker = program.getTypeChecker();
+        type = typeChecker.getTypeAtLocation(myClassNode!);
+
+        ctx = {
+            ts,
+            typeChecker,
+        };
+    });
+
+    it.each([
+        ['property', ts.TypeFlags.Number],
+        ['publicProperty', ts.TypeFlags.String],
+        ['nonExistentProperty', undefined],
+        ['privateProperty', undefined],
+        ['protectedProperty', undefined],
+    ])('input: %s => output: %s', (propertyName, expectedFlags) => {
+        const result = getPropertyType(ctx, type, propertyName);
+        if (expectedFlags === undefined) {
+            expect(result).toBeUndefined();
+        } else {
+            expect(result!.flags).toBe(expectedFlags);
+        }
+    });
+});
 
 describe('getMinSyntaxNodeForCompletion()', () => {
     const ctx = { ts };
