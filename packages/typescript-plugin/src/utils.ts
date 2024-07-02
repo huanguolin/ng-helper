@@ -136,11 +136,11 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
 
     function visit(node: ts.Node): SyntaxNodeInfo | undefined {
         if (ctx.ts.isSourceFile(node)) {
-            return visit(node.statements[node.statements.length-1]);
+            return visit(node.statements[node.statements.length - 1]);
         } else if (ctx.ts.isExpressionStatement(node)) {
             return visit(node.expression);
         } else if (ctx.ts.isCommaListExpression(node)) {
-            return visit(node.elements[node.elements.length-1]);
+            return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isBinaryExpression(node)) {
             return visit(node.right);
         } else if (ctx.ts.isPrefixUnaryExpression(node)) {
@@ -148,11 +148,11 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
         } else if (ctx.ts.isParenthesizedExpression(node)) {
             return visit(node.expression);
         } else if (ctx.ts.isObjectLiteralExpression(node)) {
-            return visit(node.properties[node.properties.length-1]);
+            return visit(node.properties[node.properties.length - 1]);
         } else if (ctx.ts.isPropertyAssignment(node)) {
             return visit(node.initializer);
         } else if (ctx.ts.isCallExpression(node)) {
-            return visit(node.arguments[node.arguments.length-1]);
+            return visit(node.arguments[node.arguments.length - 1]);
         } else if (ctx.ts.isElementAccessExpression(node)) {
             return visit(node.argumentExpression);
         } else if (ctx.ts.isPropertyAccessExpression(node)) {
@@ -204,43 +204,35 @@ export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map
 
 export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
     const symbol = type.getSymbol();
-    if (symbol) {
-        const members = symbol.members;
+    if (!symbol) return;
 
-        if (members) {
-            const result: NgCompletionResponseItem[] = [];
+    const members = symbol.members;
+    if (!members) return;
 
-            members.forEach(member => {
-                if (!member.valueDeclaration) {
-                    return;
-                }
+    const result = Array.from(members.values())
+        .map(x => buildCompletionResponseItem(ctx, x))
+        .filter(x => !!x) as NgCompletionResponseItem[];
+    return result;
+}
 
-                const modifiers = ctx.ts.getCombinedModifierFlags(member.valueDeclaration);
-                if (modifiers & ctx.ts.ModifierFlags.Private || modifiers & ctx.ts.ModifierFlags.Protected) {
-                    return;
-                }
+function buildCompletionResponseItem(ctx: PluginContext, memberSymbol: ts.Symbol): NgCompletionResponseItem | undefined {
+    if (!memberSymbol.valueDeclaration) return;
 
-                if (member.flags & ctx.ts.SymbolFlags.Method || member.flags & ctx.ts.SymbolFlags.Property) {
-                    const memberName = member.getName();
+    const modifiers = ctx.ts.getCombinedModifierFlags(memberSymbol.valueDeclaration);
+    if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) return;
 
-                    // angular.js 内部方法属性过滤掉
-                    if (memberName.startsWith('$')) {
-                        return;
-                    }
+    const memberName = memberSymbol.getName();
+    // angular.js 内部方法属性过滤掉
+    if (memberName.startsWith('$')) return;
 
-                    const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
-                    const memberTypeString = ctx.typeChecker.typeToString(memberType);
-                    result.push({
-                        kind: member.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
-                        name: memberName,
-                        typeInfo: memberTypeString,
-                        document: getSymbolDocument(ctx, member),
-                    });
-                }
-            });
-
-            return result;
-        }
+    if (memberSymbol.flags & ctx.ts.SymbolFlags.Method || memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
+        const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(memberSymbol, memberSymbol.valueDeclaration);
+        return {
+            kind: memberSymbol.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
+            name: memberName,
+            typeInfo: ctx.typeChecker.typeToString(memberType),
+            document: getSymbolDocument(ctx, memberSymbol),
+        };
     }
 }
 
