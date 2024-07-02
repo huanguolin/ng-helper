@@ -71,16 +71,22 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
  * @returns 返回指定属性的类型
  */
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
-    const symbol = type.getProperty(propertyName);
-    if (!symbol || !symbol.valueDeclaration) return;
+    const symbol = type.getSymbol();
+    if (!symbol) return;
+
+    const members = symbol.members;
+    if (!members) return;
+
+    const targetMemberSymbol = Array.from(members.values()).find(x => x.getName() === propertyName);
+    if (!targetMemberSymbol || !targetMemberSymbol.valueDeclaration) return;
 
     // 排除非公开的
-    const modifiers = ctx.ts.getCombinedModifierFlags(symbol.valueDeclaration);
+    const modifiers = ctx.ts.getCombinedModifierFlags(targetMemberSymbol.valueDeclaration);
     if (modifiers & ctx.ts.ModifierFlags.Private || modifiers & ctx.ts.ModifierFlags.Protected) {
         return;
     }
 
-    return ctx.typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
+    return ctx.typeChecker.getTypeOfSymbolAtLocation(targetMemberSymbol, targetMemberSymbol.valueDeclaration);
 }
 
 /**

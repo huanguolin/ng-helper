@@ -50,6 +50,7 @@ describe('getPropertyType()', () => {
 
     beforeAll(() => {
         const className = 'MyClass';
+        // TODO add test case
         const sourceCode = `
             class ${className} {
                 property: number;
