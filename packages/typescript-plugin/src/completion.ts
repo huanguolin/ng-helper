@@ -95,11 +95,7 @@ function getComponentCoreInfo(ctx: PluginContext, componentLiteralNode: ts.Objec
     for (const prop of componentLiteralNode.properties) {
         if (ctx.ts.isPropertyAssignment(prop) && ctx.ts.isIdentifier(prop.name)) {
             if (prop.name.text === 'controller' && ctx.ts.isIdentifier(prop.initializer)) {
-                const symbol = ctx.typeChecker.getSymbolAtLocation(prop.initializer);
-                if (symbol && symbol.valueDeclaration) {
-                    const controllerType = ctx.typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
-                    result.controllerType = controllerType;
-                }
+                result.controllerType = ctx.typeChecker.getTypeAtLocation(prop.initializer);
             } else if (prop.name.text === 'controllerAs' && ctx.ts.isStringLiteral(prop.initializer)) {
                 result.controllerAs = prop.initializer.text;
             } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
