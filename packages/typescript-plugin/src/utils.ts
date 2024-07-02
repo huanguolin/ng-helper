@@ -82,7 +82,7 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
 
     // 排除非公开的
     const modifiers = ctx.ts.getCombinedModifierFlags(targetMemberSymbol.valueDeclaration);
-    if (modifiers & ctx.ts.ModifierFlags.Private || modifiers & ctx.ts.ModifierFlags.Protected) {
+    if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) {
         return;
     }
 
