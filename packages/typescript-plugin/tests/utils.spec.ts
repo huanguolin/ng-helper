@@ -30,8 +30,9 @@ describe('getCompletionType()', () => {
         ["ctrl.a.", "string"],
         ["ctrl.b.c.", "{ d: number; }"],
         ["ctrl.b.c.d.", "number"],
-        // ["ctrl.b.e.", "number[]"], // TODO fix this
-        // TODO fill test
+        ["ctrl.b.e.", "number[]"],
+        // TODO test get array element
+        // TODO test function call
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
         const result = getCompletionType(ctx, type, node);

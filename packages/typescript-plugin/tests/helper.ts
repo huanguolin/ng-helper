@@ -1,25 +1,30 @@
 import ts from "typescript";
 import { PluginContext } from "../src/type";
 
-export function createTsTestProgram(sourceFiles: Record<string, string>) {
-    const compilerHost: ts.CompilerHost = {
-        getSourceFile: (fileName, languageVersion) => {
-            const sourceText = sourceFiles[fileName];
-            return sourceText !== undefined
-                ? ts.createSourceFile(fileName, sourceText, languageVersion)
-                : undefined;
-        },
-        getDefaultLibFileName: options => ts.getDefaultLibFilePath(options),
-        writeFile: (fileName, content) => console.log(`Writing ${fileName}: ${content}`),
-        getCurrentDirectory: () => "",
-        getDirectories: () => [],
-        fileExists: fileName => sourceFiles[fileName] !== undefined,
-        readFile: fileName => sourceFiles[fileName],
-        getCanonicalFileName: fileName => fileName,
-        useCaseSensitiveFileNames: () => true,
-        getNewLine: () => "\n"
+export function createTsTestProgram(sourceFiles: Record<string, string>, options?: ts.CompilerOptions) {
+    const compilerOptions = Object.assign({ target: ts.ScriptTarget.ES5 }, options);
+    const host = ts.createCompilerHost(compilerOptions);
+
+    // override methods:
+    const { getSourceFile, fileExists, readFile } = host;
+    host.getSourceFile = (...args) => {
+        const [fileName, languageVersion] = args;
+        const sourceText = sourceFiles[fileName];
+        return sourceText !== undefined
+            ? ts.createSourceFile(fileName, sourceText, languageVersion)
+            : getSourceFile(...args);
     };
-    return ts.createProgram(Object.keys(sourceFiles), {}, compilerHost);
+    host.fileExists = (fileName) => {
+        const sourceText = sourceFiles[fileName];
+        return !!sourceText || fileExists(fileName);
+    };
+    host.readFile = (fileName) => {
+        const sourceText = sourceFiles[fileName];
+        return sourceText ?? readFile(fileName);
+    };
+    host.getDefaultLibLocation = () => './node_modules/typescript/lib/';
+
+    return ts.createProgram(Object.keys(sourceFiles), compilerOptions, host);
 }
 
 export function prepareSimpleTestData(sourceCode: string, className: string) {
@@ -43,12 +48,12 @@ export function prepareSimpleTestData(sourceCode: string, className: string) {
         typeChecker,
         ts,
         sourceFile,
-        logger: createDumpLogger(),
+        logger: createDumbLogger(),
     };
     return { program, sourceFile, typeChecker, type, ctx };
 }
 
-function createDumpLogger(): ts.server.Logger {
+function createDumbLogger(): ts.server.Logger {
     const noop = (() => {}) as (...args: any[]) => any;
     return {
         close: noop,
