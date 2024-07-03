@@ -27,7 +27,7 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
             if (nodeType) {
                 ctx.logger.info(buildLogMsg('prop access: node type:', ctx.typeChecker.typeToString(nodeType), 'node.name.text:', node.name.text));
-                return node.name.text ? getPropertyType(ctx, nodeType, node.name.text) : nodeType;
+                return node.name.text ? getPropertyTypeViaSymbolMember(ctx, nodeType, node.name.text) : nodeType;
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
             const nodeType = visit(node.expression);
@@ -63,14 +63,15 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
     }
 }
 
-/**
- * 获取属性的类型。
- * @param ctx 上下文
- * @param type 类型
- * @param propertyName 属性名字
- * @returns 返回指定属性的类型
- */
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
+    if (isTypeOfClass(ctx, type)) {
+        return getPropertyTypeViaSymbolMember(ctx, type, propertyName);
+    } else {
+        return getPropertyTypeViaType(ctx, type, propertyName);
+    }
+}
+
+export function getPropertyTypeViaSymbolMember(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
     const symbol = type.getSymbol();
     if (!symbol) return;
 
@@ -87,6 +88,20 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
     }
 
     return ctx.typeChecker.getTypeOfSymbolAtLocation(targetMemberSymbol, targetMemberSymbol.valueDeclaration);
+}
+
+
+export function getPropertyTypeViaType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
+    const symbol = type.getProperty(propertyName);
+    if (!symbol || !symbol.valueDeclaration) return;
+
+    // 排除非公开的
+    const modifiers = ctx.ts.getCombinedModifierFlags(symbol.valueDeclaration);
+    if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) {
+        return;
+    }
+
+    return ctx.typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
 }
 
 /**
@@ -208,12 +223,26 @@ export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map
     }
 }
 
-export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
+export function buildCompletionResponse(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
+    if (isTypeOfClass(ctx, type)) {
+        ctx.logger.info(buildLogMsg('buildCompletionResponse: via symbol members'));
+        return buildCompletionViaSymbolMembers(ctx, type);
+    } else {
+        ctx.logger.info(buildLogMsg('buildCompletionResponse: via type'));
+        return buildCompletionViaType(ctx, type);
+    }
+}
+export function buildCompletionViaSymbolMembers(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
+    
+    ctx.logger.info(buildLogMsg('buildCompletionViaSymbolMembers: 1'));
     const symbol = type.getSymbol();
     if (!symbol) return;
 
+    ctx.logger.info(buildLogMsg('buildCompletionViaSymbolMembers: 2'));
     const members = symbol.members;
     if (!members) return;
+
+    ctx.logger.info(buildLogMsg('buildCompletionViaSymbolMembers: 3'));
 
     const result = Array.from(members.values())
         .map(x => buildCompletionResponseItem(ctx, x))
@@ -221,25 +250,45 @@ export function buildCompletionFromPublicMembers(ctx: PluginContext, type: ts.Ty
     return result;
 }
 
-function buildCompletionResponseItem(ctx: PluginContext, memberSymbol: ts.Symbol): NgCompletionResponseItem | undefined {
+export function buildCompletionViaType(ctx: PluginContext, type: ts.Type): NgCompletionResponse {
+    
+    ctx.logger.info(buildLogMsg('buildCompletionViaType: 1'));
+    const result = type.getApparentProperties()
+        .map(x => buildCompletionResponseItem(ctx, x))
+        .filter(x => !!x) as NgCompletionResponseItem[];
+    return result;
+}
+
+export function buildCompletionResponseItem(ctx: PluginContext, memberSymbol: ts.Symbol): NgCompletionResponseItem | undefined {
+    
+    ctx.logger.info(buildLogMsg('buildCompletionResponseItem: 1'));
     if (!memberSymbol.valueDeclaration) return;
 
+    ctx.logger.info(buildLogMsg('buildCompletionResponseItem: 2'));
     const modifiers = ctx.ts.getCombinedModifierFlags(memberSymbol.valueDeclaration);
     if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) return;
 
     const memberName = memberSymbol.getName();
+    ctx.logger.info(buildLogMsg('buildCompletionResponseItem: 3'));
     // angular.js 内部方法属性过滤掉
     if (memberName.startsWith('$')) return;
 
-    if (memberSymbol.flags & ctx.ts.SymbolFlags.Method || memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
-        const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(memberSymbol, memberSymbol.valueDeclaration);
-        return {
-            kind: memberSymbol.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
-            name: memberName,
-            typeInfo: ctx.typeChecker.typeToString(memberType),
-            document: getSymbolDocument(ctx, memberSymbol),
-        };
-    }
+    const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(memberSymbol, memberSymbol.valueDeclaration);
+    
+    ctx.logger.info(buildLogMsg('buildCompletionResponseItem: 4'));
+    return {
+        // kind: memberSymbol.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
+        kind: 'method',
+        name: memberName,
+        typeInfo: ctx.typeChecker.typeToString(memberType),
+        document: getSymbolDocument(ctx, memberSymbol),
+    };
+    // if (memberSymbol.flags & ctx.ts.SymbolFlags.Method || memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
+    // }
+}
+
+export function isTypeOfClass(ctx: PluginContext, type: ts.Type): boolean {
+    return type !== ctx.typeChecker.getDeclaredTypeOfSymbol(type.symbol);
 }
 
 export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string {

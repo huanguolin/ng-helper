@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import { PluginContext } from "../src/type";
-import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyType } from "../src/utils";
+import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyTypeViaSymbolMember } from "../src/utils";
 import { prepareSimpleTestData } from "./helper";
 
 describe('getCompletionType()', () => {
@@ -77,7 +77,7 @@ describe('getPropertyType()', () => {
         ['protectedProperty', undefined],
         ['a', '{ b: { c: number; }; }'],
     ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
-        const result = getPropertyType(ctx, type, propertyName);
+        const result = getPropertyTypeViaSymbolMember(ctx, type, propertyName);
         if (expectedTypeString === undefined) {
             expect(result).toBeUndefined();
         } else {
