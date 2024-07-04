@@ -1,4 +1,3 @@
-
 export function isContainsNgFilter(prefix: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(prefix);
 }
@@ -9,8 +8,7 @@ export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCur
     // |
     // |<>
     // </|
-    if (lastStartTagStart < 0
-        || lastEndTagStart >= lastStartTagStart) {
+    if (lastStartTagStart < 0 || lastEndTagStart >= lastStartTagStart) {
         return false;
     }
 
@@ -49,7 +47,7 @@ export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
         return false;
     }
 
-    const quotePaired = chArr.filter(c => c === '"').length % 2 == 0;
+    const quotePaired = chArr.filter((c) => c === '"').length % 2 === 0;
     if (!quotePaired) {
         return false;
     }
@@ -69,16 +67,16 @@ export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
 export function isInDbQuote(tagTextBeforeCursor: string): boolean {
     // input example: '<div class="a b" ng-if="
     const chArr = Array.from(tagTextBeforeCursor);
-    const quoteCnt = chArr.filter(c => c === '"').length;
-    return quoteCnt % 2 != 0;
+    const quoteCnt = chArr.filter((c) => c === '"').length;
+    return quoteCnt % 2 !== 0;
 }
 
 /**
-* 是否在 Angular.js 模版 {{}} 中。
-* 只要在 {{ }} 之间即可。
-* @param tagTextBeforeCursor 文件开始到光标前的字符串。
-* @returns 是否在其中。
-*/
+ * 是否在 Angular.js 模版 {{}} 中。
+ * 只要在 {{ }} 之间即可。
+ * @param tagTextBeforeCursor 文件开始到光标前的字符串。
+ * @returns 是否在其中。
+ */
 export function isInTemplate(textBeforeCursor: string): boolean {
     return !!getTemplateText(textBeforeCursor);
 }
@@ -109,9 +107,7 @@ export function getTemplateText(textBeforeCursor: string): string | undefined {
     }
 
     const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
-    if (templateAreaText.includes('}')
-        || templateAreaText.includes('<')
-        || templateAreaText.includes('>')) {
+    if (templateAreaText.includes('}') || templateAreaText.includes('<') || templateAreaText.includes('>')) {
         return;
     }
 

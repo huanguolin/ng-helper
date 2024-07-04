@@ -1,7 +1,15 @@
-import type ts from "typescript";
-import { PluginContext } from "./type";
-import { buildLogMsg, buildCompletionViaSymbolMembers, buildCompletionFromBindings, getMinSyntaxNodeForCompletion, getCompletionType, buildCompletionResponse } from "./utils";
-import { NgCompletionResponse } from "@ng-helper/shared/lib/plugin";
+import { NgCompletionResponse } from '@ng-helper/shared/lib/plugin';
+import type ts from 'typescript';
+
+import { PluginContext } from './type';
+import {
+    buildLogMsg,
+    buildCompletionViaSymbolMembers,
+    buildCompletionFromBindings,
+    getMinSyntaxNodeForCompletion,
+    getCompletionType,
+    buildCompletionResponse,
+} from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     if (!ctx.sourceFile) {
@@ -57,7 +65,9 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
         if (info.controllerType) {
             ctx.logger.info(buildLogMsg('getComponentCompletions controllerType:', ctx.typeChecker.typeToString(info.controllerType)));
             const targetType = getCompletionType(ctx, info.controllerType, minSyntaxNode);
-            if (!targetType) return;
+            if (!targetType) {
+                return;
+            }
 
             ctx.logger.info(buildLogMsg('getComponentCompletions getCompletionType targetType:', ctx.typeChecker.typeToString(targetType)));
             return buildCompletionResponse(ctx, targetType);
@@ -99,10 +109,7 @@ function getComponentCoreInfo(ctx: PluginContext, componentLiteralNode: ts.Objec
                 result.controllerAs = prop.initializer.text;
             } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
                 for (const f of prop.initializer.properties) {
-                    if (ctx.ts.isPropertyAssignment(f)
-                        && ctx.ts.isIdentifier(f.name)
-                        && ctx.ts.isStringLiteral(f.initializer)
-                    ) {
+                    if (ctx.ts.isPropertyAssignment(f) && ctx.ts.isIdentifier(f.name) && ctx.ts.isStringLiteral(f.initializer)) {
                         result.bindings.set(f.name.text, f.initializer.text);
                     }
                 }
@@ -113,14 +120,15 @@ function getComponentCoreInfo(ctx: PluginContext, componentLiteralNode: ts.Objec
 }
 
 function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
-    if (ctx.ts.isCallExpression(node)
-        && ctx.ts.isPropertyAccessExpression(node.expression)
-        && ctx.ts.isCallExpression(node.expression.expression)
-        && ctx.ts.isIdentifier(node.expression.name)
-        && node.expression.name.text === 'component'
-        && node.arguments.length === 2
-        && ctx.ts.isStringLiteral(node.arguments[0])
-        && ctx.ts.isObjectLiteralExpression(node.arguments[1])
+    if (
+        ctx.ts.isCallExpression(node) &&
+        ctx.ts.isPropertyAccessExpression(node.expression) &&
+        ctx.ts.isCallExpression(node.expression.expression) &&
+        ctx.ts.isIdentifier(node.expression.name) &&
+        node.expression.name.text === 'component' &&
+        node.arguments.length === 2 &&
+        ctx.ts.isStringLiteral(node.arguments[0]) &&
+        ctx.ts.isObjectLiteralExpression(node.arguments[1])
     ) {
         return true;
     }

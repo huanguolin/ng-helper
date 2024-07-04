@@ -1,27 +1,29 @@
-import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, ProviderResult, Range, TextDocument, languages } from "vscode";
-import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
-import { ensureTsServerRunning } from "../utils";
-import { getComponentCompletion } from "../service/api";
-import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from "@ng-helper/shared/lib/html";
+import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from '@ng-helper/shared/lib/html';
+import {
+    CompletionItem,
+    CompletionItemKind,
+    CompletionItemProvider,
+    CompletionList,
+    Position,
+    ProviderResult,
+    Range,
+    TextDocument,
+    languages,
+} from 'vscode';
+
+import { getComponentCompletion } from '../service/api';
+import { ensureTsServerRunning } from '../utils';
+
+import { isComponentHtml } from './utils';
 
 export function typeCompletion(port: number) {
-    return languages.registerCompletionItemProvider(
-        'html',
-        new TypeCompletionProvider(port),
-        '.'
-    );
+    return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
 }
 
 class TypeCompletionProvider implements CompletionItemProvider {
+    constructor(private port: number) {}
 
-    constructor(private port: number) { }
-
-    provideCompletionItems(
-        document: TextDocument,
-        position: Position,
-        token: CancellationToken,
-        context: CompletionContext,
-    ): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
+    provideCompletionItems(document: TextDocument, position: Position): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
         if (!isComponentHtml(document)) {
             return undefined;
         }
@@ -35,10 +37,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
     }
 
-    private async getCompletionItems(
-        document: TextDocument,
-        prefix: string,
-    ): Promise<CompletionList<CompletionItem> | undefined> {
+    private async getCompletionItems(document: TextDocument, prefix: string): Promise<CompletionList<CompletionItem> | undefined> {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
@@ -46,7 +45,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
-            const items = res.map(x => {
+            const items = res.map((x) => {
                 const item = new CompletionItem(x.name, x.kind === 'method' ? CompletionItemKind.Method : CompletionItemKind.Field);
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeInfo}`;
                 item.documentation = x.document;

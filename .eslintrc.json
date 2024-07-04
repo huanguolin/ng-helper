@@ -2,26 +2,46 @@
     "root": true,
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": "latest",
         "sourceType": "module",
-        "tsconfigRootDir": "__dirname",
+        "tsconfigRootDir": "./",
         "project": [
-            "./tsconfig.eslint.json",
+            "./tsconfig.json",
             "./packages/*/tsconfig.json"
         ]
     },
     "plugins": [
         "@typescript-eslint",
-        "eslint-plugin-import"
+        "import",
+        "unused-imports"
     ],
     "extends": [
         "eslint:recommended",
+        "plugin:prettier/recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking"
     ],
     "rules": {
+        "semi": "off",
+        "@typescript-eslint/semi": "error",
         "@typescript-eslint/naming-convention": [
-            "warn",
+            "error",
+            {
+                "selector": [
+                    "typeLike"
+                ],
+                "format": [
+                    "PascalCase"
+                ]
+            },
+            {
+                "selector": [
+                    "method"
+                ],
+                "format": [
+                    "camelCase"
+                ]
+            },
             {
                 "selector": "import",
                 "format": [
@@ -30,15 +50,35 @@
                 ]
             }
         ],
-        "@typescript-eslint/semi": "warn",
-        "curly": "warn",
-        "eqeqeq": "warn",
-        "no-throw-literal": "warn",
-        "semi": "off"
+        "curly": "error",
+        "eqeqeq": "error",
+        "no-throw-literal": "error",
+        "unused-imports/no-unused-imports": "error",
+        "no-trailing-spaces": "error",
+        "import/named": "off",
+        "import/namespace": "off",
+        "import/no-unresolved": "off",
+        "import/no-named-as-default": "off",
+        "import/order": [
+            "error",
+            {
+                "groups": [
+                    "builtin",
+                    "external",
+                    "parent",
+                    "sibling"
+                ],
+                "newlines-between": "always",
+                "alphabetize": {
+                    "order": "asc"
+                }
+            }
+        ]
     },
     "ignorePatterns": [
-        "out",
+        "node_modules",
         "dist",
-        "**/*.d.ts"
+        "**/*.d.ts",
+        "jest.config.ts"
     ]
 }

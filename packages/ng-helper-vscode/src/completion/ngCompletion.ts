@@ -1,33 +1,32 @@
-import { languages, TextDocument, Position, Range, CompletionItem, CompletionList } from "vscode";
-import { isComponentHtml, isInStartTagAndCanCompletionNgX } from "./utils";
-import { ensureTsServerRunning } from "../utils";
-import { canCompletionNgDirective, getTemplateInnerText, isContainsNgFilter, isInStartTagAnd, isInTemplate } from "@ng-helper/shared/lib/html";
-import { getComponentControllerAs } from "../service/api";
+import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from '@ng-helper/shared/lib/html';
+import { languages, TextDocument, Position, Range, CompletionItem, CompletionList } from 'vscode';
+
+import { getComponentControllerAs } from '../service/api';
+import { ensureTsServerRunning } from '../utils';
+
+import { isComponentHtml, isInStartTagAndCanCompletionNgX } from './utils';
 
 export function ngCompletion(port: number) {
-    return languages.registerCompletionItemProvider(
-        'html',
-        {
-            provideCompletionItems(document: TextDocument, position: Position) {
-                if (!isComponentHtml(document)) {
-                    return;
-                }
+    return languages.registerCompletionItemProvider('html', {
+        provideCompletionItems(document: TextDocument, position: Position) {
+            if (!isComponentHtml(document)) {
+                return;
+            }
 
-                const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-                if (isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
-                    // TODO improve
-                    return getNgDirectiveList().map(x => new CompletionItem(x));
-                }
+            const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
+            if (isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
+                // TODO improve
+                return getNgDirectiveList().map((x) => new CompletionItem(x));
+            }
 
-                if (isInTemplate(textBeforeCursor)) {
-                    const prefix = getTemplateInnerText(textBeforeCursor);
-                    if (prefix && !isContainsNgFilter(prefix)) {
-                        return getComponentControllerAsCompletion(document, port);
-                    }
+            if (isInTemplate(textBeforeCursor)) {
+                const prefix = getTemplateInnerText(textBeforeCursor);
+                if (prefix && !isContainsNgFilter(prefix)) {
+                    return getComponentControllerAsCompletion(document, port);
                 }
             }
-        }
-    );
+        },
+    });
 }
 
 async function getComponentControllerAsCompletion(document: TextDocument, port: number) {
@@ -83,4 +82,3 @@ function getNgDirectiveList() {
         'ng-mouseenter',
     ];
 }
-

@@ -1,4 +1,12 @@
-import { isInDbQuote, canCompletionNgDirective, isInTemplate, isInStartTagAnd, getTemplateInnerText, isContainsNgFilter, getTemplateText } from '../lib/html';
+import {
+    isInDbQuote,
+    canCompletionNgDirective,
+    isInTemplate,
+    isInStartTagAnd,
+    getTemplateInnerText,
+    isContainsNgFilter,
+    getTemplateText,
+} from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
     it.each([
@@ -16,7 +24,7 @@ describe('isContainsNgFilter()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isContainsNgFilter(input);
         expect(v).toBe(output);
-    })
+    });
 });
 
 describe('isInStartTagAnd()', () => {
@@ -34,7 +42,7 @@ describe('isInStartTagAnd()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isInStartTagAnd(input, () => true);
         expect(v).toBe(output);
-    })
+    });
 });
 
 describe('canCompletionNgDirective()', () => {
@@ -59,7 +67,7 @@ describe('canCompletionNgDirective()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = canCompletionNgDirective(input);
         expect(v).toBe(output);
-    })
+    });
 });
 
 describe('canCompletionAttrValue()', () => {
@@ -84,7 +92,7 @@ describe('canCompletionAttrValue()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isInDbQuote(input);
         expect(v).toBe(output);
-    })
+    });
 });
 
 describe('canCompletionTemplate()', () => {
@@ -99,7 +107,7 @@ describe('canCompletionTemplate()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isInTemplate(input);
         expect(v).toBe(output);
-    })
+    });
 });
 
 describe('getTemplateInnerText()', () => {

@@ -1,7 +1,9 @@
-import * as ts from "typescript";
-import { PluginContext } from "../src/type";
-import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyTypeViaSymbolMember } from "../src/utils";
-import { prepareSimpleTestData } from "./helper";
+import * as ts from 'typescript';
+
+import { PluginContext } from '../src/type';
+import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyTypeViaSymbolMember } from '../src/utils';
+
+import { prepareSimpleTestData } from './helper';
 
 describe('getCompletionType()', () => {
     const className = 'ComponentController';
@@ -26,11 +28,11 @@ describe('getCompletionType()', () => {
     });
 
     it.each([
-        ["ctrl.", className],
-        ["ctrl.a.", "string"],
-        ["ctrl.b.c.", "{ d: number; }"],
-        ["ctrl.b.c.d.", "number"],
-        ["ctrl.b.e.", "number[]"],
+        ['ctrl.', className],
+        ['ctrl.a.', 'string'],
+        ['ctrl.b.c.', '{ d: number; }'],
+        ['ctrl.b.c.d.', 'number'],
+        ['ctrl.b.e.', 'number[]'],
         // TODO test get array element
         // TODO test function call
     ])('input: %s => output: %s', (input, output) => {
@@ -39,7 +41,7 @@ describe('getCompletionType()', () => {
         if (output === undefined) {
             expect(result).toBeUndefined();
         } else {
-            expect(ctx.typeChecker.typeToString(result!)).toBe(output)
+            expect(ctx.typeChecker.typeToString(result!)).toBe(output);
         }
     });
 });
@@ -124,7 +126,7 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         // 多语句
         ['ctrl.a = ctrl.b.c; ctrl.d.', 'ctrl.d.'],
     ])('input: %s => output: %s', (input: string, output: string) => {
-            const v = getMinSyntaxNodeForCompletion(ctx as PluginContext, input);
-            expect(v?.node.getText(v?.sourceFile)).toBe(output);
-        })
+        const v = getMinSyntaxNodeForCompletion(ctx as PluginContext, input);
+        expect(v?.node.getText(v?.sourceFile)).toBe(output);
+    });
 });

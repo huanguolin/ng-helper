@@ -1,10 +1,10 @@
 import { Uri, commands, window, workspace } from 'vscode';
+
 import { createCommand } from './utils';
 
 export function createComponentCommand() {
     return createCommand('createComponent', async (path: Uri) => {
         if (!path) {
-            window.showInformationMessage("Use this command from the Explorer context menu, and on 'components' folder.");
             return;
         }
 

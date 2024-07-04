@@ -1,8 +1,9 @@
-import { PluginContext } from "./type";
-import { getComponentCompletions, getComponentControllerAs } from "./completion";
+import { NgCompletionRequest } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
-import { NgCompletionRequest } from "@ng-helper/shared/lib/plugin";
-import { buildLogMsg } from "./utils";
+
+import { getComponentCompletions, getComponentControllerAs } from './completion';
+import { PluginContext } from './type';
+import { buildLogMsg } from './utils';
 
 export function initHttpServer(getContext: (fileName: string) => PluginContext | undefined) {
     const app = express();
