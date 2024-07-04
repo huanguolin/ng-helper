@@ -1,9 +1,8 @@
-// eslint-disable-next-line no-restricted-imports
-import ts from 'typescript';
+import type ts from 'typescript';
 
 import { PluginContext } from '../../src/type';
-import { getPropertyType } from '../../src/utils/common';
-import { prepareSimpleTestData } from '../helper';
+import { getPropertyType, typeToString } from '../../src/utils/common';
+import { prepareTestContext } from '../helper';
 
 describe('getPropertyType()', () => {
     let type: ts.Type;
@@ -11,23 +10,31 @@ describe('getPropertyType()', () => {
 
     beforeAll(() => {
         const className = 'MyClass';
-        // TODO add test case
         const sourceCode = `
-            class ${className} {
-                property: number;
-                public publicProperty: string;
-                private privateProperty: boolean;
-                protected protectedProperty: string;
-                a = {
-                    b: {
-                        c: 5,
-                    },
-                };
-            }
-        `;
-        const data = prepareSimpleTestData(sourceCode, className);
-        type = data.type;
-        ctx = data.ctx;
+                class ${className} {
+                    property: number;
+                    public publicProperty: string;
+                    private privateProperty: boolean;
+                    protected protectedProperty: string;
+                    a = {
+                        b: {
+                            c: 5,
+                        },
+                    };
+                }
+            `;
+        ctx = prepareTestContext(sourceCode);
+        type = ctx.typeChecker.getTypeAtLocation(findTheNode()!);
+
+        function findTheNode() {
+            let theNode: ts.ClassDeclaration | undefined;
+            ctx.ts.forEachChild(ctx.sourceFile, (node) => {
+                if (ctx.ts.isClassDeclaration(node) && node.name && node.name.text === className) {
+                    theNode = node;
+                }
+            });
+            return theNode;
+        }
     });
 
     it.each([
@@ -39,10 +46,6 @@ describe('getPropertyType()', () => {
         ['a', '{ b: { c: number; }; }'],
     ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
         const result = getPropertyType(ctx, type, propertyName);
-        if (expectedTypeString === undefined) {
-            expect(result).toBeUndefined();
-        } else {
-            expect(ctx.typeChecker.typeToString(result!)).toBe(expectedTypeString);
-        }
+        expect(typeToString(ctx, result)).toBe(expectedTypeString);
     });
 });

@@ -1,19 +1,22 @@
-// eslint-disable-next-line no-restricted-imports
+// eslint-disable-next-line no-restricted-syntax
 import ts from 'typescript';
 
 import { PluginContext, PluginLogger } from '../src/type';
 
-export function createTsTestProgram(sourceFiles: Record<string, string>, options?: ts.CompilerOptions) {
-    const compilerOptions = Object.assign({ target: ts.ScriptTarget.ES5 }, options);
+export function createTestProgram(sourceFiles: Record<string, string>, options?: ts.CompilerOptions) {
+    const compilerOptions = Object.assign({ target: ts.ScriptTarget.ES2015 }, options);
     const host = ts.createCompilerHost(compilerOptions);
 
-    // override methods:
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { getSourceFile, fileExists, readFile } = host;
+    /**
+     * override methods:
+     */
+    const getSourceFile = host.getSourceFile.bind(host);
+    const fileExists = host.fileExists.bind(host);
+    const readFile = host.readFile.bind(host);
     host.getSourceFile = (...args) => {
-        const [fileName, languageVersion] = args;
+        const [fileName] = args;
         const sourceText = sourceFiles[fileName];
-        return sourceText !== undefined ? ts.createSourceFile(fileName, sourceText, languageVersion) : getSourceFile(...args);
+        return sourceText !== undefined ? ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.ES2022) : getSourceFile(...args);
     };
     host.fileExists = (fileName) => {
         const sourceText = sourceFiles[fileName];
@@ -28,30 +31,20 @@ export function createTsTestProgram(sourceFiles: Record<string, string>, options
     return ts.createProgram(Object.keys(sourceFiles), compilerOptions, host);
 }
 
-export function prepareSimpleTestData(sourceCode: string, className: string) {
+export function prepareTestContext(sourceCode: string): PluginContext {
     const sourceFileName = 'test.ts';
     const sourceFiles: Record<string, string> = { [sourceFileName]: sourceCode };
-    const program = createTsTestProgram(sourceFiles);
-
-    const sourceFile = program.getSourceFile(sourceFileName)!;
-    let myClassNode: ts.ClassDeclaration | undefined;
-    ts.forEachChild(sourceFile, (node) => {
-        if (ts.isClassDeclaration(node) && node.name && node.name.text === className) {
-            myClassNode = node;
-        }
-    });
-
+    const program = createTestProgram(sourceFiles);
     const typeChecker = program.getTypeChecker();
-    const type = typeChecker.getTypeAtLocation(myClassNode!);
+    const sourceFile = program.getSourceFile(sourceFileName)!;
 
-    const ctx: PluginContext = {
+    return {
         program,
         typeChecker,
         ts,
         sourceFile,
         logger: createDumbLogger(),
     };
-    return { program, sourceFile, typeChecker, type, ctx };
 }
 
 function createDumbLogger(): PluginLogger {

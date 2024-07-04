@@ -1,9 +1,9 @@
-// eslint-disable-next-line no-restricted-imports
-import ts from 'typescript';
+import type ts from 'typescript';
 
 import { getCompletionType, getMinSyntaxNodeForCompletion } from '../../src/completion/utils';
 import { PluginContext } from '../../src/type';
-import { prepareSimpleTestData } from '../helper';
+import { typeToString } from '../../src/utils/common';
+import { prepareTestContext } from '../helper';
 
 describe('getCompletionType()', () => {
     const className = 'ComponentController';
@@ -11,7 +11,7 @@ describe('getCompletionType()', () => {
     let ctx: PluginContext;
 
     beforeAll(() => {
-        const sourceCode = `
+        ctx = prepareTestContext(`
             class ${className} {
                 a = 'abc';
                 b = {
@@ -21,10 +21,18 @@ describe('getCompletionType()', () => {
                     e: [1, 2, 3],
                 };
             }
-        `;
-        const data = prepareSimpleTestData(sourceCode, className);
-        type = data.type;
-        ctx = data.ctx;
+        `);
+        type = ctx.typeChecker.getTypeAtLocation(findTheNode()!);
+
+        function findTheNode() {
+            let theNode: ts.ClassDeclaration | undefined;
+            ctx.ts.forEachChild(ctx.sourceFile, (node) => {
+                if (ctx.ts.isClassDeclaration(node) && node.name && node.name.text === className) {
+                    theNode = node;
+                }
+            });
+            return theNode;
+        }
     });
 
     it.each([
@@ -38,16 +46,12 @@ describe('getCompletionType()', () => {
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
         const result = getCompletionType(ctx, type, node);
-        if (output === undefined) {
-            expect(result).toBeUndefined();
-        } else {
-            expect(ctx.typeChecker.typeToString(result!)).toBe(output);
-        }
+        expect(typeToString(ctx, result)).toBe(output);
     });
 });
 
 describe('getMinSyntaxNodeForCompletion()', () => {
-    const ctx = { ts };
+    const ctx = prepareTestContext('');
     it.each([
         // 字段访问
         ['ctrl.', 'ctrl.'],
@@ -84,7 +88,7 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         // 多语句
         ['ctrl.a = ctrl.b.c; ctrl.d.', 'ctrl.d.'],
     ])('input: %s => output: %s', (input: string, output: string) => {
-        const v = getMinSyntaxNodeForCompletion(ctx as PluginContext, input);
+        const v = getMinSyntaxNodeForCompletion(ctx, input);
         expect(v?.node.getText(v?.sourceFile)).toBe(output);
     });
 });

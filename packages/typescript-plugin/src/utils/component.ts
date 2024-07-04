@@ -1,5 +1,4 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
-// eslint-disable-next-line no-restricted-imports
 import type ts from 'typescript';
 
 import { ComponentCoreInfo, PluginContext } from '../type';
