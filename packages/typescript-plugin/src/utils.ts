@@ -199,12 +199,22 @@ export function buildCompletionFromBindings(ctx: PluginContext, bindingsMap: Map
     const result: NgCompletionResponseItem[] = [];
     for (const [k, v] of bindingsMap) {
         const typeInfo = getBindType(v);
-        result.push({
-            kind: typeInfo.type === 'function' ? 'method' : 'property',
+        const item: NgCompletionResponseItem = {
+            kind: 'property',
             name: k,
-            typeInfo: typeInfo.typeString,
+            typeString: typeInfo.typeString,
             document: `bindings config: ${v}`,
-        });
+        };
+        if (typeInfo.type !== 'function') {
+            result.push(item);
+        } else {
+            result.push({
+                ...item,
+                kind: 'function',
+                paramNames: [],
+                returnType: 'unknown',
+            });
+        }
     }
     return result;
 
@@ -257,7 +267,7 @@ export function buildCompletionViaSymbolMembers(ctx: PluginContext, type: ts.Typ
 
     const result = Array.from(members.values())
         .map((x) => buildCompletionResponseItem(ctx, x))
-        .filter((x) => !!x);
+        .filter((x) => !!x) as NgCompletionResponseItem[];
     return result;
 }
 
@@ -266,7 +276,7 @@ export function buildCompletionViaType(ctx: PluginContext, type: ts.Type): NgCom
     const result = type
         .getApparentProperties()
         .map((x) => buildCompletionResponseItem(ctx, x))
-        .filter((x) => !!x);
+        .filter((x) => !!x) as NgCompletionResponseItem[];
     return result;
 }
 
@@ -292,12 +302,21 @@ export function buildCompletionResponseItem(ctx: PluginContext, memberSymbol: ts
 
     ctx.logger.info(buildLogMsg('buildCompletionResponseItem: 4'));
     const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(memberSymbol, memberSymbol.valueDeclaration);
-    if (memberSymbol.flags & (ctx.ts.SymbolFlags.Method | ctx.ts.SymbolFlags.Property)) {
-        return {
-            kind: memberSymbol.flags & ctx.ts.SymbolFlags.Method ? 'method' : 'property',
+    if (memberSymbol.flags & (ctx.ts.SymbolFlags.Method | ctx.ts.SymbolFlags.Function | ctx.ts.SymbolFlags.Property)) {
+        const item: NgCompletionResponseItem = {
+            kind: 'property',
             name: memberName,
-            typeInfo: ctx.typeChecker.typeToString(memberType),
+            typeString: ctx.typeChecker.typeToString(memberType),
             document: getSymbolDocument(ctx, memberSymbol),
+        };
+        if (memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
+            return item;
+        }
+        return {
+            ...item,
+            kind: 'function',
+            paramNames: [], // TODO
+            returnType: 'unknown', // TODO
         };
     }
 }

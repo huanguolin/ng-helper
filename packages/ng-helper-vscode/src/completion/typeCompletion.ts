@@ -46,8 +46,8 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
             const items = res.map((x) => {
-                const item = new CompletionItem(x.name, x.kind === 'method' ? CompletionItemKind.Method : CompletionItemKind.Field);
-                item.detail = `(${x.kind}) ${x.name}: ${x.typeInfo}`;
+                const item = new CompletionItem(x.name, x.kind === 'property' ? CompletionItemKind.Field : CompletionItemKind.Method);
+                item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
                 item.documentation = x.document;
                 return item;
             });
