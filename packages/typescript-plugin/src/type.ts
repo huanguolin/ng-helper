@@ -13,3 +13,9 @@ export type SyntaxNodeInfo = {
     sourceFile: ts.SourceFile;
     node: ts.Node;
 };
+
+export type ComponentCoreInfo = {
+    controllerAs: string;
+    controllerType?: ts.Type;
+    bindings: Map<string, string>;
+};

@@ -3,7 +3,7 @@ import express from 'express';
 
 import { getComponentCompletions, getComponentControllerAs } from './completion';
 import { PluginContext } from './type';
-import { buildLogMsg } from './utils';
+import { buildLogMsg } from './utils/log';
 
 export function initHttpServer(getContext: (fileName: string) => PluginContext | undefined) {
     const app = express();

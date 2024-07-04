@@ -5,7 +5,7 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { initHttpServer } from './httpServer';
 import { PluginContext } from './type';
-import { buildLogMsg } from './utils';
+import { buildLogMsg } from './utils/log';
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     let server: http.Server | undefined;

@@ -16,7 +16,9 @@
     "tsc:plugin": "cd packages/typescript-plugin && npm run tsc",
     "tsc:shared": "cd packages/shared && npm run tsc",
     "lint": "eslint . --ext .ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm-run-all -p test:*",
+    "test:plugin": "cd packages/typescript-plugin && npm t",
+    "test:shared": "cd packages/shared && npm t"
   },
   "devDependencies": {
     "@types/node": "18.x",
