@@ -1,6 +1,7 @@
 import assert from 'assert';
 
 import { NgCompletionResponse, NgCompletionResponseItem } from '@ng-helper/shared/lib/plugin';
+// eslint-disable-next-line no-restricted-imports
 import type ts from 'typescript';
 
 import { PluginContext, SyntaxNodeInfo } from './type';

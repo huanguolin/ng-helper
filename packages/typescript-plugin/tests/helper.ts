@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import ts from 'typescript';
 
 import { PluginContext } from '../src/type';

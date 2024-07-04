@@ -73,6 +73,17 @@
                     "order": "asc"
                 }
             }
+        ],
+        "no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "typescript",
+                        "message": "Don't import anything from typescript (it will cause compatibility problems, see https://github.com/microsoft/TypeScript/wiki/Writing-a-Language-Service-Plugin#setup-and-initialization) except type."
+                    }
+                ]
+            }
         ]
     },
     "ignorePatterns": [

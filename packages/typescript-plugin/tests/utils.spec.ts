@@ -1,4 +1,5 @@
-import * as ts from 'typescript';
+// eslint-disable-next-line no-restricted-imports
+import ts from 'typescript';
 
 import { PluginContext } from '../src/type';
 import { getCompletionType, getMinSyntaxNodeForCompletion, getPropertyTypeViaSymbolMember } from '../src/utils';
