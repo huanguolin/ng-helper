@@ -1,3 +1,5 @@
+import path from 'path';
+
 // eslint-disable-next-line no-restricted-syntax
 import ts from 'typescript';
 
@@ -26,7 +28,7 @@ export function createTestProgram(sourceFiles: Record<string, string>, options?:
         const sourceText = sourceFiles[fileName];
         return sourceText ?? readFile(fileName);
     };
-    host.getDefaultLibLocation = () => './node_modules/typescript/lib/';
+    host.getDefaultLibLocation = () => path.relative(__dirname, '../node_modules/typescript/lib/');
 
     return ts.createProgram(Object.keys(sourceFiles), compilerOptions, host);
 }
