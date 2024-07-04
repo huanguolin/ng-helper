@@ -4,6 +4,7 @@
   "license": "MIT",
   "main": "lib",
   "scripts": {
+    "tsc": "tsc --noEmit",
     "lint": "eslint . --ext ts",
     "test": "jest",
     "test:watch": "jest --watch"

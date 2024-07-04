@@ -11,6 +11,10 @@
     "packages/*"
   ],
   "scripts": {
+    "tsc": "npm-run-all -p tsc:*",
+    "tsc:extension": "cd packages/ng-helper-vscode && npm run tsc",
+    "tsc:plugin": "cd packages/typescript-plugin && npm run tsc",
+    "tsc:shared": "cd packages/shared && npm run tsc",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

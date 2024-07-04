@@ -39,12 +39,12 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "compile": "npm run tsc && npm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "check-types": "tsc --noEmit",
+    "package": "npm run tsc && npm run lint && node esbuild.js --production",
+    "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
