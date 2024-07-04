@@ -141,3 +141,7 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
         };
     }
 }
+
+export function typeToString(ctx: PluginContext, type?: ts.Type): string | undefined {
+    return type ? ctx.typeChecker.typeToString(type) : undefined;
+}

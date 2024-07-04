@@ -5,7 +5,7 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { initHttpServer } from './httpServer';
 import { PluginContext } from './type';
-import { buildLogMsg } from './utils/log';
+import { buildLogger } from './utils/log';
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     let server: http.Server | undefined;
@@ -13,15 +13,18 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
 
     return {
         create(info: ts.server.PluginCreateInfo) {
-            const logger = info.project.projectService.logger;
-            logger.info(buildLogMsg('init'));
+            const logger = buildLogger(modules.typescript, info);
+            const initLogger = logger.prefix('[init]');
+
+            initLogger.startGroup();
+            initLogger.info('start');
 
             const app = initHttpServer(getContext);
 
             start = (port) => {
                 server?.close();
                 server = app.listen(port, () => {
-                    logger.info(buildLogMsg('listening on port', port));
+                    initLogger.info('listening on port', port);
                 });
             };
 
@@ -31,12 +34,16 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
                 start(config.port);
             }
 
+            initLogger.info('end');
+            initLogger.endGroup();
+
             return info.languageService;
 
             function getContext(fileName: string): PluginContext | undefined {
                 const program = info.project['program'] as ts.Program | undefined;
 
                 if (!program) {
+                    logger.info('getContext()', 'get program failed');
                     return undefined;
                 }
 
@@ -44,6 +51,7 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
                 const sourceFile = program.getSourceFile(fileName);
 
                 if (!sourceFile) {
+                    logger.info('getContext()', 'get source file failed');
                     return undefined;
                 }
 

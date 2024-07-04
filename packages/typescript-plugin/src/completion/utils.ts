@@ -1,11 +1,8 @@
-import assert from 'assert';
-
 // eslint-disable-next-line no-restricted-imports
 import type ts from 'typescript';
 
 import { PluginContext, SyntaxNodeInfo } from '../type';
-import { getPropertyType, createTmpSourceFile } from '../utils/common';
-import { buildLogMsg } from '../utils/log';
+import { getPropertyType, createTmpSourceFile, typeToString } from '../utils/common';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -20,16 +17,15 @@ import { buildLogMsg } from '../utils/log';
  * @returns 目标类型
  */
 export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
-    assert(ctx.ts.isPropertyAccessExpression(minSyntaxNode.node), 'minSyntaxNode.node must be PropertyAccessExpression!');
-
+    const logger = ctx.logger.prefix('getCompletionType()');
     return visit(minSyntaxNode.node);
 
     function visit(node: ts.Node): ts.Type | undefined {
         if (ctx.ts.isPropertyAccessExpression(node)) {
-            ctx.logger.info(buildLogMsg('prop access: node text:', node.getText(minSyntaxNode.sourceFile)));
+            logger.info('prop node text:', node.getText(minSyntaxNode.sourceFile));
             const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
+            logger.info('prop type:', typeToString(ctx, nodeType), 'node.name:', node.name.text);
             if (nodeType) {
-                ctx.logger.info(buildLogMsg('prop access: node type:', ctx.typeChecker.typeToString(nodeType), 'node.name.text:', node.name.text));
                 return node.name.text ? getPropertyType(ctx, nodeType, node.name.text) : nodeType;
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
@@ -65,7 +61,7 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
                 return fnTypes[0].getReturnType();
             }
         } else {
-            ctx.logger.info(buildLogMsg('getCompletionType: can be here!'));
+            logger.info('can be here!');
         }
     }
 }

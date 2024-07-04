@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import ts from 'typescript';
 
-import { PluginContext } from '../src/type';
+import { PluginContext, PluginLogger } from '../src/type';
 
 export function createTsTestProgram(sourceFiles: Record<string, string>, options?: ts.CompilerOptions) {
     const compilerOptions = Object.assign({ target: ts.ScriptTarget.ES5 }, options);
@@ -54,18 +54,14 @@ export function prepareSimpleTestData(sourceCode: string, className: string) {
     return { program, sourceFile, typeChecker, type, ctx };
 }
 
-function createDumbLogger(): ts.server.Logger {
+function createDumbLogger(): PluginLogger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const noop = (() => {}) as (...args: any[]) => any;
-    return {
-        close: noop,
-        hasLevel: noop,
-        loggingEnabled: () => true,
-        perftrc: noop,
-        info: noop,
+    const coreLogger = {
         startGroup: noop,
         endGroup: noop,
-        msg: noop,
-        getLogFileName: noop,
+        info: noop,
+        error: noop,
     };
+    return { ...coreLogger, prefix: () => coreLogger };
 }
