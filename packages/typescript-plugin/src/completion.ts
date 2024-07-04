@@ -17,7 +17,7 @@ export function getComponentControllerAs(ctx: PluginContext): string | undefined
         const info = getComponentCoreInfo(ctx, componentLiteralNode);
         return info.controllerAs;
     } catch (error) {
-        ctx.logger.info(buildLogMsg('getComponentControllerAs error:', (error as any)?.message));
+        ctx.logger.info(buildLogMsg('getComponentControllerAs error:', (error as Error).message, (error as Error).stack));
     }
 }
 
@@ -63,7 +63,7 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
             return buildCompletionResponse(ctx, targetType);
         }
     } catch (error) {
-        ctx.logger.info(buildLogMsg('getComponentCompletions error:', (error as any)?.message));
+        ctx.logger.info(buildLogMsg('getComponentCompletions error:', (error as Error).message, (error as Error).stack));
     }
 }
 
