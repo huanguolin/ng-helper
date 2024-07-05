@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 
 import { PluginContext } from '../../src/type';
-import { getPropertyType, typeToString } from '../../src/utils/common';
+import { getPropertyType, isUnionType, typeToString } from '../../src/utils/common';
 import { prepareTestContext } from '../helper';
 
 describe('getPropertyType()', () => {
@@ -71,7 +71,7 @@ describe('getPropertyType()', () => {
                 const x = A;
             `;
             ctx = prepareTestContext(sourceCode);
-            const nodeX = (ctx.sourceFile?.statements[1] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeX = findVariableDeclaration(ctx, 'x');
             type = ctx.typeChecker.getTypeAtLocation(nodeX);
         });
 
@@ -103,7 +103,7 @@ describe('getPropertyType()', () => {
                 };
             `;
             ctx = prepareTestContext(sourceCode);
-            const nodeX = (ctx.sourceFile?.statements[0] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeX = findVariableDeclaration(ctx, 'x');
             type = ctx.typeChecker.getTypeAtLocation(nodeX);
         });
 
@@ -156,7 +156,7 @@ describe('getPropertyType()', () => {
             ['c', 'string[]'],
             ['foo', '(bar: string) => void'],
         ])('[variable node] input: %s => output: %s', (propertyName, expectedTypeString) => {
-            const nodeX = (ctx.sourceFile?.statements[1] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeX = findVariableDeclaration(ctx, 'x');
             const type = ctx.typeChecker.getTypeAtLocation(nodeX);
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
@@ -191,7 +191,7 @@ describe('getPropertyType()', () => {
             ['d', 'boolean'],
             ['foo', '(bar: string) => void'],
         ])('[variable case 1] input: %s => output: %s', (propertyName, expectedTypeString) => {
-            const nodeX = (ctx.sourceFile?.statements[2] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeX = findVariableDeclaration(ctx, 'x');
             const type = ctx.typeChecker.getTypeAtLocation(nodeX);
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
@@ -204,7 +204,7 @@ describe('getPropertyType()', () => {
             ['c', 'string[]'],
             ['foo', '(bar: string) => void'],
         ])('[variable case 2] input: %s => output: %s', (propertyName, expectedTypeString) => {
-            const nodeY = (ctx.sourceFile?.statements[4] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeY = findVariableDeclaration(ctx, 'y');
             const type = ctx.typeChecker.getTypeAtLocation(nodeY);
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
@@ -229,11 +229,9 @@ describe('getPropertyType()', () => {
         let ctx: PluginContext;
 
         beforeAll(() => {
-            const sourceCode = `
-                let x: string;
-            `;
+            const sourceCode = `let x: string;`;
             ctx = prepareTestContext(sourceCode);
-            const nodeX = (ctx.sourceFile?.statements[0] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const nodeX = findVariableDeclaration(ctx, 'x');
             type = ctx.typeChecker.getTypeAtLocation(nodeX);
         });
 
@@ -247,3 +245,44 @@ describe('getPropertyType()', () => {
         });
     });
 });
+
+describe('isUnionType()', () => {
+    let ctx: PluginContext;
+
+    beforeAll(() => {
+        const sourceCode = `
+            let x: string | number;
+            let y: boolean;
+            let z: string;
+            let a: number;
+        `;
+        ctx = prepareTestContext(sourceCode);
+    });
+
+    it.each([
+        ['x', true],
+        ['y', true],
+        ['z', false],
+        ['a', false],
+    ])('input: %s => output: %s', (varName, expected) => {
+        const node = findVariableDeclaration(ctx, varName);
+        const type = ctx.typeChecker.getTypeAtLocation(node);
+        const result = isUnionType(ctx, type);
+        expect(result).toBe(expected);
+    });
+});
+
+function findVariableDeclaration(ctx: PluginContext, varName: string): ts.Identifier {
+    let node: ts.Identifier | undefined = undefined;
+
+    for (const statement of ctx.sourceFile.statements) {
+        if (ctx.ts.isVariableStatement(statement)) {
+            const n = statement.declarationList.declarations[0].name;
+            if (ctx.ts.isIdentifier(n) && n.text === varName) {
+                node = n;
+            }
+        }
+    }
+
+    return node!;
+}
