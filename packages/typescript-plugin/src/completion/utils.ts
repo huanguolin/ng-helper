@@ -20,12 +20,30 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
     return visit(minSyntaxNode.node);
 
     function visit(node: ts.Node): ts.Type | undefined {
+        logger.info('node text:', node.getText(minSyntaxNode.sourceFile));
+
         if (ctx.ts.isPropertyAccessExpression(node)) {
-            logger.info('prop node text:', node.getText(minSyntaxNode.sourceFile));
             const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
             logger.info('prop type:', typeToString(ctx, nodeType), 'node.name:', node.name.text);
             if (nodeType) {
                 return node.name.text ? getPropertyType(ctx, nodeType, node.name.text) : nodeType;
+            }
+        } else if (ctx.ts.isCallExpression(node)) {
+            const nodeType = visit(node.expression);
+            if (!nodeType) {
+                return;
+            }
+
+            const signatures = nodeType.getCallSignatures();
+            logger.info('signatures:', ...signatures);
+            if (signatures.length === 1) {
+                return signatures[0].getReturnType();
+            } else if (signatures.length > 1) {
+                const matchedSignatures = signatures.filter((x) => x.parameters.length === node.arguments.length);
+                if (matchedSignatures.length > 0) {
+                    // TODO 按照入参类型找到合适的函数签名
+                    return matchedSignatures[0].getReturnType();
+                }
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
             const nodeType = visit(node.expression);
@@ -49,18 +67,8 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             } else if (ctx.typeChecker.isArrayLikeType(nodeType)) {
                 // TODO
             }
-        } else if (ctx.ts.isCallExpression(node)) {
-            const nodeType = visit(node.expression);
-            if (!nodeType) {
-                return;
-            }
-
-            const fnTypes = nodeType.getCallSignatures();
-            if (fnTypes.length > 0) {
-                return fnTypes[0].getReturnType();
-            }
         } else {
-            logger.info('can be here!');
+            logger.info('can not be here!');
         }
     }
 }
