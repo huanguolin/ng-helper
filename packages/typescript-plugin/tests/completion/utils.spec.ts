@@ -20,6 +20,8 @@ describe('getCompletionType()', () => {
                     },
                     e: [1, 2, 3],
                 };
+                x = () => 'xxx';
+                y(n: number) { return [n]; }
             }
         `);
         type = ctx.typeChecker.getTypeAtLocation(findTheNode()!);
@@ -41,8 +43,9 @@ describe('getCompletionType()', () => {
         ['ctrl.b.c.', '{ d: number; }'],
         ['ctrl.b.c.d.', 'number'],
         ['ctrl.b.e.', 'number[]'],
+        ['ctrl.x().', 'string'],
+        ['ctrl.y(ctrl.b.c.d).', 'number[]'],
         // TODO test get array element
-        // TODO test function call
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
         const result = getCompletionType(ctx, type, node);

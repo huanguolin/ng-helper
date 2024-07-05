@@ -35,7 +35,6 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             }
 
             const signatures = nodeType.getCallSignatures();
-            logger.info('signatures:', ...signatures);
             if (signatures.length === 1) {
                 return signatures[0].getReturnType();
             } else if (signatures.length > 1) {
