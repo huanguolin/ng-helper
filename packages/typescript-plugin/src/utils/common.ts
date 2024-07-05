@@ -13,6 +13,23 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
     } else {
         return getPropertyTypeViaType(ctx, type, propertyName);
     }
+    // TODO 联合类型处理
+    // else if (type.isUnion()) {
+    //     const list = type.types.map((x) => getPropertyType(ctx, x, propertyName)).filter((x) => !!x) as ts.Type[];
+    //     if (list.length === type.types.length) {
+    //         return createUnionType(ctx, list);
+    //     }
+    // }
+}
+
+export function createUnionType(ctx: PluginContext, types: ts.Type[]): ts.Type {
+    // 创建一个临时的联合类型节点
+    const unionTypeNode = ctx.ts.factory.createUnionTypeNode(
+        types.map((type) => ctx.typeChecker.typeToTypeNode(type, undefined, ctx.ts.NodeBuilderFlags.None) as ts.TypeNode),
+    );
+
+    // 使用 typeChecker 获取这个节点的类型
+    return ctx.typeChecker.getTypeFromTypeNode(unionTypeNode);
 }
 
 function getPropertyTypeViaSymbol(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
