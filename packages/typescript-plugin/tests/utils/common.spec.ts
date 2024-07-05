@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 
 import { PluginContext } from '../../src/type';
-import { getPropertyType, isUnionType, typeToString } from '../../src/utils/common';
+import { getPropertyType, typeToString } from '../../src/utils/common';
 import { prepareTestContext } from '../helper';
 
 describe('getPropertyType()', () => {
@@ -243,32 +243,6 @@ describe('getPropertyType()', () => {
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
         });
-    });
-});
-
-describe('isUnionType()', () => {
-    let ctx: PluginContext;
-
-    beforeAll(() => {
-        const sourceCode = `
-            let x: string | number;
-            let y: boolean;
-            let z: string;
-            let a: number;
-        `;
-        ctx = prepareTestContext(sourceCode);
-    });
-
-    it.each([
-        ['x', true],
-        ['y', true],
-        ['z', false],
-        ['a', false],
-    ])('input: %s => output: %s', (varName, expected) => {
-        const node = findVariableDeclaration(ctx, varName);
-        const type = ctx.typeChecker.getTypeAtLocation(node);
-        const result = isUnionType(ctx, type);
-        expect(result).toBe(expected);
     });
 });
 

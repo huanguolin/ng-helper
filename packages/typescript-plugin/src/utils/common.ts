@@ -143,15 +143,3 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
 export function typeToString(ctx: PluginContext, type?: ts.Type): string | undefined {
     return type ? ctx.typeChecker.typeToString(type) : undefined;
 }
-
-/**
- * Checks if a given type is a union type.
- * Note: 'boolean' type is also a Union type.
- *
- * @param ctx - The plugin context.
- * @param type - The type to check.
- * @returns `true` if the type is a union type, `false` otherwise.
- */
-export function isUnionType(ctx: PluginContext, type: ts.Type): boolean {
-    return !!(type.flags & ctx.ts.TypeFlags.Union);
-}
