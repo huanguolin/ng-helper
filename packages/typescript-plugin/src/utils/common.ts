@@ -57,7 +57,6 @@ function getPropertyTypeViaType(ctx: PluginContext, type: ts.Type, propertyName:
 
 /**
  * 判断类型是否是 typeof X。
- * TODO: 目前判断的不太严谨。
  */
 export function isTypeOfType(ctx: PluginContext, type: ts.Type): boolean {
     if (!type.symbol) {
