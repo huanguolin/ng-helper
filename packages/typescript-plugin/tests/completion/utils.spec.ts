@@ -12,6 +12,10 @@ describe('getCompletionType()', () => {
 
     beforeAll(() => {
         ctx = prepareTestContext(`
+            interface MyArrayLike<T> {
+                readonly length: number;
+                [index: number]: T;
+            }
             class ${className} {
                 a = 'abc';
                 b = {
@@ -22,6 +26,12 @@ describe('getCompletionType()', () => {
                 };
                 x = () => 'xxx';
                 y(n: number) { return [n]; }
+                t!: [number, string];
+                arrLike: MyArrayLike<string> = {
+                    0: '0',
+                    1: '2',
+                    length: 2,
+                };
             }
         `);
         type = ctx.typeChecker.getTypeAtLocation(findTheNode()!);
@@ -38,16 +48,27 @@ describe('getCompletionType()', () => {
     });
 
     it.each([
+        // prop access
         ['ctrl.', className],
         ['ctrl.a.', 'string'],
         ['ctrl.b.c.', '{ d: number; }'],
         ['ctrl.b.c.d.', 'number'],
         ['ctrl.b.e.', 'number[]'],
+        // function call
         ['ctrl.x().', 'string'],
         ['ctrl.y(ctrl.b.c.d).', 'number[]'],
+        // array
         ['ctrl.b.e[0].', 'number'],
         ['ctrl.b.e[ctrl.b.c.d].', 'number'],
-        // TODO test tuple/element access
+        // tuple
+        ['ctrl.t[0].', 'number'],
+        ['ctrl.t[1].', 'string'],
+        // TODO fix next line
+        // ['ctrl.t[ctrl.b.c.d].', 'number | string'],
+        ['ctrl.arrLike.', 'MyArrayLike<string>'],
+        ['ctrl.arrLike.length', 'number'],
+        // TODO fix next line
+        // ['ctrl.arrLike[0].', 'string'],
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
         const result = getCompletionType(ctx, type, node);

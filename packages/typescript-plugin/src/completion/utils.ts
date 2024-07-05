@@ -35,6 +35,7 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             }
 
             const signatures = nodeType.getCallSignatures();
+            logger.info('signatures:', ...signatures.map((s) => ctx.typeChecker.signatureToString(s)));
             if (signatures.length === 1) {
                 return signatures[0].getReturnType();
             } else if (signatures.length > 1) {
@@ -52,22 +53,31 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
 
             if (ctx.typeChecker.isTupleType(nodeType)) {
                 const tupleElementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
-                const v = node.argumentExpression;
-                if (ctx.ts.isLiteralExpression(v) && v.kind === ctx.ts.SyntaxKind.NumericLiteral) {
-                    const index = Number.parseInt(v.text);
+                const arg = node.argumentExpression;
+                if (ctx.ts.isLiteralExpression(arg) && arg.kind === ctx.ts.SyntaxKind.NumericLiteral) {
+                    const index = Number.parseInt(arg.text);
                     return tupleElementTypes[index];
                 } else {
                     // TODO
-                    // return ctx.typeChecker.getUnionType(tupleElementTypes);
+                    logger.info('======<TODO createUnionType(tupleElementTypes)>=====');
                 }
             } else if (ctx.typeChecker.isArrayType(nodeType)) {
                 const typeArguments = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
                 return typeArguments.length > 0 ? typeArguments[0] : undefined;
-            } else if (ctx.typeChecker.isArrayLikeType(nodeType)) {
-                // TODO
+            } else {
+                const arg = node.argumentExpression;
+                if (
+                    ctx.ts.isLiteralExpression(arg) &&
+                    (arg.kind === ctx.ts.SyntaxKind.StringLiteral || arg.kind === ctx.ts.SyntaxKind.NumericLiteral)
+                ) {
+                    return getPropertyType(ctx, nodeType, arg.text);
+                } else {
+                    // TODO how to do here?
+                    logger.info('======<TODO how to do here?>=====');
+                }
             }
         } else {
-            logger.info('can not be here!');
+            logger.info('======<can not be here>=====');
         }
     }
 }
