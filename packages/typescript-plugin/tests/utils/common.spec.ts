@@ -121,7 +121,6 @@ describe('getPropertyType()', () => {
     });
 
     describe('interface', () => {
-        let type: ts.Type;
         let ctx: PluginContext;
 
         beforeAll(() => {
@@ -135,8 +134,6 @@ describe('getPropertyType()', () => {
                 let x: A;
             `;
             ctx = prepareTestContext(sourceCode);
-            const nodeX = (ctx.sourceFile?.statements[1] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
-            type = ctx.typeChecker.getTypeAtLocation(nodeX);
         });
 
         it.each([
@@ -145,14 +142,28 @@ describe('getPropertyType()', () => {
             ['b', '{ m: string; }'],
             ['c', 'string[]'],
             ['foo', '(bar: string) => void'],
-        ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
+        ])('[interface node] input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const nodeInterfaceA = (ctx.sourceFile?.statements[0] as ts.InterfaceDeclaration).name;
+            const type = ctx.typeChecker.getTypeAtLocation(nodeInterfaceA);
+            const result = getPropertyType(ctx, type, propertyName);
+            expect(typeToString(ctx, result)).toBe(expectedTypeString);
+        });
+
+        it.each([
+            ['nonExistentProperty', undefined],
+            ['a', 'number'],
+            ['b', '{ m: string; }'],
+            ['c', 'string[]'],
+            ['foo', '(bar: string) => void'],
+        ])('[variable node] input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const nodeX = (ctx.sourceFile?.statements[1] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const type = ctx.typeChecker.getTypeAtLocation(nodeX);
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
         });
     });
 
     describe('intersection interface', () => {
-        let type: ts.Type;
         let ctx: PluginContext;
 
         beforeAll(() => {
@@ -165,11 +176,25 @@ describe('getPropertyType()', () => {
                     c: string[];
                     foo: (bar: string) => void;
                 }
-                let x: A1 & A2;
+                let x: A1 & A2 & { d: boolean; };
+                type B = A1 & A2;
+                let y: B;
             `;
             ctx = prepareTestContext(sourceCode);
+        });
+
+        it.each([
+            ['nonExistentProperty', undefined],
+            ['a', 'number'],
+            ['b', '{ m: string; }'],
+            ['c', 'string[]'],
+            ['d', 'boolean'],
+            ['foo', '(bar: string) => void'],
+        ])('[variable case 1] input: %s => output: %s', (propertyName, expectedTypeString) => {
             const nodeX = (ctx.sourceFile?.statements[2] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
-            type = ctx.typeChecker.getTypeAtLocation(nodeX);
+            const type = ctx.typeChecker.getTypeAtLocation(nodeX);
+            const result = getPropertyType(ctx, type, propertyName);
+            expect(typeToString(ctx, result)).toBe(expectedTypeString);
         });
 
         it.each([
@@ -178,7 +203,22 @@ describe('getPropertyType()', () => {
             ['b', '{ m: string; }'],
             ['c', 'string[]'],
             ['foo', '(bar: string) => void'],
-        ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
+        ])('[variable case 2] input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const nodeY = (ctx.sourceFile?.statements[4] as ts.VariableStatement).declarationList.declarations[0].name as ts.Identifier;
+            const type = ctx.typeChecker.getTypeAtLocation(nodeY);
+            const result = getPropertyType(ctx, type, propertyName);
+            expect(typeToString(ctx, result)).toBe(expectedTypeString);
+        });
+
+        it.each([
+            ['nonExistentProperty', undefined],
+            ['a', 'number'],
+            ['b', '{ m: string; }'],
+            ['c', 'string[]'],
+            ['foo', '(bar: string) => void'],
+        ])('[type alias] input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const nodeB = (ctx.sourceFile?.statements[3] as ts.TypeAliasDeclaration).name;
+            const type = ctx.typeChecker.getTypeAtLocation(nodeB);
             const result = getPropertyType(ctx, type, propertyName);
             expect(typeToString(ctx, result)).toBe(expectedTypeString);
         });
