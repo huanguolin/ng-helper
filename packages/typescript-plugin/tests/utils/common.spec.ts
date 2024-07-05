@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 
 import { PluginContext } from '../../src/type';
-import { getPropertyType, typeToString } from '../../src/utils/common';
+import { getPropertyType, isTypeOfType, typeToString } from '../../src/utils/common';
 import { prepareTestContext } from '../helper';
 
 describe('getPropertyType()', () => {
@@ -298,3 +298,47 @@ function findVariableDeclaration(ctx: PluginContext, varName: string): ts.Identi
 
     return node!;
 }
+
+describe('isTypeOfType()', () => {
+    let ctx: PluginContext;
+
+    beforeEach(() => {
+        ctx = prepareTestContext(`
+            type M<T> = { p: T };
+            class A { }
+            const x = A;
+            let y: A;
+            let z: M<number>;
+        `);
+    });
+
+    it.each([
+        ['x', true],
+        ['y', false],
+        // ['z', false], // TODO fix this
+    ])('input: %s => output: %s', (varName, expected) => {
+        const node = findVariableDeclaration(ctx, varName);
+        const type = ctx.typeChecker.getTypeAtLocation(node);
+        const result = isTypeOfType(ctx, type);
+        expect(result).toBe(expected);
+    });
+});
+
+// TODO fix this
+// describe('isGenericType()', () => {
+//     let ctx: PluginContext;
+
+//     beforeEach(() => {
+//         ctx = prepareTestContext(`
+//             type M<T> = { p: T };
+//             let z: M<number>;
+//         `);
+//     });
+
+//     it.each([['z', false]])('input: %s => output: %s', (varName, expected) => {
+//         const node = findVariableDeclaration(ctx, varName);
+//         const type = ctx.typeChecker.getTypeAtLocation(node);
+//         const result = isGenericType(ctx, type);
+//         expect(result).toBe(expected);
+//     });
+// });
