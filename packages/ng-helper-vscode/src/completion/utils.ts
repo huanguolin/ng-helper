@@ -5,6 +5,6 @@ export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
-export function isInStartTagAndCanCompletionNgX(textBeforeCursor: string): boolean {
+export function isInStartTagAndCanCompletionNgDirective(textBeforeCursor: string): boolean {
     return isInStartTagAnd(textBeforeCursor, canCompletionNgDirective);
 }

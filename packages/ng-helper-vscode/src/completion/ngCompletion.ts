@@ -4,7 +4,7 @@ import { languages, TextDocument, Position, Range, CompletionItem, CompletionLis
 import { getComponentControllerAs } from '../service/api';
 import { ensureTsServerRunning } from '../utils';
 
-import { isComponentHtml, isInStartTagAndCanCompletionNgX } from './utils';
+import { isComponentHtml, isInStartTagAndCanCompletionNgDirective } from './utils';
 
 const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
@@ -18,12 +18,8 @@ const defaultNgConfigStr: NgDirectiveConfig = {
 export function ngCompletion(port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position) {
-            if (!isComponentHtml(document)) {
-                return;
-            }
-
             const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-            if (isInStartTagAndCanCompletionNgX(textBeforeCursor)) {
+            if (isInStartTagAndCanCompletionNgDirective(textBeforeCursor)) {
                 return getNgDirectiveConfigList()
                     .map(([name, configs]) =>
                         configs.length > 0
@@ -31,6 +27,10 @@ export function ngCompletion(port: number) {
                             : [configToCompletionItem(name, defaultNgConfigExpr)],
                     )
                     .flat();
+            }
+
+            if (!isComponentHtml(document)) {
+                return;
             }
 
             if (isInTemplate(textBeforeCursor)) {
