@@ -167,11 +167,20 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
         if (memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
             return item;
         }
+
+        let paramNames: string[] = [];
+        let returnType = 'unknown';
+        const signatures = memberType.getCallSignatures();
+        if (signatures.length > 0) {
+            const signature = signatures[0];
+            paramNames = signature.parameters.map((x) => x.getName());
+            returnType = ctx.typeChecker.typeToString(signature.getReturnType());
+        }
         return {
             ...item,
-            kind: 'function',
-            paramNames: [], // TODO
-            returnType: 'unknown', // TODO
+            kind: 'method',
+            paramNames,
+            returnType,
         };
     }
 }

@@ -7,6 +7,7 @@ import {
     Position,
     ProviderResult,
     Range,
+    SnippetString,
     TextDocument,
     languages,
 } from 'vscode';
@@ -46,7 +47,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
             const items = res.map((x) => {
-                const item = new CompletionItem(x.name, x.kind === 'property' ? CompletionItemKind.Field : CompletionItemKind.Method);
+                const isFunction = x.kind === 'method' || x.kind === 'function';
+                const item = new CompletionItem(x.name, isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
+                if (isFunction) {
+                    let snippet = `${x.name}(`;
+                    snippet += x.paramNames.map((x, i) => `\${${i + 1}:${x}}`).join(', ');
+                    snippet += ')${0}';
+                    item.insertText = new SnippetString(snippet);
+                }
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
                 item.documentation = x.document;
                 return item;

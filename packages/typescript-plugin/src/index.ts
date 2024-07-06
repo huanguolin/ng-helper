@@ -64,10 +64,6 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
                 };
             }
         },
-        // TODO
-        // onabort() {
-        //     server?.close();
-        // },
         onConfigurationChanged(config: Partial<NgPluginConfiguration>) {
             if (config.port && start) {
                 start(config.port);
