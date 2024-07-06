@@ -3,9 +3,11 @@ import * as http from 'http';
 import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript/lib/tsserverlibrary';
 
+import { getTsInjectionDiagnostics } from './diagnostic';
 import { initHttpServer } from './httpServer';
 import { PluginContext, PluginCoreLogger, PluginLogger } from './type';
 import { buildLogger } from './utils/log';
+import { isComponentTsFile, isControllerTsFile } from './utils/ng';
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     let server: http.Server | undefined;
@@ -27,10 +29,15 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
 
             ({ start, server } = initHttpServerForPlugin({ getContext, start, server, initLogger, info }));
 
+            // Set up decorator object
+            const proxy: ts.LanguageService = buildProxy(info);
+
+            overrideGetSemanticDiagnostics({ proxy, info, getContext });
+
             initLogger.info('end');
             initLogger.endGroup();
 
-            return info.languageService;
+            return proxy;
         },
         onConfigurationChanged(config: Partial<NgPluginConfiguration>) {
             if (config.port && start) {
@@ -41,6 +48,48 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
 }
 
 export = init;
+
+function overrideGetSemanticDiagnostics({
+    proxy,
+    info,
+    getContext,
+}: {
+    proxy: ts.LanguageService;
+    info: ts.server.PluginCreateInfo;
+    getContext: (fileName: string) => PluginContext | undefined;
+}) {
+    proxy.getSemanticDiagnostics = (fileName: string) => {
+        const prior = info.languageService.getSemanticDiagnostics(fileName);
+
+        if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName)) {
+            return prior;
+        }
+
+        const ctx = getContext(fileName);
+        if (!ctx) {
+            return prior;
+        }
+
+        const diagnostics = getTsInjectionDiagnostics(ctx);
+        if (diagnostics.length > 0) {
+            prior.push(...diagnostics);
+        }
+
+        return prior;
+    };
+}
+
+function buildProxy(info: ts.server.PluginCreateInfo) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const proxy: ts.LanguageService = Object.create(null);
+    for (const k of Object.keys(info.languageService) as Array<keyof ts.LanguageService>) {
+        const x = info.languageService[k]!;
+        // @ts-expect-error - JS runtime trickery which is tricky to type tersely
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        proxy[k] = (...args: Array<{}>) => x.apply(info.languageService, args);
+    }
+    return proxy;
+}
 
 function buildGetContextFunc({
     info,

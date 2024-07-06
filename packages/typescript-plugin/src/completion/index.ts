@@ -2,9 +2,9 @@ import { NgCompletionResponse } from '@ng-helper/shared/lib/plugin';
 
 import { PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getPublicMembersTypeInfoOfBindings } from '../utils/component';
-import { getComponentCoreInfo } from '../utils/component';
-import { getComponentDeclareLiteralNode } from '../utils/component';
+import { getPublicMembersTypeInfoOfBindings } from '../utils/ng';
+import { getComponentCoreInfo } from '../utils/ng';
+import { getComponentDeclareLiteralNode } from '../utils/ng';
 
 import { getMinSyntaxNodeForCompletion, getCompletionType } from './utils';
 

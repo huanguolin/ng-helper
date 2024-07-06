@@ -110,3 +110,11 @@ export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsM
         return result;
     }
 }
+
+export function isComponentTsFile(fileName: string): boolean {
+    return fileName.endsWith('.component.ts');
+}
+
+export function isControllerTsFile(fileName: string): boolean {
+    return fileName.endsWith('.controller.ts');
+}
