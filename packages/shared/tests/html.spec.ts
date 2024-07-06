@@ -6,6 +6,8 @@ import {
     getTemplateInnerText,
     isContainsNgFilter,
     getTemplateText,
+    getTagAndTheAttrNameWhenInAttrValue,
+    getAttrValueText,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -70,7 +72,7 @@ describe('canCompletionNgDirective()', () => {
     });
 });
 
-describe('canCompletionAttrValue()', () => {
+describe('isInDbQuote()', () => {
     it.each([
         ['"', true],
         ['""', false],
@@ -95,7 +97,37 @@ describe('canCompletionAttrValue()', () => {
     });
 });
 
-describe('canCompletionTemplate()', () => {
+describe('getAttrValueText()', () => {
+    it.each([
+        ['<div class="', ''],
+        ['<div class="btn', 'btn'],
+        ['<div class="btn ', 'btn '],
+        ['<common-btn class="btn"  title=" ', ' '],
+        ['<common-btn class="btn" ng-if="click(), n = n + 1', 'click(), n = n + 1'],
+    ])('input: %s => output: %s', (input: string, output: string) => {
+        const v = getAttrValueText(input);
+        expect(v).toBe(output);
+    });
+});
+
+describe('getTagAndTheAttrNameWhenInAttrValue()', () => {
+    it.each([
+        ['<div class="', 'div', 'class'],
+        ['<div class="btn', 'div', 'class'],
+        ['<div class="btn ', 'div', 'class'],
+        ['<div class="btn"  title=" ', 'div', 'title'],
+        ['<div class="btn" ng-if="click()', 'div', 'ng-if'],
+        ['<common-btn class="btn', 'common-btn', 'class'],
+        ['<common-btn class="btn" ng-if="click()', 'common-btn', 'ng-if'],
+        ['<common-btn ng-click="n = n + 1', 'common-btn', 'ng-click'],
+    ])('input: %s => output: %s', (input: string, tag: string, attr: string) => {
+        const v = getTagAndTheAttrNameWhenInAttrValue(input);
+        expect(v.tagName).toBe(tag);
+        expect(v.attrName).toBe(attr);
+    });
+});
+
+describe('isInTemplate()', () => {
     it.each([
         ['{{', true],
         ['{{}}', false],

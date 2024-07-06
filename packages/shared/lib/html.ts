@@ -1,8 +1,17 @@
+import assert from 'assert';
+
+interface TagAndCurrentAttrName {
+    tagName: string;
+    attrName: string;
+}
+
+const SPACE = '\u0020';
+
 export function isContainsNgFilter(prefix: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(prefix);
 }
 
-export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean) {
+export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean): boolean {
     const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
     const lastEndTagStart = textBeforeCursor.lastIndexOf('</');
     // |
@@ -69,6 +78,49 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
     const chArr = Array.from(tagTextBeforeCursor);
     const quoteCnt = chArr.filter((c) => c === '"').length;
     return quoteCnt % 2 !== 0;
+}
+/**
+ * 从标签文本中获取属性值中的字符串。
+ *
+ * @param tagTextBeforeCursor 光标之前的一个 tag 文本字符串。
+ * @returns 属性值字符串。
+ */
+export function getAttrValueText(tagTextBeforeCursor: string): string {
+    const index = tagTextBeforeCursor.lastIndexOf('"');
+    return tagTextBeforeCursor.slice(index + 1);
+}
+
+/**
+ * 获取 tag name 和光标前，且离光标最近的 attr name。
+ * @param tagTextBeforeCursor 光标前的字符串。
+ * @returns tag & attr name。
+ */
+export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string): TagAndCurrentAttrName {
+    // input example: '<div class="a b" ng-if="
+
+    assert(
+        isInStartTagAnd(tagTextBeforeCursor, isInDbQuote),
+        'getTagAndTheAttrNameWhenInAttrValue() input must be "tagTextBeforeCursor", but got: ' + tagTextBeforeCursor,
+    );
+
+    const result: TagAndCurrentAttrName = { tagName: '', attrName: '' };
+
+    const tagMatch = tagTextBeforeCursor.match(/^<([\w-]+)\s*/);
+    if (tagMatch) {
+        result.tagName = tagMatch[1];
+    }
+
+    // avoid <common-btn ng-click="n = n + 1
+    const lastQuoteIndex = tagTextBeforeCursor.lastIndexOf('"');
+    const lastAttr = tagTextBeforeCursor
+        .slice(0, lastQuoteIndex)
+        .split(SPACE)
+        .filter((s) => s.includes('='))
+        .pop();
+
+    result.attrName = lastAttr!.split('=')[0];
+
+    return result;
 }
 
 /**

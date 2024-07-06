@@ -1,4 +1,12 @@
-import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from '@ng-helper/shared/lib/html';
+import {
+    getAttrValueText,
+    getTagAndTheAttrNameWhenInAttrValue,
+    getTemplateInnerText,
+    isContainsNgFilter,
+    isInDbQuote,
+    isInStartTagAnd,
+    isInTemplate,
+} from '@ng-helper/shared/lib/html';
 import {
     CompletionItem,
     CompletionItemKind,
@@ -15,9 +23,9 @@ import {
 import { getComponentCompletion } from '../service/api';
 import { ensureTsServerRunning } from '../utils';
 
-import { isComponentHtml } from './utils';
+import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from './utils';
 
-export function typeCompletion(port: number) {
+export function componentType(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
 }
 
@@ -34,6 +42,22 @@ class TypeCompletionProvider implements CompletionItemProvider {
             const prefix = getTemplateInnerText(textBeforeCursor);
             if (prefix && !isContainsNgFilter(prefix)) {
                 return this.getCompletionItems(document, prefix);
+            }
+        }
+
+        let tagTextBeforeCursor = '';
+        if (
+            isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
+                tagTextBeforeCursor = innerTagTextBeforeCursor;
+                return isInDbQuote(innerTagTextBeforeCursor);
+            })
+        ) {
+            const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+            if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
+                const prefix = getAttrValueText(tagTextBeforeCursor);
+                if (prefix) {
+                    return this.getCompletionItems(document, prefix);
+                }
             }
         }
     }

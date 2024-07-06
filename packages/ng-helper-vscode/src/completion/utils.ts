@@ -8,3 +8,11 @@ export function isComponentHtml(document: TextDocument) {
 export function isInStartTagAndCanCompletionNgDirective(textBeforeCursor: string): boolean {
     return isInStartTagAnd(textBeforeCursor, canCompletionNgDirective);
 }
+
+export function isNgDirectiveAttr(attrName: string): boolean {
+    return attrName.startsWith('ng-');
+}
+
+export function isComponentTag(tagName: string): boolean {
+    return tagName.includes('-');
+}

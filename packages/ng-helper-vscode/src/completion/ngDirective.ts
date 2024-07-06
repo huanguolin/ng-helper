@@ -1,10 +1,6 @@
-import { getTemplateInnerText, isContainsNgFilter, isInTemplate } from '@ng-helper/shared/lib/html';
-import { languages, TextDocument, Position, Range, CompletionItem, CompletionList, SnippetString } from 'vscode';
+import { languages, TextDocument, Position, Range, CompletionItem, SnippetString } from 'vscode';
 
-import { getComponentControllerAs } from '../service/api';
-import { ensureTsServerRunning } from '../utils';
-
-import { isComponentHtml, isInStartTagAndCanCompletionNgDirective } from './utils';
+import { isInStartTagAndCanCompletionNgDirective } from './utils';
 
 const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
@@ -15,7 +11,7 @@ const defaultNgConfigStr: NgDirectiveConfig = {
     snippet: `\${0:string}`,
 };
 
-export function ngCompletion(port: number) {
+export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position) {
             const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
@@ -28,31 +24,8 @@ export function ngCompletion(port: number) {
                     )
                     .flat();
             }
-
-            if (!isComponentHtml(document)) {
-                return;
-            }
-
-            if (isInTemplate(textBeforeCursor)) {
-                const prefix = getTemplateInnerText(textBeforeCursor);
-                if (prefix && !isContainsNgFilter(prefix)) {
-                    return getComponentControllerAsCompletion(document, port);
-                }
-            }
         },
     });
-}
-
-async function getComponentControllerAsCompletion(document: TextDocument, port: number) {
-    // remove .html add .ts
-    const tsFilePath = document.fileName.slice(0, -5) + '.ts';
-
-    await ensureTsServerRunning(tsFilePath, port);
-
-    const res = await getComponentControllerAs(port, { fileName: tsFilePath });
-    if (res) {
-        return new CompletionList([new CompletionItem(res)], false);
-    }
 }
 
 function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {

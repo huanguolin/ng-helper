@@ -1,8 +1,9 @@
 import { ExtensionContext } from 'vscode';
 
-import { ngCompletion } from './ngCompletion';
-import { typeCompletion } from './typeCompletion';
+import { componentCtrl } from './componentCtrl';
+import { componentType } from './componentType';
+import { ngDirective } from './ngDirective';
 
 export function registerComponentCompletions(context: ExtensionContext, port: number) {
-    context.subscriptions.push(typeCompletion(port), ngCompletion(port));
+    context.subscriptions.push(componentType(port), componentCtrl(port), ngDirective(port));
 }
