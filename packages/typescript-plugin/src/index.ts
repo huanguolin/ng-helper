@@ -4,7 +4,7 @@ import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript/lib/tsserverlibrary';
 
 import { initHttpServer } from './httpServer';
-import { PluginContext } from './type';
+import { PluginContext, PluginCoreLogger, PluginLogger } from './type';
 import { buildLogger } from './utils/log';
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
@@ -19,50 +19,18 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
             initLogger.startGroup();
             initLogger.info('start');
 
-            const app = initHttpServer(getContext);
+            const getContext = buildGetContextFunc({
+                info,
+                logger,
+                modules,
+            });
 
-            start = (port) => {
-                server?.close();
-                server = app.listen(port, () => {
-                    initLogger.info('listening on port', port);
-                });
-            };
-
-            const config = info.config as Partial<NgPluginConfiguration> | undefined;
-
-            if (config?.port) {
-                start(config.port);
-            }
+            ({ start, server } = initHttpServerForPlugin({ getContext, start, server, initLogger, info }));
 
             initLogger.info('end');
             initLogger.endGroup();
 
             return info.languageService;
-
-            function getContext(fileName: string): PluginContext | undefined {
-                const program = info.project['program'] as ts.Program | undefined;
-
-                if (!program) {
-                    logger.info('getContext()', 'get program failed');
-                    return undefined;
-                }
-
-                const typeChecker = program.getTypeChecker();
-                const sourceFile = program.getSourceFile(fileName);
-
-                if (!sourceFile) {
-                    logger.info('getContext()', 'get source file failed');
-                    return undefined;
-                }
-
-                return {
-                    program,
-                    typeChecker,
-                    sourceFile,
-                    ts: modules.typescript,
-                    logger,
-                };
-            }
         },
         onConfigurationChanged(config: Partial<NgPluginConfiguration>) {
             if (config.port && start) {
@@ -73,3 +41,72 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
 }
 
 export = init;
+
+function buildGetContextFunc({
+    info,
+    logger,
+    modules,
+}: {
+    info: ts.server.PluginCreateInfo;
+    logger: PluginLogger;
+    modules: {
+        typescript: typeof import('typescript/lib/tsserverlibrary');
+    };
+}): (fileName: string) => PluginContext | undefined {
+    return getContext;
+
+    function getContext(fileName: string): PluginContext | undefined {
+        const program = info.project['program'] as ts.Program | undefined;
+
+        if (!program) {
+            logger.info('getContext()', 'get program failed');
+            return undefined;
+        }
+
+        const typeChecker = program.getTypeChecker();
+        const sourceFile = program.getSourceFile(fileName);
+
+        if (!sourceFile) {
+            logger.info('getContext()', 'get source file failed');
+            return undefined;
+        }
+
+        return {
+            program,
+            typeChecker,
+            sourceFile,
+            ts: modules.typescript,
+            logger,
+        };
+    }
+}
+
+function initHttpServerForPlugin({
+    getContext,
+    start,
+    server,
+    initLogger,
+    info,
+}: {
+    getContext: (fileName: string) => PluginContext | undefined;
+    start: ((port: number) => void) | undefined;
+    server: http.Server | undefined;
+    initLogger: PluginCoreLogger;
+    info: ts.server.PluginCreateInfo;
+}) {
+    const app = initHttpServer(getContext);
+
+    start = (port) => {
+        server?.close();
+        server = app.listen(port, () => {
+            initLogger.info('listening on port', port);
+        });
+    };
+
+    const config = info.config as Partial<NgPluginConfiguration> | undefined;
+
+    if (config?.port) {
+        start(config.port);
+    }
+    return { start, server };
+}
