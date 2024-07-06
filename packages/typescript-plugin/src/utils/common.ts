@@ -188,3 +188,14 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
 export function typeToString(ctx: PluginContext, type?: ts.Type): string | undefined {
     return type ? ctx.typeChecker.typeToString(type) : undefined;
 }
+
+export function isCommaListExpression(ctx: PluginContext, node: ts.Node): node is ts.CommaListExpression {
+    if (typeof ctx.ts.isCommaListExpression === 'function') {
+        return ctx.ts.isCommaListExpression(node);
+    }
+
+    if (ctx.ts.isBinaryExpression(node)) {
+        return node.operatorToken.kind === ctx.ts.SyntaxKind.CommaToken;
+    }
+    return false;
+}

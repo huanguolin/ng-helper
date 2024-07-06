@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 
 import { PluginContext, SyntaxNodeInfo } from '../type';
-import { getPropertyType, createTmpSourceFile, typeToString } from '../utils/common';
+import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpression } from '../utils/common';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -133,7 +133,7 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
             return visit(node.statements[node.statements.length - 1]);
         } else if (ctx.ts.isExpressionStatement(node)) {
             return visit(node.expression);
-        } else if (ctx.ts.isCommaListExpression(node)) {
+        } else if (isCommaListExpression(ctx, node)) {
             return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isBinaryExpression(node)) {
             return visit(node.right);
