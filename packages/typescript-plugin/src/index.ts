@@ -7,7 +7,7 @@ import { getTsInjectionDiagnostics } from './diagnostic';
 import { initHttpServer } from './httpServer';
 import { PluginContext, PluginCoreLogger, PluginLogger } from './type';
 import { buildLogger } from './utils/log';
-import { isComponentTsFile, isControllerTsFile } from './utils/ng';
+import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from './utils/ng';
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     let server: http.Server | undefined;
@@ -61,7 +61,7 @@ function overrideGetSemanticDiagnostics({
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
 
-        if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName)) {
+        if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName) && !isServiceTsFile(fileName)) {
             return prior;
         }
 
@@ -70,9 +70,13 @@ function overrideGetSemanticDiagnostics({
             return prior;
         }
 
-        const diagnostics = getTsInjectionDiagnostics(ctx);
-        if (diagnostics.length > 0) {
-            prior.push(...diagnostics);
+        try {
+            const diagnostics = getTsInjectionDiagnostics(ctx);
+            if (diagnostics) {
+                prior.push(...diagnostics);
+            }
+        } catch (error) {
+            ctx.logger.error('getTsInjectionDiagnostics:', (error as Error).message, (error as Error).stack);
         }
 
         return prior;

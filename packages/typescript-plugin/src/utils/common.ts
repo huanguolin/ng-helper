@@ -199,3 +199,11 @@ export function isCommaListExpression(ctx: PluginContext, node: ts.Node): node i
     }
     return false;
 }
+
+export function findClassDeclaration(ctx: PluginContext, node: ts.Node): ts.ClassDeclaration | undefined {
+    if (ctx.ts.isClassDeclaration(node)) {
+        return node;
+    }
+
+    return node.forEachChild((child: ts.Node) => findClassDeclaration(ctx, child));
+}

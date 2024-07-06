@@ -118,3 +118,7 @@ export function isComponentTsFile(fileName: string): boolean {
 export function isControllerTsFile(fileName: string): boolean {
     return fileName.endsWith('.controller.ts');
 }
+
+export function isServiceTsFile(fileName: string): boolean {
+    return fileName.endsWith('.service.ts');
+}
