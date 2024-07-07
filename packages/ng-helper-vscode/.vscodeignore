@@ -1,12 +1,15 @@
-node_modules/**
+ref.md
+scripts/**
+src/**
+dist/**/*.map
 tsconfig.json
 .eslintrc.json
 esbuild.js
 babel.config.js
 jest.config.js
-src/**
-tests/**
-**/*.ts
-**/*.map
-ref.md
+
+node_modules/**
+!node_modules/@ng-helper/typescript-plugin/package.json
+!node_modules/@ng-helper/typescript-plugin/dist/*.js
+
 
