@@ -13,14 +13,16 @@ const esbuildProblemMatcherPlugin = {
 
     setup(build) {
         build.onStart(() => {
-            console.log('build started');
+            // [watch] 这个不能删除，会影响 $esbuild-watch 的工作
+            console.log('[watch] build started');
         });
         build.onEnd((result) => {
             result.errors.forEach(({ text, location }) => {
                 console.error(`✘ [ERROR] ${text}`);
                 console.error(`    ${location.file}:${location.line}:${location.column}:`);
             });
-            console.log('build finished');
+            // [watch] 这个不能删除，会影响 $esbuild-watch 的工作
+            console.log('[watch] build finished');
         });
     },
 };
