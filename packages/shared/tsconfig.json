@@ -3,15 +3,14 @@
 		"module": "commonjs",
 		"target": "ES2022",
 		"lib": ["ES2022"],
-		"noEmit": true,
 		"rootDir": ".",
 		"strict": true,
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+        "noEmit": true
 	},
-	"exclude": [
-	  "node_modules", "babel.config.js", "jest.config.ts"
-	]
+    "exclude": ["node_modules", "dist", "tests"],
+    "include": ["src"]
 }

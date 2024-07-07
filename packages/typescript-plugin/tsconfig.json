@@ -7,8 +7,10 @@
         "strict": true,
         "noImplicitAny": true,
         "rootDir": ".",
-        "outDir": "./dist",
         "sourceMap": true,
-        "declaration": true
-    }
+        "declaration": true,
+        "noEmit": true
+    },
+    "exclude": ["node_modules", "dist", "tests"],
+    "include": ["src"]
 }

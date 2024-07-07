@@ -23,10 +23,10 @@
             "type": "shell",
             "command": "yarn",
             "args": [
+                "workspace",
+                "ng-helper",
                 "run",
-                "watch:esbuild",
-                "-w",
-                "ng-helper"
+                "watch:esbuild"
             ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
@@ -41,10 +41,10 @@
             "type": "shell",
             "command": "yarn",
             "args": [
-                "run",
-                "watch:tsc",
-                "-w",
+                "workspace",
                 "ng-helper",
+                "run",
+                "watch:tsc"
             ],
             "group": "build",
             "problemMatcher": "$tsc-watch",
@@ -59,10 +59,10 @@
             "type": "shell",
             "command": "yarn",
             "args": [
+                "workspace",
+                "@ng-helper/typescript-plugin",
                 "run",
-                "watch:esbuild",
-                "-w",
-                "@ng-helper/typescript-plugin"
+                "watch:esbuild"
             ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
