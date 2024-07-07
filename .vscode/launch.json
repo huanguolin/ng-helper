@@ -18,7 +18,7 @@
 			"preLaunchTask": "${defaultBuildTask}",
 			"env": {
 				// enable tsserver log
-				"TSS_LOG": "-logToFile true -file ${workspaceFolder}/logs/tsserver.log -level verbose"
+				"TSS_LOG": "-logToFile true -file ${workspaceFolder}/tsserver-logs/tsserver.log -level info"
 			}
 		}
 	]

@@ -3,5 +3,5 @@ dist
 node_modules
 .vscode-test/
 *.vsix
-logs
+tsserver-logs/*.log
 .DS_Store
