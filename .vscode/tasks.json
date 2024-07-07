@@ -7,7 +7,6 @@
             "label": "watch",
             "dependsOn": [
                 "plugin:watch:esbuild",
-                "watch:tsc",
                 "watch:esbuild"
             ],
             "presentation": {
@@ -30,24 +29,6 @@
             ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",
-            "isBackground": true,
-            "presentation": {
-                "group": "watch",
-                "reveal": "never"
-            }
-        },
-        {
-            "label": "watch:tsc",
-            "type": "shell",
-            "command": "yarn",
-            "args": [
-                "workspace",
-                "ng-helper",
-                "run",
-                "watch:tsc"
-            ],
-            "group": "build",
-            "problemMatcher": "$tsc-watch",
             "isBackground": true,
             "presentation": {
                 "group": "watch",

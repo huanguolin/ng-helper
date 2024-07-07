@@ -6,10 +6,8 @@
   "license": "MIT",
   "private": "true",
   "scripts": {
-    "compile": "yarn run tsc && yarn run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
+    "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
     "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts",
     "test": "jest",

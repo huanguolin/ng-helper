@@ -43,11 +43,9 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
-    "compile": "yarn run tsc && yarn run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
+    "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
     "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "yarn run tsc && yarn run lint && node esbuild.js --production",
+    "package": "yarn run compile",
     "package:vsix": "vsce package --yarn --dependencies",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts"
