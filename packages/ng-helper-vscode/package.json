@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "license": "MIT",
   "engines": {
-    "vscode": "^1.60.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@types/node": "18.x",
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "esbuild": "^0.21.4",
