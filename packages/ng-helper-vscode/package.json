@@ -4,6 +4,10 @@
   "description": "Angular.js Helper for VSCode.",
   "version": "0.0.1",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/huanguolin/ng-helper.git"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
