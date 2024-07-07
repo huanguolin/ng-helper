@@ -21,7 +21,7 @@
         {
             "label": "watch:esbuild",
             "type": "shell",
-            "command": "npm",
+            "command": "yarn",
             "args": [
                 "run",
                 "watch:esbuild",
@@ -39,7 +39,7 @@
         {
             "label": "watch:tsc",
             "type": "shell",
-            "command": "npm",
+            "command": "yarn",
             "args": [
                 "run",
                 "watch:tsc",
@@ -57,7 +57,7 @@
         {
             "label": "plugin:watch:esbuild",
             "type": "shell",
-            "command": "npm",
+            "command": "yarn",
             "args": [
                 "run",
                 "watch:esbuild",

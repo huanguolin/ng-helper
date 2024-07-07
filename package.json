@@ -12,9 +12,9 @@
   ],
   "scripts": {
     "tsc": "npm-run-all -p tsc:*",
-    "tsc:extension": "cd packages/ng-helper-vscode && npm run tsc",
-    "tsc:plugin": "cd packages/typescript-plugin && npm run tsc",
-    "tsc:shared": "cd packages/shared && npm run tsc",
+    "tsc:extension": "cd packages/ng-helper-vscode && yarn run tsc",
+    "tsc:plugin": "cd packages/typescript-plugin && yarn run tsc",
+    "tsc:shared": "cd packages/shared && yarn run tsc",
     "lint": "eslint . --ext .ts",
     "test": "npm-run-all -p test:*",
     "test:plugin": "cd packages/typescript-plugin && npm t",
