@@ -21,12 +21,48 @@ export async function activateExt(): Promise<number | undefined> {
 }
 
 async function canActivate(): Promise<boolean> {
+    const confUri = getConfigUri();
+    if (!confUri) {
+        return false;
+    }
+    return await isFileExistsOnWorkspace(confUri);
+}
+
+export async function readConfig(): Promise<NgHelperConfig> {
+    const uri = getConfigUri()!;
+    const uint8Array = await workspace.fs.readFile(uri);
+    // uint8Array to string
+    const jsonText = new TextDecoder().decode(uint8Array);
+
+    let config = getDefaultConfig();
+    try {
+        const userConfig = JSON.parse(jsonText || '{}') as NgHelperConfig;
+        config = Object.assign(config, userConfig);
+    } catch (error) {
+        console.error('ng-helper.json is not a valid JSON file: ', jsonText);
+    }
+    return config;
+}
+
+function getDefaultConfig(): NgHelperConfig {
+    return {
+        componentCssFileExt: 'css',
+    };
+}
+
+function getConfigUri(): Uri | undefined {
     const workspaceFolders = workspace.workspaceFolders;
     if (!workspaceFolders) {
-        return false;
+        return;
     }
 
     const rootWorkspaceUri = workspaceFolders[0].uri;
-    const confUri = Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
-    return await isFileExistsOnWorkspace(confUri);
+    return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
+}
+
+export interface NgHelperConfig {
+    /**
+     * like 'less', 'scss', 'css' etc. default is 'css';
+     */
+    componentCssFileExt: string;
 }

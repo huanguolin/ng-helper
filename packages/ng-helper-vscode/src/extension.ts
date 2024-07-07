@@ -1,6 +1,6 @@
 import { ExtensionContext } from 'vscode';
 
-import { activateExt } from './activate';
+import { activateExt, readConfig } from './activate';
 import { createComponentCommand } from './command/createComponent';
 import { registerComponentCompletions } from './completion';
 
@@ -16,8 +16,10 @@ export async function activate(context: ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('======= "ng-helper" is now active ========');
 
+    const config = await readConfig();
+
     // command
-    context.subscriptions.push(createComponentCommand());
+    context.subscriptions.push(createComponentCommand(config.componentCssFileExt));
 
     // completion
     registerComponentCompletions(context, port);
