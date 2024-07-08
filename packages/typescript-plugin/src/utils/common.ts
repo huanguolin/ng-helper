@@ -87,25 +87,6 @@ export function isTypeOfType(ctx: PluginContext, type: ts.Type): boolean {
     return type !== ctx.typeChecker.getDeclaredTypeOfSymbol(type.symbol);
 }
 
-export function isGenericType(ctx: PluginContext, type: ts.Type): boolean {
-    const arr = ctx.typeChecker.getTypeArguments(type as ts.TypeReference);
-    return arr.length > 0;
-    // const symbol = type.getSymbol();
-    // if (!symbol) {
-    //     return false;
-    // }
-
-    // const declarations = symbol.getDeclarations();
-    // if (!declarations) {
-    //     return false;
-    // }
-
-    // return true;
-    // return declarations.some((declaration) => {
-    //     return ctx.typeChecker.generic
-    // });
-}
-
 export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string {
     return ctx.ts.displayPartsToString(symbol.getDocumentationComment(ctx.typeChecker));
 }

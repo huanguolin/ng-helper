@@ -356,22 +356,3 @@ describe('isTypeOfType()', () => {
         expect(result).toBe(expected);
     });
 });
-
-// TODO fix this
-// describe('isGenericType()', () => {
-//     let ctx: PluginContext;
-
-//     beforeEach(() => {
-//         ctx = prepareTestContext(`
-//             type M<T> = { p: T };
-//             let z: M<number>;
-//         `);
-//     });
-
-//     it.each([['z', false]])('input: %s => output: %s', (varName, expected) => {
-//         const node = findVariableDeclaration(ctx, varName);
-//         const type = ctx.typeChecker.getTypeAtLocation(node);
-//         const result = isGenericType(ctx, type);
-//         expect(result).toBe(expected);
-//     });
-// });
