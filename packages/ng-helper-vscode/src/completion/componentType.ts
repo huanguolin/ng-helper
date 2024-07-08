@@ -70,7 +70,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
-            const items = res.map((x) => {
+            const items = res.map((x, i) => {
                 const isFunction = x.kind === 'method' || x.kind === 'function';
                 const item = new CompletionItem(x.name, isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
                 if (isFunction) {
@@ -81,6 +81,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 }
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
                 item.documentation = x.document;
+                item.sortText = i.toString();
                 return item;
             });
             return new CompletionList(items, false);
