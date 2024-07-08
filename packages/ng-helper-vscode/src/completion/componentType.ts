@@ -54,7 +54,8 @@ class TypeCompletionProvider implements CompletionItemProvider {
         ) {
             const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
             if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
-                const prefix = getAttrValueText(tagTextBeforeCursor);
+                let prefix = getAttrValueText(tagTextBeforeCursor);
+                prefix = processPrefix(attrName, prefix);
                 if (prefix) {
                     return this.getCompletionItems(document, prefix);
                 }
@@ -87,4 +88,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
             return new CompletionList(items, false);
         }
     }
+}
+
+function processPrefix(attrName: string, prefix: string): string {
+    // 特殊处理:
+    // 输入：prefix = "{ 'class-name': ctrl."
+    // 输出：prefix = "ctrl."
+    if (attrName === 'ng-class' && prefix.startsWith('{') && prefix.includes(':')) {
+        return prefix.split(':').pop()!;
+    }
+    return prefix;
 }

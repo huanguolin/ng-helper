@@ -87,7 +87,7 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
  */
 export function getAttrValueText(tagTextBeforeCursor: string): string {
     const index = tagTextBeforeCursor.lastIndexOf('"');
-    return tagTextBeforeCursor.slice(index + 1);
+    return tagTextBeforeCursor.slice(index + 1).trim();
 }
 
 /**
