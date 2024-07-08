@@ -8,8 +8,8 @@ import {
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, Range } from 'vscode';
 
-import { getComponentControllerAs } from '../service/api';
-import { ensureTsServerRunning } from '../utils';
+import { getComponentControllerAs } from '../../service/api';
+import { ensureTsServerRunning } from '../../utils';
 
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from './utils';
 

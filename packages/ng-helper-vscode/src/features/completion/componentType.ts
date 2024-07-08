@@ -20,8 +20,8 @@ import {
     languages,
 } from 'vscode';
 
-import { getComponentCompletion } from '../service/api';
-import { ensureTsServerRunning } from '../utils';
+import { getComponentCompletion } from '../../service/api';
+import { ensureTsServerRunning } from '../../utils';
 
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from './utils';
 

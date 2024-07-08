@@ -1,8 +1,8 @@
 import { ExtensionContext } from 'vscode';
 
 import { activateExt, readConfig } from './activate';
-import { createComponentCommand } from './command/createComponent';
-import { registerComponentCompletions } from './completion';
+import { createComponentCommand } from './features/command/createComponent';
+import { registerComponentCompletions } from './features/completion';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
