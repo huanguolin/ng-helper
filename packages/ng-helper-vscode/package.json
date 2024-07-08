@@ -44,7 +44,8 @@
   "scripts": {
     "package": "vsce package --yarn --dependencies",
     "vscode:prepublish": "yarn run resolver && yarn run compile",
-    "resolver": "cd ../typescript-plugin && yarn run compile && cd - && node scripts/resolver.js",
+    "resolver": "yarn run prepare:plugin && node scripts/resolver.js",
+    "prepare:plugin": "cd ../typescript-plugin && yarn run compile",
     "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
     "watch:esbuild": "node esbuild.js --watch",
     "tsc": "tsc --noEmit",
