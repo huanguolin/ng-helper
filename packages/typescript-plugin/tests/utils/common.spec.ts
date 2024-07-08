@@ -245,6 +245,36 @@ describe('getPropertyType()', () => {
         });
     });
 
+    describe('generic type', () => {
+        let typeX: ts.Type;
+        let typeY: ts.Type;
+        let ctx: PluginContext;
+
+        beforeAll(() => {
+            const sourceCode = `
+            type M<T> = { foo: T; bar: () => T };
+            type N<T = number> = { foo: T; bar: () => T };
+            let x: M<number>;
+            let y: N;`;
+            ctx = prepareTestContext(sourceCode);
+            const nodeX = findVariableDeclaration(ctx, 'x');
+            const nodeY = findVariableDeclaration(ctx, 'y');
+            typeX = ctx.typeChecker.getTypeAtLocation(nodeX);
+            typeY = ctx.typeChecker.getTypeAtLocation(nodeY);
+        });
+
+        it.each([
+            ['nonExistentProperty', undefined],
+            ['foo', 'number'],
+            ['bar', '() => number'],
+        ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const rX = getPropertyType(ctx, typeX, propertyName);
+            const rY = getPropertyType(ctx, typeY, propertyName);
+            expect(typeToString(ctx, rX)).toBe(expectedTypeString);
+            expect(typeToString(ctx, rY)).toBe(expectedTypeString);
+        });
+    });
+
     // TODO 单元测试过不了
     // describe('union type', () => {
     //     let type: ts.Type;
@@ -305,17 +335,20 @@ describe('isTypeOfType()', () => {
     beforeEach(() => {
         ctx = prepareTestContext(`
             type M<T> = { p: T };
+            type N<T = number> = { q: T };
             class A { }
             const x = A;
             let y: A;
             let z: M<number>;
+            let r: N;
         `);
     });
 
     it.each([
         ['x', true],
         ['y', false],
-        // ['z', false], // TODO fix this
+        ['z', false],
+        ['r', false],
     ])('input: %s => output: %s', (varName, expected) => {
         const node = findVariableDeclaration(ctx, varName);
         const type = ctx.typeChecker.getTypeAtLocation(node);

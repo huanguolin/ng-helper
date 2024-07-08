@@ -80,6 +80,10 @@ export function isTypeOfType(ctx: PluginContext, type: ts.Type): boolean {
         return false;
     }
 
+    if (type.aliasTypeArguments) {
+        return false;
+    }
+
     return type !== ctx.typeChecker.getDeclaredTypeOfSymbol(type.symbol);
 }
 
