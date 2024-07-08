@@ -275,6 +275,35 @@ describe('getPropertyType()', () => {
         });
     });
 
+    // TODO fix this
+    // describe('use utility type', () => {
+    //     let type: ts.Type;
+    //     let ctx: PluginContext;
+
+    //     beforeAll(() => {
+    //         const sourceCode = `
+    //         interface Person {
+    //             name: string;
+    //             age: number;
+    //             say: (words: string) => void;
+    //         }
+    //         let x: Omit<Person, 'say'>;
+    //         `;
+    //         ctx = prepareTestContext(sourceCode);
+    //         const nodeX = findVariableDeclaration(ctx, 'x');
+    //         type = ctx.typeChecker.getTypeAtLocation(nodeX);
+    //     });
+
+    //     it.each([
+    //         ['nonExistentProperty', undefined],
+    //         ['name', 'string'],
+    //         ['say', undefined],
+    //     ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
+    //         const result = getPropertyType(ctx, type, propertyName);
+    //         expect(typeToString(ctx, result)).toBe(expectedTypeString);
+    //     });
+    // });
+
     // TODO 单元测试过不了
     // describe('union type', () => {
     //     let type: ts.Type;
