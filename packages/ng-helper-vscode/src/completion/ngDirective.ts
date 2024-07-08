@@ -47,11 +47,11 @@ function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
             [
                 {
                     name: 'map',
-                    snippet: `{'\${1:class-name}': \${2:expression}}`,
+                    snippet: `{'\${1:class-name}': \${0:expression}}`,
                 },
                 {
                     name: 'array',
-                    snippet: `['\${1:classNameVar}', '\${2:classNameVar2}']`,
+                    snippet: `['\${1:classNameVar}', '\${0:classNameVar2}']`,
                 },
                 {
                     name: '',
@@ -66,7 +66,7 @@ function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
             [
                 {
                     name: 'array',
-                    snippet: `\${0:item} in \${1:items} track by \${2:$index}`,
+                    snippet: `\${0:item} in \${1:items} track by \${2:\\$index}`,
                 },
                 {
                     name: 'object',
@@ -81,7 +81,7 @@ function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
             [
                 {
                     name: '',
-                    snippet: `\${3:item.name} for \${2:item} in \${1:items} track by \${4:item.id}`,
+                    snippet: `\${3:item.name} for \${2:item} in \${1:items} track by \${0:item.id}`,
                 },
             ],
         ],
