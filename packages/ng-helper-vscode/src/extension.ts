@@ -3,6 +3,7 @@ import { ExtensionContext } from 'vscode';
 import { activateExt, readConfig } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerComponentCompletions } from './features/completion';
+import { registerComponentHover } from './features/hover';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -23,6 +24,9 @@ export async function activate(context: ExtensionContext) {
 
     // completion
     registerComponentCompletions(context, port);
+
+    // hover
+    registerComponentHover(context, port);
 }
 
 // This method is called when your extension is deactivated

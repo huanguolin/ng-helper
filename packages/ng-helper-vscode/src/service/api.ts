@@ -1,5 +1,15 @@
-import { NgCompletionRequest, NgCompletionResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
+import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
 import axios from 'axios';
+
+export async function getComponentHover(port: number, info: NgHoverRequest) {
+    try {
+        const result = await axios.post<NgHoverResponse>(buildUrl(port, 'component', 'hover'), info);
+        console.log('getComponentHover result: ', result.data);
+        return result.data;
+    } catch (error) {
+        console.log('getComponentHover failed: ', error);
+    }
+}
 
 export async function getComponentCompletion(port: number, info: NgCompletionRequest) {
     try {

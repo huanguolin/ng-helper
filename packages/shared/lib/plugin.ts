@@ -31,6 +31,11 @@ export interface NgCompletionRequest extends NgRequest {
     prefix: string;
 }
 
-export type NgCompletionResponseItem = NgTypeInfo;
+export interface NgHoverRequest extends NgRequest {
+    contextString: string;
+}
 
+export type NgHoverResponse = NgTypeInfo | undefined;
+
+export type NgCompletionResponseItem = NgTypeInfo;
 export type NgCompletionResponse = NgCompletionResponseItem[] | undefined;

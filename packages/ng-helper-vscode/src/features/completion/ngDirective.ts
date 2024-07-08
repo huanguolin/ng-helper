@@ -1,6 +1,6 @@
 import { languages, TextDocument, Position, Range, CompletionItem, SnippetString } from 'vscode';
 
-import { isInStartTagAndCanCompletionNgDirective } from './utils';
+import { isInStartTagAndCanCompletionNgDirective } from '../utils';
 
 const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',

@@ -10,8 +10,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Rang
 
 import { getComponentControllerAs } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
-
-import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from './utils';
+import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentCtrl(port: number) {
     return languages.registerCompletionItemProvider('html', {

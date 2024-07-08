@@ -22,8 +22,7 @@ import {
 
 import { getComponentCompletion } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
-
-import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from './utils';
+import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentType(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');

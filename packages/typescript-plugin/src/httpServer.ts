@@ -1,7 +1,8 @@
-import { NgCompletionRequest, NgCompletionResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
+import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 
 import { getComponentCompletions, getComponentControllerAs } from './completion';
+import { getComponentHoverType } from './hover';
 import { PluginContext } from './type';
 
 export function initHttpServer(getContext: (fileName: string) => PluginContext | undefined) {
@@ -20,6 +21,15 @@ export function initHttpServer(getContext: (fileName: string) => PluginContext |
             res,
             getContext,
             action: (ctx, body) => getComponentCompletions(ctx, body.prefix),
+        });
+    });
+
+    app.post('/ng-helper/component/hover', (req, res) => {
+        handleRequest<NgHoverRequest, NgHoverResponse>({
+            req,
+            res,
+            getContext,
+            action: (ctx, body) => getComponentHoverType(ctx, body.contextString),
         });
     });
 
