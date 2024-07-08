@@ -17,10 +17,10 @@ export function ngDirective(_port: number) {
             const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
             if (isInStartTagAndCanCompletionNgDirective(textBeforeCursor)) {
                 return getNgDirectiveConfigList()
-                    .map(([name, configs]) =>
+                    .map(([name, configs], i) =>
                         configs.length > 0
-                            ? configs.map((c) => configToCompletionItem(name, c))
-                            : [configToCompletionItem(name, defaultNgConfigExpr)],
+                            ? configs.map((c) => configToCompletionItem(name, c, i))
+                            : [configToCompletionItem(name, defaultNgConfigExpr, i)],
                     )
                     .flat();
             }
@@ -28,8 +28,9 @@ export function ngDirective(_port: number) {
     });
 }
 
-function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
+function configToCompletionItem(name: string, config: NgDirectiveConfig, sortIndex: number): CompletionItem {
     const item = new CompletionItem(`${name} ${config.name}`);
+    item.sortText = sortIndex.toString();
     if (config.snippet) {
         item.insertText = new SnippetString(`${name}="${config.snippet}"`);
     }
@@ -38,6 +39,7 @@ function configToCompletionItem(name: string, config: NgDirectiveConfig): Comple
 }
 
 function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
+    // 这里依据我们使用的频率排序的
     return [
         ['ng-click', []],
         ['ng-if', []],
@@ -51,7 +53,7 @@ function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
                 },
                 {
                     name: 'array',
-                    snippet: `['\${1:classNameVar}', '\${0:classNameVar2}']`,
+                    snippet: `[\${0:classNameVar}]`,
                 },
                 {
                     name: '',
