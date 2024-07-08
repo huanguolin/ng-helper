@@ -5,7 +5,7 @@ import { findClassDeclaration } from '../utils/common';
 
 import { getConstructor, getStaticPublicInjectionField } from './utils';
 
-export function getTsInjectionDiagnostics(ctx: PluginContext): ts.Diagnostic[] | undefined {
+export function getTsInjectionDiagnostic(ctx: PluginContext): ts.Diagnostic | undefined {
     const logger = ctx.logger.prefix('getTsInjectionDiagnostics()');
     const classNode = findClassDeclaration(ctx, ctx.sourceFile);
     if (!classNode) {
@@ -37,73 +37,60 @@ export function getTsInjectionDiagnostics(ctx: PluginContext): ts.Diagnostic[] |
         return;
     }
 
-    const result: ts.Diagnostic[] = [];
-
     if (injectionArray.length === 0) {
         const { left, right } = getConstructorParenPosition(ctx, constructor);
-        result.push(
-            buildDiagnostic({
-                category: ctx.ts.DiagnosticCategory.Error,
-                code: 0,
-                file: ctx.sourceFile,
-                start: left,
-                length: right - left + 1,
-                messageText: 'Constructor parameters do not match $inject.',
-            }),
-        );
+        return buildDiagnostic({
+            start: left,
+            length: right - left + 1,
+            messageText: getNotMatchMsg(true),
+        });
     } else if (constructorParams.length === 0) {
         const { left, right } = getConstructorParenPosition(ctx, constructor);
-        result.push(
-            buildDiagnostic({
-                category: ctx.ts.DiagnosticCategory.Error,
-                code: 0,
-                file: ctx.sourceFile,
-                start: left,
-                length: right - left + 1,
-                messageText: 'Constructor parameters do not match $inject.',
-            }),
-        );
+        return buildDiagnostic({
+            start: left,
+            length: right - left + 1,
+            messageText: getNotMatchMsg(true),
+        });
     } else {
-        for (let i = 0; i < Math.min(injectionArray.length, constructorParams.length); i++) {
+        for (let i = 0; i < Math.max(injectionArray.length, constructorParams.length); i++) {
             const injectEle = injectionArray[i];
             const param = constructorParams[i];
 
+            if (!injectEle || !param) {
+                const existOne = injectEle || param;
+                return buildDiagnostic({
+                    start: existOne.getStart(ctx.sourceFile),
+                    length: existOne.getWidth(ctx.sourceFile),
+                    messageText: getNotMatchMsg(!!param),
+                });
+            }
+
             if (!ctx.ts.isStringLiteral(injectEle)) {
-                result.push(
-                    buildDiagnostic({
-                        category: ctx.ts.DiagnosticCategory.Error,
-                        code: 0,
-                        file: ctx.sourceFile,
-                        start: injectEle.getStart(ctx.sourceFile),
-                        length: injectEle.getWidth(ctx.sourceFile),
-                        messageText: '$inject element must be literal string.',
-                    }),
-                );
-                break;
+                return buildDiagnostic({
+                    start: injectEle.getStart(ctx.sourceFile),
+                    length: injectEle.getWidth(ctx.sourceFile),
+                    messageText: '$inject element must be literal string.',
+                });
             }
 
             if (injectEle.text.toLowerCase() !== param.name.getText(ctx.sourceFile).toLowerCase()) {
-                result.push(
-                    buildDiagnostic({
-                        category: ctx.ts.DiagnosticCategory.Error,
-                        code: 0,
-                        file: ctx.sourceFile,
-                        start: param.getStart(ctx.sourceFile),
-                        length: param.getWidth(ctx.sourceFile),
-                        messageText: 'Constructor parameter not match $inject element.',
-                    }),
-                );
-                break;
+                const isConstructorSide = injectionArray.length <= constructorParams.length;
+                const wrongSide = isConstructorSide ? param : injectEle;
+                return buildDiagnostic({
+                    start: wrongSide.getStart(ctx.sourceFile),
+                    length: wrongSide.getWidth(ctx.sourceFile),
+                    messageText: getNotMatchMsg(isConstructorSide),
+                });
             }
         }
     }
 
-    logger.info('miss staticInjectField.initializer');
-    return result;
-
-    function buildDiagnostic(input: ts.Diagnostic): ts.Diagnostic {
+    function buildDiagnostic(input: Omit<ts.Diagnostic, 'category' | 'code' | 'file'>): ts.Diagnostic {
         return {
             ...input,
+            category: ctx.ts.DiagnosticCategory.Error,
+            code: 0,
+            file: ctx.sourceFile,
             messageText: `[ng-helper] ${input.messageText as string}`,
         };
     }
@@ -117,4 +104,8 @@ function getConstructorParenPosition(ctx: PluginContext, constructor: ts.Constru
     // 获取右括号的位置
     const right = constructorStartAt + constructorText.indexOf(')');
     return { left, right };
+}
+
+function getNotMatchMsg(isConstructorSide: boolean): string {
+    return isConstructorSide ? 'Constructor parameter not match $inject element.' : '$inject element not match constructor parameter.';
 }

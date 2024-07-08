@@ -3,7 +3,7 @@ import * as http from 'http';
 import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript/lib/tsserverlibrary';
 
-import { getTsInjectionDiagnostics } from './diagnostic';
+import { getTsInjectionDiagnostic } from './diagnostic';
 import { initHttpServer } from './httpServer';
 import { PluginContext, PluginCoreLogger, PluginLogger } from './type';
 import { buildLogger } from './utils/log';
@@ -71,12 +71,13 @@ function overrideGetSemanticDiagnostics({
         }
 
         try {
-            const diagnostics = getTsInjectionDiagnostics(ctx);
-            if (diagnostics) {
-                prior.push(...diagnostics);
+            const diagnostic = getTsInjectionDiagnostic(ctx);
+            ctx.logger.info('getSemanticDiagnostics():', diagnostic);
+            if (diagnostic) {
+                prior.push(diagnostic);
             }
         } catch (error) {
-            ctx.logger.error('getTsInjectionDiagnostics:', (error as Error).message, (error as Error).stack);
+            ctx.logger.error('getSemanticDiagnostics():', (error as Error).message, (error as Error).stack);
         }
 
         return prior;

@@ -43,11 +43,12 @@
   },
   "scripts": {
     "package": "vsce package --yarn --dependencies",
-    "vscode:prepublish": "yarn run resolver && yarn run compile",
-    "resolver": "yarn run prepare:plugin && node scripts/resolver.js",
-    "prepare:plugin": "cd ../typescript-plugin && yarn run compile",
-    "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
-    "watch:esbuild": "node esbuild.js --watch",
+    "vscode:prepublish": "yarn compile && yarn plugin:resolve",
+    "plugin:resolve": "yarn plugin:compile && node scripts/resolver.js",
+    "plugin:compile": "cd ../typescript-plugin && yarn compile",
+    "plugin:clean": "node scripts/resolver.js --clean",
+    "compile": "yarn tsc && yarn lint && node esbuild.js --production",
+    "watch:esbuild": "yarn plugin:clean && node esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts"
   },
