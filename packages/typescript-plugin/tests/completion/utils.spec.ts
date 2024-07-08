@@ -60,6 +60,7 @@ describe('getCompletionType()', () => {
         // array
         ['ctrl.b.e[0].', 'number'],
         ['ctrl.b.e[ctrl.b.c.d].', 'number'],
+        ['[ctrl.a.', 'string'],
         // tuple
         ['ctrl.t[0].', 'number'],
         ['ctrl.t[1].', 'string'],

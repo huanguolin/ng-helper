@@ -95,6 +95,9 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
  * ctrl.a[ctrl.b.c. -> ctrl.b.c.
  * ctrl.a[1 + ctrl.b.c]. -> ctrl.a[1 + ctrl.b.c].
  *
+ * 数组值
+ * [ctrl.b.c. -> ctrl.b.c.
+ *
  * 方法调用
  * ctrl.a(ctrl.b.c. -> ctrl.b.c.
  * ctrl.a(1, ctrl.b.c). -> ctrl.a(1, ctrl.b.c).
@@ -149,6 +152,8 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
             return visit(node.arguments[node.arguments.length - 1]);
         } else if (ctx.ts.isElementAccessExpression(node)) {
             return visit(node.argumentExpression);
+        } else if (ctx.ts.isArrayLiteralExpression(node)) {
+            return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isPropertyAccessExpression(node)) {
             return { sourceFile, node };
         }
