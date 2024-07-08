@@ -17,20 +17,23 @@ export function ngDirective(_port: number) {
             const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
             if (isInStartTagAndCanCompletionNgDirective(textBeforeCursor)) {
                 return getNgDirectiveConfigList()
-                    .map(([name, configs], i) =>
+                    .map(([name, configs]) =>
                         configs.length > 0
-                            ? configs.map((c) => configToCompletionItem(name, c, i))
-                            : [configToCompletionItem(name, defaultNgConfigExpr, i)],
+                            ? configs.map((c) => configToCompletionItem(name, c))
+                            : [configToCompletionItem(name, defaultNgConfigExpr)],
                     )
-                    .flat();
+                    .flat()
+                    .map((item, index) => {
+                        item.sortText = index.toString().padStart(3, '0');
+                        return item;
+                    });
             }
         },
     });
 }
 
-function configToCompletionItem(name: string, config: NgDirectiveConfig, sortIndex: number): CompletionItem {
+function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
     const item = new CompletionItem(`${name} ${config.name}`);
-    item.sortText = sortIndex.toString();
     if (config.snippet) {
         item.insertText = new SnippetString(`${name}="${config.snippet}"`);
     }

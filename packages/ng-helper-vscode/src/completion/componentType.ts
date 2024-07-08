@@ -82,7 +82,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 }
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
                 item.documentation = x.document;
-                item.sortText = i.toString();
+                item.sortText = i.toString().padStart(3, '0');
                 return item;
             });
             return new CompletionList(items, false);
