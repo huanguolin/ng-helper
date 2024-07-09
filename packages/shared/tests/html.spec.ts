@@ -101,8 +101,8 @@ describe('getAttrValueText()', () => {
     it.each([
         ['<div class="', ''],
         ['<div class="btn', 'btn'],
-        ['<div class="btn ', 'btn '],
-        ['<common-btn class="btn"  title=" ', ' '],
+        ['<div class="btn ', 'btn '], // 不能 trim
+        ['<common-btn class="btn"  title=" ', ' '], // 不能 trim
         ['<common-btn class="btn" ng-if="click(), n = n + 1', 'click(), n = n + 1'],
     ])('input: %s => output: %s', (input: string, output: string) => {
         const v = getAttrValueText(input);
@@ -149,7 +149,7 @@ describe('getTemplateInnerText()', () => {
         ['text with {{illegal}} character}', undefined], // 含非法字符
         ['text with {{<html>', undefined], // 含非法字符
         ['start {{ignore this}} end {{template start', 'template start'], // 多个模板起始标记
-        ['{{  ', ''], // trim
+        ['{{  ', '  '], // 不能 trim
         ['', undefined], // 空字符串输入
     ])('given input "%s", should return "%s"', (input, expectedOutput) => {
         expect(getTemplateInnerText(input)).toBe(expectedOutput);

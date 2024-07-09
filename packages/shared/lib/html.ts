@@ -81,13 +81,13 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
 }
 /**
  * 从标签文本中获取属性值中的字符串。
- *
+ * 注意：返回的字符串不能 trim，否则利用它计算 offset 会出错。
  * @param tagTextBeforeCursor 光标之前的一个 tag 文本字符串。
  * @returns 属性值字符串。
  */
 export function getAttrValueText(tagTextBeforeCursor: string): string {
     const index = tagTextBeforeCursor.lastIndexOf('"');
-    return tagTextBeforeCursor.slice(index + 1).trim();
+    return tagTextBeforeCursor.slice(index + 1);
 }
 
 /**
@@ -135,14 +135,14 @@ export function isInTemplate(textBeforeCursor: string): boolean {
 
 /**
  * 从光标前的文本中获取模板内部字符串。
- *
+ * 注意：返回的字符串不能 trim，否则利用它计算 offset 会出错。
  * @param textBeforeCursor 光标前的文本字符串。
- * @returns {string | undefined} 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
+ * @returns 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
  */
 export function getTemplateInnerText(textBeforeCursor: string): string | undefined {
     const tplText = getTemplateText(textBeforeCursor);
     if (tplText) {
-        return tplText.slice('{{'.length).trim();
+        return tplText.slice('{{'.length);
     }
 }
 
@@ -166,7 +166,7 @@ export function getTemplateInnerTextAll(textBeforeCursor: string, textAfterCurso
  * 从光标前的文本中获取模板字符串(包含起始的'{{')。
  *
  * @param textBeforeCursor 光标前的文本字符串。
- * @returns {string | undefined} 返回合规的光标前的模板文本，如果没有找到，则返回undefined。
+ * @returns 返回合规的光标前的模板文本，如果没有找到，则返回undefined。
  */
 export function getTemplateText(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
