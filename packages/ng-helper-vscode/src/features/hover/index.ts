@@ -1,5 +1,5 @@
 import { isInTemplate, isInStartTagAnd, isInDbQuote, getTagAndTheAttrNameWhenInAttrValue, getTemplateInnerTextAll } from '@ng-helper/shared/lib/html';
-import { ExtensionContext, Hover, languages, Position, Range, TextDocument } from 'vscode';
+import { ExtensionContext, Hover, languages, MarkdownString, Position, Range, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
@@ -61,7 +61,11 @@ async function getHoverInfo({
     const res = await getComponentHover(port, { fileName: tsFilePath, contextString });
 
     if (res) {
-        // TODO complete hover info
-        return new Hover(res.typeString);
+        const markdownStr = new MarkdownString();
+        markdownStr.appendCodeblock(res.formattedTypeString, 'typescript');
+        if (res.document) {
+            markdownStr.appendText(res.document);
+        }
+        return new Hover(markdownStr);
     }
 }

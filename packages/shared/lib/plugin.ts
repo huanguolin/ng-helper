@@ -35,7 +35,12 @@ export interface NgHoverRequest extends NgRequest {
     contextString: string;
 }
 
-export type NgHoverResponse = NgTypeInfo | undefined;
+export interface NgHoverInfo {
+    formattedTypeString: string;
+    document: string;
+}
+
+export type NgHoverResponse = NgHoverInfo | undefined;
 
 export type NgCompletionResponseItem = NgTypeInfo;
 export type NgCompletionResponse = NgCompletionResponseItem[] | undefined;
