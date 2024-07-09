@@ -187,3 +187,20 @@ export function findClassDeclaration(ctx: PluginContext, node: ts.Node): ts.Clas
 
     return node.forEachChild((child: ts.Node) => findClassDeclaration(ctx, child));
 }
+
+export function getNodeAtPosition(ctx: PluginContext, position: number, sourceFile?: ts.SourceFile): ts.Node | undefined {
+    sourceFile ??= ctx.sourceFile;
+
+    let foundNode: ts.Node | undefined;
+
+    find(sourceFile);
+
+    return foundNode;
+
+    function find(node: ts.Node) {
+        if (node.pos <= position && position < node.end) {
+            foundNode = node;
+            ctx.ts.forEachChild(node, find);
+        }
+    }
+}

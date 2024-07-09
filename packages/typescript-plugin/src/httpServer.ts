@@ -29,7 +29,7 @@ export function initHttpServer(getContext: (fileName: string) => PluginContext |
             req,
             res,
             getContext,
-            action: (ctx, body) => getComponentHoverType(ctx, body.contextString),
+            action: (ctx, body) => getComponentHoverType(ctx, body),
         });
     });
 
@@ -60,7 +60,7 @@ function handleRequest<TBody extends NgRequest, TResponse>({
         res.send(response);
         ctx.logger.info('response:', response);
     } catch (error) {
-        ctx.logger.error('getComponentControllerAs:', (error as Error).message, (error as Error).stack);
+        ctx.logger.error(req.url, (error as Error).message, (error as Error).stack);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
         res.status(500).send(error as any);
     } finally {

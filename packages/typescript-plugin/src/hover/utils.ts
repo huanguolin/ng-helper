@@ -2,21 +2,38 @@ import { NgHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { PluginContext } from '../type';
-import { typeToString } from '../utils/common';
+import { getSymbolDocument, typeToString } from '../utils/common';
 
-export function buildHoverInfo({ ctx, type, name }: { ctx: PluginContext; type: ts.Type; name: string }): NgHoverInfo {
+export function buildHoverInfo({
+    ctx,
+    targetType,
+    name,
+    parentType,
+}: {
+    ctx: PluginContext;
+    targetType: ts.Type;
+    name: string;
+    parentType?: ts.Type;
+}): NgHoverInfo {
     let typeKind = 'property';
-    if (type.isClass()) {
+    if (targetType.isClass()) {
         typeKind = 'class';
-    } else if (type.getCallSignatures().length > 0) {
+    } else if (targetType.getCallSignatures().length > 0) {
         typeKind = 'method';
     }
-    const result: NgHoverInfo = {
-        formattedTypeString: `(${typeKind}) ${name}: ${formatTypeString(ctx, type)}`,
-        // TODO document
-        document: '',
+
+    let document = '';
+    if (parentType) {
+        const memberSymbol = parentType.getProperty(name);
+        if (memberSymbol && memberSymbol.valueDeclaration) {
+            document = getSymbolDocument(ctx, memberSymbol);
+        }
+    }
+
+    return {
+        formattedTypeString: `(${typeKind}) ${name}: ${formatTypeString(ctx, targetType)}`,
+        document,
     };
-    return result;
 }
 
 export function formatTypeString(ctx: PluginContext, type: ts.Type): string {

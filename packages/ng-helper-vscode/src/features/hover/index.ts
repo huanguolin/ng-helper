@@ -1,9 +1,9 @@
 import { isInTemplate, isInStartTagAnd, isInDbQuote, getTagAndTheAttrNameWhenInAttrValue, getTemplateInnerTextAll } from '@ng-helper/shared/lib/html';
-import { ExtensionContext, Hover, languages, MarkdownString, Position, Range, TextDocument } from 'vscode';
+import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
-import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
+import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
 
 export function registerComponentHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
@@ -13,13 +13,22 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     return undefined;
                 }
 
-                const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-                const textAfterCursor = document.getText(new Range(position, document.positionAt(document.getText().length)));
+                const docText = document.getText();
+                let offset = document.offsetAt(position);
+                const theChar = docText[offset];
+                if (!isValidIdentifier(theChar)) {
+                    return;
+                }
+
+                const textBeforeCursor = docText.slice(0, offset);
+                const textAfterCursor = docText.slice(offset);
                 if (isInTemplate(textBeforeCursor)) {
+                    const templateStartIndex = textBeforeCursor.lastIndexOf('{{');
+                    offset -= templateStartIndex + '{{'.length;
                     const contextString = getTemplateInnerTextAll(textBeforeCursor, textAfterCursor);
                     // TODO 处理 filter
                     if (contextString) {
-                        return getHoverInfo({ document, port, contextString });
+                        return getHoverInfo({ document, port, contextString, offset });
                     }
                 }
 
@@ -46,19 +55,21 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
 
 async function getHoverInfo({
     document,
-    contextString,
     port,
+    contextString,
+    offset,
 }: {
     document: TextDocument;
-    contextString: string;
     port: number;
+    contextString: string;
+    offset: number;
 }): Promise<Hover | undefined> {
     // remove .html add .ts
     const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
     await ensureTsServerRunning(tsFilePath, port);
 
-    const res = await getComponentHover(port, { fileName: tsFilePath, contextString });
+    const res = await getComponentHover(port, { fileName: tsFilePath, contextString, offset });
 
     if (res) {
         const markdownStr = new MarkdownString();

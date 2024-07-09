@@ -3,6 +3,8 @@ import type ts from 'typescript';
 
 import { ComponentCoreInfo, PluginContext } from '../type';
 
+import { isTypeOfType } from './common';
+
 export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     if (
         ctx.ts.isCallExpression(node) &&
@@ -27,7 +29,14 @@ export function getComponentCoreInfo(ctx: PluginContext, componentLiteralNode: t
     for (const prop of componentLiteralNode.properties) {
         if (ctx.ts.isPropertyAssignment(prop) && ctx.ts.isIdentifier(prop.name)) {
             if (prop.name.text === 'controller' && ctx.ts.isIdentifier(prop.initializer)) {
-                result.controllerType = ctx.typeChecker.getTypeAtLocation(prop.initializer);
+                let controllerType = ctx.typeChecker.getTypeAtLocation(prop.initializer);
+                if (isTypeOfType(ctx, controllerType)) {
+                    const targetSymbol = controllerType.symbol;
+                    if (targetSymbol) {
+                        controllerType = ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
+                    }
+                }
+                result.controllerType = controllerType;
             } else if (prop.name.text === 'controllerAs' && ctx.ts.isStringLiteral(prop.initializer)) {
                 result.controllerAs = prop.initializer.text;
             } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
