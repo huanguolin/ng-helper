@@ -5,7 +5,7 @@ import { PluginContext } from '../type';
 import { typeToString } from '../utils/common';
 import { getComponentCoreInfo, getComponentDeclareLiteralNode } from '../utils/ng';
 
-import { buildTypeInfo } from './utils';
+import { buildHoverInfo } from './utils';
 
 export function getComponentHoverType(ctx: PluginContext, contextString: string): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
@@ -37,6 +37,6 @@ export function getComponentHoverType(ctx: PluginContext, contextString: string)
             return;
         }
 
-        return buildTypeInfo({ ctx, type: targetType, name: minPrefix });
+        return buildHoverInfo({ ctx, type: targetType, name: minPrefix });
     }
 }
