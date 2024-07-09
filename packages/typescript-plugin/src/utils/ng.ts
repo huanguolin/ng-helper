@@ -74,16 +74,17 @@ export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsM
             name: k,
             typeString: typeInfo.typeString,
             document: `bindings config: ${v}`,
+            isFunction: false,
         };
-        if (typeInfo.type !== 'function') {
-            result.push(item);
-        } else {
+        if (typeInfo.type === 'function') {
             result.push({
                 ...item,
-                kind: 'function',
+                kind: 'method',
+                isFunction: true,
                 paramNames: [],
-                returnType: 'unknown',
             });
+        } else {
+            result.push(item);
         }
     }
     return result;

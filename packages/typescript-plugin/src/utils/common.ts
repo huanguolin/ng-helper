@@ -142,31 +142,26 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
     }
 
     const memberType = ctx.typeChecker.getTypeOfSymbolAtLocation(memberSymbol, memberSymbol.valueDeclaration);
-    if (memberSymbol.flags & (ctx.ts.SymbolFlags.Method | ctx.ts.SymbolFlags.Function | ctx.ts.SymbolFlags.Property)) {
-        const item: NgTypeInfo = {
+    if (memberSymbol.flags & (ctx.ts.SymbolFlags.Method | ctx.ts.SymbolFlags.Property)) {
+        let item: NgTypeInfo = {
             kind: 'property',
             name: memberName,
             typeString: ctx.typeChecker.typeToString(memberType),
             document: getSymbolDocument(ctx, memberSymbol),
+            isFunction: false,
         };
-        if (memberSymbol.flags & ctx.ts.SymbolFlags.Property) {
-            return item;
-        }
-
-        let paramNames: string[] = [];
-        let returnType = 'unknown';
         const signatures = memberType.getCallSignatures();
         if (signatures.length > 0) {
             const signature = signatures[0];
-            paramNames = signature.parameters.map((x) => x.getName());
-            returnType = ctx.typeChecker.typeToString(signature.getReturnType());
+            const paramNames = signature.parameters.map((x) => x.getName());
+            item = {
+                ...item,
+                kind: 'method',
+                isFunction: true,
+                paramNames,
+            };
         }
-        return {
-            ...item,
-            kind: 'method',
-            paramNames,
-            returnType,
-        };
+        return item;
     }
 }
 

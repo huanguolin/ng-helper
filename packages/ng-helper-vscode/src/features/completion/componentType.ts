@@ -71,11 +71,10 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
         if (res) {
             const items = res.map((x, i) => {
-                const isFunction = x.kind === 'method' || x.kind === 'function';
-                const item = new CompletionItem(x.name, isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
-                if (isFunction) {
+                const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
+                if (x.isFunction) {
                     let snippet = `${x.name}(`;
-                    snippet += x.paramNames.map((x, i) => `\${${i + 1}:${x}}`).join(', ');
+                    snippet += x.paramNames!.map((x, i) => `\${${i + 1}:${x}}`).join(', ');
                     snippet += ')${0}';
                     item.insertText = new SnippetString(snippet);
                 }

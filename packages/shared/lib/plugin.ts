@@ -1,22 +1,16 @@
-export type NgTypeKind = 'property' | 'method' | 'function';
+/**
+ * 表示与父类型的关系。
+ * NgFieldKind 并不是表示 type 的类型分类。
+ */
+export type NgFieldKind = 'property' | 'method';
 
-export type NgTypeInfo = NgPropertyTypeInfo | NgFunctionLikeTypeInfo;
-
-export interface NgBaseTypeInfo {
-    kind: NgTypeKind;
+export interface NgTypeInfo {
+    kind: NgFieldKind;
     name: string;
     typeString: string;
     document: string;
-}
-
-export interface NgPropertyTypeInfo extends NgBaseTypeInfo {
-    kind: 'property';
-}
-
-export interface NgFunctionLikeTypeInfo extends NgBaseTypeInfo {
-    kind: 'method' | 'function';
-    paramNames: string[];
-    returnType: string;
+    isFunction: boolean;
+    paramNames?: string[];
 }
 
 export interface NgPluginConfiguration {
