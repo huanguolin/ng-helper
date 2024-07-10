@@ -9,7 +9,7 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 - [x] Component:
   - [x] component 创建右键菜单
   - [x] html 数据绑定自动补全
-  - [ ] html hover 类型提示
+  - [x] html hover 类型提示
   - [ ] html 中跳转到 ts 定义位置
   - [ ] html 中 component 标签名字自动补全
   - [ ] html 中 component 属性自动补全
