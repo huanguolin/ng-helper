@@ -1,16 +1,6 @@
 import assert from 'assert';
 
-interface TagAndCurrentAttrName {
-    tagName: string;
-    attrName: string;
-}
-
-const SPACE = '\u0020';
-
-export function isContainsNgFilter(prefix: string): boolean {
-    return /(^|[^|])\|([^|]|$)/.test(prefix);
-}
-
+// ！！！需要重构 ！！！
 export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean): boolean {
     const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
     const lastEndTagStart = textBeforeCursor.lastIndexOf('</');
@@ -38,6 +28,7 @@ export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCur
     return and(tagTextBeforeCursor);
 }
 
+// ！！！需要重构 ！！！
 /**
  * 可否补全指令。
  * 只有三种情况不补全：
@@ -73,7 +64,7 @@ export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
  * @param tagTextBeforeCursor 光标前的字符串。
  * @returns 是否在其中。
  */
-export function isInDbQuote(tagTextBeforeCursor: string): boolean {
+export function isInDbQuote_deprecate(tagTextBeforeCursor: string): boolean {
     // input example: '<div class="a b" ng-if="
     const chArr = Array.from(tagTextBeforeCursor);
     const quoteCnt = chArr.filter((c) => c === '"').length;
@@ -90,6 +81,7 @@ export function getAttrValueText_old(tagTextBeforeCursor: string): string {
     return tagTextBeforeCursor.slice(index + 1);
 }
 
+// ！！！需要重构 ！！！
 /**
  * 获取 tag name 和光标前，且离光标最近的 attr name。
  * @param tagTextBeforeCursor 光标前的字符串。
@@ -99,7 +91,7 @@ export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string)
     // input example: '<div class="a b" ng-if="
 
     assert(
-        isInStartTagAnd(tagTextBeforeCursor, isInDbQuote),
+        isInStartTagAnd(tagTextBeforeCursor, isInDbQuote_deprecate),
         'getTagAndTheAttrNameWhenInAttrValue() input must be "tagTextBeforeCursor", but got: ' + tagTextBeforeCursor,
     );
 
@@ -129,7 +121,7 @@ export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string)
  * @param tagTextBeforeCursor 文件开始到光标前的字符串。
  * @returns 是否在其中。
  */
-export function isInTemplate(textBeforeCursor: string): boolean {
+export function isInTemplate_deprecate(textBeforeCursor: string): boolean {
     return !!getTemplateText_old(textBeforeCursor);
 }
 
@@ -139,15 +131,15 @@ export function isInTemplate(textBeforeCursor: string): boolean {
  * @param textBeforeCursor 光标前的文本字符串。
  * @returns 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
  */
-export function getTemplateInnerText(textBeforeCursor: string): string | undefined {
+export function getTemplateInnerText_deprecate(textBeforeCursor: string): string | undefined {
     const tplText = getTemplateText_old(textBeforeCursor);
     if (tplText) {
         return tplText.slice('{{'.length);
     }
 }
 
-export function getTemplateInnerTextAll(textBeforeCursor: string, textAfterCursor: string): string | undefined {
-    const prefix = getTemplateInnerText(textBeforeCursor);
+export function getTemplateInnerTextAll_deprecate(textBeforeCursor: string, textAfterCursor: string): string | undefined {
+    const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
 
     const firstRightBraces = textAfterCursor.indexOf('}}');
     if (firstRightBraces < 0) {
@@ -180,6 +172,27 @@ export function getTemplateText_old(textBeforeCursor: string): string | undefine
     }
 
     return templateAreaText;
+}
+
+//=========================================================
+// 下面是新函数或者重构后的函数
+//=========================================================
+
+export interface TagAndCurrentAttrName {
+    tagName: string;
+    attrName: string;
+}
+
+export interface ExtractString {
+    str: string;
+    start: number;
+    length: number;
+}
+
+export const SPACE = '\u0020';
+
+export function isContainsNgFilter(prefix: string): boolean {
+    return /(^|[^|])\|([^|]|$)/.test(prefix);
 }
 
 export function getAttrValueText(htmlText: string, offset: number): ExtractString | undefined {
@@ -218,10 +231,4 @@ function ensureInputValid(htmlText: string, offset: number) {
     if (offset < 0 || offset > htmlText.length) {
         throw new Error('offset is invalid');
     }
-}
-
-export interface ExtractString {
-    str: string;
-    start: number;
-    length: number;
 }

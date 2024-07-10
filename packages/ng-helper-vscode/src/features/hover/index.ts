@@ -1,7 +1,7 @@
 import {
-    isInTemplate,
+    isInTemplate_deprecate,
     isInStartTagAnd,
-    isInDbQuote,
+    isInDbQuote_deprecate,
     getTagAndTheAttrNameWhenInAttrValue,
     getTemplateText,
     getAttrValueText,
@@ -28,7 +28,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 }
 
                 const textBeforeCursor = docText.slice(0, offset);
-                if (isInTemplate(textBeforeCursor)) {
+                if (isInTemplate_deprecate(textBeforeCursor)) {
                     const tplText = getTemplateText(docText, offset);
                     // TODO filter 处理
                     if (tplText) {
@@ -40,7 +40,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 if (
                     isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
                         tagTextBeforeCursor = innerTagTextBeforeCursor;
-                        return isInDbQuote(innerTagTextBeforeCursor);
+                        return isInDbQuote_deprecate(innerTagTextBeforeCursor);
                     })
                 ) {
                     const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);

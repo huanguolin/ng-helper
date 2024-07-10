@@ -1,7 +1,7 @@
 import {
-    isInDbQuote,
+    isInDbQuote_deprecate,
     canCompletionNgDirective,
-    isInTemplate,
+    isInTemplate_deprecate,
     isInStartTagAnd,
     isContainsNgFilter,
     getTemplateText_old,
@@ -92,7 +92,7 @@ describe('isInDbQuote()', () => {
         ['<div class="btn" ng-hide', false],
         ['<div class="btn" ng-hide ', false],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isInDbQuote(input);
+        const v = isInDbQuote_deprecate(input);
         expect(v).toBe(output);
     });
 });
@@ -137,7 +137,7 @@ describe('isInTemplate()', () => {
         ['<x-c attr-title="{{', true],
         ['{{ <div', false],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isInTemplate(input);
+        const v = isInTemplate_deprecate(input);
         expect(v).toBe(output);
     });
 });

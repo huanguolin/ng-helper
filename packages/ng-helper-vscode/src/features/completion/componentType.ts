@@ -1,11 +1,11 @@
 import {
     getAttrValueText_old,
     getTagAndTheAttrNameWhenInAttrValue,
-    getTemplateInnerText,
+    getTemplateInnerText_deprecate,
     isContainsNgFilter,
-    isInDbQuote,
+    isInDbQuote_deprecate,
     isInStartTagAnd,
-    isInTemplate,
+    isInTemplate_deprecate,
 } from '@ng-helper/shared/lib/html';
 import {
     CompletionItem,
@@ -37,8 +37,8 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
 
         const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-        if (isInTemplate(textBeforeCursor)) {
-            const prefix = getTemplateInnerText(textBeforeCursor);
+        if (isInTemplate_deprecate(textBeforeCursor)) {
+            const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
             if (prefix && !isContainsNgFilter(prefix)) {
                 return this.getCompletionItems(document, prefix);
             }
@@ -48,7 +48,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         if (
             isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
                 tagTextBeforeCursor = innerTagTextBeforeCursor;
-                return isInDbQuote(innerTagTextBeforeCursor);
+                return isInDbQuote_deprecate(innerTagTextBeforeCursor);
             })
         ) {
             const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);

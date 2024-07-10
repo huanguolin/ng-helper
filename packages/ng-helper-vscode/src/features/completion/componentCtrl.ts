@@ -1,10 +1,10 @@
 import {
-    isInTemplate,
-    getTemplateInnerText,
+    isInTemplate_deprecate,
+    getTemplateInnerText_deprecate,
     isContainsNgFilter,
     getTagAndTheAttrNameWhenInAttrValue,
     isInStartTagAnd,
-    isInDbQuote,
+    isInDbQuote_deprecate,
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, Range } from 'vscode';
 
@@ -20,8 +20,8 @@ export function componentCtrl(port: number) {
             }
 
             const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-            if (isInTemplate(textBeforeCursor)) {
-                const prefix = getTemplateInnerText(textBeforeCursor);
+            if (isInTemplate_deprecate(textBeforeCursor)) {
+                const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     return getComponentControllerAsCompletion(document, port);
                 }
@@ -31,7 +31,7 @@ export function componentCtrl(port: number) {
             if (
                 isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
                     tagTextBeforeCursor = innerTagTextBeforeCursor;
-                    return isInDbQuote(innerTagTextBeforeCursor);
+                    return isInDbQuote_deprecate(innerTagTextBeforeCursor);
                 })
             ) {
                 const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
