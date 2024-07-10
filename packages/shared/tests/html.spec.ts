@@ -6,7 +6,7 @@ import {
     isContainsNgFilter,
     getTemplateText_old,
     getTagAndTheAttrNameWhenInAttrValue,
-    getAttrValueText,
+    getAttrValueText_old,
     getTemplateText,
 } from '../lib/html';
 
@@ -105,7 +105,7 @@ describe('getAttrValueText()', () => {
         ['<common-btn class="btn"  title=" ', ' '], // 不能 trim
         ['<common-btn class="btn" ng-if="click(), n = n + 1', 'click(), n = n + 1'],
     ])('input: %s => output: %s', (input: string, output: string) => {
-        const v = getAttrValueText(input);
+        const v = getAttrValueText_old(input);
         expect(v).toBe(output);
     });
 });

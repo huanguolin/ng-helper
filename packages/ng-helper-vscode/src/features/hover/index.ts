@@ -1,4 +1,11 @@
-import { isInTemplate, isInStartTagAnd, isInDbQuote, getTagAndTheAttrNameWhenInAttrValue, getTemplateText } from '@ng-helper/shared/lib/html';
+import {
+    isInTemplate,
+    isInStartTagAnd,
+    isInDbQuote,
+    getTagAndTheAttrNameWhenInAttrValue,
+    getTemplateText,
+    getAttrValueText,
+} from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
@@ -23,6 +30,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 const textBeforeCursor = docText.slice(0, offset);
                 if (isInTemplate(textBeforeCursor)) {
                     const tplText = getTemplateText(docText, offset);
+                    // TODO filter 处理
                     if (tplText) {
                         return getHoverInfo({ document, port, contextString: tplText.str, offset: offset - tplText.start });
                     }
@@ -37,11 +45,11 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 ) {
                     const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
                     if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
-                        // TODO
-                        // const prefix = getAttrValueText(tagTextBeforeCursor);
-                        // if (prefix) {
-                        //     return getHoverInfo({ document, port, prefix });
-                        // }
+                        // TODO filter 处理
+                        const attrValueText = getAttrValueText(docText, offset);
+                        if (attrValueText) {
+                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: offset - attrValueText.start });
+                        }
                     }
                 }
             },

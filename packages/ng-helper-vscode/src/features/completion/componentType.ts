@@ -1,5 +1,5 @@
 import {
-    getAttrValueText,
+    getAttrValueText_old,
     getTagAndTheAttrNameWhenInAttrValue,
     getTemplateInnerText,
     isContainsNgFilter,
@@ -53,7 +53,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         ) {
             const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
             if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
-                let prefix = getAttrValueText(tagTextBeforeCursor);
+                let prefix = getAttrValueText_old(tagTextBeforeCursor);
                 prefix = processPrefix(attrName, prefix);
                 if (prefix) {
                     return this.getCompletionItems(document, prefix);

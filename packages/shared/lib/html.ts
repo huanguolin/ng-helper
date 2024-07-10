@@ -85,7 +85,7 @@ export function isInDbQuote(tagTextBeforeCursor: string): boolean {
  * @param tagTextBeforeCursor 光标之前的一个 tag 文本字符串。
  * @returns 属性值字符串。
  */
-export function getAttrValueText(tagTextBeforeCursor: string): string {
+export function getAttrValueText_old(tagTextBeforeCursor: string): string {
     const index = tagTextBeforeCursor.lastIndexOf('"');
     return tagTextBeforeCursor.slice(index + 1);
 }
@@ -182,20 +182,28 @@ export function getTemplateText_old(textBeforeCursor: string): string | undefine
     return templateAreaText;
 }
 
+export function getAttrValueText(htmlText: string, offset: number): ExtractString | undefined {
+    return getTextInside(htmlText, offset, '"', '"');
+}
+
 export function getTemplateText(htmlText: string, offset: number): ExtractString | undefined {
+    return getTextInside(htmlText, offset, '{{', '}}');
+}
+
+export function getTextInside(htmlText: string, offset: number, leftMarker: string, rightMarker: string): ExtractString | undefined {
     ensureInputValid(htmlText, offset);
 
-    const leftBraces = htmlText.lastIndexOf('{{', offset);
+    const leftBraces = htmlText.lastIndexOf(leftMarker, offset);
     if (leftBraces < 0) {
         return;
     }
 
-    const rightBraces = htmlText.indexOf('}}', offset);
+    const rightBraces = htmlText.indexOf(rightMarker, offset);
     if (rightBraces < 0) {
         return;
     }
 
-    const start = leftBraces + '{{'.length;
+    const start = leftBraces + leftMarker.length;
     const end = rightBraces;
     if (offset >= start && offset <= end) {
         return {
