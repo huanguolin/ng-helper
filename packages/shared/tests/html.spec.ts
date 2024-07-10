@@ -3,11 +3,11 @@ import {
     canCompletionNgDirective,
     isInTemplate,
     isInStartTagAnd,
-    getTemplateInnerText,
     isContainsNgFilter,
-    getTemplateText,
+    getTemplateText_old,
     getTagAndTheAttrNameWhenInAttrValue,
     getAttrValueText,
+    getTemplateText,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -142,21 +142,35 @@ describe('isInTemplate()', () => {
     });
 });
 
-describe('getTemplateInnerText()', () => {
+describe('getTemplateText()', () => {
     it.each([
-        ['some text before {{template', 'template'], // 正常情况
-        ['text without template markers', undefined], // 无模板起始标记
-        ['text with {{illegal}} character}', undefined], // 含非法字符
-        ['text with {{<html>', undefined], // 含非法字符
-        ['start {{ignore this}} end {{template start', 'template start'], // 多个模板起始标记
-        ['{{  ', '  '], // 不能 trim
-        ['', undefined], // 空字符串输入
-    ])('given input "%s", should return "%s"', (input, expectedOutput) => {
-        expect(getTemplateInnerText(input)).toBe(expectedOutput);
+        // 正常情况
+        ['{{x}}', 2, { str: 'x', start: 2, length: 1 }],
+        ['{{}}', 2, { str: '', start: 2, length: 0 }],
+        // 模板标记缺失
+        ['{text}}', 2, undefined],
+        ['text}}', 2, undefined],
+        ['{{text}', 2, undefined],
+        ['{{text', 2, undefined],
+        // 范围外
+        ['0{{}}5', 0, undefined],
+        ['0{{}}5', 5, undefined],
+        ['0{{}}5', 1, undefined],
+        ['0{{}}5', 2, undefined],
+        ['0{{}}5', 4, undefined],
+        // 多个模板起始标记
+        ['0{{3}}6{{9}}', 9, { str: '9', start: 9, length: 1 }],
+        ['0{{3}}6{{9}}', 3, { str: '3', start: 3, length: 1 }],
+        // 不能 trim
+        ['{{  }}', 2, { str: '  ', start: 2, length: 2 }],
+        ['', 0, undefined], // 空字符串输入
+    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getTemplateText(text, offset);
+        expect(result).toStrictEqual(expectedOutput);
     });
 });
 
-describe('getTemplateText()', () => {
+describe('getTemplateText_old()', () => {
     it.each([
         ['some text before {{template', '{{template'], // 正常情况
         ['text without template markers', undefined], // 无模板起始标记
@@ -166,6 +180,6 @@ describe('getTemplateText()', () => {
         ['{{  ', '{{  '],
         ['', undefined],
     ])('given input "%s", should return "%s"', (input, expectedOutput) => {
-        expect(getTemplateText(input)).toBe(expectedOutput);
+        expect(getTemplateText_old(input)).toBe(expectedOutput);
     });
 });

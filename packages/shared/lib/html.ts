@@ -130,7 +130,7 @@ export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string)
  * @returns 是否在其中。
  */
 export function isInTemplate(textBeforeCursor: string): boolean {
-    return !!getTemplateText(textBeforeCursor);
+    return !!getTemplateText_old(textBeforeCursor);
 }
 
 /**
@@ -140,7 +140,7 @@ export function isInTemplate(textBeforeCursor: string): boolean {
  * @returns 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
  */
 export function getTemplateInnerText(textBeforeCursor: string): string | undefined {
-    const tplText = getTemplateText(textBeforeCursor);
+    const tplText = getTemplateText_old(textBeforeCursor);
     if (tplText) {
         return tplText.slice('{{'.length);
     }
@@ -168,7 +168,7 @@ export function getTemplateInnerTextAll(textBeforeCursor: string, textAfterCurso
  * @param textBeforeCursor 光标前的文本字符串。
  * @returns 返回合规的光标前的模板文本，如果没有找到，则返回undefined。
  */
-export function getTemplateText(textBeforeCursor: string): string | undefined {
+export function getTemplateText_old(textBeforeCursor: string): string | undefined {
     const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
     if (lastLeftBraces < 0) {
         return;
@@ -180,4 +180,40 @@ export function getTemplateText(textBeforeCursor: string): string | undefined {
     }
 
     return templateAreaText;
+}
+
+export function getTemplateText(htmlText: string, offset: number): ExtractString | undefined {
+    ensureInputValid(htmlText, offset);
+
+    const leftBraces = htmlText.lastIndexOf('{{', offset);
+    if (leftBraces < 0) {
+        return;
+    }
+
+    const rightBraces = htmlText.indexOf('}}', offset);
+    if (rightBraces < 0) {
+        return;
+    }
+
+    const start = leftBraces + '{{'.length;
+    const end = rightBraces;
+    if (offset >= start && offset <= end) {
+        return {
+            str: htmlText.slice(start, end),
+            start,
+            length: end - start,
+        };
+    }
+}
+
+function ensureInputValid(htmlText: string, offset: number) {
+    if (offset < 0 || offset > htmlText.length) {
+        throw new Error('offset is invalid');
+    }
+}
+
+export interface ExtractString {
+    str: string;
+    start: number;
+    length: number;
 }

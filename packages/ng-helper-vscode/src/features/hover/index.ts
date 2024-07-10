@@ -1,4 +1,4 @@
-import { isInTemplate, isInStartTagAnd, isInDbQuote, getTagAndTheAttrNameWhenInAttrValue, getTemplateInnerTextAll } from '@ng-helper/shared/lib/html';
+import { isInTemplate, isInStartTagAnd, isInDbQuote, getTagAndTheAttrNameWhenInAttrValue, getTemplateText } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
@@ -14,21 +14,17 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 }
 
                 const docText = document.getText();
-                let offset = document.offsetAt(position);
+                const offset = document.offsetAt(position);
                 const theChar = docText[offset];
                 if (!isValidIdentifier(theChar)) {
                     return;
                 }
 
                 const textBeforeCursor = docText.slice(0, offset);
-                const textAfterCursor = docText.slice(offset);
                 if (isInTemplate(textBeforeCursor)) {
-                    const templateStartIndex = textBeforeCursor.lastIndexOf('{{');
-                    offset -= templateStartIndex + '{{'.length;
-                    const contextString = getTemplateInnerTextAll(textBeforeCursor, textAfterCursor);
-                    // TODO 处理 filter
-                    if (contextString) {
-                        return getHoverInfo({ document, port, contextString, offset });
+                    const tplText = getTemplateText(docText, offset);
+                    if (tplText) {
+                        return getHoverInfo({ document, port, contextString: tplText.str, offset: offset - tplText.start });
                     }
                 }
 
