@@ -16,6 +16,9 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, offse
         return;
     }
 
+    if (!contextString.endsWith('.')) {
+        contextString += '.';
+    }
     const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, contextString);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
