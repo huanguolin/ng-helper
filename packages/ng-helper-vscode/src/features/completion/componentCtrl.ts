@@ -1,10 +1,9 @@
 import {
-    isInTemplate_deprecate,
-    getTemplateInnerText_deprecate,
     isContainsNgFilter,
     getTagAndTheAttrNameWhenInAttrValue,
     isInStartTagAnd,
-    isInDbQuote_deprecate,
+    getTemplateText,
+    TagAndCurrentAttrName,
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, Range } from 'vscode';
 
@@ -19,22 +18,24 @@ export function componentCtrl(port: number) {
                 return undefined;
             }
 
-            const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-            if (isInTemplate_deprecate(textBeforeCursor)) {
-                const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
+            const docText = document.getText();
+            const offset = document.offsetAt(position);
+            const tplText = getTemplateText(docText, offset);
+            if (tplText) {
+                const prefix = tplText.str.slice(0, tplText.relativeOffset);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     return getComponentControllerAsCompletion(document, port);
                 }
             }
 
-            let tagTextBeforeCursor = '';
-            if (
-                isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
-                    tagTextBeforeCursor = innerTagTextBeforeCursor;
-                    return isInDbQuote_deprecate(innerTagTextBeforeCursor);
-                })
-            ) {
-                const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+            const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
+            let tagInfo: TagAndCurrentAttrName | undefined = undefined;
+            const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
+                tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+                return Boolean(tagInfo.tagName && tagInfo.attrName);
+            });
+            if (isInStartTag && tagInfo) {
+                const { tagName, attrName } = tagInfo;
                 if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
                     return getComponentControllerAsCompletion(document, port);
                 }

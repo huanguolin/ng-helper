@@ -1,11 +1,10 @@
 import {
-    getAttrValueText_old,
+    getAttrValueText,
     getTagAndTheAttrNameWhenInAttrValue,
-    getTemplateInnerText_deprecate,
+    getTemplateText,
     isContainsNgFilter,
-    isInDbQuote_deprecate,
     isInStartTagAnd,
-    isInTemplate_deprecate,
+    TagAndCurrentAttrName,
 } from '@ng-helper/shared/lib/html';
 import {
     CompletionItem,
@@ -36,27 +35,31 @@ class TypeCompletionProvider implements CompletionItemProvider {
             return undefined;
         }
 
-        const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-        if (isInTemplate_deprecate(textBeforeCursor)) {
-            const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
+        const docText = document.getText();
+        const offset = document.offsetAt(position);
+        const tplText = getTemplateText(docText, offset);
+        if (tplText) {
+            const prefix = tplText.str.slice(0, tplText.relativeOffset);
             if (prefix && !isContainsNgFilter(prefix)) {
                 return this.getCompletionItems(document, prefix);
             }
         }
 
-        let tagTextBeforeCursor = '';
-        if (
-            isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
-                tagTextBeforeCursor = innerTagTextBeforeCursor;
-                return isInDbQuote_deprecate(innerTagTextBeforeCursor);
-            })
-        ) {
-            const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+        const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
+        let tagInfo: TagAndCurrentAttrName | undefined = undefined;
+        const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
+            tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+            return Boolean(tagInfo.tagName && tagInfo.attrName);
+        });
+        if (isInStartTag && tagInfo) {
+            const { tagName, attrName } = tagInfo;
             if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
-                let prefix = getAttrValueText_old(tagTextBeforeCursor);
-                prefix = processPrefix(attrName, prefix);
-                if (prefix) {
-                    return this.getCompletionItems(document, prefix);
+                const attrValueText = getAttrValueText(docText, offset);
+                if (attrValueText) {
+                    const prefix = processPrefix(attrName, attrValueText?.str.slice(0, attrValueText.relativeOffset) ?? '');
+                    if (prefix) {
+                        return this.getCompletionItems(document, prefix);
+                    }
                 }
             }
         }
@@ -88,10 +91,11 @@ class TypeCompletionProvider implements CompletionItemProvider {
     }
 }
 
+// 特殊处理:
+// 输入：prefix = "{ 'class-name': ctrl."
+// 输出：prefix = "ctrl."
 function processPrefix(attrName: string, prefix: string): string {
-    // 特殊处理:
-    // 输入：prefix = "{ 'class-name': ctrl."
-    // 输出：prefix = "ctrl."
+    prefix = prefix.trim();
     if (attrName === 'ng-class' && prefix.startsWith('{') && prefix.includes(':')) {
         return prefix.split(':').pop()!;
     }

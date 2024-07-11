@@ -1,9 +1,9 @@
 import {
     isInStartTagAnd,
-    isInDbQuote_deprecate,
     getTagAndTheAttrNameWhenInAttrValue,
     getTemplateText,
     getAttrValueText,
+    TagAndCurrentAttrName,
 } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
@@ -29,23 +29,23 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 const tplText = getTemplateText(docText, offset);
                 // TODO filter 处理
                 if (tplText) {
-                    return getHoverInfo({ document, port, contextString: tplText.str, offset: offset - tplText.start });
+                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.relativeOffset });
                 }
 
                 const textBeforeCursor = docText.slice(0, offset);
-                let tagTextBeforeCursor = '';
-                if (
-                    isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {
-                        tagTextBeforeCursor = innerTagTextBeforeCursor;
-                        return isInDbQuote_deprecate(innerTagTextBeforeCursor);
-                    })
-                ) {
-                    const { tagName, attrName } = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+                let tagInfo: TagAndCurrentAttrName | undefined = undefined;
+                const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
+                    tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
+                    return Boolean(tagInfo.tagName && tagInfo.attrName);
+                });
+                if (isInStartTag && tagInfo) {
+                    const { tagName, attrName } = tagInfo;
                     if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
                         // TODO filter 处理
+                        // TODO ng-class map
                         const attrValueText = getAttrValueText(docText, offset);
                         if (attrValueText) {
-                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: offset - attrValueText.start });
+                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.relativeOffset });
                         }
                     }
                 }

@@ -1,5 +1,3 @@
-import assert from 'assert';
-
 // ！！！需要重构 ！！！
 export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean): boolean {
     const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
@@ -59,28 +57,6 @@ export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
     return true;
 }
 
-/**
- * 是否在双引号 "" 中。
- * @param tagTextBeforeCursor 光标前的字符串。
- * @returns 是否在其中。
- */
-export function isInDbQuote_deprecate(tagTextBeforeCursor: string): boolean {
-    // input example: '<div class="a b" ng-if="
-    const chArr = Array.from(tagTextBeforeCursor);
-    const quoteCnt = chArr.filter((c) => c === '"').length;
-    return quoteCnt % 2 !== 0;
-}
-/**
- * 从标签文本中获取属性值中的字符串。
- * 注意：返回的字符串不能 trim，否则利用它计算 offset 会出错。
- * @param tagTextBeforeCursor 光标之前的一个 tag 文本字符串。
- * @returns 属性值字符串。
- */
-export function getAttrValueText_old(tagTextBeforeCursor: string): string {
-    const index = tagTextBeforeCursor.lastIndexOf('"');
-    return tagTextBeforeCursor.slice(index + 1);
-}
-
 // ！！！需要重构 ！！！
 /**
  * 获取 tag name 和光标前，且离光标最近的 attr name。
@@ -89,11 +65,6 @@ export function getAttrValueText_old(tagTextBeforeCursor: string): string {
  */
 export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string): TagAndCurrentAttrName {
     // input example: '<div class="a b" ng-if="
-
-    assert(
-        isInStartTagAnd(tagTextBeforeCursor, isInDbQuote_deprecate),
-        'getTagAndTheAttrNameWhenInAttrValue() input must be "tagTextBeforeCursor", but got: ' + tagTextBeforeCursor,
-    );
 
     const result: TagAndCurrentAttrName = { tagName: '', attrName: '' };
 
@@ -113,49 +84,6 @@ export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string)
     result.attrName = lastAttr!.split('=')[0];
 
     return result;
-}
-
-/**
- * 是否在 Angular.js 模版 {{}} 中。
- * 只要在 {{ }} 之间即可。
- * @param tagTextBeforeCursor 文件开始到光标前的字符串。
- * @returns 是否在其中。
- */
-export function isInTemplate_deprecate(textBeforeCursor: string): boolean {
-    return !!getTemplateText_old(textBeforeCursor);
-}
-
-/**
- * 从光标前的文本中获取模板内部字符串。
- * 注意：返回的字符串不能 trim，否则利用它计算 offset 会出错。
- * @param textBeforeCursor 光标前的文本字符串。
- * @returns 返回合规的光标前的模板内文本，如果没有找到，则返回undefined。
- */
-export function getTemplateInnerText_deprecate(textBeforeCursor: string): string | undefined {
-    const tplText = getTemplateText_old(textBeforeCursor);
-    if (tplText) {
-        return tplText.slice('{{'.length);
-    }
-}
-
-/**
- * 从光标前的文本中获取模板字符串(包含起始的'{{')。
- *
- * @param textBeforeCursor 光标前的文本字符串。
- * @returns 返回合规的光标前的模板文本，如果没有找到，则返回undefined。
- */
-export function getTemplateText_old(textBeforeCursor: string): string | undefined {
-    const lastLeftBraces = textBeforeCursor.lastIndexOf('{{');
-    if (lastLeftBraces < 0) {
-        return;
-    }
-
-    const templateAreaText = textBeforeCursor.slice(lastLeftBraces);
-    if (templateAreaText.includes('}') || templateAreaText.includes('<') || templateAreaText.includes('>')) {
-        return;
-    }
-
-    return templateAreaText;
 }
 
 //=========================================================

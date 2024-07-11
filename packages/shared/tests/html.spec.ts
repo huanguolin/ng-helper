@@ -1,14 +1,4 @@
-import {
-    isInDbQuote_deprecate,
-    canCompletionNgDirective,
-    isInTemplate_deprecate,
-    isInStartTagAnd,
-    isContainsNgFilter,
-    getTemplateText_old,
-    getTagAndTheAttrNameWhenInAttrValue,
-    getAttrValueText_old,
-    getTemplateText,
-} from '../lib/html';
+import { canCompletionNgDirective, isInStartTagAnd, isContainsNgFilter, getTagAndTheAttrNameWhenInAttrValue, getTemplateText } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
     it.each([
@@ -72,44 +62,6 @@ describe('canCompletionNgDirective()', () => {
     });
 });
 
-describe('isInDbQuote()', () => {
-    it.each([
-        ['"', true],
-        ['""', false],
-        ['{{ "', true],
-        ['"a" "', true],
-        ['<div class', false],
-        ['<div class=', false],
-        ['<div class="', true],
-        ['<div class="btn', true],
-        ['<div class="btn ', true],
-        ['<div class="btn"', false],
-        ['<div class="btn" ', false],
-        ['<div class="btn"  tit', false],
-        ['<div class="btn"  title=" ', true],
-        ['<div class="btn"  title=" "', false],
-        ['<div class="btn" ng-if="click()"', false],
-        ['<div class="btn" ng-hide', false],
-        ['<div class="btn" ng-hide ', false],
-    ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isInDbQuote_deprecate(input);
-        expect(v).toBe(output);
-    });
-});
-
-describe('getAttrValueText()', () => {
-    it.each([
-        ['<div class="', ''],
-        ['<div class="btn', 'btn'],
-        ['<div class="btn ', 'btn '], // 不能 trim
-        ['<common-btn class="btn"  title=" ', ' '], // 不能 trim
-        ['<common-btn class="btn" ng-if="click(), n = n + 1', 'click(), n = n + 1'],
-    ])('input: %s => output: %s', (input: string, output: string) => {
-        const v = getAttrValueText_old(input);
-        expect(v).toBe(output);
-    });
-});
-
 describe('getTagAndTheAttrNameWhenInAttrValue()', () => {
     it.each([
         ['<div class="', 'div', 'class'],
@@ -124,21 +76,6 @@ describe('getTagAndTheAttrNameWhenInAttrValue()', () => {
         const v = getTagAndTheAttrNameWhenInAttrValue(input);
         expect(v.tagName).toBe(tag);
         expect(v.attrName).toBe(attr);
-    });
-});
-
-describe('isInTemplate()', () => {
-    it.each([
-        ['{{', true],
-        ['{{}}', false],
-        ['{{\n}}', false],
-        ['{{}', false],
-        ['{{ ctrl', true],
-        ['<x-c attr-title="{{', true],
-        ['{{ <div', false],
-    ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isInTemplate_deprecate(input);
-        expect(v).toBe(output);
     });
 });
 
@@ -169,19 +106,5 @@ describe('getTemplateText()', () => {
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
         const result = getTemplateText(text, offset);
         expect(result).toStrictEqual(expectedOutput);
-    });
-});
-
-describe('getTemplateText_old()', () => {
-    it.each([
-        ['some text before {{template', '{{template'], // 正常情况
-        ['text without template markers', undefined], // 无模板起始标记
-        ['text with {{illegal}} character}', undefined], // 含非法字符
-        ['text with {{<html>', undefined], // 含非法字符
-        ['start {{ignore this}} end {{template start', '{{template start'], // 多个模板起始标记
-        ['{{  ', '{{  '],
-        ['', undefined],
-    ])('given input "%s", should return "%s"', (input, expectedOutput) => {
-        expect(getTemplateText_old(input)).toBe(expectedOutput);
     });
 });
