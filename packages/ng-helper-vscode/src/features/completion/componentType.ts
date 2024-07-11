@@ -1,7 +1,7 @@
 import {
     getTextInDbQuotes,
     getTagAndTheAttrNameWhenInAttrValue,
-    getTemplateText,
+    getTextInTemplate,
     isContainsNgFilter,
     isInStartTagAnd,
     TagAndCurrentAttrName,
@@ -37,7 +37,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         const docText = document.getText();
         const offset = document.offsetAt(position);
-        const tplText = getTemplateText(docText, offset);
+        const tplText = getTextInTemplate(docText, offset);
         if (tplText) {
             const prefix = tplText.str.slice(0, tplText.relativeOffset);
             if (prefix && !isContainsNgFilter(prefix)) {

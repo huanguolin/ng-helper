@@ -1,7 +1,7 @@
 import {
     isInStartTagAnd,
     getTagAndTheAttrNameWhenInAttrValue,
-    getTemplateText,
+    getTextInTemplate,
     getTextInDbQuotes,
     TagAndCurrentAttrName,
 } from '@ng-helper/shared/lib/html';
@@ -26,7 +26,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     return;
                 }
 
-                const tplText = getTemplateText(docText, offset);
+                const tplText = getTextInTemplate(docText, offset);
                 // TODO filter 处理
                 if (tplText) {
                     return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.relativeOffset });

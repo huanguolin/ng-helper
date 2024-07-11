@@ -180,7 +180,7 @@ export function getTextInDbQuotes(htmlText: string, offset: number): ExtractStri
     return getTextInside(htmlText, offset, '"', '"');
 }
 
-export function getTemplateText(htmlText: string, offset: number): ExtractString | undefined {
+export function getTextInTemplate(htmlText: string, offset: number): ExtractString | undefined {
     return getTextInside(htmlText, offset, '{{', '}}');
 }
 

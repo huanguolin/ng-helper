@@ -3,7 +3,7 @@ import {
     isInStartTagAnd,
     isContainsNgFilter,
     getTagAndTheAttrNameWhenInAttrValue,
-    getTemplateText,
+    getTextInTemplate,
     getStartTagText,
 } from '../lib/html';
 
@@ -115,7 +115,7 @@ describe('getStartTagText()', () => {
     });
 });
 
-describe('getTemplateText()', () => {
+describe('getTextInTemplate()', () => {
     it.each([
         // 正常情况
         ['{{x}}', 2, { str: 'x', start: 2, length: 1, relativeOffset: 0 }],
@@ -139,7 +139,7 @@ describe('getTemplateText()', () => {
         // 不能 trim
         ['{{  }}', 2, { str: '  ', start: 2, length: 2, relativeOffset: 0 }],
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getTemplateText(text, offset);
+        const result = getTextInTemplate(text, offset);
         expect(result).toStrictEqual(expectedOutput);
     });
 
@@ -147,6 +147,6 @@ describe('getTemplateText()', () => {
         ['', 0],
         ['{{1}}', -1],
     ])('invalid input: %s, should throw error', (text, offset) => {
-        expect(() => getTemplateText(text, offset)).toThrow();
+        expect(() => getTextInTemplate(text, offset)).toThrow();
     });
 });
