@@ -2,7 +2,7 @@ import {
     isInStartTagAnd,
     getTagAndTheAttrNameWhenInAttrValue,
     getTemplateText,
-    getAttrValueText,
+    getTextInDbQuotes,
     TagAndCurrentAttrName,
 } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
@@ -43,7 +43,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
                         // TODO filter 处理
                         // TODO ng-class map
-                        const attrValueText = getAttrValueText(docText, offset);
+                        const attrValueText = getTextInDbQuotes(docText, offset);
                         if (attrValueText) {
                             return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.relativeOffset });
                         }

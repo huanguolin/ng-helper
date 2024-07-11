@@ -116,7 +116,7 @@ export function getStartTagText(htmlText: string, offset: number): ExtractString
     let pos = offset;
 
     // 在不在 "" 中
-    const attrValueText = getAttrValueText(htmlText, offset);
+    const attrValueText = getTextInDbQuotes(htmlText, offset);
     if (attrValueText) {
         // 如果在，则将光标移动到 "" 外，这里向前移动
         pos = attrValueText.start - '"'.length - 1;
@@ -176,7 +176,7 @@ export function getStartTagText(htmlText: string, offset: number): ExtractString
     };
 }
 
-export function getAttrValueText(htmlText: string, offset: number): ExtractString | undefined {
+export function getTextInDbQuotes(htmlText: string, offset: number): ExtractString | undefined {
     return getTextInside(htmlText, offset, '"', '"');
 }
 
