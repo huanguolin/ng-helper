@@ -191,8 +191,8 @@ export interface ExtractString {
 
 export const SPACE = '\u0020';
 
-export function isContainsNgFilter(prefix: string): boolean {
-    return /(^|[^|])\|([^|]|$)/.test(prefix);
+export function isContainsNgFilter(text: string): boolean {
+    return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
 export function getAttrValueText(htmlText: string, offset: number): ExtractString | undefined {
