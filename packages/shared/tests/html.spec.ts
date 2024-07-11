@@ -1,4 +1,11 @@
-import { canCompletionNgDirective, isInStartTagAnd, isContainsNgFilter, getTagAndTheAttrNameWhenInAttrValue, getTemplateText } from '../lib/html';
+import {
+    canCompletionNgDirective,
+    isInStartTagAnd,
+    isContainsNgFilter,
+    getTagAndTheAttrNameWhenInAttrValue,
+    getTemplateText,
+    getStartTagText,
+} from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
     it.each([
@@ -79,6 +86,35 @@ describe('getTagAndTheAttrNameWhenInAttrValue()', () => {
     });
 });
 
+describe('getStartTagText()', () => {
+    it.each([
+        // 正常情况
+        ['<div >', 2, { str: '<div >', start: 0, length: 6, relativeOffset: 2 }],
+        ['<h1/>', 1, { length: 5, relativeOffset: 1, start: 0, str: '<h1/>' }],
+        ['< />', 1, { length: 4, relativeOffset: 1, start: 0, str: '< />' }],
+        ['<h1><span></h1>', /* s */ 5, { length: 6, relativeOffset: 1, start: 4, str: '<span>' }],
+        // 包含 angular 模版
+        ['<h1 ng-if="a > 3" />', /* a */ 11, { length: 20, relativeOffset: 11, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3" />', /* " */ 10, { length: 20, relativeOffset: 10, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3" />', /* = */ 9, { length: 20, relativeOffset: 9, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3"disabled />', /* d */ 17, { length: 28, relativeOffset: 17, start: 0, str: '<h1 ng-if="a > 3"disabled />' }],
+        // 多个标签
+        ['<h1>text</h1>', /* t */ 4, undefined],
+        ['<h1>{{"text" | t}}</h1>', /* e */ 8, undefined],
+        ['</h1>', /* 1 */ 3, undefined],
+        ['h1></h1>', /* 1 */ 1, undefined],
+        // 注意下面的不算在开始标签内
+        ['</>', 0, undefined],
+        ['</>', 1, undefined],
+        ['</>', 2, undefined],
+        ['<>', 0, undefined],
+        ['<>', 1, undefined],
+    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getStartTagText(text, offset);
+        expect(result).toStrictEqual(expectedOutput);
+    });
+});
+
 describe('getTemplateText()', () => {
     it.each([
         // 正常情况
@@ -102,9 +138,15 @@ describe('getTemplateText()', () => {
         ['0{{3}}6{{9}}', 6, undefined],
         // 不能 trim
         ['{{  }}', 2, { str: '  ', start: 2, length: 2, relativeOffset: 0 }],
-        ['', 0, undefined], // 空字符串输入
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
         const result = getTemplateText(text, offset);
         expect(result).toStrictEqual(expectedOutput);
+    });
+
+    it.each([
+        ['', 0],
+        ['{{1}}', -1],
+    ])('invalid input: %s, should throw error', (text, offset) => {
+        expect(() => getTemplateText(text, offset)).toThrow();
     });
 });

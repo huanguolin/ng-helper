@@ -108,6 +108,74 @@ export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
+// 返回光标所在的开始标签的文本。找不到返回 undefined
+// 注意，光标在 '<', '>' 或者 '/>' 上不算在开始标签内
+export function getStartTagText(htmlText: string, offset: number): ExtractString | undefined {
+    ensureInputValid(htmlText, offset);
+
+    let pos = offset;
+
+    // 在不在 "" 中
+    const attrValueText = getAttrValueText(htmlText, offset);
+    if (attrValueText) {
+        // 如果在，则将光标移动到 "" 外，这里向前移动
+        pos = attrValueText.start - '"'.length - 1;
+    }
+
+    let start = pos;
+    let end = pos;
+    let inQuotes = false;
+
+    // 向前搜索开始标签
+    while (start > 0) {
+        if (htmlText[start] === '"') {
+            inQuotes = !inQuotes;
+        } else if (htmlText[start] === '>' && !inQuotes) {
+            // 包含开始标签结尾，直接结束
+            return;
+        } else if (htmlText[start] === '<' && !inQuotes) {
+            break;
+        }
+        start--;
+    }
+
+    // 如果没找到 '<'，或者找到的是结束标签 '</'，结束
+    if (htmlText[start] !== '<' || htmlText[start + 1] === '/') {
+        return;
+    }
+
+    // 重置引号状态
+    inQuotes = false;
+
+    // 向后搜索结束标签
+    while (end < htmlText.length) {
+        if (htmlText[end] === '"') {
+            inQuotes = !inQuotes;
+        } else if (htmlText[end] === '<' && !inQuotes) {
+            // 包含开始标签的开始字符或者结束标签的开始字符，直接结束
+            return;
+        } else if (htmlText[end] === '>' && !inQuotes) {
+            break;
+        }
+        end++;
+    }
+
+    // 如果没找到 '>'，结束
+    if (htmlText[end] !== '>') {
+        return;
+    }
+
+    // 提取标签文本
+    const tagText = htmlText.slice(start, end + 1);
+
+    return {
+        str: tagText,
+        start: start,
+        length: end - start + 1,
+        relativeOffset: offset - start,
+    };
+}
+
 export function getAttrValueText(htmlText: string, offset: number): ExtractString | undefined {
     return getTextInside(htmlText, offset, '"', '"');
 }
@@ -147,7 +215,7 @@ export function getTextInside(htmlText: string, offset: number, leftMarker: stri
 }
 
 function ensureInputValid(htmlText: string, offset: number) {
-    if (offset < 0 || offset > htmlText.length) {
+    if (offset < 0 || offset >= htmlText.length) {
         throw new Error('offset is invalid');
     }
 }
