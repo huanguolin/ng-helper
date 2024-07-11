@@ -1,5 +1,4 @@
 import {
-    isInTemplate_deprecate,
     isInStartTagAnd,
     isInDbQuote_deprecate,
     getTagAndTheAttrNameWhenInAttrValue,
@@ -27,15 +26,13 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     return;
                 }
 
-                const textBeforeCursor = docText.slice(0, offset);
-                if (isInTemplate_deprecate(textBeforeCursor)) {
-                    const tplText = getTemplateText(docText, offset);
-                    // TODO filter 处理
-                    if (tplText) {
-                        return getHoverInfo({ document, port, contextString: tplText.str, offset: offset - tplText.start });
-                    }
+                const tplText = getTemplateText(docText, offset);
+                // TODO filter 处理
+                if (tplText) {
+                    return getHoverInfo({ document, port, contextString: tplText.str, offset: offset - tplText.start });
                 }
 
+                const textBeforeCursor = docText.slice(0, offset);
                 let tagTextBeforeCursor = '';
                 if (
                     isInStartTagAnd(textBeforeCursor, (innerTagTextBeforeCursor) => {

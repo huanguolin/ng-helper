@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "ci": "yarn tsc && yarn lint && yarn test",
     "tsc": "npm-run-all -p tsc:*",
     "tsc:extension": "cd packages/ng-helper-vscode && yarn run tsc",
     "tsc:plugin": "cd packages/typescript-plugin && yarn run tsc",

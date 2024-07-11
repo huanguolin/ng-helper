@@ -138,22 +138,6 @@ export function getTemplateInnerText_deprecate(textBeforeCursor: string): string
     }
 }
 
-export function getTemplateInnerTextAll_deprecate(textBeforeCursor: string, textAfterCursor: string): string | undefined {
-    const prefix = getTemplateInnerText_deprecate(textBeforeCursor);
-
-    const firstRightBraces = textAfterCursor.indexOf('}}');
-    if (firstRightBraces < 0) {
-        return;
-    }
-
-    const suffix = textAfterCursor.slice(0, firstRightBraces);
-    if (suffix.includes('}') || suffix.includes('<') || suffix.includes('>')) {
-        return;
-    }
-
-    return prefix + suffix;
-}
-
 /**
  * 从光标前的文本中获取模板字符串(包含起始的'{{')。
  *
