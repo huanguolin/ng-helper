@@ -145,8 +145,9 @@ describe('isInTemplate()', () => {
 describe('getTemplateText()', () => {
     it.each([
         // 正常情况
-        ['{{x}}', 2, { str: 'x', start: 2, length: 1 }],
-        ['{{}}', 2, { str: '', start: 2, length: 0 }],
+        ['{{x}}', 2, { str: 'x', start: 2, length: 1, relativeOffset: 0 }],
+        ['{{}}', 2, { str: '', start: 2, length: 0, relativeOffset: 0 }],
+        ['{{1234}}', 4, { str: '1234', start: 2, length: 4, relativeOffset: 2 }],
         // 模板标记缺失
         ['{text}}', 2, undefined],
         ['text}}', 2, undefined],
@@ -159,10 +160,11 @@ describe('getTemplateText()', () => {
         ['0{{}}5', 2, undefined],
         ['0{{}}5', 4, undefined],
         // 多个模板起始标记
-        ['0{{3}}6{{9}}', 9, { str: '9', start: 9, length: 1 }],
-        ['0{{3}}6{{9}}', 3, { str: '3', start: 3, length: 1 }],
+        ['0{{3}}6{{9}}', 9, { str: '9', start: 9, length: 1, relativeOffset: 0 }],
+        ['0{{3}}6{{9}}', 3, { str: '3', start: 3, length: 1, relativeOffset: 0 }],
+        ['0{{3}}6{{9}}', 6, undefined],
         // 不能 trim
-        ['{{  }}', 2, { str: '  ', start: 2, length: 2 }],
+        ['{{  }}', 2, { str: '  ', start: 2, length: 2, relativeOffset: 0 }],
         ['', 0, undefined], // 空字符串输入
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
         const result = getTemplateText(text, offset);

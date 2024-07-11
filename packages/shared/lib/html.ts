@@ -171,6 +171,7 @@ export interface ExtractString {
     str: string;
     start: number;
     length: number;
+    relativeOffset: number;
 }
 
 export const SPACE = '\u0020';
@@ -203,10 +204,16 @@ export function getTextInside(htmlText: string, offset: number, leftMarker: stri
     const start = leftBraces + leftMarker.length;
     const end = rightBraces;
     if (offset >= start && offset <= end) {
+        const str = htmlText.slice(start, end);
+        if (str.includes(leftMarker) || str.includes(rightMarker)) {
+            return;
+        }
+
         return {
-            str: htmlText.slice(start, end),
+            str,
             start,
             length: end - start,
+            relativeOffset: offset - start,
         };
     }
 }
