@@ -8,6 +8,7 @@ import {
     getBeforeCursorText,
     getAfterCursorText,
     getTextInDbQuotes,
+    parseStartTagText,
 } from '../lib/html';
 
 describe('isInStartTagAnd()', () => {
@@ -88,18 +89,6 @@ describe('isContainsNgFilter()', () => {
         expect(v).toBe(output);
     });
 });
-
-// describe('getTagNameAndCurrentAttrName()', () => {
-//     it.each([
-//         ['<div class="abc">', { tagName: 'div', attrName: 'class' }],
-//         ['<h1>', { tagName: 'h1', attrName: '' }],
-//         ['<common-btn class="btn" ng-if="click()">', { tagName: 'common-btn', attrName: 'class' }],
-//         ['<common-btn ng-click="n = n + 1">', { tagName: 'common-btn', attrName: 'ng-click' }],
-//     ])('given text: "%s", should return %p', (text, expectedOutput) => {
-//         const result = getTagNameAndCurrentAttrName({ str: text, start: 0, cursorAt: 0 });
-//         expect(result).toEqual(expectedOutput);
-//     });
-// });
 
 describe('getStartTagText()', () => {
     it.each([
@@ -223,4 +212,69 @@ describe('getAfterCursorText()', () => {
         const result = getAfterCursorText({ str: text, start: 0, cursorAt: offset });
         expect(result).toBe(expectedOutput);
     });
+});
+
+describe('parseStartTagText()', () => {
+    it.each([
+        ['<div>', { name: { str: 'div', start: 1 }, attrs: [], isSelfClosing: false }],
+        [
+            '<div class="abc">',
+            {
+                name: { str: 'div', start: 1 },
+                attrs: [{ name: { str: 'class', start: 5 }, value: { str: 'abc', start: 12 } }],
+                isSelfClosing: false,
+            },
+        ],
+        [
+            '<div class="abc" id="def">',
+            {
+                name: { str: 'div', start: 1 },
+                attrs: [
+                    { name: { str: 'class', start: 5 }, value: { str: 'abc', start: 12 } },
+                    { name: { str: 'id', start: 17 }, value: { str: 'def', start: 21 } },
+                ],
+                isSelfClosing: false,
+            },
+        ],
+        [
+            '<input type="text" />',
+            {
+                name: { str: 'input', start: 1 },
+                attrs: [{ name: { str: 'type', start: 7 }, value: { str: 'text', start: 13 } }],
+                isSelfClosing: true,
+            },
+        ],
+        [
+            '<img src="image.jpg" alt="Image" />',
+            {
+                name: { str: 'img', start: 1 },
+                attrs: [
+                    { name: { str: 'src', start: 5 }, value: { str: 'image.jpg', start: 10 } },
+                    { name: { str: 'alt', start: 21 }, value: { str: 'Image', start: 26 } },
+                ],
+                isSelfClosing: true,
+            },
+        ],
+        [
+            '<img \t\n ng-if=" x>3 && x < 10 && (x / 3 > 2)" \t\n  src="image.jpg" />',
+            {
+                name: { str: 'img', start: 1 },
+                attrs: [
+                    { name: { str: 'ng-if', start: 8 }, value: { str: ' x>3 && x < 10 && (x / 3 > 2)', start: 15 } },
+                    { name: { str: 'src', start: 50 }, value: { str: 'image.jpg', start: 55 } },
+                ],
+                isSelfClosing: true,
+            },
+        ],
+    ])('given startTagText: "%s", should return %s', (startTagText, expectedOutput) => {
+        const result = parseStartTagText(startTagText);
+        expect(result).toStrictEqual(expectedOutput);
+    });
+
+    it.each(['<div', '<div class="abc"', '<div class="abc" ng-if=" x>3', '<', '</div>', '<input type = "text" />'])(
+        'given invalid startTagText: "%s", should throw error',
+        (startTagText) => {
+            expect(() => parseStartTagText(startTagText)).toThrow();
+        },
+    );
 });

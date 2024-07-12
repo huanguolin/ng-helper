@@ -104,21 +104,91 @@ export interface CursorTextSpan extends TextSpan {
     cursorAt: number;
 }
 
+export interface HtmlAttr {
+    name: TextSpan;
+    value?: TextSpan;
+}
+
+export interface HtmlStartTag {
+    name: TextSpan;
+    attrs: HtmlAttr[];
+    isSelfClosing: boolean;
+}
+
 export const SPACE = '\u0020';
 
 export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
-// export function getTagNameAndCurrentAttrName(startTagText: ExtractString): TagAndCurrentAttrName {
-//     const tagMatch = startTagText.str.match(/^<([\w-]+)/);
-//     const tagName = tagMatch ? tagMatch[1] : '';
+export function parseStartTagText(startTagText: string): HtmlStartTag {
+    if (!/^<\w+([\s\S]*?)?\/?>$/m.test(startTagText)) {
+        throw new Error('Invalid start tag text.');
+    }
 
-//     const attrMatch = startTagText.str.match(/([\w-]+)=["']/g);
-//     const attrName = attrMatch ? attrMatch[attrMatch.length - 1].slice(0, -2) : '';
+    let pos = 1; // 跳过开始的 '<'
+    const len = startTagText.length;
 
-//     return { tagName, attrName };
-// }
+    // 解析标签名
+    const name = parseTextSpan((char) => !/\s|\/|>/.test(char));
+
+    const attrs: HtmlAttr[] = [];
+    let isSelfClosing = false;
+
+    // 解析属性
+    while (pos < len) {
+        skipWhitespace();
+        if (pos >= len) {
+            break;
+        }
+
+        // 检查是否自闭合或结束
+        if (startTagText[pos] === '/') {
+            isSelfClosing = startTagText[pos + 1] === '>';
+            break;
+        }
+        if (startTagText[pos] === '>') {
+            break;
+        }
+
+        // 解析属性名和值
+        const attrName = parseTextSpan((char) => !/\s|=|\/|>/.test(char));
+        const attrValue = parseAttributeValue();
+
+        attrs.push({ name: attrName, value: attrValue });
+    }
+
+    return { name, attrs, isSelfClosing };
+
+    function skipWhitespace() {
+        while (pos < len && /\s/.test(startTagText[pos])) {
+            pos++;
+        }
+    }
+
+    function parseTextSpan(predicate: (char: string) => boolean): TextSpan {
+        const start = pos;
+        while (pos < len && predicate(startTagText[pos])) {
+            pos++;
+        }
+        return { str: startTagText.slice(start, pos), start };
+    }
+
+    function parseAttributeValue(): TextSpan | undefined {
+        if (startTagText[pos] !== '=') {
+            return undefined;
+        }
+        pos++; // 跳过 '='
+        if (startTagText[pos] === '"') {
+            pos++; // 跳过开始引号
+            const value = parseTextSpan((char) => char !== '"');
+            pos++; // 跳过结束引号
+            return value;
+        } else {
+            throw new Error('Attribute names and values cannot have spaces between them.');
+        }
+    }
+}
 
 /**
  * 从给定的 HTML 文本中提取光标位置处所在的开始标签文本。
@@ -239,6 +309,6 @@ export function getAfterCursorText(extractString: CursorTextSpan): string {
 
 function ensureInputValid(htmlText: string, cursorAt: number) {
     if (cursorAt < 0 || cursorAt >= htmlText.length) {
-        throw new Error('cursorAt is invalid');
+        throw new Error('"cursorAt" is invalid.');
     }
 }
