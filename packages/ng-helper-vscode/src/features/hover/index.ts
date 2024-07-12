@@ -20,6 +20,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 }
 
                 const docText = document.getText();
+                // hover 时光标的位置不是虚拟的（一定在某个字符上），所以不需要减 1
                 const offset = document.offsetAt(position);
                 const theChar = docText[offset];
                 if (!isValidIdentifier(theChar)) {

@@ -37,7 +37,9 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
 
         const docText = document.getText();
-        const offset = document.offsetAt(position);
+        // 由于输入时光标的位置是虚拟的，并不占空间，所以需要减 1，
+        // 否则查找的结果可能不正确。
+        const offset = document.offsetAt(position) - 1;
         const tplText = getTextInTemplate(docText, offset);
         if (tplText) {
             const prefix = getBeforeCursorText(tplText);
@@ -59,7 +61,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 if (attrValueText) {
                     const prefix = processPrefix(attrName, attrValueText ? getBeforeCursorText(attrValueText) : '');
                     if (prefix) {
-                        return this.getCompletionItems(document, prefix);
+                        return this.getCompletionItems(document, prefix + '.'); // 由于上面的把 offset - 1 了，所以这里不包含 '.', 需要加回来
                     }
                 }
             }

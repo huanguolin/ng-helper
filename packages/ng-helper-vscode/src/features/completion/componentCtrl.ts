@@ -20,7 +20,9 @@ export function componentCtrl(port: number) {
             }
 
             const docText = document.getText();
-            const offset = document.offsetAt(position);
+            // 由于输入时光标的位置是虚拟的，并不占空间，所以需要减 1，
+            // 否则查找的结果可能不正确。
+            const offset = document.offsetAt(position) - 1;
             const tplText = getTextInTemplate(docText, offset);
             if (tplText) {
                 const prefix = getBeforeCursorText(tplText);
