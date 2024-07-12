@@ -4,6 +4,7 @@ import {
     getTextInTemplate,
     getTextInDbQuotes,
     TagAndCurrentAttrName,
+    Cursor,
 } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
@@ -20,20 +21,19 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 }
 
                 const docText = document.getText();
-                // hover 时光标的位置不是虚拟的（一定在某个字符上），所以不需要减 1
-                const offset = document.offsetAt(position);
-                const theChar = docText[offset];
+                const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
+                const theChar = docText[cursor.at];
                 if (!isValidIdentifier(theChar)) {
                     return;
                 }
 
-                const tplText = getTextInTemplate(docText, offset);
+                const tplText = getTextInTemplate(docText, cursor);
                 // TODO filter 处理
                 if (tplText) {
-                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.cursorAt });
+                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.cursor.at });
                 }
 
-                const textBeforeCursor = docText.slice(0, offset);
+                const textBeforeCursor = docText.slice(0, cursor.at);
                 let tagInfo: TagAndCurrentAttrName | undefined = undefined;
                 const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
                     tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
@@ -44,9 +44,9 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
                         // TODO filter 处理
                         // TODO ng-class map
-                        const attrValueText = getTextInDbQuotes(docText, offset);
+                        const attrValueText = getTextInDbQuotes(docText, cursor);
                         if (attrValueText) {
-                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.cursorAt });
+                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.cursor.at });
                         }
                     }
                 }

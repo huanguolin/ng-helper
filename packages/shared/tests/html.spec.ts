@@ -93,15 +93,15 @@ describe('isContainsNgFilter()', () => {
 describe('getStartTagText()', () => {
     it.each([
         // 正常情况
-        ['<div >', 2, { str: '<div >', start: 0, cursorAt: 2 }],
-        ['<h1/>', 1, { cursorAt: 1, start: 0, str: '<h1/>' }],
-        ['< />', 1, { cursorAt: 1, start: 0, str: '< />' }],
-        ['<h1><span></h1>', /* s */ 5, { cursorAt: 1, start: 4, str: '<span>' }],
+        ['<div >', 2, { str: '<div >', start: 0, cursor: { at: 2, isHover: true } }],
+        ['<h1/>', 1, { cursor: { at: 1, isHover: true }, start: 0, str: '<h1/>' }],
+        ['< />', 1, { cursor: { at: 1, isHover: true }, start: 0, str: '< />' }],
+        ['<h1><span></h1>', /* s */ 5, { cursor: { at: 1, isHover: true }, start: 4, str: '<span>' }],
         // 包含 angular 模版
-        ['<h1 ng-if="a > 3" />', /* a */ 11, { cursorAt: 11, start: 0, str: '<h1 ng-if="a > 3" />' }],
-        ['<h1 ng-if="a > 3" />', /* " */ 10, { cursorAt: 10, start: 0, str: '<h1 ng-if="a > 3" />' }],
-        ['<h1 ng-if="a > 3" />', /* = */ 9, { cursorAt: 9, start: 0, str: '<h1 ng-if="a > 3" />' }],
-        ['<h1 ng-if="a > 3"disabled />', /* d */ 17, { cursorAt: 17, start: 0, str: '<h1 ng-if="a > 3"disabled />' }],
+        ['<h1 ng-if="a > 3" />', /* a */ 11, { cursor: { at: 11, isHover: true }, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3" />', /* " */ 10, { cursor: { at: 10, isHover: true }, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3" />', /* = */ 9, { cursor: { at: 9, isHover: true }, start: 0, str: '<h1 ng-if="a > 3" />' }],
+        ['<h1 ng-if="a > 3"disabled />', /* d */ 17, { cursor: { at: 17, isHover: true }, start: 0, str: '<h1 ng-if="a > 3"disabled />' }],
         // 多个标签
         ['<h1>text</h1>', /* t */ 4, undefined],
         ['<h1>{{"text" | t}}</h1>', /* e */ 8, undefined],
@@ -114,7 +114,7 @@ describe('getStartTagText()', () => {
         ['<>', 0, undefined],
         ['<>', 1, undefined],
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getStartTagText(text, offset);
+        const result = getStartTagText(text, { at: offset, isHover: true });
         expect(result).toStrictEqual(expectedOutput);
     });
 });
@@ -122,9 +122,9 @@ describe('getStartTagText()', () => {
 describe('getTextInDbQuotes()', () => {
     it.each([
         // 正常情况
-        ['<div class="abc">', /* a */ 12, { str: 'abc', start: 12, cursorAt: 0 }],
-        ['<div class="abc">', /* b */ 13, { str: 'abc', start: 12, cursorAt: 1 }],
-        ['<div class="abc">', /* c */ 14, { str: 'abc', start: 12, cursorAt: 2 }],
+        ['<div class="abc">', /* a */ 12, { str: 'abc', start: 12, cursor: { at: 0, isHover: true } }],
+        ['<div class="abc">', /* b */ 13, { str: 'abc', start: 12, cursor: { at: 1, isHover: true } }],
+        ['<div class="abc">', /* c */ 14, { str: 'abc', start: 12, cursor: { at: 2, isHover: true } }],
         // 范围外
         ['<div class="abc">', /* v */ 3, undefined],
         ['<div class="abc">', /* " */ 11, undefined],
@@ -135,12 +135,27 @@ describe('getTextInDbQuotes()', () => {
         ['<div class=abc">', /* b */ 12, undefined],
         // 多个引号对
         ['<div class="abc" id="def">', 20, undefined],
-        ['<div class="abc" id="def">', 21, { str: 'def', start: 21, cursorAt: 0 }],
-        ['<div class="abc" id="def">', 22, { str: 'def', start: 21, cursorAt: 1 }],
+        ['<div class="abc" id="def">', 21, { str: 'def', start: 21, cursor: { at: 0, isHover: true } }],
+        ['<div class="abc" id="def">', 22, { str: 'def', start: 21, cursor: { at: 1, isHover: true } }],
         // 不能 trim
-        ['<div class=" abc ">', 12, { str: ' abc ', start: 12, cursorAt: 0 }],
-    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getTextInDbQuotes(text, offset);
+        ['<div class=" abc ">', 12, { str: ' abc ', start: 12, cursor: { at: 0, isHover: true } }],
+    ])('[isHover = true] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getTextInDbQuotes(text, { at: offset, isHover: true });
+        expect(result).toStrictEqual(expectedOutput);
+    });
+
+    it.each([
+        // 正常情况
+        ['<div class="abc">', /* b */ 13, { str: 'abc', start: 12, cursor: { at: 1, isHover: false } }],
+        ['<div class="abc">', /* c */ 14, { str: 'abc', start: 12, cursor: { at: 2, isHover: false } }],
+        ['<div class="abc">', /* " */ 15, { str: 'abc', start: 12, cursor: { at: 3, isHover: false } }],
+        // 范围外
+        ['<div class="abc">', /* v */ 3, undefined],
+        ['<div class="abc">', /* " */ 11, undefined],
+        ['<div class="abc">', /* a */ 12, undefined],
+        ['<div class="abc">', /* > */ 16, undefined],
+    ])('[isHover = false] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getTextInDbQuotes(text, { at: offset, isHover: false });
         expect(result).toStrictEqual(expectedOutput);
     });
 
@@ -148,16 +163,16 @@ describe('getTextInDbQuotes()', () => {
         ['', 0],
         ['<div class="abc">', -1],
     ])('invalid input: %s, should throw error', (text, offset) => {
-        expect(() => getTextInDbQuotes(text, offset)).toThrow();
+        expect(() => getTextInDbQuotes(text, { at: offset, isHover: true })).toThrow();
     });
 });
 
 describe('getTextInTemplate()', () => {
     it.each([
         // 正常情况
-        ['{{x}}', 2, { str: 'x', start: 2, cursorAt: 0 }],
-        ['{{}}', 2, { str: '', start: 2, cursorAt: 0 }],
-        ['{{1234}}', 4, { str: '1234', start: 2, cursorAt: 2 }],
+        ['{{x}}', 2, { str: 'x', start: 2, cursor: { at: 0, isHover: true } }],
+        ['{{}}', 2, { str: '', start: 2, cursor: { at: 0, isHover: true } }],
+        ['{{1234}}', 4, { str: '1234', start: 2, cursor: { at: 2, isHover: true } }],
         // 模板标记缺失
         ['{text}}', 2, undefined],
         ['text}}', 2, undefined],
@@ -170,13 +185,13 @@ describe('getTextInTemplate()', () => {
         ['0{{}}5', 2, undefined],
         ['0{{}}5', 4, undefined],
         // 多个模板起始标记
-        ['0{{3}}6{{9}}', 9, { str: '9', start: 9, cursorAt: 0 }],
-        ['0{{3}}6{{9}}', 3, { str: '3', start: 3, cursorAt: 0 }],
+        ['0{{3}}6{{9}}', 9, { str: '9', start: 9, cursor: { at: 0, isHover: true } }],
+        ['0{{3}}6{{9}}', 3, { str: '3', start: 3, cursor: { at: 0, isHover: true } }],
         ['0{{3}}6{{9}}', 6, undefined],
         // 不能 trim
-        ['{{  }}', 2, { str: '  ', start: 2, cursorAt: 0 }],
+        ['{{  }}', 2, { str: '  ', start: 2, cursor: { at: 0, isHover: true } }],
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getTextInTemplate(text, offset);
+        const result = getTextInTemplate(text, { at: offset, isHover: true });
         expect(result).toStrictEqual(expectedOutput);
     });
 
@@ -184,7 +199,7 @@ describe('getTextInTemplate()', () => {
         ['', 0],
         ['{{1}}', -1],
     ])('invalid input: %s, should throw error', (text, offset) => {
-        expect(() => getTextInTemplate(text, offset)).toThrow();
+        expect(() => getTextInTemplate(text, { at: offset, isHover: true })).toThrow();
     });
 });
 
@@ -194,9 +209,21 @@ describe('getBeforeCursorText()', () => {
         ['1234', 1, '1'],
         ['1234', 0, ''],
         ['1234', 3, '123'],
+        ['1234', 4, '1234'],
         ['', 0, ''],
-    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getBeforeCursorText({ str: text, start: 0, cursorAt: offset });
+    ])('[isHover = false] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getBeforeCursorText({ str: text, start: 0, cursor: { at: offset, isHover: false } });
+        expect(result).toBe(expectedOutput);
+    });
+
+    it.each([
+        ['1234', 2, '123'],
+        ['1234', 1, '12'],
+        ['1234', 0, '1'],
+        ['1234', 3, '1234'],
+        ['', 0, ''],
+    ])('[isHover = true] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getBeforeCursorText({ str: text, start: 0, cursor: { at: offset, isHover: true } });
         expect(result).toBe(expectedOutput);
     });
 });
@@ -207,9 +234,21 @@ describe('getAfterCursorText()', () => {
         ['1234', 1, '234'],
         ['1234', 0, '1234'],
         ['1234', 3, '4'],
+        ['1234', 4, ''],
         ['', 0, ''],
-    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getAfterCursorText({ str: text, start: 0, cursorAt: offset });
+    ])('[isHover = false] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getAfterCursorText({ str: text, start: 0, cursor: { at: offset, isHover: false } });
+        expect(result).toBe(expectedOutput);
+    });
+
+    it.each([
+        ['1234', 2, '4'],
+        ['1234', 1, '34'],
+        ['1234', 0, '234'],
+        ['1234', 3, ''],
+        ['', 0, ''],
+    ])('[isHover = true] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getAfterCursorText({ str: text, start: 0, cursor: { at: offset, isHover: true } });
         expect(result).toBe(expectedOutput);
     });
 });

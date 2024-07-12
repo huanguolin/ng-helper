@@ -100,8 +100,17 @@ export interface TextSpan {
     start: number;
 }
 
+export interface Cursor {
+    at: number;
+    /**
+     * hover 时，光标在某个字符上, at 的值就是对应字符的位置。
+     * 否则，光标在字符之间，是虚拟的，并不占一个字符, 但 at 的值是光标后一个字符的位置。
+     */
+    isHover: boolean;
+}
+
 export interface CursorTextSpan extends TextSpan {
-    cursorAt: number;
+    cursor: Cursor;
 }
 
 export interface HtmlAttr {
@@ -192,18 +201,17 @@ export function parseStartTagText(startTagText: string): HtmlStartTag {
 
 /**
  * 从给定的 HTML 文本中提取光标位置处所在的开始标签文本。
- * 注意：光标在 '<', '>' 或者 '/>' 上不算在开始标签内。
  * @param htmlText - 要搜索的 HTML 文本。
- * @param cursorAt - 光标位置。
+ * @param cursor - 光标位置信息。
  * @returns 提取的开始标签文本信息，如果未找到则返回 undefined。
  */
-export function getStartTagText(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
-    ensureInputValid(htmlText, cursorAt);
+export function getStartTagText(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
+    ensureInputValid(htmlText, cursor);
 
-    let pos = cursorAt;
+    let pos = cursor.at;
 
     // 在不在 "" 中
-    const attrValueText = getTextInDbQuotes(htmlText, cursorAt);
+    const attrValueText = getTextInDbQuotes(htmlText, cursor);
     if (attrValueText) {
         // 如果在，则将光标移动到 "" 外，这里向前移动
         pos = attrValueText.start - '"'.length - 1;
@@ -258,34 +266,40 @@ export function getStartTagText(htmlText: string, cursorAt: number): CursorTextS
     return {
         str: tagText,
         start: start,
-        cursorAt: cursorAt - start,
+        cursor: {
+            ...cursor,
+            at: cursor.at - start,
+        },
     };
 }
 
-export function getTextInDbQuotes(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
-    return getTextInside(htmlText, cursorAt, '"', '"');
+export function getTextInDbQuotes(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
+    return getTextInside(htmlText, cursor, '"', '"');
 }
 
-export function getTextInTemplate(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
-    return getTextInside(htmlText, cursorAt, '{{', '}}');
+export function getTextInTemplate(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
+    return getTextInside(htmlText, cursor, '{{', '}}');
 }
 
-export function getTextInside(htmlText: string, cursorAt: number, leftMarker: string, rightMarker: string): CursorTextSpan | undefined {
-    ensureInputValid(htmlText, cursorAt);
+export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: string, rightMarker: string): CursorTextSpan | undefined {
+    ensureInputValid(htmlText, cursor);
 
-    const leftBraces = htmlText.lastIndexOf(leftMarker, cursorAt);
-    if (leftBraces < 0) {
+    // 注意：这里是要取 Inside 的文本，不含左右标记。所以不是 hover 时，at 要减 1。
+    const pos = cursor.isHover ? cursor.at : cursor.at - 1;
+
+    const leftIndex = htmlText.lastIndexOf(leftMarker, pos);
+    if (leftIndex < 0) {
         return;
     }
 
-    const rightBraces = htmlText.indexOf(rightMarker, cursorAt);
-    if (rightBraces < 0) {
+    const rightIndex = htmlText.indexOf(rightMarker, pos);
+    if (rightIndex < 0) {
         return;
     }
 
-    const start = leftBraces + leftMarker.length;
-    const end = rightBraces;
-    if (cursorAt >= start && cursorAt <= end) {
+    const start = leftIndex + leftMarker.length;
+    const end = rightIndex;
+    if (pos >= start && pos <= end) {
         const str = htmlText.slice(start, end);
         if (str.includes(leftMarker) || str.includes(rightMarker)) {
             return;
@@ -294,21 +308,24 @@ export function getTextInside(htmlText: string, cursorAt: number, leftMarker: st
         return {
             str,
             start,
-            cursorAt: cursorAt - start,
+            cursor: {
+                ...cursor,
+                at: cursor.at - start,
+            },
         };
     }
 }
 
-export function getBeforeCursorText(extractString: CursorTextSpan): string {
-    return extractString.str.slice(0, extractString.cursorAt);
+export function getBeforeCursorText({ str, cursor }: CursorTextSpan): string {
+    return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
-export function getAfterCursorText(extractString: CursorTextSpan): string {
-    return extractString.str.slice(extractString.cursorAt);
+export function getAfterCursorText({ str, cursor }: CursorTextSpan): string {
+    return str.slice(cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
-function ensureInputValid(htmlText: string, cursorAt: number) {
-    if (cursorAt < 0 || cursorAt >= htmlText.length) {
+function ensureInputValid(htmlText: string, cursor: Cursor) {
+    if (cursor.at < 0 || (cursor.isHover ? cursor.at >= htmlText.length : cursor.at > htmlText.length)) {
         throw new Error('"cursorAt" is invalid.');
     }
 }
