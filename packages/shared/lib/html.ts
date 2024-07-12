@@ -108,8 +108,13 @@ export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
-// 返回光标所在的开始标签的文本。找不到返回 undefined
-// 注意，光标在 '<', '>' 或者 '/>' 上不算在开始标签内
+/**
+ * 从给定的 HTML 文本中提取指定偏移位置处所在的开始标签文本。
+ * 注意：光标在 '<', '>' 或者 '/>' 上不算在开始标签内。
+ * @param htmlText - 要搜索的 HTML 文本。
+ * @param offset - 要开始搜索的偏移位置。
+ * @returns 提取的开始标签文本信息，如果未找到则返回 undefined。
+ */
 export function getStartTagText(htmlText: string, offset: number): ExtractString | undefined {
     ensureInputValid(htmlText, offset);
 

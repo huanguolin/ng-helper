@@ -10,25 +10,6 @@ import {
     getTextInDbQuotes,
 } from '../lib/html';
 
-describe('isContainsNgFilter()', () => {
-    it.each([
-        ['', false],
-        ['  ', false],
-        ['||', false],
-        ['a||', false],
-        ['||b', false],
-        ['a||b', false],
-        ['|', true],
-        ['"A"|', true],
-        ['|date', true],
-        ['"A"|date', true],
-        ['"A" | date', true],
-    ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isContainsNgFilter(input);
-        expect(v).toBe(output);
-    });
-});
-
 describe('isInStartTagAnd()', () => {
     it.each([
         [' ', false],
@@ -86,6 +67,25 @@ describe('getTagAndTheAttrNameWhenInAttrValue()', () => {
         const v = getTagAndTheAttrNameWhenInAttrValue(input);
         expect(v.tagName).toBe(tag);
         expect(v.attrName).toBe(attr);
+    });
+});
+
+describe('isContainsNgFilter()', () => {
+    it.each([
+        ['', false],
+        ['  ', false],
+        ['||', false],
+        ['a||', false],
+        ['||b', false],
+        ['a||b', false],
+        ['|', true],
+        ['"A"|', true],
+        ['|date', true],
+        ['"A"|date', true],
+        ['"A" | date', true],
+    ])('input: %s => output: %s', (input: string, output: boolean) => {
+        const v = isContainsNgFilter(input);
+        expect(v).toBe(output);
     });
 });
 
