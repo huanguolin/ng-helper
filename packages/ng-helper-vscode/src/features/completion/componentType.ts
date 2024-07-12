@@ -1,12 +1,12 @@
 import {
-    getTextInDbQuotes,
-    getTagAndTheAttrNameWhenInAttrValue,
     getTextInTemplate,
     isContainsNgFilter,
-    isInStartTagAnd,
-    TagAndCurrentAttrName,
     getBeforeCursorText,
     Cursor,
+    getStartTagText,
+    parseStartTagText,
+    getTheAttrWhileCursorAtValue,
+    CursorTextSpan,
 } from '@ng-helper/shared/lib/html';
 import {
     CompletionItem,
@@ -15,7 +15,6 @@ import {
     CompletionList,
     Position,
     ProviderResult,
-    Range,
     SnippetString,
     TextDocument,
     languages,
@@ -39,6 +38,8 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
         const docText = document.getText();
         const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
+
+        // 模版 {{}} 中
         const tplText = getTextInTemplate(docText, cursor);
         if (tplText) {
             const prefix = getBeforeCursorText(tplText);
@@ -47,18 +48,22 @@ class TypeCompletionProvider implements CompletionItemProvider {
             }
         }
 
-        const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-        let tagInfo: TagAndCurrentAttrName | undefined = undefined;
-        const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
-            tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
-            return Boolean(tagInfo.tagName && tagInfo.attrName);
-        });
-        if (isInStartTag && tagInfo) {
-            const { tagName, attrName } = tagInfo;
-            if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
-                const attrValueText = getTextInDbQuotes(docText, cursor);
-                if (attrValueText) {
-                    const prefix = processPrefix(attrName, attrValueText ? getBeforeCursorText(attrValueText) : '');
+        // 组件属性值中 或者 ng-* 属性值中
+        const startTagText = getStartTagText(docText, cursor);
+        if (startTagText) {
+            const startTag = parseStartTagText(startTagText.text, startTagText.start);
+            const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
+            if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
+                const cursorAttr: CursorTextSpan = {
+                    ...attr.value!,
+                    cursor: {
+                        at: cursor.at - attr.value!.start,
+                        isHover: cursor.isHover,
+                    },
+                };
+                const prefix = getBeforeCursorText(cursorAttr);
+                if (prefix && !isContainsNgFilter(prefix)) {
+                    const prefix = processPrefix(attr.name.text, attr.value!.text);
                     if (prefix) {
                         return this.getCompletionItems(document, prefix);
                     }

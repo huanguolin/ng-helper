@@ -1,6 +1,5 @@
-import { languages, TextDocument, Position, Range, CompletionItem, SnippetString } from 'vscode';
-
-import { isInStartTagAndCanCompletionNgDirective } from '../utils';
+import { canCompletionNgDirective, Cursor, getBeforeCursorText, getStartTagText } from '@ng-helper/shared/lib/html';
+import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
 
 const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
@@ -14,19 +13,24 @@ const defaultNgConfigStr: NgDirectiveConfig = {
 export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position) {
-            const textBeforeCursor = document.getText(new Range(new Position(0, 0), position));
-            if (isInStartTagAndCanCompletionNgDirective(textBeforeCursor)) {
-                return getNgDirectiveConfigList()
-                    .map(([name, configs]) =>
-                        configs.length > 0
-                            ? configs.map((c) => configToCompletionItem(name, c))
-                            : [configToCompletionItem(name, defaultNgConfigExpr)],
-                    )
-                    .flat()
-                    .map((item, index) => {
-                        item.sortText = index.toString().padStart(3, '0');
-                        return item;
-                    });
+            const docText = document.getText();
+            const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
+            const startTagText = getStartTagText(docText, cursor);
+            if (startTagText) {
+                const tagTextBeforeCursor = getBeforeCursorText(startTagText);
+                if (canCompletionNgDirective(tagTextBeforeCursor)) {
+                    return getNgDirectiveConfigList()
+                        .map(([name, configs]) =>
+                            configs.length > 0
+                                ? configs.map((c) => configToCompletionItem(name, c))
+                                : [configToCompletionItem(name, defaultNgConfigExpr)],
+                        )
+                        .flat()
+                        .map((item, index) => {
+                            item.sortText = index.toString().padStart(3, '0');
+                            return item;
+                        });
+                }
             }
         },
     });

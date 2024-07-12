@@ -1,11 +1,4 @@
-import {
-    isInStartTagAnd,
-    getTagAndTheAttrNameWhenInAttrValue,
-    getTextInTemplate,
-    getTextInDbQuotes,
-    TagAndCurrentAttrName,
-    Cursor,
-} from '@ng-helper/shared/lib/html';
+import { getTextInTemplate, Cursor, getStartTagText, getTheAttrWhileCursorAtValue, parseStartTagText } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
@@ -22,32 +15,28 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
 
                 const docText = document.getText();
                 const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
+
                 const theChar = docText[cursor.at];
                 if (!isValidIdentifier(theChar)) {
                     return;
                 }
 
+                // 模版 {{}} 中
                 const tplText = getTextInTemplate(docText, cursor);
                 // TODO filter 处理
                 if (tplText) {
-                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.cursor.at });
+                    return getHoverInfo({ document, port, contextString: tplText.text, offset: tplText.cursor.at });
                 }
 
-                const textBeforeCursor = docText.slice(0, cursor.at);
-                let tagInfo: TagAndCurrentAttrName | undefined = undefined;
-                const isInStartTag = isInStartTagAnd(textBeforeCursor, (tagTextBeforeCursor) => {
-                    tagInfo = getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor);
-                    return Boolean(tagInfo.tagName && tagInfo.attrName);
-                });
-                if (isInStartTag && tagInfo) {
-                    const { tagName, attrName } = tagInfo;
-                    if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
+                // 组件属性值中 或者 ng-* 属性值中
+                const startTagText = getStartTagText(docText, cursor);
+                if (startTagText) {
+                    const startTag = parseStartTagText(startTagText.text, startTagText.start);
+                    const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
+                    if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
                         // TODO filter 处理
                         // TODO ng-class map
-                        const attrValueText = getTextInDbQuotes(docText, cursor);
-                        if (attrValueText) {
-                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.cursor.at });
-                        }
+                        return getHoverInfo({ document, port, contextString: attr.value!.text, offset: cursor.at - attr.value!.start });
                     }
                 }
             },

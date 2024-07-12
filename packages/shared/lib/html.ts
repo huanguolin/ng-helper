@@ -1,102 +1,10 @@
-// ！！！需要重构 ！！！
-export function isInStartTagAnd(textBeforeCursor: string, and: (tagTextBeforeCursor: string) => boolean): boolean {
-    const lastStartTagStart = textBeforeCursor.lastIndexOf('<');
-    const lastEndTagStart = textBeforeCursor.lastIndexOf('</');
-    // |
-    // |<>
-    // </|
-    if (lastStartTagStart < 0 || lastEndTagStart >= lastStartTagStart) {
-        return false;
-    }
-
-    // > or />
-    const lastStartTagEnd = textBeforeCursor.lastIndexOf('>');
-    // >|
-    // />|
-    if (lastStartTagEnd > lastStartTagStart) {
-        return false;
-    }
-
-    /**
-     * ><|
-     * /><|
-     * <|
-     */
-    const tagTextBeforeCursor = textBeforeCursor.slice(lastStartTagStart);
-    return and(tagTextBeforeCursor);
-}
-
-// ！！！需要重构 ！！！
-/**
- * 可否补全指令。
- * 只有三种情况不补全：
- * 1. 光标前是 '<' 或者 '='
- * 2. 光标在属性值之中, 即在双引号中
- * 3. 光标紧挨着 tag 名，比如：'<div'
- * @param tagTextBeforeCursor 开始标签的起始位置 '<' 到光标前的字符串。
- * @returns 可否补全指令。
- */
-export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
-    // input example: '<div class="a b" ng-
-    const chArr = Array.from(tagTextBeforeCursor);
-    const lastCh = chArr[chArr.length - 1];
-
-    if (lastCh === '<' || lastCh === '=') {
-        return false;
-    }
-
-    const quotePaired = chArr.filter((c) => c === '"').length % 2 === 0;
-    if (!quotePaired) {
-        return false;
-    }
-
-    if (/^<[\w-]+$/.test(tagTextBeforeCursor)) {
-        return false;
-    }
-
-    return true;
-}
-
-// ！！！需要重构 ！！！
-/**
- * 获取 tag name 和光标前，且离光标最近的 attr name。
- * @param tagTextBeforeCursor 光标前的字符串。
- * @returns tag & attr name。
- */
-export function getTagAndTheAttrNameWhenInAttrValue(tagTextBeforeCursor: string): TagAndCurrentAttrName {
-    // input example: '<div class="a b" ng-if="
-
-    const result: TagAndCurrentAttrName = { tagName: '', attrName: '' };
-
-    const tagMatch = tagTextBeforeCursor.match(/^<([\w-]+)\s*/);
-    if (tagMatch) {
-        result.tagName = tagMatch[1];
-    }
-
-    // avoid <common-btn ng-click="n = n + 1
-    const lastQuoteIndex = tagTextBeforeCursor.lastIndexOf('"');
-    const lastAttr = tagTextBeforeCursor
-        .slice(0, lastQuoteIndex)
-        .split(SPACE)
-        .filter((s) => s.includes('='))
-        .pop();
-
-    result.attrName = lastAttr!.split('=')[0];
-
-    return result;
-}
-
-//=========================================================
-// 下面是新函数或者重构后的函数
-//=========================================================
-
 export interface TagAndCurrentAttrName {
     tagName: string;
     attrName: string;
 }
 
 export interface TextSpan {
-    str: string;
+    text: string;
     start: number;
 }
 
@@ -119,6 +27,7 @@ export interface HtmlAttr {
 }
 
 export interface HtmlStartTag {
+    start: number;
     name: TextSpan;
     attrs: HtmlAttr[];
     isSelfClosing: boolean;
@@ -130,7 +39,13 @@ export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
-export function parseStartTagText(startTagText: string): HtmlStartTag {
+export function getTheAttrWhileCursorAtValue(startTag: HtmlStartTag, cursor: Cursor): HtmlAttr | undefined {
+    const pos = cursor.isHover ? cursor.at : cursor.at - 1;
+    const attr = startTag.attrs.find((a) => a.value && a.value.start <= pos && pos <= a.value.start + a.value.text.length);
+    return attr;
+}
+
+export function parseStartTagText(startTagText: string, baseStartAt = 0): HtmlStartTag {
     if (!/^<\w+([\s\S]*?)?\/?>$/m.test(startTagText)) {
         throw new Error('Invalid start tag text.');
     }
@@ -167,7 +82,7 @@ export function parseStartTagText(startTagText: string): HtmlStartTag {
         attrs.push({ name: attrName, value: attrValue });
     }
 
-    return { name, attrs, isSelfClosing };
+    return { start: baseStartAt, name, attrs, isSelfClosing };
 
     function skipWhitespace() {
         while (pos < len && /\s/.test(startTagText[pos])) {
@@ -180,7 +95,7 @@ export function parseStartTagText(startTagText: string): HtmlStartTag {
         while (pos < len && predicate(startTagText[pos])) {
             pos++;
         }
-        return { str: startTagText.slice(start, pos), start };
+        return { text: startTagText.slice(start, pos), start: baseStartAt + start };
     }
 
     function parseAttributeValue(): TextSpan | undefined {
@@ -208,7 +123,7 @@ export function parseStartTagText(startTagText: string): HtmlStartTag {
 export function getStartTagText(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
     ensureInputValid(htmlText, cursor);
 
-    let pos = cursor.at;
+    let pos = cursor.isHover ? cursor.at : cursor.at - 1;
 
     // 在不在 "" 中
     const attrValueText = getTextInDbQuotes(htmlText, cursor);
@@ -264,7 +179,7 @@ export function getStartTagText(htmlText: string, cursor: Cursor): CursorTextSpa
     const tagText = htmlText.slice(start, end + 1);
 
     return {
-        str: tagText,
+        text: tagText,
         start: start,
         cursor: {
             ...cursor,
@@ -306,7 +221,7 @@ export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: stri
         }
 
         return {
-            str,
+            text: str,
             start,
             cursor: {
                 ...cursor,
@@ -316,11 +231,11 @@ export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: stri
     }
 }
 
-export function getBeforeCursorText({ str, cursor }: CursorTextSpan): string {
+export function getBeforeCursorText({ text: str, cursor }: CursorTextSpan): string {
     return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
-export function getAfterCursorText({ str, cursor }: CursorTextSpan): string {
+export function getAfterCursorText({ text: str, cursor }: CursorTextSpan): string {
     return str.slice(cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
@@ -328,4 +243,34 @@ function ensureInputValid(htmlText: string, cursor: Cursor) {
     if (cursor.at < 0 || (cursor.isHover ? cursor.at >= htmlText.length : cursor.at > htmlText.length)) {
         throw new Error('"cursorAt" is invalid.');
     }
+}
+
+/**
+ * 可否补全指令。
+ * 只有三种情况不补全：
+ * 1. 光标前是 '<' 或者 '='
+ * 2. 光标在属性值之中, 即在双引号中
+ * 3. 光标紧挨着 tag 名，比如：'<div'
+ * @param tagTextBeforeCursor 开始标签的起始位置 '<' 到光标前的字符串。
+ * @returns 可否补全指令。
+ */
+export function canCompletionNgDirective(tagTextBeforeCursor: string): boolean {
+    // input example: '<div class="a b" ng-
+    const chArr = Array.from(tagTextBeforeCursor);
+    const lastCh = chArr[chArr.length - 1];
+
+    if (lastCh === '<' || lastCh === '=') {
+        return false;
+    }
+
+    const quotePaired = chArr.filter((c) => c === '"').length % 2 === 0;
+    if (!quotePaired) {
+        return false;
+    }
+
+    if (/^<[\w-]+$/.test(tagTextBeforeCursor)) {
+        return false;
+    }
+
+    return true;
 }
