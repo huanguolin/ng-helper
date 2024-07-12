@@ -1,15 +1,27 @@
-export interface TagAndCurrentAttrName {
-    tagName: string;
-    attrName: string;
-}
-
+/**
+ * Represents a span of text with its starting position.
+ */
 export interface TextSpan {
+    /**
+     * The text content of the span.
+     */
     text: string;
+
+    /**
+     * The starting position of the span.
+     */
     start: number;
 }
 
+/**
+ * Represents a cursor with position and hover state.
+ */
 export interface Cursor {
+    /**
+     * The position of the cursor.
+     */
     at: number;
+
     /**
      * hover 时，光标在某个字符上, at 的值就是对应字符的位置。
      * 否则，光标在字符之间，是虚拟的，并不占一个字符, 但 at 的值是光标后一个字符的位置。
@@ -17,16 +29,31 @@ export interface Cursor {
     isHover: boolean;
 }
 
+/**
+ * Represents a text span with a cursor.
+ */
 export interface CursorTextSpan extends TextSpan {
+    /**
+     * The cursor associated with the text span.
+     */
     cursor: Cursor;
 }
 
+/**
+ * Represents an HTML attribute.
+ */
 export interface HtmlAttr {
     name: TextSpan;
     value?: TextSpan;
 }
 
+/**
+ * Represents the start tag of an HTML element.
+ */
 export interface HtmlStartTag {
+    /**
+     * The starting position of the start tag.
+     */
     start: number;
     name: TextSpan;
     attrs: HtmlAttr[];
@@ -35,6 +62,11 @@ export interface HtmlStartTag {
 
 export const SPACE = '\u0020';
 
+/**
+ * Checks if the given text contains an Angular filter.
+ * @param text - The text to check.
+ * @returns A boolean indicating whether the text contains an Angular filter.
+ */
 export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
@@ -52,6 +84,14 @@ export function getTheAttrWhileCursorAtValue(startTag: HtmlStartTag, cursor: Cur
     return attr;
 }
 
+/**
+ * Parses the start tag text and returns an `HtmlStartTag` object.
+ *
+ * @param startTagText - The start tag text to parse.
+ * @param baseStartAt - The base start position.
+ * @returns The parsed `HtmlStartTag` object.
+ * @throws Error if the start tag text is invalid.
+ */
 export function parseStartTagText(startTagText: string, baseStartAt = 0): HtmlStartTag {
     if (!/^<\w+([\s\S]*?)?\/?>$/m.test(startTagText)) {
         throw new Error('Invalid start tag text.');
@@ -195,14 +235,37 @@ export function getStartTagText(htmlText: string, cursor: Cursor): CursorTextSpa
     };
 }
 
+/**
+ * Retrieves the text enclosed in double quotes from the given HTML text at the specified cursor position.
+ *
+ * @param htmlText - The HTML text to search within.
+ * @param cursor - The cursor position.
+ * @returns The text enclosed in double quotes, or `undefined` if not found.
+ */
 export function getTextInDbQuotes(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
     return getTextInside(htmlText, cursor, '"', '"');
 }
 
+/**
+ * Retrieves the text inside a template string based on the provided cursor position.
+ *
+ * @param htmlText - The HTML template string.
+ * @param cursor - The cursor position.
+ * @returns The text span inside the template string, delimited by '{{' and '}}', that contains the cursor position.
+ */
 export function getTextInTemplate(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
     return getTextInside(htmlText, cursor, '{{', '}}');
 }
 
+/**
+ * Retrieves the text inside the given HTML text between the left and right markers.
+ * @param htmlText - The HTML text to search within.
+ * @param cursor - The cursor position.
+ * @param leftMarker - The left marker.
+ * @param rightMarker - The right marker.
+ * @returns The text span between the left and right markers, along with the updated cursor position.
+ *          Returns undefined if the markers are not found or if the text span contains the markers.
+ */
 export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: string, rightMarker: string): CursorTextSpan | undefined {
     ensureInputValid(htmlText, cursor);
 
@@ -238,10 +301,22 @@ export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: stri
     }
 }
 
+/**
+ * Retrieves the text before the cursor position.
+ *
+ * @param cursorTextSpan - The cursor and text information.
+ * @returns The text before the cursor position.
+ */
 export function getBeforeCursorText({ text: str, cursor }: CursorTextSpan): string {
     return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
+/**
+ * Returns the text after the cursor position.
+ *
+ * @param cursorTextSpan - The cursor and text span information.
+ * @returns The text after the cursor position.
+ */
 export function getAfterCursorText({ text: str, cursor }: CursorTextSpan): string {
     return str.slice(cursor.isHover ? cursor.at + 1 : cursor.at);
 }
