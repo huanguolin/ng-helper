@@ -7,6 +7,9 @@ import {
     getAfterCursorText,
     getTextInDbQuotes,
     parseStartTagText,
+    HtmlStartTag,
+    Cursor,
+    getTheAttrWhileCursorAtValue,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -302,5 +305,69 @@ describe('canCompletionNgDirective()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = canCompletionNgDirective(input);
         expect(v).toBe(output);
+    });
+});
+
+describe('getTheAttrWhileCursorAtValue()', () => {
+    it('should return the attribute with value while cursor is at the value position', () => {
+        const startTag: HtmlStartTag = {
+            start: 0,
+            name: { text: 'div', start: 1 },
+            attrs: [
+                { name: { text: 'class', start: 5 }, value: { text: 'abc', start: 12 } },
+                { name: { text: 'id', start: 17 }, value: { text: 'def', start: 20 } },
+            ],
+            isSelfClosing: false,
+        };
+        const cursor: Cursor = { at: 14, isHover: true };
+
+        const result = getTheAttrWhileCursorAtValue(startTag, cursor);
+
+        expect(result).toBe(startTag.attrs[0]);
+    });
+
+    it('should return undefined if cursor is not at the value position', () => {
+        const startTag: HtmlStartTag = {
+            start: 0,
+            name: { text: 'div', start: 1 },
+            attrs: [
+                { name: { text: 'class', start: 5 }, value: { text: 'abc', start: 12 } },
+                { name: { text: 'id', start: 17 }, value: { text: 'def', start: 20 } },
+            ],
+            isSelfClosing: false,
+        };
+        const cursor: Cursor = { at: 8, isHover: true };
+
+        const result = getTheAttrWhileCursorAtValue(startTag, cursor);
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if attribute value is not present', () => {
+        const startTag: HtmlStartTag = {
+            start: 0,
+            name: { text: 'div', start: 1 },
+            attrs: [{ name: { text: 'class', start: 5 } }, { name: { text: 'id', start: 17 }, value: { text: 'def', start: 20 } }],
+            isSelfClosing: false,
+        };
+        const cursor: Cursor = { at: 14, isHover: true };
+
+        const result = getTheAttrWhileCursorAtValue(startTag, cursor);
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if start tag has no attributes', () => {
+        const startTag: HtmlStartTag = {
+            start: 0,
+            name: { text: 'div', start: 1 },
+            attrs: [],
+            isSelfClosing: false,
+        };
+        const cursor: Cursor = { at: 8, isHover: true };
+
+        const result = getTheAttrWhileCursorAtValue(startTag, cursor);
+
+        expect(result).toBeUndefined();
     });
 });

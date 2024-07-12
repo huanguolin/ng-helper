@@ -39,6 +39,13 @@ export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
+/**
+ * Retrieves the HtmlAttr object while the cursor is at the value position.
+ *
+ * @param startTag - The HtmlStartTag object representing the start tag.
+ * @param cursor - The Cursor object representing the cursor position.
+ * @returns The HtmlAttr object if found, otherwise undefined.
+ */
 export function getTheAttrWhileCursorAtValue(startTag: HtmlStartTag, cursor: Cursor): HtmlAttr | undefined {
     const pos = cursor.isHover ? cursor.at : cursor.at - 1;
     const attr = startTag.attrs.find((a) => a.value && a.value.start <= pos && pos <= a.value.start + a.value.text.length);
