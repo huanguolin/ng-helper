@@ -5,6 +5,8 @@ import {
     getTagAndTheAttrNameWhenInAttrValue,
     getTextInTemplate,
     getStartTagText,
+    getBeforeCursorText,
+    getAfterCursorText,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -148,5 +150,31 @@ describe('getTextInTemplate()', () => {
         ['{{1}}', -1],
     ])('invalid input: %s, should throw error', (text, offset) => {
         expect(() => getTextInTemplate(text, offset)).toThrow();
+    });
+});
+
+describe('getBeforeCursorText()', () => {
+    it.each([
+        ['1234', 2, '12'],
+        ['1234', 1, '1'],
+        ['1234', 0, ''],
+        ['1234', 3, '123'],
+        ['', 0, ''],
+    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getBeforeCursorText({ str: text, start: 0, length: text.length, relativeOffset: offset });
+        expect(result).toBe(expectedOutput);
+    });
+});
+
+describe('getAfterCursorText()', () => {
+    it.each([
+        ['1234', 2, '34'],
+        ['1234', 1, '234'],
+        ['1234', 0, '1234'],
+        ['1234', 3, '4'],
+        ['', 0, ''],
+    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getAfterCursorText({ str: text, start: 0, length: text.length, relativeOffset: offset });
+        expect(result).toBe(expectedOutput);
     });
 });

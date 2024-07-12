@@ -5,6 +5,7 @@ import {
     isContainsNgFilter,
     isInStartTagAnd,
     TagAndCurrentAttrName,
+    getBeforeCursorText,
 } from '@ng-helper/shared/lib/html';
 import {
     CompletionItem,
@@ -39,7 +40,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const offset = document.offsetAt(position);
         const tplText = getTextInTemplate(docText, offset);
         if (tplText) {
-            const prefix = tplText.str.slice(0, tplText.relativeOffset);
+            const prefix = getBeforeCursorText(tplText);
             if (prefix && !isContainsNgFilter(prefix)) {
                 return this.getCompletionItems(document, prefix);
             }
@@ -56,7 +57,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
             if (isComponentTag(tagName) || isNgDirectiveAttr(attrName)) {
                 const attrValueText = getTextInDbQuotes(docText, offset);
                 if (attrValueText) {
-                    const prefix = processPrefix(attrName, attrValueText?.str.slice(0, attrValueText.relativeOffset) ?? '');
+                    const prefix = processPrefix(attrName, attrValueText ? getBeforeCursorText(attrValueText) : '');
                     if (prefix) {
                         return this.getCompletionItems(document, prefix);
                     }

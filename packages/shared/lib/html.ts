@@ -214,6 +214,14 @@ export function getTextInside(htmlText: string, offset: number, leftMarker: stri
     }
 }
 
+export function getBeforeCursorText(extractString: ExtractString): string {
+    return extractString.str.slice(0, extractString.relativeOffset);
+}
+
+export function getAfterCursorText(extractString: ExtractString): string {
+    return extractString.str.slice(extractString.relativeOffset);
+}
+
 function ensureInputValid(htmlText: string, offset: number) {
     if (offset < 0 || offset >= htmlText.length) {
         throw new Error('offset is invalid');

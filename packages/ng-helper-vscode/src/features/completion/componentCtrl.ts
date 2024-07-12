@@ -4,6 +4,7 @@ import {
     isInStartTagAnd,
     getTextInTemplate,
     TagAndCurrentAttrName,
+    getBeforeCursorText,
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, Range } from 'vscode';
 
@@ -22,7 +23,7 @@ export function componentCtrl(port: number) {
             const offset = document.offsetAt(position);
             const tplText = getTextInTemplate(docText, offset);
             if (tplText) {
-                const prefix = tplText.str.slice(0, tplText.relativeOffset);
+                const prefix = getBeforeCursorText(tplText);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     return getComponentControllerAsCompletion(document, port);
                 }
