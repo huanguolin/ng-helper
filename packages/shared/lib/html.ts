@@ -95,11 +95,13 @@ export interface TagAndCurrentAttrName {
     attrName: string;
 }
 
-export interface ExtractString {
+export interface TextSpan {
     str: string;
     start: number;
-    length: number;
-    relativeOffset: number;
+}
+
+export interface CursorTextSpan extends TextSpan {
+    cursorAt: number;
 }
 
 export const SPACE = '\u0020';
@@ -108,20 +110,30 @@ export function isContainsNgFilter(text: string): boolean {
     return /(^|[^|])\|([^|]|$)/.test(text);
 }
 
+// export function getTagNameAndCurrentAttrName(startTagText: ExtractString): TagAndCurrentAttrName {
+//     const tagMatch = startTagText.str.match(/^<([\w-]+)/);
+//     const tagName = tagMatch ? tagMatch[1] : '';
+
+//     const attrMatch = startTagText.str.match(/([\w-]+)=["']/g);
+//     const attrName = attrMatch ? attrMatch[attrMatch.length - 1].slice(0, -2) : '';
+
+//     return { tagName, attrName };
+// }
+
 /**
- * 从给定的 HTML 文本中提取指定偏移位置处所在的开始标签文本。
+ * 从给定的 HTML 文本中提取光标位置处所在的开始标签文本。
  * 注意：光标在 '<', '>' 或者 '/>' 上不算在开始标签内。
  * @param htmlText - 要搜索的 HTML 文本。
- * @param offset - 要开始搜索的偏移位置。
+ * @param cursorAt - 光标位置。
  * @returns 提取的开始标签文本信息，如果未找到则返回 undefined。
  */
-export function getStartTagText(htmlText: string, offset: number): ExtractString | undefined {
-    ensureInputValid(htmlText, offset);
+export function getStartTagText(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
+    ensureInputValid(htmlText, cursorAt);
 
-    let pos = offset;
+    let pos = cursorAt;
 
     // 在不在 "" 中
-    const attrValueText = getTextInDbQuotes(htmlText, offset);
+    const attrValueText = getTextInDbQuotes(htmlText, cursorAt);
     if (attrValueText) {
         // 如果在，则将光标移动到 "" 外，这里向前移动
         pos = attrValueText.start - '"'.length - 1;
@@ -176,35 +188,34 @@ export function getStartTagText(htmlText: string, offset: number): ExtractString
     return {
         str: tagText,
         start: start,
-        length: end - start + 1,
-        relativeOffset: offset - start,
+        cursorAt: cursorAt - start,
     };
 }
 
-export function getTextInDbQuotes(htmlText: string, offset: number): ExtractString | undefined {
-    return getTextInside(htmlText, offset, '"', '"');
+export function getTextInDbQuotes(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
+    return getTextInside(htmlText, cursorAt, '"', '"');
 }
 
-export function getTextInTemplate(htmlText: string, offset: number): ExtractString | undefined {
-    return getTextInside(htmlText, offset, '{{', '}}');
+export function getTextInTemplate(htmlText: string, cursorAt: number): CursorTextSpan | undefined {
+    return getTextInside(htmlText, cursorAt, '{{', '}}');
 }
 
-export function getTextInside(htmlText: string, offset: number, leftMarker: string, rightMarker: string): ExtractString | undefined {
-    ensureInputValid(htmlText, offset);
+export function getTextInside(htmlText: string, cursorAt: number, leftMarker: string, rightMarker: string): CursorTextSpan | undefined {
+    ensureInputValid(htmlText, cursorAt);
 
-    const leftBraces = htmlText.lastIndexOf(leftMarker, offset);
+    const leftBraces = htmlText.lastIndexOf(leftMarker, cursorAt);
     if (leftBraces < 0) {
         return;
     }
 
-    const rightBraces = htmlText.indexOf(rightMarker, offset);
+    const rightBraces = htmlText.indexOf(rightMarker, cursorAt);
     if (rightBraces < 0) {
         return;
     }
 
     const start = leftBraces + leftMarker.length;
     const end = rightBraces;
-    if (offset >= start && offset <= end) {
+    if (cursorAt >= start && cursorAt <= end) {
         const str = htmlText.slice(start, end);
         if (str.includes(leftMarker) || str.includes(rightMarker)) {
             return;
@@ -213,22 +224,21 @@ export function getTextInside(htmlText: string, offset: number, leftMarker: stri
         return {
             str,
             start,
-            length: end - start,
-            relativeOffset: offset - start,
+            cursorAt: cursorAt - start,
         };
     }
 }
 
-export function getBeforeCursorText(extractString: ExtractString): string {
-    return extractString.str.slice(0, extractString.relativeOffset);
+export function getBeforeCursorText(extractString: CursorTextSpan): string {
+    return extractString.str.slice(0, extractString.cursorAt);
 }
 
-export function getAfterCursorText(extractString: ExtractString): string {
-    return extractString.str.slice(extractString.relativeOffset);
+export function getAfterCursorText(extractString: CursorTextSpan): string {
+    return extractString.str.slice(extractString.cursorAt);
 }
 
-function ensureInputValid(htmlText: string, offset: number) {
-    if (offset < 0 || offset >= htmlText.length) {
-        throw new Error('offset is invalid');
+function ensureInputValid(htmlText: string, cursorAt: number) {
+    if (cursorAt < 0 || cursorAt >= htmlText.length) {
+        throw new Error('cursorAt is invalid');
     }
 }

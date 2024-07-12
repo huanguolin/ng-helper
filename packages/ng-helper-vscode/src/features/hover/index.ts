@@ -29,7 +29,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                 const tplText = getTextInTemplate(docText, offset);
                 // TODO filter 处理
                 if (tplText) {
-                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.relativeOffset });
+                    return getHoverInfo({ document, port, contextString: tplText.str, offset: tplText.cursorAt });
                 }
 
                 const textBeforeCursor = docText.slice(0, offset);
@@ -45,7 +45,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                         // TODO ng-class map
                         const attrValueText = getTextInDbQuotes(docText, offset);
                         if (attrValueText) {
-                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.relativeOffset });
+                            return getHoverInfo({ document, port, contextString: attrValueText.str, offset: attrValueText.cursorAt });
                         }
                     }
                 }
