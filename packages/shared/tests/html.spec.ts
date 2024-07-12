@@ -7,6 +7,7 @@ import {
     getStartTagText,
     getBeforeCursorText,
     getAfterCursorText,
+    getTextInDbQuotes,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -114,6 +115,39 @@ describe('getStartTagText()', () => {
     ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
         const result = getStartTagText(text, offset);
         expect(result).toStrictEqual(expectedOutput);
+    });
+});
+
+describe('getTextInDbQuotes()', () => {
+    it.each([
+        // 正常情况
+        ['<div class="abc">', /* a */ 12, { str: 'abc', start: 12, length: 3, relativeOffset: 0 }],
+        ['<div class="abc">', /* b */ 13, { str: 'abc', start: 12, length: 3, relativeOffset: 1 }],
+        ['<div class="abc">', /* c */ 14, { str: 'abc', start: 12, length: 3, relativeOffset: 2 }],
+        // 范围外
+        ['<div class="abc">', /* v */ 3, undefined],
+        ['<div class="abc">', /* " */ 11, undefined],
+        ['<div class="abc">', /* " */ 15, undefined],
+        ['<div class="abc">', /* > */ 16, undefined],
+        // 引号不成对
+        ['<div class="abc>', /* a */ 12, undefined],
+        ['<div class=abc">', /* b */ 12, undefined],
+        // 多个引号对
+        ['<div class="abc" id="def">', 20, undefined],
+        ['<div class="abc" id="def">', 21, { str: 'def', start: 21, length: 3, relativeOffset: 0 }],
+        ['<div class="abc" id="def">', 22, { str: 'def', start: 21, length: 3, relativeOffset: 1 }],
+        // 不能 trim
+        ['<div class=" abc ">', 12, { str: ' abc ', start: 12, length: 5, relativeOffset: 0 }],
+    ])('given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
+        const result = getTextInDbQuotes(text, offset);
+        expect(result).toStrictEqual(expectedOutput);
+    });
+
+    it.each([
+        ['', 0],
+        ['<div class="abc">', -1],
+    ])('invalid input: %s, should throw error', (text, offset) => {
+        expect(() => getTextInDbQuotes(text, offset)).toThrow();
     });
 });
 
