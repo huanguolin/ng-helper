@@ -5,6 +5,8 @@ import {
     getTheAttrWhileCursorAtValue,
     parseStartTagText,
     indexOfNgFilter,
+    getMapValues,
+    HtmlAttr,
 } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
@@ -44,9 +46,10 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     const startTag = parseStartTagText(startTagText.text, startTagText.start);
                     const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
                     if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-                        const cursorAt = cursor.at - attr.value!.start;
-                        const contextString = trimFilters(attr.value!.text, cursorAt);
-                        // TODO ng-class map
+                        let cursorAt = cursor.at - attr.value!.start;
+                        let contextString = trimFilters(attr.value!.text, cursorAt);
+                        // handle ng-class/ng-style map value
+                        ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
                         return getHoverInfo({ document, port, contextString, offset: cursorAt });
                     }
                 }
@@ -97,4 +100,18 @@ function trimFilters(contextString: string, cursorAt: number): string {
     }
 
     return contextString.slice(0, index);
+}
+
+function handleMapAttrValue(attr: HtmlAttr, contextString: string, cursorAt: number) {
+    if (attr.name.text === 'ng-class' || attr.name.text === 'ng-style') {
+        const mapValues = getMapValues(contextString);
+        if (mapValues && mapValues.length) {
+            const hoveredValue = mapValues.find((v) => v.start <= cursorAt && cursorAt <= v.start + v.text.length);
+            if (hoveredValue) {
+                contextString = hoveredValue.text;
+                cursorAt = cursorAt - hoveredValue.start;
+            }
+        }
+    }
+    return { contextString, cursorAt };
 }

@@ -103,7 +103,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
 // 输出：prefix = "ctrl."
 function processPrefix(attrName: string, prefix: string): string {
     prefix = prefix.trim();
-    if (attrName === 'ng-class' && prefix.startsWith('{') && prefix.includes(':')) {
+    if ((attrName === 'ng-class' || attrName === 'ng-style') && prefix.startsWith('{') && prefix.includes(':')) {
         return prefix.split(':').pop()!;
     }
     return prefix;
