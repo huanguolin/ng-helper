@@ -7,7 +7,7 @@ import { getComponentCoreInfo, getComponentDeclareLiteralNode } from '../utils/n
 
 import { buildHoverInfo } from './utils';
 
-export function getComponentHoverType(ctx: PluginContext, { contextString, offset }: NgHoverRequest): NgHoverResponse {
+export function getComponentHoverType(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
 
     const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
@@ -33,11 +33,11 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, offse
     }
 
     if (info.controllerType) {
-        const targetNode = getNodeAtPosition(ctx, offset, minSyntaxNode.sourceFile);
+        const targetNode = getNodeAtPosition(ctx, cursorAt, minSyntaxNode.sourceFile);
         logger.info('targetNode:', targetNode ? targetNode.getText(minSyntaxNode.sourceFile) : undefined);
 
         if (!targetNode) {
-            logger.error('targetNode not found at', offset);
+            logger.error('targetNode not found at', cursorAt);
             return;
         }
 

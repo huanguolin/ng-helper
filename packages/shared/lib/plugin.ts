@@ -27,7 +27,7 @@ export interface NgCompletionRequest extends NgRequest {
 
 export interface NgHoverRequest extends NgRequest {
     contextString: string;
-    offset: number;
+    cursorAt: number;
 }
 
 export interface NgHoverInfo {

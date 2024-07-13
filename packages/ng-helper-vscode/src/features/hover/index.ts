@@ -36,7 +36,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     const cursorAt = tplText.cursor.at;
                     const contextString = trimFilters(tplText.text, cursorAt);
                     if (contextString) {
-                        return getHoverInfo({ document, port, contextString, offset: cursorAt });
+                        return getHoverInfo({ document, port, contextString, cursorAt });
                     }
                 }
 
@@ -50,7 +50,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                         let contextString = trimFilters(attr.value!.text, cursorAt);
                         // handle ng-class/ng-style map value
                         ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
-                        return getHoverInfo({ document, port, contextString, offset: cursorAt });
+                        return getHoverInfo({ document, port, contextString, cursorAt });
                     }
                 }
             },
@@ -62,19 +62,19 @@ async function getHoverInfo({
     document,
     port,
     contextString,
-    offset,
+    cursorAt,
 }: {
     document: TextDocument;
     port: number;
     contextString: string;
-    offset: number;
+    cursorAt: number;
 }): Promise<Hover | undefined> {
     // remove .html add .ts
     const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
     await ensureTsServerRunning(tsFilePath, port);
 
-    const res = await getComponentHover(port, { fileName: tsFilePath, contextString, offset });
+    const res = await getComponentHover(port, { fileName: tsFilePath, contextString, cursorAt });
 
     if (res) {
         const markdownStr = new MarkdownString();
