@@ -1,4 +1,11 @@
-import { getTextInTemplate, Cursor, getStartTagText, getTheAttrWhileCursorAtValue, parseStartTagText } from '@ng-helper/shared/lib/html';
+import {
+    getTextInTemplate,
+    Cursor,
+    getStartTagText,
+    getTheAttrWhileCursorAtValue,
+    parseStartTagText,
+    indexOfNgFilter,
+} from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
@@ -23,9 +30,12 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
 
                 // 模版 {{}} 中
                 const tplText = getTextInTemplate(docText, cursor);
-                // TODO filter 处理
                 if (tplText) {
-                    return getHoverInfo({ document, port, contextString: tplText.text, offset: tplText.cursor.at });
+                    const cursorAt = tplText.cursor.at;
+                    const contextString = trimFilters(tplText.text, cursorAt);
+                    if (contextString) {
+                        return getHoverInfo({ document, port, contextString, offset: cursorAt });
+                    }
                 }
 
                 // 组件属性值中 或者 ng-* 属性值中
@@ -34,9 +44,10 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                     const startTag = parseStartTagText(startTagText.text, startTagText.start);
                     const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
                     if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-                        // TODO filter 处理
+                        const cursorAt = cursor.at - attr.value!.start;
+                        const contextString = trimFilters(attr.value!.text, cursorAt);
                         // TODO ng-class map
-                        return getHoverInfo({ document, port, contextString: attr.value!.text, offset: cursor.at - attr.value!.start });
+                        return getHoverInfo({ document, port, contextString, offset: cursorAt });
                     }
                 }
             },
@@ -70,4 +81,20 @@ async function getHoverInfo({
         }
         return new Hover(markdownStr);
     }
+}
+
+// 特殊处理:
+// 输入：xxx | filter
+// 输出：xxx
+function trimFilters(contextString: string, cursorAt: number): string {
+    const index = indexOfNgFilter(contextString);
+    if (index < 0) {
+        return contextString;
+    }
+
+    if (index <= cursorAt) {
+        return '';
+    }
+
+    return contextString.slice(0, index);
 }

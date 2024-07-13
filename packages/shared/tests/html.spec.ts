@@ -10,6 +10,7 @@ import {
     HtmlStartTag,
     Cursor,
     getTheAttrWhileCursorAtValue,
+    indexOfNgFilter,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -28,6 +29,28 @@ describe('isContainsNgFilter()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isContainsNgFilter(input);
         expect(v).toBe(output);
+    });
+});
+
+describe('indexOfNgFilter()', () => {
+    it.each([
+        ['', -1],
+        ['abc', -1],
+        ['abc |', 4],
+        ['abc | def', 4],
+        ['abc | def |', 4],
+        ['| abc', 0],
+        ['| abc | def', 0],
+        ['|', 0],
+        ['x|', 1],
+        ['|y', 0],
+        ['x|y', 1],
+        ['abc || def', -1],
+        ['abc | | def', 4],
+        ['||', -1],
+    ])('input: %s => output: %s', (input: string, output: number) => {
+        const result = indexOfNgFilter(input);
+        expect(result).toBe(output);
     });
 });
 

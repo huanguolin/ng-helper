@@ -62,13 +62,29 @@ export interface HtmlStartTag {
 
 export const SPACE = '\u0020';
 
+export const NG_FILTER_PATTERN = /(^|[^|])\|([^|]|$)/;
+
 /**
  * Checks if the given text contains an Angular filter.
  * @param text - The text to check.
  * @returns A boolean indicating whether the text contains an Angular filter.
  */
 export function isContainsNgFilter(text: string): boolean {
-    return /(^|[^|])\|([^|]|$)/.test(text);
+    return NG_FILTER_PATTERN.test(text);
+}
+
+/**
+ * Finds the index of the first occurrence of an Angular filter in the given text.
+ *
+ * @param text - The text to search for the Angular filter.
+ * @returns The index of the first occurrence of the Angular filter, or -1 if not found.
+ */
+export function indexOfNgFilter(text: string): number {
+    const matched = text.match(NG_FILTER_PATTERN);
+    if (matched && typeof matched.index === 'number') {
+        return matched.index + matched[1].length;
+    }
+    return -1;
 }
 
 /**
