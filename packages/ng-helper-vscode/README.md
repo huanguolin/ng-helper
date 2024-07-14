@@ -12,6 +12,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
   - [x] Right-click context menu for creating components
   - [x] Auto-completion for data binding in HTML
   - [x] Hover type hints in HTML
+  - [ ] Signature help in HTML
   - [ ] Navigation from HTML to ts definitions
   - [ ] Auto-completion for component tag names in HTML
   - [ ] Auto-completion for component attributes in HTML
