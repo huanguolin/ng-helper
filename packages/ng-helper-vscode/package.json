@@ -2,6 +2,10 @@
   "name": "ng-helper",
   "displayName": "Angular.js Helper",
   "description": "Angular.js Helper for VSCode.",
+  "author": {
+    "name": "Alvin Huang",
+    "email": "huanguolin@outlook.com"
+  },
   "version": "0.0.1",
   "license": "MIT",
   "repository": {
@@ -64,7 +68,7 @@
     "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
-    "@vscode/vsce": "^2.29.0",
+    "@vscode/vsce": "^2.30.0",
     "commander": "^12.1.0",
     "esbuild": "^0.21.4",
     "eslint": "^8.57.0",
