@@ -1,5 +1,5 @@
 
-# ng-helper - The Perfect Assistant for Angular.js + TypeScript Development
+# ng-helper - The Perfect Assistant for Angular.js with TypeScript Development
 
 > [中文文档](https://github.com/huanguolin/ng-helper/blob/main/packages/ng-helper-vscode/README.zh_cn.md)
 

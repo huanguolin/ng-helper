@@ -1,7 +1,7 @@
 {
   "name": "ng-helper",
   "displayName": "Angular.js Helper",
-  "description": "Angular.js Helper for VSCode.",
+  "description": "The Perfect Assistant for Angular.js with TypeScript Development.",
   "author": {
     "name": "Alvin Huang",
     "email": "huanguolin@outlook.com"
@@ -17,6 +17,7 @@
     "vscode": "^1.80.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
   "activationEvents": [
