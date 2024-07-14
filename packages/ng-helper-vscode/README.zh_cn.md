@@ -2,6 +2,7 @@
 
 ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScript 使用时。能提供 html 中 ng-* 指令、数据绑定自动补全、hover 类型提示，ts 文件注入校验，创建 component 右键菜单等便捷功能。
 
+![demo](https://github.com/huanguolin/ng-helper/blob/main/resources/demo.gif)
 
 ## Features
 
