@@ -1,5 +1,5 @@
 
-name: Check eslint & tsc
+name: lint & tsc & unit-test
 
 on:
   push:
