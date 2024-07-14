@@ -5,7 +5,7 @@
 
 ng-helper enhances the efficiency of Angular.js development, especially when used with TypeScript. It provides convenient features such as auto-completion for ng-* directives and data binding in HTML, hover type hints, injection validation in ts files, right-click context menu for creating components, and more.
 
-![demo](https://github.com/huanguolin/ng-helper/blob/main/resources/demo.gif)
+![demo](https://raw.githubusercontent.com/huanguolin/ng-helper/main/resources/demo.gif)
 
 ## Features
 
