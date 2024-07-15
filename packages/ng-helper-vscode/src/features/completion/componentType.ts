@@ -8,17 +8,7 @@ import {
     getTheAttrWhileCursorAtValue,
     CursorTextSpan,
 } from '@ng-helper/shared/lib/html';
-import {
-    CompletionItem,
-    CompletionItemKind,
-    CompletionItemProvider,
-    CompletionList,
-    Position,
-    ProviderResult,
-    SnippetString,
-    TextDocument,
-    languages,
-} from 'vscode';
+import { CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, SnippetString, TextDocument, languages } from 'vscode';
 
 import { getComponentCompletion } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
@@ -31,7 +21,22 @@ export function componentType(port: number) {
 class TypeCompletionProvider implements CompletionItemProvider {
     constructor(private port: number) {}
 
-    provideCompletionItems(document: TextDocument, position: Position): ProviderResult<CompletionItem[] | CompletionList<CompletionItem>> {
+    async provideCompletionItems(document: TextDocument, position: Position): Promise<CompletionList<CompletionItem> | undefined> {
+        try {
+            return await this.provideTypeCompletion({ document, position });
+        } catch (error) {
+            console.error('provideTypeCompletion() error:', error);
+            return undefined;
+        }
+    }
+
+    private async provideTypeCompletion({
+        document,
+        position,
+    }: {
+        document: TextDocument;
+        position: Position;
+    }): Promise<CompletionList<CompletionItem> | undefined> {
         if (!isComponentHtml(document)) {
             return undefined;
         }
@@ -44,7 +49,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         if (tplText) {
             const prefix = getBeforeCursorText(tplText);
             if (prefix && !isContainsNgFilter(prefix)) {
-                return this.getCompletionItems(document, prefix);
+                return await this.getCompletionItems(document, prefix);
             }
         }
 
@@ -65,7 +70,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 if (prefix && !isContainsNgFilter(prefix)) {
                     const prefix = processPrefix(attr.name.text, attr.value!.text);
                     if (prefix) {
-                        return this.getCompletionItems(document, prefix);
+                        return await this.getCompletionItems(document, prefix);
                     }
                 }
             }

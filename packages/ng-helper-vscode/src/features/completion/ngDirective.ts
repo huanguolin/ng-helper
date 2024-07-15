@@ -13,27 +13,34 @@ const defaultNgConfigStr: NgDirectiveConfig = {
 export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position) {
-            const docText = document.getText();
-            const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-            const startTagText = getStartTagText(docText, cursor);
-            if (startTagText) {
-                const tagTextBeforeCursor = getBeforeCursorText(startTagText);
-                if (canCompletionNgDirective(tagTextBeforeCursor)) {
-                    return getNgDirectiveConfigList()
-                        .map(([name, configs]) =>
-                            configs.length > 0
-                                ? configs.map((c) => configToCompletionItem(name, c))
-                                : [configToCompletionItem(name, defaultNgConfigExpr)],
-                        )
-                        .flat()
-                        .map((item, index) => {
-                            item.sortText = index.toString().padStart(3, '0');
-                            return item;
-                        });
-                }
+            try {
+                return provideNgCompletion({ document, position });
+            } catch (error) {
+                console.error('provideNgCompletion() error:', error);
+                return undefined;
             }
         },
     });
+}
+
+function provideNgCompletion({ document, position }: { document: TextDocument; position: Position }) {
+    const docText = document.getText();
+    const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
+    const startTagText = getStartTagText(docText, cursor);
+    if (startTagText) {
+        const tagTextBeforeCursor = getBeforeCursorText(startTagText);
+        if (canCompletionNgDirective(tagTextBeforeCursor)) {
+            return getNgDirectiveConfigList()
+                .map(([name, configs]) =>
+                    configs.length > 0 ? configs.map((c) => configToCompletionItem(name, c)) : [configToCompletionItem(name, defaultNgConfigExpr)],
+                )
+                .flat()
+                .map((item, index) => {
+                    item.sortText = index.toString().padStart(3, '0');
+                    return item;
+                });
+        }
+    }
 }
 
 function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {

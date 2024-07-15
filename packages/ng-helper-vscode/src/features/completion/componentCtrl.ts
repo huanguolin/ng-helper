@@ -15,34 +15,43 @@ import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentCtrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
-        provideCompletionItems(document: TextDocument, position: Position) {
-            if (!isComponentHtml(document)) {
+        async provideCompletionItems(document: TextDocument, position: Position) {
+            try {
+                return await provideCtrlCompletion({ document, position, port });
+            } catch (error) {
+                console.error('provideCtrlCompletion() error:', error);
                 return undefined;
-            }
-
-            const docText = document.getText();
-            const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-
-            // 模版 {{}} 中
-            const tplText = getTextInTemplate(docText, cursor);
-            if (tplText) {
-                const prefix = getBeforeCursorText(tplText);
-                if (prefix && !isContainsNgFilter(prefix)) {
-                    return getComponentControllerAsCompletion(document, port);
-                }
-            }
-
-            // 组件属性值中 或者 ng-* 属性值中
-            const startTagText = getStartTagText(docText, cursor);
-            if (startTagText) {
-                const startTag = parseStartTagText(startTagText.text, startTagText.start);
-                const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
-                if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-                    return getComponentControllerAsCompletion(document, port);
-                }
             }
         },
     });
+}
+
+async function provideCtrlCompletion({ document, position, port }: { document: TextDocument; position: Position; port: number }) {
+    if (!isComponentHtml(document)) {
+        return undefined;
+    }
+
+    const docText = document.getText();
+    const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
+
+    // 模版 {{}} 中
+    const tplText = getTextInTemplate(docText, cursor);
+    if (tplText) {
+        const prefix = getBeforeCursorText(tplText);
+        if (prefix && !isContainsNgFilter(prefix)) {
+            return await getComponentControllerAsCompletion(document, port);
+        }
+    }
+
+    // 组件属性值中 或者 ng-* 属性值中
+    const startTagText = getStartTagText(docText, cursor);
+    if (startTagText) {
+        const startTag = parseStartTagText(startTagText.text, startTagText.start);
+        const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
+        if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
+            return await getComponentControllerAsCompletion(document, port);
+        }
+    }
 }
 
 async function getComponentControllerAsCompletion(document: TextDocument, port: number) {

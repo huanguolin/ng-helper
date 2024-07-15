@@ -8,7 +8,7 @@ import {
     getMapValues,
     HtmlAttr,
 } from '@ng-helper/shared/lib/html';
-import { ExtensionContext, Hover, languages, MarkdownString, TextDocument } from 'vscode';
+import { ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
@@ -17,45 +17,54 @@ import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier }
 export function registerComponentHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
-            provideHover(document, position, _token) {
-                if (!isComponentHtml(document)) {
+            async provideHover(document, position, _token) {
+                try {
+                    return await provideHover({ document, position, port });
+                } catch (error) {
+                    console.error('provideHover() error:', error);
                     return undefined;
-                }
-
-                const docText = document.getText();
-                const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
-
-                const theChar = docText[cursor.at];
-                if (!isValidIdentifier(theChar)) {
-                    return;
-                }
-
-                // 模版 {{}} 中
-                const tplText = getTextInTemplate(docText, cursor);
-                if (tplText) {
-                    const cursorAt = tplText.cursor.at;
-                    const contextString = trimFilters(tplText.text, cursorAt);
-                    if (contextString) {
-                        return getHoverInfo({ document, port, contextString, cursorAt });
-                    }
-                }
-
-                // 组件属性值中 或者 ng-* 属性值中
-                const startTagText = getStartTagText(docText, cursor);
-                if (startTagText) {
-                    const startTag = parseStartTagText(startTagText.text, startTagText.start);
-                    const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
-                    if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-                        let cursorAt = cursor.at - attr.value!.start;
-                        let contextString = trimFilters(attr.value!.text, cursorAt);
-                        // handle ng-class/ng-style map value
-                        ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
-                        return getHoverInfo({ document, port, contextString, cursorAt });
-                    }
                 }
             },
         }),
     );
+}
+
+async function provideHover({ document, position, port }: { document: TextDocument; position: Position; port: number }) {
+    if (!isComponentHtml(document)) {
+        return undefined;
+    }
+
+    const docText = document.getText();
+    const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
+
+    const theChar = docText[cursor.at];
+    if (!isValidIdentifier(theChar)) {
+        return;
+    }
+
+    // 模版 {{}} 中
+    const tplText = getTextInTemplate(docText, cursor);
+    if (tplText) {
+        const cursorAt = tplText.cursor.at;
+        const contextString = trimFilters(tplText.text, cursorAt);
+        if (contextString) {
+            return await getHoverInfo({ document, port, contextString, cursorAt });
+        }
+    }
+
+    // 组件属性值中 或者 ng-* 属性值中
+    const startTagText = getStartTagText(docText, cursor);
+    if (startTagText) {
+        const startTag = parseStartTagText(startTagText.text, startTagText.start);
+        const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
+        if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
+            let cursorAt = cursor.at - attr.value!.start;
+            let contextString = trimFilters(attr.value!.text, cursorAt);
+            // handle ng-class/ng-style map value
+            ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
+            return await getHoverInfo({ document, port, contextString, cursorAt });
+        }
+    }
 }
 
 async function getHoverInfo({
