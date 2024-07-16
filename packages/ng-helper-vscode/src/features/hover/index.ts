@@ -1,11 +1,10 @@
 import {
     getTextInTemplate,
     Cursor,
-    getStartTagText,
     getTheAttrWhileCursorAtValue,
-    parseStartTagText,
     indexOfNgFilter,
     getMapValues,
+    getHtmlTagByCursor,
     HtmlAttr,
 } from '@ng-helper/shared/lib/html';
 import { ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
@@ -53,13 +52,12 @@ async function provideHover({ document, position, port }: { document: TextDocume
     }
 
     // 组件属性值中 或者 ng-* 属性值中
-    const startTagText = getStartTagText(docText, cursor);
-    if (startTagText) {
-        const startTag = parseStartTagText(startTagText.text, startTagText.start);
-        const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
-        if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-            let cursorAt = cursor.at - attr.value!.start;
-            let contextString = trimFilters(attr.value!.text, cursorAt);
+    const tag = getHtmlTagByCursor(docText, cursor);
+    if (tag) {
+        const attr = getTheAttrWhileCursorAtValue(tag, cursor);
+        if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+            let cursorAt = cursor.at - attr.value.start;
+            let contextString = trimFilters(attr.value.text, cursorAt);
             // handle ng-class/ng-style map value
             ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
             return await getHoverInfo({ document, port, contextString, cursorAt });

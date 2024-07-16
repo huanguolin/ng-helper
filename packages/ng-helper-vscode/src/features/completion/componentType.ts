@@ -3,10 +3,8 @@ import {
     isContainsNgFilter,
     getBeforeCursorText,
     Cursor,
-    getStartTagText,
-    parseStartTagText,
     getTheAttrWhileCursorAtValue,
-    CursorTextSpan,
+    getHtmlTagByCursor,
 } from '@ng-helper/shared/lib/html';
 import { CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, SnippetString, TextDocument, languages } from 'vscode';
 
@@ -54,21 +52,13 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
 
         // 组件属性值中 或者 ng-* 属性值中
-        const startTagText = getStartTagText(docText, cursor);
-        if (startTagText) {
-            const startTag = parseStartTagText(startTagText.text, startTagText.start);
-            const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
-            if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
-                const cursorAttr: CursorTextSpan = {
-                    ...attr.value!,
-                    cursor: {
-                        at: cursor.at - attr.value!.start,
-                        isHover: cursor.isHover,
-                    },
-                };
-                const prefix = getBeforeCursorText(cursorAttr);
+        const tag = getHtmlTagByCursor(docText, cursor);
+        if (tag) {
+            const attr = getTheAttrWhileCursorAtValue(tag, cursor);
+            if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+                let prefix = attr.value.text.slice(0, cursor.at - attr.value.start);
                 if (prefix && !isContainsNgFilter(prefix)) {
-                    const prefix = processPrefix(attr.name.text, attr.value!.text);
+                    prefix = processPrefix(attr.name.text, prefix);
                     if (prefix) {
                         return await this.getCompletionItems(document, prefix);
                     }

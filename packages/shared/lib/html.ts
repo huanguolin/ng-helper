@@ -1,3 +1,8 @@
+import { ChildNode, Document } from 'domhandler';
+import { ElementType, parseDocument } from 'htmlparser2';
+import { parseFragment } from 'parse5';
+import { Element } from 'parse5/dist/tree-adapters/default';
+
 /**
  * Represents a span of text with its starting position.
  */
@@ -39,26 +44,19 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
-/**
- * Represents an HTML attribute.
- */
-export interface HtmlAttr {
-    name: TextSpan;
-    value?: TextSpan;
-}
-
-/**
- * Represents the start tag of an HTML element.
- */
-export interface HtmlStartTag {
-    /**
-     * The starting position of the start tag.
-     */
-    start: number;
-    name: TextSpan;
+export type HtmlTag = {
+    tagName: string;
     attrs: HtmlAttr[];
-    isSelfClosing: boolean;
-}
+    start: number;
+    end: number;
+    startTagEnd: number | undefined;
+    endTagStart: number | undefined;
+};
+
+export type HtmlAttr = {
+    name: TextSpan;
+    value: TextSpan;
+};
 
 export const SPACE = '\u0020';
 
@@ -87,179 +85,90 @@ export function indexOfNgFilter(text: string): number {
     return -1;
 }
 
-/**
- * Retrieves the HtmlAttr object while the cursor is at the value position.
- *
- * @param startTag - The HtmlStartTag object representing the start tag.
- * @param cursor - The Cursor object representing the cursor position.
- * @returns The HtmlAttr object if found, otherwise undefined.
- */
-export function getTheAttrWhileCursorAtValue(startTag: HtmlStartTag, cursor: Cursor): HtmlAttr | undefined {
+export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): HtmlAttr | undefined {
     const pos = cursor.isHover ? cursor.at : cursor.at - 1;
-    const attr = startTag.attrs.find((a) => a.value && a.value.start <= pos && pos <= a.value.start + a.value.text.length);
-    return attr;
+
+    if (pos < tag.start || pos >= (tag.startTagEnd ?? tag.end)) {
+        return;
+    }
+
+    return tag.attrs.find((attr) => attr.value.start <= pos && pos < attr.value.start + attr.value.text.length);
 }
 
-/**
- * Parses the start tag text and returns an `HtmlStartTag` object.
- *
- * @param startTagText - The start tag text to parse.
- * @param baseStartAt - The base start position.
- * @returns The parsed `HtmlStartTag` object.
- * @throws Error if the start tag text is invalid.
- */
-export function parseStartTagText(startTagText: string, baseStartAt = 0): HtmlStartTag {
-    if (!/^<\w+([\s\S]*?)?\/?>$/m.test(startTagText)) {
-        throw new Error('Invalid start tag text.');
-    }
-
-    let pos = 1; // 跳过开始的 '<'
-    const len = startTagText.length;
-
-    // 解析标签名
-    const name = parseTextSpan((char) => !/\s|\/|>/.test(char));
-
-    const attrs: HtmlAttr[] = [];
-    let isSelfClosing = false;
-
-    // 解析属性
-    while (pos < len) {
-        skipWhitespace();
-        if (pos >= len) {
-            break;
-        }
-
-        // 检查是否自闭合或结束
-        if (startTagText[pos] === '/') {
-            isSelfClosing = startTagText[pos + 1] === '>';
-            break;
-        }
-        if (startTagText[pos] === '>') {
-            break;
-        }
-
-        // 解析属性名和值
-        const attrName = parseTextSpan((char) => !/\s|=|\/|>/.test(char));
-        const attrValue = parseAttributeValue();
-
-        attrs.push({ name: attrName, value: attrValue });
-    }
-
-    return { start: baseStartAt, name, attrs, isSelfClosing };
-
-    function skipWhitespace() {
-        while (pos < len && /\s/.test(startTagText[pos])) {
-            pos++;
-        }
-    }
-
-    function parseTextSpan(predicate: (char: string) => boolean): TextSpan {
-        const start = pos;
-        while (pos < len && predicate(startTagText[pos])) {
-            pos++;
-        }
-        return { text: startTagText.slice(start, pos), start: baseStartAt + start };
-    }
-
-    function parseAttributeValue(): TextSpan | undefined {
-        if (startTagText[pos] !== '=') {
-            return undefined;
-        }
-        pos++; // 跳过 '='
-        if (startTagText[pos] === '"') {
-            pos++; // 跳过开始引号
-            const value = parseTextSpan((char) => char !== '"');
-            pos++; // 跳过结束引号
-            return value;
-        } else {
-            throw new Error('Attribute names and values cannot have spaces between them.');
-        }
-    }
+export function parseHtml(htmlText: string): Document {
+    return parseDocument(htmlText, { withStartIndices: true, withEndIndices: true });
 }
 
-/**
- * 从给定的 HTML 文本中提取光标位置处所在的开始标签文本。
- * @param htmlText - 要搜索的 HTML 文本。
- * @param cursor - 光标位置信息。
- * @returns 提取的开始标签文本信息，如果未找到则返回 undefined。
- */
-export function getStartTagText(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
+export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | undefined {
     ensureInputValid(htmlText, cursor);
 
-    let pos = cursor.isHover ? cursor.at : cursor.at - 1;
-
-    // 在不在 "" 中
-    const attrValueText = getTextInDbQuotes(htmlText, cursor);
-    if (attrValueText) {
-        // 如果在，则将光标移动到 "" 外，这里向前移动
-        pos = attrValueText.start - '"'.length - 1;
-    }
-
-    let start = pos;
-    let end = pos;
-    let inQuotes = false;
-
-    // 向前搜索开始标签
-    while (start > 0) {
-        if (htmlText[start] === '"') {
-            inQuotes = !inQuotes;
-        } else if (htmlText[start] === '>' && !inQuotes) {
-            // 包含开始标签结尾，直接结束
-            return;
-        } else if (htmlText[start] === '<' && !inQuotes) {
-            break;
-        }
-        start--;
-    }
-
-    // 如果没找到 '<'，或者找到的是结束标签 '</'，结束
-    if (htmlText[start] !== '<' || htmlText[start + 1] === '/') {
+    const document = parseHtml(htmlText);
+    const tag = document.children.find(findTargetTag);
+    if (!tag) {
         return;
     }
 
-    // 重置引号状态
-    inQuotes = false;
+    const fragment = htmlText.slice(tag.startIndex!, tag.endIndex! + 1);
+    const element = parseFragment(fragment, { sourceCodeLocationInfo: true }).childNodes[0] as Element;
 
-    // 向后搜索结束标签
-    while (end < htmlText.length) {
-        if (htmlText[end] === '"') {
-            inQuotes = !inQuotes;
-        } else if (htmlText[end] === '<' && !inQuotes) {
-            // 包含开始标签的开始字符或者结束标签的开始字符，直接结束
-            return;
-        } else if (htmlText[end] === '>' && !inQuotes) {
-            break;
-        }
-        end++;
+    const start = tag.startIndex!;
+    // 注意：end, endOffset 是不含的，但 endIndex 是含的
+    const end = tag.endIndex! + 1;
+
+    // 注意:
+    // element 中 tag 的起始位置（比如：startTag.startOffset = 0）。
+    // 所以最终的结果要加上 start.
+
+    let startTagEnd: number | undefined;
+    let endTagStart: number | undefined;
+    if (typeof element.sourceCodeLocation?.startTag?.endOffset === 'number') {
+        startTagEnd = start + element.sourceCodeLocation.startTag.endOffset;
     }
-
-    // 如果没找到 '>'，结束
-    if (htmlText[end] !== '>') {
-        return;
+    if (typeof element.sourceCodeLocation?.endTag?.startOffset === 'number') {
+        endTagStart = start + element.sourceCodeLocation.endTag.startOffset;
     }
-
-    // 提取标签文本
-    const tagText = htmlText.slice(start, end + 1);
 
     return {
-        text: tagText,
-        start: start,
-        cursor: {
-            ...cursor,
-            at: cursor.at - start,
-        },
+        tagName: element.tagName,
+        attrs: buildTagAttrs(),
+        start,
+        end,
+        startTagEnd,
+        endTagStart,
     };
-}
 
-/**
- * Retrieves the text enclosed in double quotes from the given HTML text at the specified cursor position.
- *
- * @param htmlText - The HTML text to search within.
- * @param cursor - The cursor position.
- * @returns The text enclosed in double quotes, or `undefined` if not found.
- */
-export function getTextInDbQuotes(htmlText: string, cursor: Cursor): CursorTextSpan | undefined {
-    return getTextInside(htmlText, cursor, '"', '"');
+    function findTargetTag(node: ChildNode): ChildNode | undefined {
+        if (node.type !== ElementType.Tag) {
+            return;
+        }
+
+        if (node.startIndex! <= cursor.at && cursor.at <= node.endIndex!) {
+            if (!node.children.length) {
+                return node;
+            } else {
+                return node.children.find(findTargetTag) ?? node;
+            }
+        }
+    }
+
+    function buildTagAttrs(): HtmlAttr[] {
+        const { attrs } = element.sourceCodeLocation!;
+        return element.attrs.map((attr) => {
+            const location = attrs![attr.name];
+            const attrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
+            const attrValueStart = !attr.value ? 0 : attrText.indexOf(attr.value);
+            return {
+                name: {
+                    text: attr.name,
+                    start: start + location.startOffset,
+                },
+                value: {
+                    text: attr.value,
+                    start: start + location.startOffset + attrValueStart,
+                },
+            };
+        });
+    }
 }
 
 /**
@@ -325,16 +234,6 @@ export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: stri
  */
 export function getBeforeCursorText({ text: str, cursor }: CursorTextSpan): string {
     return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
-}
-
-/**
- * Returns the text after the cursor position.
- *
- * @param cursorTextSpan - The cursor and text span information.
- * @returns The text after the cursor position.
- */
-export function getAfterCursorText({ text: str, cursor }: CursorTextSpan): string {
-    return str.slice(cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
 function ensureInputValid(htmlText: string, cursor: Cursor) {

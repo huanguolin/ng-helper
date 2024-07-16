@@ -3,9 +3,8 @@ import {
     getTextInTemplate,
     getBeforeCursorText,
     Cursor,
-    getStartTagText,
     getTheAttrWhileCursorAtValue,
-    parseStartTagText,
+    getHtmlTagByCursor,
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList } from 'vscode';
 
@@ -44,11 +43,10 @@ async function provideCtrlCompletion({ document, position, port }: { document: T
     }
 
     // 组件属性值中 或者 ng-* 属性值中
-    const startTagText = getStartTagText(docText, cursor);
-    if (startTagText) {
-        const startTag = parseStartTagText(startTagText.text, startTagText.start);
-        const attr = getTheAttrWhileCursorAtValue(startTag, cursor);
-        if (attr && (isComponentTag(startTag.name.text) || isNgDirectiveAttr(attr.name.text))) {
+    const tag = getHtmlTagByCursor(docText, cursor);
+    if (tag) {
+        const attr = getTheAttrWhileCursorAtValue(tag, cursor);
+        if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
             return await getComponentControllerAsCompletion(document, port);
         }
     }

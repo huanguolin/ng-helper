@@ -1,4 +1,4 @@
-import { canCompletionNgDirective, Cursor, getBeforeCursorText, getStartTagText } from '@ng-helper/shared/lib/html';
+import { canCompletionNgDirective, Cursor, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
 
 const defaultNgConfigExpr: NgDirectiveConfig = {
@@ -26,9 +26,9 @@ export function ngDirective(_port: number) {
 function provideNgCompletion({ document, position }: { document: TextDocument; position: Position }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-    const startTagText = getStartTagText(docText, cursor);
-    if (startTagText) {
-        const tagTextBeforeCursor = getBeforeCursorText(startTagText);
+    const tag = getHtmlTagByCursor(docText, cursor);
+    if (tag) {
+        const tagTextBeforeCursor = docText.slice(tag.start, cursor.at);
         if (canCompletionNgDirective(tagTextBeforeCursor)) {
             return getNgDirectiveConfigList()
                 .map(([name, configs]) =>
