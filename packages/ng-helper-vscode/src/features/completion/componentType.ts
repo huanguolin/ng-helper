@@ -55,7 +55,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const tag = getHtmlTagByCursor(docText, cursor);
         if (tag) {
             const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-            if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+            if (attr && attr.value && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
                 let prefix = attr.value.text.slice(0, cursor.at - attr.value.start);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     prefix = processPrefix(attr.name.text, prefix);

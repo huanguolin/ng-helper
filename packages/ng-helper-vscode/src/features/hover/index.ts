@@ -55,7 +55,7 @@ async function provideHover({ document, position, port }: { document: TextDocume
     const tag = getHtmlTagByCursor(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-        if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+        if (attr && attr.value && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
             let cursorAt = cursor.at - attr.value.start;
             let contextString = trimFilters(attr.value.text, cursorAt);
             // handle ng-class/ng-style map value
