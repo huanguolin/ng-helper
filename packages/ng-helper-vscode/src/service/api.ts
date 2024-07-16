@@ -53,6 +53,7 @@ export async function healthCheck(port: number): Promise<boolean> {
 
 async function bizRequest<TInput, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
     try {
+        console.log(`${apiName}() request: `, info);
         const result = await axios.post<TOutput>(url, info, {
             cancelToken: getAxiosCancelToken(vscodeCancelToken),
         });
