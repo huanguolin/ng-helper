@@ -44,6 +44,9 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
+/**
+ * Represents an HTML tag.
+ */
 export type HtmlTag = {
     tagName: string;
     attrs: HtmlAttr[];
@@ -53,9 +56,12 @@ export type HtmlTag = {
     endTagStart: number | undefined;
 };
 
+/**
+ * Represents an HTML attribute.
+ */
 export type HtmlAttr = {
     name: TextSpan;
-    value: TextSpan;
+    value?: TextSpan;
 };
 
 export const SPACE = '\u0020';
@@ -85,6 +91,13 @@ export function indexOfNgFilter(text: string): number {
     return -1;
 }
 
+/**
+ * Retrieves the HtmlAttr object while the cursor is at the value position.
+ *
+ * @param tag - The HtmlTag object.
+ * @param cursor - The Cursor object representing the current position.
+ * @returns The HtmlAttr object if the cursor is within the value position of an attribute, otherwise undefined.
+ */
 export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): HtmlAttr | undefined {
     const pos = cursor.isHover ? cursor.at : cursor.at - 1;
 
@@ -92,18 +105,31 @@ export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): Html
         return;
     }
 
-    return tag.attrs.find((attr) => attr.value.start <= pos && pos < attr.value.start + attr.value.text.length);
+    return tag.attrs.find((attr) => attr.value && attr.value.start <= pos && pos < attr.value.start + attr.value.text.length);
 }
 
+/**
+ * Parses the given HTML text and returns a Document object.
+ *
+ * @param htmlText - The HTML text to parse.
+ * @returns The parsed Document object.
+ */
 export function parseHtml(htmlText: string): Document {
     return parseDocument(htmlText, { withStartIndices: true, withEndIndices: true });
 }
 
+/**
+ * Retrieves the HTML tag at the specified cursor position in the given HTML text.
+ * @param htmlText - The HTML text.
+ * @param cursor - The cursor position.
+ * @returns The HTML tag at the cursor position, or undefined if no tag is found.
+ */
 export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | undefined {
     ensureInputValid(htmlText, cursor);
 
     const document = parseHtml(htmlText);
-    const tag = document.children.find(findTargetTag);
+    const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
+    const tag = findTargetTag();
     if (!tag) {
         return;
     }
@@ -137,17 +163,24 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
         endTagStart,
     };
 
-    function findTargetTag(node: ChildNode): ChildNode | undefined {
-        if (node.type !== ElementType.Tag) {
-            return;
-        }
-
-        if (node.startIndex! <= cursor.at && cursor.at <= node.endIndex!) {
-            if (!node.children.length) {
-                return node;
-            } else {
-                return node.children.find(findTargetTag) ?? node;
+    function findTargetTag(): ChildNode | undefined {
+        for (const childNode of document.children) {
+            const target = findTargetTagInner(childNode);
+            if (target) {
+                return target;
             }
+        }
+    }
+
+    function findTargetTagInner(node: ChildNode): ChildNode | undefined {
+        if (node.type === ElementType.Tag && cursorAt >= node.startIndex! && cursorAt <= node.endIndex!) {
+            for (const childNode of node.children) {
+                const target = findTargetTagInner(childNode);
+                if (target) {
+                    return target;
+                }
+            }
+            return node;
         }
     }
 
@@ -155,18 +188,22 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
         const { attrs } = element.sourceCodeLocation!;
         return element.attrs.map((attr) => {
             const location = attrs![attr.name];
-            const attrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
-            const attrValueStart = !attr.value ? 0 : attrText.indexOf(attr.value);
-            return {
+            const item: HtmlAttr = {
                 name: {
                     text: attr.name,
                     start: start + location.startOffset,
                 },
-                value: {
-                    text: attr.value,
-                    start: start + location.startOffset + attrValueStart,
-                },
             };
+            if (!attr.value) {
+                return item;
+            }
+            const attrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
+            const attrValueStart = attrText.indexOf(attr.value);
+            item.value = {
+                text: attr.value,
+                start: start + location.startOffset + attrValueStart,
+            };
+            return item;
         });
     }
 }

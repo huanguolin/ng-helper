@@ -1,4 +1,13 @@
-import { canCompletionNgDirective, isContainsNgFilter, getTextInTemplate, indexOfNgFilter, getMapValues, getBeforeCursorText } from '../lib/html';
+import {
+    canCompletionNgDirective,
+    isContainsNgFilter,
+    getTextInTemplate,
+    indexOfNgFilter,
+    getMapValues,
+    getBeforeCursorText,
+    getHtmlTagByCursor,
+    getTheAttrWhileCursorAtValue,
+} from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
     it.each([
@@ -155,5 +164,88 @@ describe('getMapValues()', () => {
     ])('given input: "%s", should return %s', ({ input, output }) => {
         const result = getMapValues(input);
         expect(result).toStrictEqual(output);
+    });
+});
+describe('getHtmlTagByCursor()', () => {
+    const h1Tag = {
+        tagName: 'h1',
+        attrs: [],
+        start: 27,
+        end: 41,
+        startTagEnd: 31,
+        endTagStart: 36,
+    };
+    const divTag = {
+        tagName: 'div',
+        attrs: [
+            {
+                name: { text: 'class', start: 9 },
+                value: { text: 'container', start: 16 },
+            },
+        ],
+        start: 4,
+        end: 47,
+        startTagEnd: 27,
+        endTagStart: 41,
+    };
+
+    it.each([
+        [{ at: 0, isHover: true }, undefined],
+        [{ at: 4, isHover: false }, undefined],
+        [{ at: 4, isHover: true }, divTag],
+        [{ at: 26, isHover: true }, divTag],
+        [{ at: 27, isHover: true }, h1Tag],
+        [{ at: 28, isHover: false }, h1Tag],
+        [{ at: 33, isHover: true }, h1Tag],
+        [{ at: 40, isHover: true }, h1Tag],
+        [{ at: 41, isHover: true }, divTag],
+        [{ at: 41, isHover: false }, h1Tag],
+        [{ at: 47, isHover: false }, divTag],
+    ])('input cursor: %s, return tag: %s', (cursor, htmlTag) => {
+        const htmlText = 'text<div class="container"><h1>Title</h1></div>';
+        const tag = getHtmlTagByCursor(htmlText, cursor);
+        expect(tag).toEqual(htmlTag);
+    });
+
+    it('parse no value attr should ok', () => {
+        const htmlText = '<h1 disabled>Title</h1>';
+        const tag = getHtmlTagByCursor(htmlText, { at: 3, isHover: true });
+        expect(tag?.tagName).toEqual('h1');
+        expect(tag?.attrs.length).toEqual(1);
+        expect(tag?.attrs[0].name.text).toEqual('disabled');
+        expect(tag?.attrs[0].value).toBeUndefined();
+    });
+
+    it.each([[{ at: 3, isHover: true }], [{ at: 5, isHover: true }], [{ at: 4, isHover: false }]])(
+        'should throw error when cursor invalid: %s',
+        (cursor) => {
+            const htmlText = '123';
+            expect(() => getHtmlTagByCursor(htmlText, cursor)).toThrow();
+        },
+    );
+});
+
+describe('getTheAttrWhileCursorAtValue()', () => {
+    const divTag = {
+        tagName: 'div',
+        attrs: [
+            { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } },
+            { name: { text: 'id', start: 26 }, value: { text: 'myDiv', start: 30 } },
+            { name: { text: 'disabled', start: 37 } },
+        ],
+        start: 4,
+        end: 37,
+        startTagEnd: 32,
+        endTagStart: 32,
+    };
+
+    it.each([
+        [divTag, { at: 4, isHover: false }, undefined],
+        [divTag, { at: 16, isHover: true }, { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } }],
+        [divTag, { at: 16, isHover: false }, undefined],
+        [divTag, { at: 37, isHover: false }, undefined],
+    ])('given tag: %p and cursor: %p, should return %p', (tag, cursor, expectedOutput) => {
+        const result = getTheAttrWhileCursorAtValue(tag, cursor);
+        expect(result).toEqual(expectedOutput);
     });
 });
