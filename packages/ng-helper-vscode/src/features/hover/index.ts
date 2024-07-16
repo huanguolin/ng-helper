@@ -17,11 +17,14 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document, position, token) {
+                console.time('provideHover');
                 try {
                     return await provideHover({ document, position, port, vscodeCancelToken: token });
                 } catch (error) {
                     console.error('provideHover() error:', error);
                     return undefined;
+                } finally {
+                    console.timeEnd('provideHover');
                 }
             },
         }),

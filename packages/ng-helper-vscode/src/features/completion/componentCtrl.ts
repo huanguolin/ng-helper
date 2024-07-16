@@ -15,11 +15,14 @@ import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 export function componentCtrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
         async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
+            console.time('provideCtrlCompletion');
             try {
                 return await provideCtrlCompletion({ document, position, port, vscodeCancelToken: token });
             } catch (error) {
                 console.error('provideCtrlCompletion() error:', error);
                 return undefined;
+            } finally {
+                console.timeEnd('provideCtrlCompletion');
             }
         },
     });

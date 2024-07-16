@@ -34,11 +34,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
         position: Position,
         token: CancellationToken,
     ): Promise<CompletionList<CompletionItem> | undefined> {
+        console.time('provideTypeCompletion');
         try {
             return await this.provideTypeCompletion({ document, position, token });
         } catch (error) {
             console.error('provideTypeCompletion() error:', error);
             return undefined;
+        } finally {
+            console.timeEnd('provideTypeCompletion');
         }
     }
 
