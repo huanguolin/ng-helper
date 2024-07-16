@@ -7,7 +7,7 @@ import {
     getHtmlTagByCursor,
     HtmlAttr,
 } from '@ng-helper/shared/lib/html';
-import { ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
+import { CancellationToken, ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
 
 import { getComponentHover } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
@@ -16,9 +16,9 @@ import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier }
 export function registerComponentHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
-            async provideHover(document, position, _token) {
+            async provideHover(document, position, token) {
                 try {
-                    return await provideHover({ document, position, port });
+                    return await provideHover({ document, position, port, vscodeCancelToken: token });
                 } catch (error) {
                     console.error('provideHover() error:', error);
                     return undefined;
@@ -28,7 +28,17 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
     );
 }
 
-async function provideHover({ document, position, port }: { document: TextDocument; position: Position; port: number }) {
+async function provideHover({
+    document,
+    position,
+    port,
+    vscodeCancelToken,
+}: {
+    document: TextDocument;
+    position: Position;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}) {
     if (!isComponentHtml(document)) {
         return undefined;
     }
@@ -47,7 +57,7 @@ async function provideHover({ document, position, port }: { document: TextDocume
         const cursorAt = tplText.cursor.at;
         const contextString = trimFilters(tplText.text, cursorAt);
         if (contextString) {
-            return await getHoverInfo({ document, port, contextString, cursorAt });
+            return await getHoverInfo({ document, port, contextString, cursorAt, vscodeCancelToken });
         }
     }
 
@@ -60,7 +70,7 @@ async function provideHover({ document, position, port }: { document: TextDocume
             let contextString = trimFilters(attr.value.text, cursorAt);
             // handle ng-class/ng-style map value
             ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
-            return await getHoverInfo({ document, port, contextString, cursorAt });
+            return await getHoverInfo({ document, port, contextString, cursorAt, vscodeCancelToken });
         }
     }
 }
@@ -70,18 +80,20 @@ async function getHoverInfo({
     port,
     contextString,
     cursorAt,
+    vscodeCancelToken,
 }: {
     document: TextDocument;
     port: number;
     contextString: string;
     cursorAt: number;
+    vscodeCancelToken: CancellationToken;
 }): Promise<Hover | undefined> {
     // remove .html add .ts
     const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
     await ensureTsServerRunning(tsFilePath, port);
 
-    const res = await getComponentHover(port, { fileName: tsFilePath, contextString, cursorAt });
+    const res = await getComponentHover({ port, info: { fileName: tsFilePath, contextString, cursorAt }, vscodeCancelToken });
 
     if (res) {
         const markdownStr = new MarkdownString();

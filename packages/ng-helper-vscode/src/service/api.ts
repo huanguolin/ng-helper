@@ -1,34 +1,45 @@
 import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
-import axios from 'axios';
+import axios, { CancelToken } from 'axios';
+import { CancellationToken } from 'vscode';
 
-export async function getComponentHover(port: number, info: NgHoverRequest) {
-    try {
-        const result = await axios.post<NgHoverResponse>(buildUrl(port, 'component', 'hover'), info);
-        console.log('getComponentHover result: ', result.data);
-        return result.data;
-    } catch (error) {
-        console.log('getComponentHover failed: ', error);
-    }
+interface ApiInput<T> {
+    port: number;
+    info: T;
+    vscodeCancelToken: CancellationToken;
 }
 
-export async function getComponentCompletion(port: number, info: NgCompletionRequest) {
-    try {
-        const result = await axios.post<NgCompletionResponse>(buildUrl(port, 'component', 'completion'), info);
-        console.log('getComponentCompletion result: ', result.data);
-        return result.data;
-    } catch (error) {
-        console.log('getComponentCompletion failed: ', error);
-    }
+interface BizRequestInput<T> {
+    url: string;
+    info: T;
+    apiName: string;
+    vscodeCancelToken: CancellationToken;
 }
 
-export async function getComponentControllerAs(port: number, info: NgRequest) {
-    try {
-        const result = await axios.post<string | undefined>(buildUrl(port, 'component', 'controller-as'), info);
-        console.log('getComponentControllerAs result: ', result.data);
-        return result.data;
-    } catch (error) {
-        console.log('getComponentControllerAs failed: ', error);
-    }
+export function getComponentHover({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
+    return bizRequest<NgHoverRequest, NgHoverResponse>({
+        url: buildUrl(port, 'component', 'hover'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentHover',
+    });
+}
+
+export function getComponentCompletion({ port, vscodeCancelToken, info }: ApiInput<NgCompletionRequest>) {
+    return bizRequest<NgCompletionRequest, NgCompletionResponse>({
+        url: buildUrl(port, 'component', 'completion'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentCompletion',
+    });
+}
+
+export function getComponentControllerAs({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
+    return bizRequest<NgRequest, string | undefined>({
+        url: buildUrl(port, 'component', 'controller-as'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentControllerAs',
+    });
 }
 
 export async function healthCheck(port: number): Promise<boolean> {
@@ -38,6 +49,32 @@ export async function healthCheck(port: number): Promise<boolean> {
     } catch (_) {
         return false;
     }
+}
+
+async function bizRequest<TInput, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
+    try {
+        const result = await axios.post<TOutput>(url, info, {
+            cancelToken: getAxiosCancelToken(vscodeCancelToken),
+        });
+        console.log(`${apiName}() result: `, result.data);
+        return result.data;
+    } catch (error) {
+        if (axios.isCancel(error)) {
+            console.log(`${apiName}() cancelled by vscode.`);
+        } else {
+            console.log(`${apiName}() failed: `, error);
+        }
+    }
+}
+
+function getAxiosCancelToken(vscodeCancelToken: CancellationToken): CancelToken {
+    const axiosCancelToken = axios.CancelToken.source();
+
+    vscodeCancelToken.onCancellationRequested(() => {
+        axiosCancelToken.cancel('Operation cancelled by VS Code');
+    });
+
+    return axiosCancelToken.token;
 }
 
 function buildUrl(port: number, ...uris: string[]) {

@@ -6,7 +6,17 @@ import {
     getTheAttrWhileCursorAtValue,
     getHtmlTagByCursor,
 } from '@ng-helper/shared/lib/html';
-import { CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionList, Position, SnippetString, TextDocument, languages } from 'vscode';
+import {
+    CancellationToken,
+    CompletionItem,
+    CompletionItemKind,
+    CompletionItemProvider,
+    CompletionList,
+    Position,
+    SnippetString,
+    TextDocument,
+    languages,
+} from 'vscode';
 
 import { getComponentCompletion } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
@@ -19,9 +29,13 @@ export function componentType(port: number) {
 class TypeCompletionProvider implements CompletionItemProvider {
     constructor(private port: number) {}
 
-    async provideCompletionItems(document: TextDocument, position: Position): Promise<CompletionList<CompletionItem> | undefined> {
+    async provideCompletionItems(
+        document: TextDocument,
+        position: Position,
+        token: CancellationToken,
+    ): Promise<CompletionList<CompletionItem> | undefined> {
         try {
-            return await this.provideTypeCompletion({ document, position });
+            return await this.provideTypeCompletion({ document, position, token });
         } catch (error) {
             console.error('provideTypeCompletion() error:', error);
             return undefined;
@@ -31,9 +45,11 @@ class TypeCompletionProvider implements CompletionItemProvider {
     private async provideTypeCompletion({
         document,
         position,
+        token,
     }: {
         document: TextDocument;
         position: Position;
+        token: CancellationToken;
     }): Promise<CompletionList<CompletionItem> | undefined> {
         if (!isComponentHtml(document)) {
             return undefined;
@@ -47,7 +63,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         if (tplText) {
             const prefix = getBeforeCursorText(tplText);
             if (prefix && !isContainsNgFilter(prefix)) {
-                return await this.getCompletionItems(document, prefix);
+                return await this.getCompletionItems(document, prefix, token);
             }
         }
 
@@ -60,20 +76,24 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 if (prefix && !isContainsNgFilter(prefix)) {
                     prefix = processPrefix(attr.name.text, prefix);
                     if (prefix) {
-                        return await this.getCompletionItems(document, prefix);
+                        return await this.getCompletionItems(document, prefix, token);
                     }
                 }
             }
         }
     }
 
-    private async getCompletionItems(document: TextDocument, prefix: string): Promise<CompletionList<CompletionItem> | undefined> {
+    private async getCompletionItems(
+        document: TextDocument,
+        prefix: string,
+        vscodeCancelToken: CancellationToken,
+    ): Promise<CompletionList<CompletionItem> | undefined> {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
         await ensureTsServerRunning(tsFilePath, this.port);
 
-        const res = await getComponentCompletion(this.port, { fileName: tsFilePath, prefix });
+        const res = await getComponentCompletion({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix } });
         if (res) {
             const items = res.map((x, i) => {
                 const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
