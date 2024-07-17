@@ -1,6 +1,7 @@
 import { ChildNode, Document } from 'domhandler';
 import { ElementType, parseDocument } from 'htmlparser2';
 import { parseFragment } from 'parse5';
+import { Attribute, Location } from 'parse5/dist/common/token';
 import { Element } from 'parse5/dist/tree-adapters/default';
 
 /**
@@ -194,17 +195,37 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
                     start: start + location.startOffset,
                 },
             };
-            if (!attr.value) {
+            const attrValueStart = getAttrValueStart(attr, location);
+            if (typeof attrValueStart === 'undefined') {
                 return item;
             }
-            const attrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
-            const attrValueStart = attrText.indexOf(attr.value);
             item.value = {
                 text: attr.value,
                 start: start + location.startOffset + attrValueStart,
             };
             return item;
         });
+    }
+
+    function getAttrValueStart(attr: Attribute, location: Location): number | undefined {
+        const realAttrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
+        const guessedAttrText = guessAttrText(attr, '"');
+        if (realAttrText.length === guessedAttrText.length) {
+            if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
+                return attr.name.length + '="'.length + '"'.length - 1; // base zero
+            } else {
+                throw new Error('getAttrValueStart(): Impossible here.');
+            }
+        } else if (realAttrText.length === attr.name.length) {
+            // <span disabled></span>
+            return undefined;
+        }
+        const v = realAttrText.lastIndexOf(attr.value);
+        return v >= 0 ? v : undefined;
+    }
+
+    function guessAttrText(attr: Attribute, quote: string): string {
+        return `${attr.name}=${quote}${attr.value}${quote}`;
     }
 }
 

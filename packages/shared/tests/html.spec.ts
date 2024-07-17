@@ -223,6 +223,15 @@ describe('getHtmlTagByCursor()', () => {
             expect(() => getHtmlTagByCursor(htmlText, cursor)).toThrow();
         },
     );
+
+    it(`test: 'ctrl' auto completion not working on <div ng-class="c">, see https://github.com/huanguolin/ng-helper/issues/2`, () => {
+        const htmlText = '<h1 ng-class="c">Title</h1>';
+        const tag = getHtmlTagByCursor(htmlText, { at: 15, isHover: false });
+        expect(tag?.tagName).toEqual('h1');
+        expect(tag?.attrs.length).toEqual(1);
+        expect(tag?.attrs[0].name).toEqual({ text: 'ng-class', start: 4 });
+        expect(tag?.attrs[0].value).toEqual({ text: 'c', start: 14 });
+    });
 });
 
 describe('getTheAttrWhileCursorAtValue()', () => {
