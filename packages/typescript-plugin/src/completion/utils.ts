@@ -22,7 +22,9 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
     function visit(node: ts.Node): ts.Type | undefined {
         logger.info('node text:', node.getText(minSyntaxNode.sourceFile));
 
-        if (ctx.ts.isPropertyAccessExpression(node)) {
+        if (ctx.ts.isLiteralExpression(node)) {
+            return getLiteralType(ctx, node);
+        } else if (ctx.ts.isPropertyAccessExpression(node)) {
             const nodeType = ctx.ts.isIdentifier(node.expression) ? rootType : visit(node.expression);
             logger.info('prop type:', typeToString(ctx, nodeType), 'node.name:', node.name.text);
             if (nodeType) {
@@ -70,13 +72,25 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
     }
 
     function getIndexType(expr: ts.Expression): ts.Type | undefined {
-        if (ctx.ts.isNumericLiteral(expr)) {
-            return ctx.typeChecker.getNumberLiteralType(Number.parseInt(expr.text, 10));
-        } else if (ctx.ts.isStringLiteral(expr)) {
-            return ctx.typeChecker.getStringLiteralType(expr.text);
+        if (ctx.ts.isLiteralExpression(expr)) {
+            return getLiteralType(ctx, expr);
         } else {
-            // TODO
-            // return visit(expr);
+            const syntaxNode = getMinSyntaxNode(ctx, minSyntaxNode.sourceFile, expr);
+            if (!syntaxNode) {
+                return;
+            }
+
+            if (ctx.ts.isLiteralExpression(syntaxNode.node)) {
+                // 它只是表达的部分结果，所以不能直接返回 getLiteralType()。
+                // 这里只需考虑 number 和 string 类型。
+                if (ctx.ts.isNumericLiteral(syntaxNode.node)) {
+                    return ctx.typeChecker.getNumberType();
+                } else if (ctx.ts.isStringLiteral(syntaxNode.node)) {
+                    return ctx.typeChecker.getStringType();
+                }
+            } else {
+                return visit(syntaxNode.node);
+            }
         }
     }
 
@@ -120,6 +134,24 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
         if (indexType.isStringLiteral()) {
             return getPropertyType(ctx, nodeType, indexType.value);
         }
+    }
+}
+
+function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type | undefined {
+    if (ctx.ts.isNumericLiteral(expr)) {
+        return ctx.typeChecker.getNumberLiteralType(Number.parseInt(expr.text, 10));
+    } else if (ctx.ts.isStringLiteral(expr)) {
+        return ctx.typeChecker.getStringLiteralType(expr.text);
+    } else if (expr.kind === ctx.ts.SyntaxKind.TrueKeyword) {
+        return ctx.typeChecker.getTrueType();
+    } else if (expr.kind === ctx.ts.SyntaxKind.FalseKeyword) {
+        return ctx.typeChecker.getTrueType();
+    } else if (expr.kind === ctx.ts.SyntaxKind.NullKeyword) {
+        return ctx.typeChecker.getNullType();
+    } else if (expr.kind === ctx.ts.SyntaxKind.UndefinedKeyword) {
+        return ctx.typeChecker.getUndefinedType();
+    } else if (expr.kind === ctx.ts.SyntaxKind.BigIntLiteral) {
+        return ctx.typeChecker.getBigIntType();
     }
 }
 
@@ -170,7 +202,11 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
  */
 export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string): SyntaxNodeInfo | undefined {
     const sourceFile = createTmpSourceFile(ctx, prefix);
-    return visit(sourceFile);
+    return getMinSyntaxNode(ctx, sourceFile, sourceFile);
+}
+
+function getMinSyntaxNode(ctx: PluginContext, sourceFile: ts.SourceFile, node: ts.Node): SyntaxNodeInfo | undefined {
+    return visit(node);
 
     function visit(node: ts.Node): SyntaxNodeInfo | undefined {
         if (ctx.ts.isSourceFile(node)) {
@@ -196,6 +232,8 @@ export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string
         } else if (ctx.ts.isArrayLiteralExpression(node)) {
             return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isPropertyAccessExpression(node)) {
+            return { sourceFile, node };
+        } else if (ctx.ts.isLiteralExpression(node)) {
             return { sourceFile, node };
         }
         // 其他情况不支持
