@@ -272,26 +272,26 @@ describe('getPropertyType()', () => {
     // });
 
     // TODO 单元测试过不了
-    // describe('union type', () => {
-    //     let type: ts.Type;
-    //     let ctx: PluginContext;
+    describe('union type', () => {
+        let type: ts.Type;
+        let ctx: PluginContext;
 
-    //     beforeAll(() => {
-    //         const sourceCode = `let x: string | number;`;
-    //         ctx = prepareTestContext(sourceCode);
-    //         const nodeX = findVariableDeclaration(ctx, 'x');
-    //         type = ctx.typeChecker.getTypeAtLocation(nodeX);
-    //     });
+        beforeAll(() => {
+            const sourceCode = `let x: string | number;`;
+            ctx = prepareTestContext(sourceCode);
+            const nodeX = findVariableDeclaration(ctx, 'x');
+            type = ctx.typeChecker.getTypeAtLocation(nodeX);
+        });
 
-    //     it.each([
-    //         ['nonExistentProperty', undefined],
-    //         ['length', undefined],
-    //         ['toString', '() => string'],
-    //     ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
-    //         const result = getPropertyType(ctx, type, propertyName);
-    //         expect(typeToString(ctx, result)).toBe(expectedTypeString);
-    //     });
-    // });
+        it.each([
+            // ['nonExistentProperty', undefined],
+            // ['length', undefined],
+            ['toString', '() => string'],
+        ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
+            const result = getPropertyType(ctx, type, propertyName);
+            expect(typeToString(ctx, result)).toBe(expectedTypeString);
+        });
+    });
 });
 
 function findVariableDeclaration(ctx: PluginContext, varName: string): ts.Identifier {
