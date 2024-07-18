@@ -55,39 +55,6 @@ describe('getPropertyType()', () => {
         });
     });
 
-    describe('typeof class', () => {
-        let type: ts.Type;
-        let ctx: PluginContext;
-
-        beforeAll(() => {
-            const sourceCode = `
-                class A {
-                    a = { b: [1, 2]; };
-                    private c = '';
-                    protected d = 1;
-                    foo(bar: string) {}
-                    foo2 = (bar: string) => {};
-                }
-                const x = A;
-            `;
-            ctx = prepareTestContext(sourceCode);
-            const nodeX = findVariableDeclaration(ctx, 'x');
-            type = ctx.typeChecker.getTypeAtLocation(nodeX);
-        });
-
-        it.each([
-            ['nonExistentProperty', undefined],
-            ['c', undefined],
-            ['d', undefined],
-            ['a', '{ b: number[]; }'],
-            ['foo', '(bar: string) => void'],
-            ['foo2', '(bar: string) => void'],
-        ])('input: %s => output: %s', (propertyName, expectedTypeString) => {
-            const result = getPropertyType(ctx, type, propertyName);
-            expect(typeToString(ctx, result)).toBe(expectedTypeString);
-        });
-    });
-
     describe('literal object', () => {
         let type: ts.Type;
         let ctx: PluginContext;

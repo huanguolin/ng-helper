@@ -8,11 +8,7 @@ export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: 
 }
 
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
-    if (isTypeOfType(ctx, type)) {
-        return getPropertyTypeViaSymbol(ctx, type, propertyName);
-    } else {
-        return getPropertyTypeViaType(ctx, type, propertyName);
-    }
+    return getPropertyTypeViaType(ctx, type, propertyName);
     // TODO 联合类型处理
     // else if (type.isUnion()) {
     //     const list = type.types.map((x) => getPropertyType(ctx, x, propertyName)).filter((x) => !!x) as ts.Type[];
@@ -22,6 +18,7 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
     // }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getPropertyTypeViaSymbol(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
     const symbol = type.getSymbol();
     if (!symbol) {
@@ -82,13 +79,10 @@ export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string
 }
 
 export function getPublicMembersTypeInfoOfType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
-    if (isTypeOfType(ctx, type)) {
-        return getPublicMembersTypeInfoViaSymbol(ctx, type);
-    } else {
-        return getPublicMembersTypeInfoViaType(ctx, type);
-    }
+    return getPublicMembersTypeInfoViaType(ctx, type);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getPublicMembersTypeInfoViaSymbol(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
     const symbol = type.getSymbol();
     if (!symbol) {
