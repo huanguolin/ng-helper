@@ -201,6 +201,9 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  * 字面量
  * 1 -> 1
  * 'a' -> 'a'
+ * 注意, 不支持下面的语句：
+ * 1.toString().
+ * 'a'.toString().
  *
  * @param ctx 上下文
  * @param prefix 补全前缀字符串
