@@ -327,22 +327,6 @@ describe('getPropertyType()', () => {
     // });
 });
 
-// TODO 单元测试过不了
-// describe('createUnionType()', () => {
-//     it('creates a union type from given types', () => {
-//         const ctx = prepareTestContext(`
-//             let x = 'x';
-//             let y = 1;
-//         `);
-//         const nodeX = findVariableDeclaration(ctx, 'x');
-//         const nodeY = findVariableDeclaration(ctx, 'y');
-//         const typeX = ctx.typeChecker.getTypeAtLocation(nodeX);
-//         const typeY = ctx.typeChecker.getTypeAtLocation(nodeY);
-//         const unionType = createUnionType(ctx, [typeX, typeY]);
-//         expect(typeToString(ctx, unionType)).toBe('string | number');
-//     });
-// });
-
 function findVariableDeclaration(ctx: PluginContext, varName: string): ts.Identifier {
     let node: ts.Identifier | undefined = undefined;
 
