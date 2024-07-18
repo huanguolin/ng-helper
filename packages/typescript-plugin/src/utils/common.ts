@@ -204,3 +204,14 @@ export function getNodeAtPosition(ctx: PluginContext, position: number, sourceFi
         }
     }
 }
+
+export function getLeftmostAccessExpression(ctx: PluginContext, expr: ts.Expression): ts.Expression {
+    while (isAccessExpression(ctx, expr)) {
+        expr = expr.expression;
+    }
+    return expr;
+}
+
+export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is ts.AccessExpression {
+    return node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression || node.kind === ctx.ts.SyntaxKind.ElementAccessExpression;
+}
