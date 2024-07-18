@@ -10,6 +10,8 @@ import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpressi
  * ctrl.a.[0].
  * ctrl.a.[ctrl.prefix + 'b'].
  * ctrl.a(1, ctrl.b.c).
+ * 1.
+ * "a".
  * @param ctx 上下文
  * @param rootType 根类型
  * @param minSyntaxNode 查找目标类型的最小语法节点
@@ -195,6 +197,10 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  *
  * 多语句
  * ctrl.a = ctrl.b.c; ctrl.d. -> ctrl.d.
+ *
+ * 字面量
+ * 1 -> 1
+ * 'a' -> 'a'
  *
  * @param ctx 上下文
  * @param prefix 补全前缀字符串

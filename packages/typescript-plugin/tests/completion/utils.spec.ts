@@ -71,7 +71,9 @@ describe('getCompletionType()', () => {
         ['ctrl.arrLike.', 'MyArrayLike<string>'],
         ['ctrl.arrLike.length', 'number'],
         ['ctrl.arrLike[0].', 'string'],
-        // TODO 字面量测试
+        // literal
+        ['1.', '1'],
+        ['"a".', '"a"'],
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
         const result = getCompletionType(ctx, type, node);
@@ -79,7 +81,7 @@ describe('getCompletionType()', () => {
     });
 
     // it('debug & test', () => {
-    //     const [input, output] = ['ctrl.b.e[ctrl.b.c.d + 1].', 'number'];
+    //     const [input, output] = ['"a".', 'string'];
     //     const node = getMinSyntaxNodeForCompletion(ctx, input)!;
     //     const result = getCompletionType(ctx, type, node);
     //     expect(typeToString(ctx, result)).toBe(output);
@@ -124,7 +126,9 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         // 多语句
         ['ctrl.a = ctrl.b.c; ctrl.d.', 'ctrl.d.'],
 
-        // TODO 字面量测试
+        // 字面量
+        ['1', '1'],
+        ['"a"', '"a"'],
     ])('input: %s => output: %s', (input: string, output: string) => {
         const v = getMinSyntaxNodeForCompletion(ctx, input);
         expect(v?.node.getText(v?.sourceFile)).toBe(output);
