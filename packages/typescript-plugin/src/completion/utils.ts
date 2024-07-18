@@ -41,8 +41,9 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
             } else if (signatures.length > 1) {
                 const matchedSignatures = signatures.filter((x) => x.parameters.length === node.arguments.length);
                 if (matchedSignatures.length > 0) {
-                    // TODO 按照入参类型找到合适的函数签名
                     return matchedSignatures[0].getReturnType();
+                } else {
+                    logger.info('Signature arguments count not matched.');
                 }
             }
         } else if (ctx.ts.isElementAccessExpression(node)) {
@@ -51,33 +52,73 @@ export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSynt
                 return;
             }
 
-            if (ctx.typeChecker.isTupleType(nodeType)) {
-                const tupleElementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
-                const arg = node.argumentExpression;
-                if (ctx.ts.isLiteralExpression(arg) && arg.kind === ctx.ts.SyntaxKind.NumericLiteral) {
-                    const index = Number.parseInt(arg.text);
-                    return tupleElementTypes[index];
-                } else {
-                    // TODO
-                    logger.info('======<TODO createUnionType(tupleElementTypes)>=====');
-                }
-            } else if (ctx.typeChecker.isArrayType(nodeType)) {
-                const typeArguments = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
-                return typeArguments.length > 0 ? typeArguments[0] : undefined;
+            const indexType = getIndexType(node.argumentExpression);
+            if (!indexType) {
+                return;
+            }
+
+            if (indexType.flags & ctx.ts.TypeFlags.NumberLike) {
+                return getNumberAccessType(nodeType, indexType);
+            } else if (indexType.flags & ctx.ts.TypeFlags.StringLike) {
+                return getStringAccessType(nodeType, indexType);
             } else {
-                const arg = node.argumentExpression;
-                if (
-                    ctx.ts.isLiteralExpression(arg) &&
-                    (arg.kind === ctx.ts.SyntaxKind.StringLiteral || arg.kind === ctx.ts.SyntaxKind.NumericLiteral)
-                ) {
-                    return getPropertyType(ctx, nodeType, arg.text);
-                } else {
-                    // TODO how to do here?
-                    logger.info('======<TODO how to do here?>=====');
-                }
+                logger.info('[ElementAccess] nodeType:', typeToString(ctx, nodeType), ', indexType:', typeToString(ctx, indexType));
             }
         } else {
             logger.info('======<can not be here>=====');
+        }
+    }
+
+    function getIndexType(expr: ts.Expression): ts.Type | undefined {
+        if (ctx.ts.isNumericLiteral(expr)) {
+            return ctx.typeChecker.getNumberLiteralType(Number.parseInt(expr.text, 10));
+        } else if (ctx.ts.isStringLiteral(expr)) {
+            return ctx.typeChecker.getStringLiteralType(expr.text);
+        } else {
+            // TODO
+            // return visit(expr);
+        }
+    }
+
+    function getNumberAccessType(nodeType: ts.Type, indexType: ts.Type): ts.Type | undefined {
+        const index = indexType.isNumberLiteral() ? indexType.value : undefined;
+
+        // tuple
+        if (ctx.typeChecker.isTupleType(nodeType)) {
+            const tupleElementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+            if (Number.isInteger(index)) {
+                return tupleElementTypes[index!];
+            } else {
+                // TODO 返回元组所有元素类型的 union
+                return;
+            }
+        }
+
+        // array like
+        if (ctx.typeChecker.isArrayLikeType(nodeType)) {
+            const elementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+            return elementTypes[0];
+        }
+
+        // nodeType is number index type
+        const numberIndexType = nodeType.getNumberIndexType();
+        if (numberIndexType) {
+            return numberIndexType;
+        }
+
+        if (typeof index === 'number') {
+            return getPropertyType(ctx, nodeType, index.toString());
+        }
+    }
+
+    function getStringAccessType(nodeType: ts.Type, indexType: ts.Type): ts.Type | undefined {
+        const stringIndexType = nodeType.getStringIndexType();
+        if (stringIndexType) {
+            return stringIndexType;
+        }
+
+        if (indexType.isStringLiteral()) {
+            return getPropertyType(ctx, nodeType, indexType.value);
         }
     }
 }
