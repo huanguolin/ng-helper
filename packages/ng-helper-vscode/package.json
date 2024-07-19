@@ -2,6 +2,7 @@
   "name": "ng-helper",
   "displayName": "Angular.js Helper",
   "description": "The Perfect Assistant for Angular.js with TypeScript Development.",
+  "icon": "resources/icon.png",
   "author": {
     "name": "Alvin Huang",
     "email": "huanguolin@outlook.com"
