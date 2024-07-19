@@ -32,6 +32,11 @@ describe('getCompletionType()', () => {
                     1: '2',
                     length: 2,
                 };
+                arrLike2: MyArrayLike<number> = {
+                    0: 0,
+                    1: 2,
+                    length: 2,
+                };
             }
         `);
         type = ctx.typeChecker.getTypeAtLocation(findTheNode()!);
@@ -71,6 +76,8 @@ describe('getCompletionType()', () => {
         ['ctrl.arrLike.', 'MyArrayLike<string>'],
         ['ctrl.arrLike.length', 'number'],
         ['ctrl.arrLike[0].', 'string'],
+        ['ctrl.arrLike2.', 'MyArrayLike<number>'],
+        ['ctrl.arrLike2[0].', 'number'],
         // literal
         ['1.', '1'],
         ['"a".', '"a"'],
