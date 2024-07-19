@@ -8,25 +8,14 @@ export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: 
 }
 
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
-    if (type.isUnion()) {
-        let result: ts.Type | undefined;
-        for (const input of type.types) {
-            const output = getPropertyType(ctx, input, propertyName);
-            if (!output) {
-                return;
-            }
-
-            if (result) {
-                if (typeToString(ctx, result) !== typeToString(ctx, output)) {
-                    return;
-                }
-            } else {
-                result = output;
-            }
-        }
-        return result;
-    }
     return getPropertyTypeViaType(ctx, type, propertyName);
+    // TODO 联合类型处理
+    // else if (type.isUnion()) {
+    //     const list = type.types.map((x) => getPropertyType(ctx, x, propertyName)).filter((x) => !!x) as ts.Type[];
+    //     if (list.length === type.types.length) {
+    //         return createUnionType(ctx, list);
+    //     }
+    // }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
