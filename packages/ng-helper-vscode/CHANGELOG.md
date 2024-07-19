@@ -5,6 +5,12 @@ All notable changes to the "ng-helper" extension will be documented in this file
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 
+## [v0.0.7](https://github.com/huanguolin/ng-helper/compare/v0.0.6...v0.0.7) (2024-07-19)
+
+### Improve
+- Improved support for auto-completion, hover type hints for accessing elements such as arrays.
+
+
 ## [v0.0.6](https://github.com/huanguolin/ng-helper/compare/v0.0.5...v0.0.6) (2024-07-17)
 
 ### Fixed
