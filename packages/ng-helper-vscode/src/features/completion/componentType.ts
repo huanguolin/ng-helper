@@ -101,9 +101,10 @@ class TypeCompletionProvider implements CompletionItemProvider {
             const items = res.map((x, i) => {
                 const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
                 if (x.isFunction) {
-                    let snippet = `${x.name}(`;
-                    snippet += x.paramNames!.map((x, i) => `\${${i + 1}:${x}}`).join(', ');
-                    snippet += ')${0}';
+                    // 分两段补全，第一段是函数名，第二段是参数
+                    let snippet = `${x.name}$1(`;
+                    snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
+                    snippet += ')$0';
                     item.insertText = new SnippetString(snippet);
                 }
                 item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
