@@ -34,6 +34,13 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
 
             overrideGetSemanticDiagnostics({ proxy, info, getContext });
 
+            // dispose
+            proxy.dispose = () => {
+                server?.close();
+                info.languageService.dispose();
+                initLogger.info('dispose');
+            };
+
             initLogger.info('end');
             initLogger.endGroup();
 
