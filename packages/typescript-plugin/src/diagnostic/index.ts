@@ -1,11 +1,48 @@
 import type ts from 'typescript';
+import type tsserver from 'typescript/lib/tsserverlibrary';
 
 import { PluginContext } from '../type';
 import { findClassDeclaration } from '../utils/common';
+import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from '../utils/ng';
 
 import { getConstructor, getStaticPublicInjectionField } from './utils';
 
-export function getTsInjectionDiagnostic(ctx: PluginContext): ts.Diagnostic | undefined {
+export function overrideGetSemanticDiagnostics({
+    proxy,
+    info,
+    getContext,
+}: {
+    proxy: tsserver.LanguageService;
+    info: tsserver.server.PluginCreateInfo;
+    getContext: (fileName: string) => PluginContext | undefined;
+}) {
+    proxy.getSemanticDiagnostics = (fileName: string) => {
+        const prior = info.languageService.getSemanticDiagnostics(fileName);
+
+        if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName) && !isServiceTsFile(fileName)) {
+            return prior;
+        }
+
+        const ctx = getContext(fileName);
+        if (!ctx) {
+            return prior;
+        }
+
+        try {
+            const diagnostic = getTsInjectionDiagnostic(ctx);
+            ctx.logger.info('getSemanticDiagnostics():', diagnostic);
+            if (diagnostic) {
+                prior.push(diagnostic);
+            }
+        } catch (error) {
+            ctx.logger.error('getSemanticDiagnostics():', (error as Error).message, (error as Error).stack);
+        }
+
+        return prior;
+    };
+}
+
+function getTsInjectionDiagnostic(ctx: PluginContext): ts.Diagnostic | undefined {
     const logger = ctx.logger.prefix('getTsInjectionDiagnostics()');
     const classNode = findClassDeclaration(ctx, ctx.sourceFile);
     if (!classNode) {

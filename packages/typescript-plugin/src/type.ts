@@ -1,3 +1,4 @@
+import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 export interface PluginCoreLogger {
@@ -30,4 +31,23 @@ export type ComponentCoreInfo = {
     controllerAs: string;
     controllerType?: ts.Type;
     bindings: Map<string, string>;
+};
+
+export type ProjectInfo = {
+    info: ts.server.PluginCreateInfo;
+    modules: {
+        typescript: typeof import('typescript/lib/tsserverlibrary');
+    };
+};
+
+export type GetContextFn = (fileName: string) => PluginContext | undefined;
+
+export type AddProjectResult = {
+    removeProject: () => void;
+    getContext: GetContextFn;
+};
+
+export type NgHelperServer = {
+    updateConfig: (cfg: NgPluginConfiguration) => void;
+    addProject: (projectInfo: ProjectInfo) => AddProjectResult | undefined;
 };

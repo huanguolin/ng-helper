@@ -15,6 +15,9 @@ export interface NgTypeInfo {
 
 export interface NgPluginConfiguration {
     port: number;
+    /**
+     * 从 vscode plugin 那边传过来，必须是绝对路径，且按照字符串长度从长到短排序。
+     */
     projectRoots: string[];
 }
 
