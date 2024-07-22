@@ -15,6 +15,7 @@ export interface NgTypeInfo {
 
 export interface NgPluginConfiguration {
     port: number;
+    projectRoots: string[];
 }
 
 export interface NgRequest {

@@ -1,6 +1,6 @@
 import { ExtensionContext } from 'vscode';
 
-import { activateExt, readConfig } from './activate';
+import { activateExt } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerComponentCompletions } from './features/completion';
 import { registerComponentHover } from './features/hover';
@@ -8,8 +8,8 @@ import { registerComponentHover } from './features/hover';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: ExtensionContext) {
-    const port = await activateExt();
-    if (!port) {
+    const config = await activateExt();
+    if (!config) {
         return;
     }
 
@@ -17,16 +17,14 @@ export async function activate(context: ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('======= "ng-helper" is now active ========');
 
-    const config = await readConfig();
-
     // command
     context.subscriptions.push(createComponentCommand(config.componentCssFileExt));
 
     // completion
-    registerComponentCompletions(context, port);
+    registerComponentCompletions(context, config.port);
 
     // hover
-    registerComponentHover(context, port);
+    registerComponentHover(context, config.port);
 }
 
 // This method is called when your extension is deactivated

@@ -4,20 +4,22 @@ import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { configTsPluginConfiguration } from './service/config';
 import { isFileExistsOnWorkspace } from './utils';
 
-export async function activateExt(): Promise<number | undefined> {
+export async function activateExt(): Promise<NgHelperConfigWithPort | undefined> {
     const canActivated = await canActivate();
     if (!canActivated) {
         return;
     }
 
-    const port = await configTsPluginConfiguration(defaultPort);
+    const config = await readConfig();
+
+    const port = await configTsPluginConfiguration(defaultPort, config);
     if (!port) {
         return;
     }
 
     await commands.executeCommand('setContext', EXT_IS_ACTIVATED, true);
 
-    return port;
+    return Object.assign(config, { port });
 }
 
 async function canActivate(): Promise<boolean> {
@@ -47,22 +49,39 @@ export async function readConfig(): Promise<NgHelperConfig> {
 function getDefaultConfig(): NgHelperConfig {
     return {
         componentCssFileExt: 'css',
+        projectRoots: [getWorkspacePath()!.fsPath],
     };
 }
 
 function getConfigUri(): Uri | undefined {
+    const rootWorkspaceUri = getWorkspacePath();
+    if (!rootWorkspaceUri) {
+        return;
+    }
+    return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
+}
+
+function getWorkspacePath(): Uri | undefined {
     const workspaceFolders = workspace.workspaceFolders;
     if (!workspaceFolders) {
         return;
     }
 
-    const rootWorkspaceUri = workspaceFolders[0].uri;
-    return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
+    return workspaceFolders[0].uri;
 }
 
 export interface NgHelperConfig {
     /**
-     * like 'less', 'scss', 'css' etc. default is 'css';
+     * like 'less', 'scss', 'css' etc, default is 'css';
      */
     componentCssFileExt: string;
+    /**
+     * The root path of the project, it can be multiple.
+     * Default is the workspace root path.
+     */
+    projectRoots: string[];
+}
+
+export interface NgHelperConfigWithPort extends NgHelperConfig {
+    port: number;
 }
