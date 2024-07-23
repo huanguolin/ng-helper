@@ -2,9 +2,7 @@ import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript/lib/tsserverlibrary';
 
 import { overrideGetSemanticDiagnostics } from './diagnostic';
-import { createNgHelperServer } from './ngHelperServer';
-
-const ngHelperServer = createNgHelperServer();
+import { ngHelperServer } from './ngHelperServer';
 
 export = init;
 

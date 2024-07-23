@@ -16,23 +16,29 @@ import { getComponentHoverType } from './hover';
 import { AddProjectResult, GetContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
 import { buildLogger } from './utils/log';
 
-export function createNgHelperServer(): NgHelperServer {
+export const ngHelperServer = createNgHelperServer();
+
+function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer(resolveContext);
     const _getContextMap = new Map<string, GetContextFn>();
     let _httpServer: http.Server | undefined;
-    let _config: NgPluginConfiguration | undefined;
+    let _config: Partial<NgPluginConfiguration> | undefined;
 
     return {
+        isExtensionActivated,
         updateConfig,
         addProject,
     };
 
-    function updateConfig(cfg: NgPluginConfiguration) {
-        if (!_config || _config.port !== cfg.port) {
+    function isExtensionActivated() {
+        return !!_config?.port;
+    }
+
+    function updateConfig(cfg: Partial<NgPluginConfiguration>) {
+        if (_config?.port !== cfg.port && cfg.port) {
             _httpServer?.close();
             _httpServer = _express.listen(cfg.port);
         }
-        sortPaths(cfg.projectRoots);
         _config = cfg;
     }
 
@@ -45,18 +51,12 @@ export function createNgHelperServer(): NgHelperServer {
         initLogger.info('start with info.config:', info.config);
 
         if (!_config) {
-            updateConfig(info.config as NgPluginConfiguration);
+            updateConfig(info.config as Partial<NgPluginConfiguration>);
             initLogger.info('update _config to:', _config);
         }
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();
         initLogger.info('project root from ts server:', projectRoot);
-
-        const valid = isValidProjectRoot(projectRoot, _config!);
-        initLogger.info('project root is valid:', valid);
-        if (!valid) {
-            return;
-        }
 
         const getContext = buildGetContextFunc({
             info,
@@ -104,15 +104,6 @@ export function createNgHelperServer(): NgHelperServer {
             }
         }
     }
-}
-
-function isValidProjectRoot(projectRoot: string, config: NgPluginConfiguration): boolean {
-    for (const cfgProjectRoot of config.projectRoots) {
-        if (projectRoot.startsWith(cfgProjectRoot)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 function sortPaths(paths: string[]) {

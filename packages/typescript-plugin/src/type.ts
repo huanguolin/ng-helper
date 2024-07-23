@@ -48,6 +48,7 @@ export type AddProjectResult = {
 };
 
 export type NgHelperServer = {
+    isExtensionActivated: () => boolean;
     updateConfig: (cfg: NgPluginConfiguration) => void;
     addProject: (projectInfo: ProjectInfo) => AddProjectResult | undefined;
 };

@@ -1,6 +1,7 @@
 import type ts from 'typescript';
 import type tsserver from 'typescript/lib/tsserverlibrary';
 
+import { ngHelperServer } from '../ngHelperServer';
 import { GetContextFn, PluginContext } from '../type';
 import { findClassDeclaration } from '../utils/common';
 import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from '../utils/ng';
@@ -18,6 +19,9 @@ export function overrideGetSemanticDiagnostics({
 }) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
+        if (!ngHelperServer.isExtensionActivated()) {
+            return prior;
+        }
 
         if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName) && !isServiceTsFile(fileName)) {
             return prior;

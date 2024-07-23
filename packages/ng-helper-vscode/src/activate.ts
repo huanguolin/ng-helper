@@ -2,7 +2,7 @@ import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { configTsPluginConfiguration } from './service/config';
-import { isFileExistsOnWorkspace, normalizeFileExt, normalizePath } from './utils';
+import { isFileExistsOnWorkspace, normalizeFileExt } from './utils';
 
 export async function activateExt(): Promise<NgHelperConfigWithPort | undefined> {
     const canActivated = await canActivate();
@@ -12,7 +12,7 @@ export async function activateExt(): Promise<NgHelperConfigWithPort | undefined>
 
     const config = await readConfig();
 
-    const port = await configTsPluginConfiguration(defaultPort, config);
+    const port = await configTsPluginConfiguration(defaultPort);
     if (!port) {
         return;
     }
@@ -49,14 +49,12 @@ export async function readConfig(): Promise<NgHelperConfig> {
 function getDefaultConfig(): NgHelperConfig {
     return {
         componentCssFileExt: 'css',
-        projectRoots: [getWorkspacePath()!.fsPath],
     };
 }
 
 function normalizeConfig(config: NgHelperConfig): NgHelperConfig {
     return {
         componentCssFileExt: normalizeFileExt(config.componentCssFileExt),
-        projectRoots: config.projectRoots.map((root) => normalizePath(root)),
     };
 }
 
@@ -82,11 +80,6 @@ export interface NgHelperConfig {
      * like 'less', 'scss', 'css' etc, default is 'css';
      */
     componentCssFileExt: string;
-    /**
-     * The root path of the project, it can be multiple.
-     * Default is the workspace root path.
-     */
-    projectRoots: string[];
 }
 
 export interface NgHelperConfigWithPort extends NgHelperConfig {
