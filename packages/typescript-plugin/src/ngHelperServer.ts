@@ -29,6 +29,7 @@ function createNgHelperServer(): NgHelperServer {
         updateConfig,
         addProject,
         getContext,
+        getCoreContext,
     };
 
     function isExtensionActivated() {
@@ -86,27 +87,39 @@ function createNgHelperServer(): NgHelperServer {
         }
     }
 
-    function getContext(filePath: string): PluginContext | undefined {
+    function getCoreContext(filePath: string): CorePluginContext | undefined {
         const projectRoot = getProjectRoot(filePath);
-        if (projectRoot) {
-            const fn = _getContextMap.get(projectRoot);
-            if (fn) {
-                const coreCtx = fn();
-                if (!coreCtx) {
-                    return;
-                }
-
-                coreCtx.logger.info('getContext() via projectRoot:', projectRoot);
-
-                const sourceFile = coreCtx.program.getSourceFile(filePath);
-                if (!sourceFile) {
-                    coreCtx.logger.info('getContext()', 'get source file failed');
-                    return;
-                }
-
-                return Object.assign({ sourceFile }, coreCtx);
-            }
+        if (!projectRoot) {
+            return;
         }
+
+        const fn = _getContextMap.get(projectRoot);
+        if (!fn) {
+            return;
+        }
+
+        const coreCtx = fn();
+        if (!coreCtx) {
+            return;
+        }
+
+        coreCtx.logger.info('getCoreContext() via projectRoot:', projectRoot);
+        return coreCtx;
+    }
+
+    function getContext(filePath: string): PluginContext | undefined {
+        const coreCtx = getCoreContext(filePath);
+        if (!coreCtx) {
+            return;
+        }
+
+        const sourceFile = coreCtx.program.getSourceFile(filePath);
+        if (!sourceFile) {
+            coreCtx.logger.info('getContext()', 'get source file failed');
+            return;
+        }
+
+        return Object.assign({ sourceFile }, coreCtx);
     }
 
     function getProjectRoot(filePath: string): string | undefined {
@@ -149,11 +162,11 @@ function initHttpServer() {
     app.get('/ng-helper/hc', (_, res) => res.send());
 
     app.post('/ng-helper/component/controller-as', (req, res) => {
-        handleRequest<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
+        handleRequestWithCtx<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
     });
 
     app.post('/ng-helper/component/completion', (req, res) => {
-        handleRequest<NgCompletionRequest, NgCompletionResponse>({
+        handleRequestWithCtx<NgCompletionRequest, NgCompletionResponse>({
             req,
             res,
             action: (ctx, body) => getComponentCompletions(ctx, body.prefix),
@@ -161,7 +174,7 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/hover', (req, res) => {
-        handleRequest<NgHoverRequest, NgHoverResponse>({
+        handleRequestWithCtx<NgHoverRequest, NgHoverResponse>({
             req,
             res,
             action: (ctx, body) => getComponentHoverType(ctx, body),
@@ -171,7 +184,7 @@ function initHttpServer() {
     return app;
 }
 
-function handleRequest<TBody extends NgRequest, TResponse>({
+function handleRequestWithCtx<TBody extends NgRequest, TResponse>({
     req,
     res,
     action,
@@ -180,8 +193,35 @@ function handleRequest<TBody extends NgRequest, TResponse>({
     res: express.Response<TResponse>;
     action: (ctx: PluginContext, body: TBody) => TResponse;
 }) {
+    return handleRequest({ req, res, resolveCtx: (body) => ngHelperServer.getContext(body.fileName), action });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function handleRequestWithCoreCtx<TBody extends NgRequest, TResponse>({
+    req,
+    res,
+    action,
+}: {
+    req: express.Request<unknown, unknown, TBody>;
+    res: express.Response<TResponse>;
+    action: (ctx: CorePluginContext, body: TBody) => TResponse;
+}) {
+    return handleRequest({ req, res, resolveCtx: (body) => ngHelperServer.getCoreContext(body.fileName), action });
+}
+
+function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, TResponse>({
+    req,
+    res,
+    resolveCtx,
+    action,
+}: {
+    req: express.Request<unknown, unknown, TBody>;
+    res: express.Response<TResponse>;
+    resolveCtx: (body: TBody) => TCtx | undefined;
+    action: (ctx: TCtx, body: TBody) => TResponse;
+}) {
     const body = req.body;
-    const ctx = ngHelperServer.getContext(body.fileName);
+    const ctx = resolveCtx(body);
     if (!ctx) {
         return res.send('<====== NO CONTEXT ======>' as unknown as TResponse);
     }

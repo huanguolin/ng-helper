@@ -44,11 +44,13 @@ export type ProjectInfo = {
 };
 
 export type GetCoreContextFn = () => CorePluginContext | undefined;
-export type GetContextFn = (filePath: string) => PluginContext | undefined;
+export type GetCoreContextFnViaFilePath = (filePath: string) => CorePluginContext | undefined;
+export type GetContextFnViaFilePath = (filePath: string) => PluginContext | undefined;
 
 export type NgHelperServer = {
     updateConfig: (cfg: NgPluginConfiguration) => void;
     addProject: (projectInfo: ProjectInfo) => (() => void) | undefined;
-    getContext: GetContextFn;
+    getContext: GetContextFnViaFilePath;
+    getCoreContext: GetCoreContextFnViaFilePath;
     isExtensionActivated: () => boolean;
 };
