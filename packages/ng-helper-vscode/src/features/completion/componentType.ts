@@ -20,7 +20,7 @@ import {
 
 import { timeCost } from '../../debug';
 import { getComponentCompletion } from '../../service/api';
-import { ensureTsServerRunning } from '../../utils';
+import { checkNgHelperServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentType(port: number) {
@@ -94,7 +94,9 @@ class TypeCompletionProvider implements CompletionItemProvider {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
-        await ensureTsServerRunning(tsFilePath, this.port);
+        if (!(await checkNgHelperServerRunning(tsFilePath, this.port))) {
+            return;
+        }
 
         const res = await getComponentCompletion({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix } });
         if (res) {

@@ -21,6 +21,11 @@ export interface NgRequest {
     fileName: string;
 }
 
+export type NgResponse<T> = {
+    errKey?: 'NO_CONTEXT';
+    data?: T;
+};
+
 export interface NgCompletionRequest extends NgRequest {
     prefix: string;
 }

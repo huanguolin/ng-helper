@@ -10,7 +10,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 
 import { timeCost } from '../../debug';
 import { getComponentControllerAs } from '../../service/api';
-import { ensureTsServerRunning } from '../../utils';
+import { checkNgHelperServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentCtrl(port: number) {
@@ -69,7 +69,9 @@ async function getComponentControllerAsCompletion(document: TextDocument, port: 
     // remove .html add .ts
     const tsFilePath = document.fileName.slice(0, -5) + '.ts';
 
-    await ensureTsServerRunning(tsFilePath, port);
+    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
+        return;
+    }
 
     const res = await getComponentControllerAs({ port, info: { fileName: tsFilePath }, vscodeCancelToken });
     if (res) {

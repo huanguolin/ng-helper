@@ -7,6 +7,7 @@ import {
     NgHoverResponse,
     NgPluginConfiguration,
     NgRequest,
+    NgResponse,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -190,7 +191,7 @@ function handleRequestWithCtx<TBody extends NgRequest, TResponse>({
     action,
 }: {
     req: express.Request<unknown, unknown, TBody>;
-    res: express.Response<TResponse>;
+    res: express.Response<NgResponse<TResponse>>;
     action: (ctx: PluginContext, body: TBody) => TResponse;
 }) {
     return handleRequest({ req, res, resolveCtx: (body) => ngHelperServer.getContext(body.fileName), action });
@@ -203,7 +204,7 @@ function handleRequestWithCoreCtx<TBody extends NgRequest, TResponse>({
     action,
 }: {
     req: express.Request<unknown, unknown, TBody>;
-    res: express.Response<TResponse>;
+    res: express.Response<NgResponse<TResponse>>;
     action: (ctx: CorePluginContext, body: TBody) => TResponse;
 }) {
     return handleRequest({ req, res, resolveCtx: (body) => ngHelperServer.getCoreContext(body.fileName), action });
@@ -216,22 +217,22 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
     action,
 }: {
     req: express.Request<unknown, unknown, TBody>;
-    res: express.Response<TResponse>;
+    res: express.Response<NgResponse<TResponse>>;
     resolveCtx: (body: TBody) => TCtx | undefined;
     action: (ctx: TCtx, body: TBody) => TResponse;
 }) {
     const body = req.body;
     const ctx = resolveCtx(body);
     if (!ctx) {
-        return res.send('<====== NO CONTEXT ======>' as unknown as TResponse);
+        return res.send({ errKey: 'NO_CONTEXT' });
     }
 
     ctx.logger.startGroup();
     try {
         ctx.logger.info('request:', body);
-        const response = action(ctx, body);
-        res.send(response);
-        ctx.logger.info('response:', response);
+        const data = action(ctx, body);
+        res.send({ data });
+        ctx.logger.info('response:', data);
     } catch (error) {
         ctx.logger.error(req.url, (error as Error).message, (error as Error).stack);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any

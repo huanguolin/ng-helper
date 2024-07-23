@@ -1,8 +1,8 @@
-import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest } from '@ng-helper/shared/lib/plugin';
+import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest, NgResponse } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
 
-import { normalizePath } from '../utils';
+import { normalizePath, triggerTsServerByProject } from '../utils';
 
 interface ApiInput<T> {
     port: number;
@@ -44,11 +44,12 @@ export function getComponentControllerAs({ port, vscodeCancelToken, info }: ApiI
     });
 }
 
-export async function healthCheck(port: number): Promise<boolean> {
+export async function checkNgHelperServerRunningApi(port: number): Promise<boolean> {
     try {
         await axios.get(buildUrl(port, 'hc'));
         return true;
     } catch (_) {
+        console.log('checkNgHelperServerRunningApi() failed.');
         return false;
     }
 }
@@ -57,11 +58,15 @@ async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken
     try {
         info.fileName = normalizePath(info.fileName);
         console.log(`${apiName}() request: `, info);
-        const result = await axios.post<TOutput>(url, info, {
+        const result = await axios.post<NgResponse<TOutput>>(url, info, {
             cancelToken: getAxiosCancelToken(vscodeCancelToken),
         });
         console.log(`${apiName}() result: `, result.data);
-        return result.data;
+        if (result.data.errKey === 'NO_CONTEXT') {
+            await triggerTsServerByProject(info.fileName);
+            return;
+        }
+        return result.data.data!;
     } catch (error) {
         if (axios.isCancel(error)) {
             console.log(`${apiName}() cancelled by vscode.`);

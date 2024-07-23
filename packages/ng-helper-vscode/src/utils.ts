@@ -2,31 +2,35 @@ import { normalize } from 'node:path';
 
 import { window, workspace, Uri } from 'vscode';
 
-import { healthCheck } from './service/api';
+import { checkNgHelperServerRunningApi } from './service/api';
 
 let tsRunning = false;
-export async function ensureTsServerRunning(tsFilePath: string, port: number) {
+export async function checkNgHelperServerRunning(tsFilePath: string, port: number): Promise<boolean> {
     if (tsRunning) {
-        return;
+        return true;
     }
 
-    tsRunning = await healthCheck(port);
+    tsRunning = await checkNgHelperServerRunningApi(port);
     if (tsRunning) {
-        return;
+        // Mark ts server running
+        tsRunning = true;
+        return true;
     }
 
+    await triggerTsServerByProject(tsFilePath);
+    return false;
+}
+
+export async function triggerTsServerByProject(tsFilePath: string) {
     if (await isFileExistsOnWorkspace(Uri.file(tsFilePath))) {
         const selection = await window.showErrorMessage(
-            "To access features like auto-completion, you need to open a TypeScript file at least once. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
+            "To access features like auto-completion, you need to open a TypeScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
             'OK',
         );
         if (selection === 'OK') {
             // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
             const document = await workspace.openTextDocument(Uri.file(tsFilePath));
             await window.showTextDocument(document);
-
-            // Mark ts server running
-            tsRunning = true;
         }
     }
 }
