@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 import type tsserver from 'typescript/lib/tsserverlibrary';
 
-import { PluginContext } from '../type';
+import { GetContextFn, PluginContext } from '../type';
 import { findClassDeclaration } from '../utils/common';
 import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from '../utils/ng';
 
@@ -14,7 +14,7 @@ export function overrideGetSemanticDiagnostics({
 }: {
     proxy: tsserver.LanguageService;
     info: tsserver.server.PluginCreateInfo;
-    getContext: (fileName: string) => PluginContext | undefined;
+    getContext: GetContextFn;
 }) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);

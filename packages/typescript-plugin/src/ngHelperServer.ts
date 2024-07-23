@@ -39,15 +39,15 @@ export function createNgHelperServer(): NgHelperServer {
     function addProject(projectInfo: ProjectInfo): AddProjectResult | undefined {
         const { info, modules } = projectInfo;
         const logger = buildLogger(modules.typescript, info);
-
-        if (!_config) {
-            updateConfig(info.config as NgPluginConfiguration);
-        }
-
         const initLogger = logger.prefix('[init]');
 
         initLogger.startGroup();
-        initLogger.info('start with config:', _config);
+        initLogger.info('start with info.config:', info.config);
+
+        if (!_config) {
+            updateConfig(info.config as NgPluginConfiguration);
+            initLogger.info('update _config to:', _config);
+        }
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();
         initLogger.info('project root from ts server:', projectRoot);
