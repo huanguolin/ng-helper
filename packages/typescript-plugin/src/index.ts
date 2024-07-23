@@ -8,7 +8,7 @@ const ngHelperServer = createNgHelperServer();
 
 export = init;
 
-function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
+function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }): ts.server.PluginModule {
     return {
         create(info: ts.server.PluginCreateInfo) {
             const result = ngHelperServer.addProject({ info, modules });
