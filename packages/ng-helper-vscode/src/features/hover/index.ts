@@ -9,6 +9,7 @@ import {
 } from '@ng-helper/shared/lib/html';
 import { CancellationToken, ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
 
+import { timeCost } from '../../debug';
 import { getComponentHover } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
@@ -17,15 +18,14 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document, position, token) {
-                console.time('provideHover');
-                try {
-                    return await provideHover({ document, position, port, vscodeCancelToken: token });
-                } catch (error) {
-                    console.error('provideHover() error:', error);
-                    return undefined;
-                } finally {
-                    console.timeEnd('provideHover');
-                }
+                return timeCost('provideHover', async () => {
+                    try {
+                        return await provideHover({ document, position, port, vscodeCancelToken: token });
+                    } catch (error) {
+                        console.error('provideHover() error:', error);
+                        return undefined;
+                    }
+                });
             },
         }),
     );

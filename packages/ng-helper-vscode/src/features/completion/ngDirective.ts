@@ -1,6 +1,8 @@
 import { canCompletionNgDirective, Cursor, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
 
+import { timeCost } from '../../debug';
+
 const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:expression}`,
@@ -13,15 +15,14 @@ const defaultNgConfigStr: NgDirectiveConfig = {
 export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position) {
-            console.time('provideNgCompletion');
-            try {
-                return provideNgCompletion({ document, position });
-            } catch (error) {
-                console.error('provideNgCompletion() error:', error);
-                return undefined;
-            } finally {
-                console.timeEnd('provideNgCompletion');
-            }
+            return timeCost('provideNgCompletion', () => {
+                try {
+                    return provideNgCompletion({ document, position });
+                } catch (error) {
+                    console.error('provideNgCompletion() error:', error);
+                    return undefined;
+                }
+            });
         },
     });
 }

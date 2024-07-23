@@ -18,6 +18,7 @@ import {
     languages,
 } from 'vscode';
 
+import { timeCost } from '../../debug';
 import { getComponentCompletion } from '../../service/api';
 import { ensureTsServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
@@ -34,15 +35,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
         position: Position,
         token: CancellationToken,
     ): Promise<CompletionList<CompletionItem> | undefined> {
-        console.time('provideTypeCompletion');
-        try {
-            return await this.provideTypeCompletion({ document, position, token });
-        } catch (error) {
-            console.error('provideTypeCompletion() error:', error);
-            return undefined;
-        } finally {
-            console.timeEnd('provideTypeCompletion');
-        }
+        return timeCost('provideTypeCompletion', async () => {
+            try {
+                return await this.provideTypeCompletion({ document, position, token });
+            } catch (error) {
+                console.error('provideTypeCompletion() error:', error);
+                return undefined;
+            }
+        });
     }
 
     private async provideTypeCompletion({
