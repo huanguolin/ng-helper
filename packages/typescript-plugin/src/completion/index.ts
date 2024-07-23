@@ -1,8 +1,9 @@
 import { NgCompletionResponse } from '@ng-helper/shared/lib/plugin';
 
-import { PluginContext } from '../type';
+import { ngHelperServer } from '../ngHelperServer';
+import { CorePluginContext, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getPublicMembersTypeInfoOfBindings } from '../utils/ng';
+import { getPublicMembersTypeInfoOfBindings, isComponentTsFile } from '../utils/ng';
 import { getComponentCoreInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
@@ -56,4 +57,26 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
 
         return getPublicMembersTypeInfoOfType(ctx, targetType);
     }
+}
+
+export function updateComponentsInfo(coreCtx: CorePluginContext, filePath: string) {
+    // const logger = coreCtx.logger.prefix('getComponentNameCompletions()');
+
+    coreCtx.program.getSourceFiles().forEach((sourceFile) => {
+        if (!isComponentTsFile(sourceFile.fileName) || sourceFile.fileName === filePath) {
+            return;
+        }
+
+        const ctx = ngHelperServer.getContext(sourceFile.fileName);
+        if (!ctx) {
+            return;
+        }
+
+        const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+        if (!componentLiteralNode) {
+            return;
+        }
+
+        const info = getComponentCoreInfo(ctx, componentLiteralNode);
+    });
 }
