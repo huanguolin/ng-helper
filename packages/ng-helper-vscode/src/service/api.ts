@@ -2,6 +2,8 @@ import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverRespo
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
 
+import { normalizePath } from '../utils';
+
 interface ApiInput<T> {
     port: number;
     info: T;
@@ -51,8 +53,9 @@ export async function healthCheck(port: number): Promise<boolean> {
     }
 }
 
-async function bizRequest<TInput, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
+async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
     try {
+        info.fileName = normalizePath(info.fileName);
         console.log(`${apiName}() request: `, info);
         const result = await axios.post<TOutput>(url, info, {
             cancelToken: getAxiosCancelToken(vscodeCancelToken),

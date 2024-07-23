@@ -2,7 +2,7 @@ import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { configTsPluginConfiguration } from './service/config';
-import { isFileExistsOnWorkspace } from './utils';
+import { isFileExistsOnWorkspace, normalizeFileExt, normalizePath } from './utils';
 
 export async function activateExt(): Promise<NgHelperConfigWithPort | undefined> {
     const canActivated = await canActivate();
@@ -43,13 +43,20 @@ export async function readConfig(): Promise<NgHelperConfig> {
     } catch (error) {
         console.error('ng-helper.json is not a valid JSON file: ', jsonText);
     }
-    return config;
+    return normalizeConfig(config);
 }
 
 function getDefaultConfig(): NgHelperConfig {
     return {
         componentCssFileExt: 'css',
         projectRoots: [getWorkspacePath()!.fsPath],
+    };
+}
+
+function normalizeConfig(config: NgHelperConfig): NgHelperConfig {
+    return {
+        componentCssFileExt: normalizeFileExt(config.componentCssFileExt),
+        projectRoots: config.projectRoots.map((root) => normalizePath(root)),
     };
 }
 

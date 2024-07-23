@@ -1,3 +1,5 @@
+import { normalize } from 'node:path';
+
 import { window, workspace, Uri } from 'vscode';
 
 import { healthCheck } from './service/api';
@@ -38,4 +40,16 @@ export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+export function normalizeFileExt(ext: string): string {
+    if (ext.startsWith('.')) {
+        return ext.slice(1);
+    }
+    return ext;
+}
+
+export function normalizePath(filePath: string): string {
+    filePath = normalize(filePath);
+    return filePath.replace(/\\/g, '/');
 }

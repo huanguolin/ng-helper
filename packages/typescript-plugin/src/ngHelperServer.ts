@@ -95,12 +95,12 @@ export function createNgHelperServer(): NgHelperServer {
         }
     }
 
-    function getProjectRoot(filePath: string) {
+    function getProjectRoot(filePath: string): string | undefined {
         const paths = Array.from(_getContextMap.keys());
         sortPaths(paths);
         for (const projectRoot of paths) {
             if (filePath.startsWith(projectRoot)) {
-                return filePath;
+                return projectRoot;
             }
         }
     }
@@ -193,7 +193,7 @@ function handleRequest<TBody extends NgRequest, TResponse>({
     const body = req.body;
     const ctx = resolveContext(body.fileName);
     if (!ctx) {
-        return res.send();
+        return res.send('<====== NO CONTEXT ======>' as unknown as TResponse);
     }
 
     ctx.logger.startGroup();
