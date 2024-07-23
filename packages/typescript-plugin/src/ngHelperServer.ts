@@ -13,14 +13,14 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { getComponentCompletions, getComponentControllerAs } from './completion';
 import { getComponentHoverType } from './hover';
-import { AddProjectResult, GetContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
+import { CorePluginContext, GetCoreContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
 import { buildLogger } from './utils/log';
 
 export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
-    const _express = initHttpServer(resolveContext);
-    const _getContextMap = new Map<string, GetContextFn>();
+    const _express = initHttpServer();
+    const _getContextMap = new Map<string, GetCoreContextFn>();
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
 
@@ -28,6 +28,7 @@ function createNgHelperServer(): NgHelperServer {
         isExtensionActivated,
         updateConfig,
         addProject,
+        getContext,
     };
 
     function isExtensionActivated() {
@@ -39,10 +40,17 @@ function createNgHelperServer(): NgHelperServer {
             _httpServer?.close();
             _httpServer = _express.listen(cfg.port);
         }
+
         _config = cfg;
+
+        // log record
+        if (_getContextMap.size > 0) {
+            const { value: getCoreContext } = _getContextMap.values().next() as { value: GetCoreContextFn; done: boolean };
+            getCoreContext()?.logger.info('updateConfig(): config:', cfg);
+        }
     }
 
-    function addProject(projectInfo: ProjectInfo): AddProjectResult | undefined {
+    function addProject(projectInfo: ProjectInfo): (() => void) | undefined {
         const { info, modules } = projectInfo;
         const logger = buildLogger(modules.typescript, info);
         const initLogger = logger.prefix('[init]');
@@ -52,24 +60,19 @@ function createNgHelperServer(): NgHelperServer {
 
         if (!_config) {
             updateConfig(info.config as Partial<NgPluginConfiguration>);
-            initLogger.info('update _config to:', _config);
         }
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();
         initLogger.info('project root from ts server:', projectRoot);
 
-        const getContext = buildGetContextFunc({
-            info,
-            logger,
-            modules,
-        });
+        const getCoreContext = buildGetCoreContextFunc({ info, logger, modules });
 
-        _getContextMap.set(projectRoot, getContext);
+        _getContextMap.set(projectRoot, getCoreContext);
 
         initLogger.info('end with projectRoot:', projectRoot);
         initLogger.endGroup();
 
-        return { removeProject, getContext };
+        return removeProject;
 
         function removeProject() {
             if (projectRoot) {
@@ -83,21 +86,32 @@ function createNgHelperServer(): NgHelperServer {
         }
     }
 
-    function resolveContext(filePath: string): PluginContext | undefined {
+    function getContext(filePath: string): PluginContext | undefined {
         const projectRoot = getProjectRoot(filePath);
         if (projectRoot) {
             const fn = _getContextMap.get(projectRoot);
             if (fn) {
-                const ctx = fn(filePath);
-                ctx?.logger.info('resolveContext(): projectRoot:', projectRoot);
-                return ctx;
+                const coreCtx = fn();
+                if (!coreCtx) {
+                    return;
+                }
+
+                coreCtx.logger.info('getContext() via projectRoot:', projectRoot);
+
+                const sourceFile = coreCtx.program.getSourceFile(filePath);
+                if (!sourceFile) {
+                    coreCtx.logger.info('getContext()', 'get source file failed');
+                    return;
+                }
+
+                return Object.assign({ sourceFile }, coreCtx);
             }
         }
     }
 
     function getProjectRoot(filePath: string): string | undefined {
         const paths = Array.from(_getContextMap.keys());
-        sortPaths(paths);
+        paths.sort((a, b) => b.length - a.length);
         for (const projectRoot of paths) {
             if (filePath.startsWith(projectRoot)) {
                 return projectRoot;
@@ -106,54 +120,42 @@ function createNgHelperServer(): NgHelperServer {
     }
 }
 
-function sortPaths(paths: string[]) {
-    paths.sort((a, b) => b.length - a.length);
-}
+function buildGetCoreContextFunc({ info, logger, modules }: ProjectInfo & { logger: PluginLogger }): GetCoreContextFn {
+    return getCoreContext;
 
-function buildGetContextFunc({ info, logger, modules }: ProjectInfo & { logger: PluginLogger }): GetContextFn {
-    return getContext;
-
-    function getContext(fileName: string): PluginContext | undefined {
+    function getCoreContext(): CorePluginContext | undefined {
         const program = info.project['program'] as ts.Program | undefined;
 
         if (!program) {
-            logger.info('getContext()', 'get program failed');
-            return undefined;
+            logger.info('getCoreContext()', 'get program failed');
+            return;
         }
 
         const typeChecker = program.getTypeChecker();
-        const sourceFile = program.getSourceFile(fileName);
-
-        if (!sourceFile) {
-            logger.info('getContext()', 'get source file failed');
-            return undefined;
-        }
 
         return {
             program,
             typeChecker,
-            sourceFile,
             ts: modules.typescript,
             logger,
         };
     }
 }
 
-function initHttpServer(resolveContext: GetContextFn) {
+function initHttpServer() {
     const app = express();
     app.use(express.json());
 
     app.get('/ng-helper/hc', (_, res) => res.send());
 
     app.post('/ng-helper/component/controller-as', (req, res) => {
-        handleRequest<NgRequest, string | undefined>({ req, res, resolveContext, action: (ctx) => getComponentControllerAs(ctx) });
+        handleRequest<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
     });
 
     app.post('/ng-helper/component/completion', (req, res) => {
         handleRequest<NgCompletionRequest, NgCompletionResponse>({
             req,
             res,
-            resolveContext,
             action: (ctx, body) => getComponentCompletions(ctx, body.prefix),
         });
     });
@@ -162,7 +164,6 @@ function initHttpServer(resolveContext: GetContextFn) {
         handleRequest<NgHoverRequest, NgHoverResponse>({
             req,
             res,
-            resolveContext,
             action: (ctx, body) => getComponentHoverType(ctx, body),
         });
     });
@@ -173,16 +174,14 @@ function initHttpServer(resolveContext: GetContextFn) {
 function handleRequest<TBody extends NgRequest, TResponse>({
     req,
     res,
-    resolveContext,
     action,
 }: {
     req: express.Request<unknown, unknown, TBody>;
     res: express.Response<TResponse>;
-    resolveContext: GetContextFn;
     action: (ctx: PluginContext, body: TBody) => TResponse;
 }) {
     const body = req.body;
-    const ctx = resolveContext(body.fileName);
+    const ctx = ngHelperServer.getContext(body.fileName);
     if (!ctx) {
         return res.send('<====== NO CONTEXT ======>' as unknown as TResponse);
     }

@@ -14,13 +14,16 @@ export interface PluginLogger extends PluginCoreLogger {
     prefix: (prefix: string) => PluginCoreLogger;
 }
 
-export type PluginContext = {
+export interface CorePluginContext {
     program: ts.Program;
     typeChecker: ts.TypeChecker;
     ts: typeof import('typescript/lib/tsserverlibrary');
-    sourceFile: ts.SourceFile;
     logger: PluginLogger;
-};
+}
+
+export interface PluginContext extends CorePluginContext {
+    sourceFile: ts.SourceFile;
+}
 
 export type SyntaxNodeInfo = {
     sourceFile: ts.SourceFile;
@@ -40,15 +43,12 @@ export type ProjectInfo = {
     };
 };
 
-export type GetContextFn = (fileName: string) => PluginContext | undefined;
-
-export type AddProjectResult = {
-    removeProject: () => void;
-    getContext: GetContextFn;
-};
+export type GetCoreContextFn = () => CorePluginContext | undefined;
+export type GetContextFn = (filePath: string) => PluginContext | undefined;
 
 export type NgHelperServer = {
-    isExtensionActivated: () => boolean;
     updateConfig: (cfg: NgPluginConfiguration) => void;
-    addProject: (projectInfo: ProjectInfo) => AddProjectResult | undefined;
+    addProject: (projectInfo: ProjectInfo) => (() => void) | undefined;
+    getContext: GetContextFn;
+    isExtensionActivated: () => boolean;
 };

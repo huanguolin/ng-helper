@@ -9,17 +9,15 @@ export = init;
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }): ts.server.PluginModule {
     return {
         create(info: ts.server.PluginCreateInfo) {
-            const result = ngHelperServer.addProject({ info, modules });
-            if (!result) {
+            const removeProject = ngHelperServer.addProject({ info, modules });
+            if (!removeProject) {
                 return info.languageService;
             }
-
-            const { getContext, removeProject } = result;
 
             // Set up decorator object
             const proxy: ts.LanguageService = buildProxy(info);
 
-            overrideGetSemanticDiagnostics({ proxy, info, getContext });
+            overrideGetSemanticDiagnostics({ proxy, info });
 
             // dispose
             proxy.dispose = () => {

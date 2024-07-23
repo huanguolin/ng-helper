@@ -2,21 +2,13 @@ import type ts from 'typescript';
 import type tsserver from 'typescript/lib/tsserverlibrary';
 
 import { ngHelperServer } from '../ngHelperServer';
-import { GetContextFn, PluginContext } from '../type';
+import { PluginContext } from '../type';
 import { findClassDeclaration } from '../utils/common';
 import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from '../utils/ng';
 
 import { getConstructor, getStaticPublicInjectionField } from './utils';
 
-export function overrideGetSemanticDiagnostics({
-    proxy,
-    info,
-    getContext,
-}: {
-    proxy: tsserver.LanguageService;
-    info: tsserver.server.PluginCreateInfo;
-    getContext: GetContextFn;
-}) {
+export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserver.LanguageService; info: tsserver.server.PluginCreateInfo }) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
         if (!ngHelperServer.isExtensionActivated()) {
@@ -27,7 +19,7 @@ export function overrideGetSemanticDiagnostics({
             return prior;
         }
 
-        const ctx = getContext(fileName);
+        const ctx = ngHelperServer.getContext(fileName);
         if (!ctx) {
             return prior;
         }
