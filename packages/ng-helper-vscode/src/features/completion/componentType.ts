@@ -21,7 +21,7 @@ import {
 import { timeCost } from '../../debug';
 import { getComponentTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
+import { getCorrespondingTsFileName, isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
 export function componentType(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
@@ -91,8 +91,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         prefix: string,
         vscodeCancelToken: CancellationToken,
     ): Promise<CompletionList<CompletionItem> | undefined> {
-        // remove .html add .ts
-        const tsFilePath = document.fileName.slice(0, -5) + '.ts';
+        const tsFilePath = getCorrespondingTsFileName(document);
 
         if (!(await checkNgHelperServerRunning(tsFilePath, this.port))) {
             return;

@@ -6,6 +6,17 @@ export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
+export function getCorrespondingTsFileName(document: TextDocument): string {
+    if (isComponentHtml(document)) {
+        // remove .html add .ts
+        const tsFilePath = document.fileName.slice(0, -5) + '.ts';
+        return tsFilePath;
+    } else {
+        // TODO 获取最接近的 ts 文件
+        return document.fileName;
+    }
+}
+
 export function getComponentName(document: TextDocument): string | undefined {
     if (!isComponentHtml(document)) {
         return;

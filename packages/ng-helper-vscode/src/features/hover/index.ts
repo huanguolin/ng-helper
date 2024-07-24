@@ -12,7 +12,7 @@ import { CancellationToken, ExtensionContext, Hover, languages, MarkdownString, 
 import { timeCost } from '../../debug';
 import { getComponentHoverApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
+import { getCorrespondingTsFileName, isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
 
 export function registerComponentHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
@@ -91,8 +91,7 @@ async function getHoverInfo({
     cursorAt: number;
     vscodeCancelToken: CancellationToken;
 }): Promise<Hover | undefined> {
-    // remove .html add .ts
-    const tsFilePath = document.fileName.slice(0, -5) + '.ts';
+    const tsFilePath = getCorrespondingTsFileName(document);
 
     if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
         return;
