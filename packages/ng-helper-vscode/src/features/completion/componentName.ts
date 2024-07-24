@@ -26,10 +26,16 @@ export function componentNameWithTrigger(port: number) {
     return languages.registerCompletionItemProvider(
         'html',
         {
-            async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
+            async provideCompletionItems(document, position, token, context) {
                 return timeCost('provideComponentNameCompletion', async () => {
                     try {
-                        return await provideComponentNameCompletion({ document, position, hasTriggerString: true, port, vscodeCancelToken: token });
+                        return await provideComponentNameCompletion({
+                            document,
+                            position,
+                            triggerString: context.triggerCharacter,
+                            port,
+                            vscodeCancelToken: token,
+                        });
                     } catch (error) {
                         console.error('provideComponentNameCompletion() error:', error);
                         return undefined;
@@ -44,13 +50,13 @@ export function componentNameWithTrigger(port: number) {
 async function provideComponentNameCompletion({
     document,
     position,
-    hasTriggerString,
+    triggerString,
     port,
     vscodeCancelToken,
 }: {
     document: TextDocument;
     position: Position;
-    hasTriggerString?: boolean;
+    triggerString?: string;
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
@@ -75,7 +81,7 @@ async function provideComponentNameCompletion({
         list = list.map((x) => kebabCase(x)).filter((x) => x !== currentComponentName);
     }
 
-    const preChar = hasTriggerString ? '' : '<';
+    const preChar = triggerString === '<' ? '' : '<';
     return new CompletionList(
         list.map((tag) => {
             const item = new CompletionItem(tag);
