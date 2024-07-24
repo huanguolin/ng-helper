@@ -1,6 +1,6 @@
 import { Cursor, canCompletionComponentName } from '@ng-helper/shared/lib/html';
 import { kebabCase } from 'change-case';
-import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken } from 'vscode';
+import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken, SnippetString } from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentNameCompletionApi } from '../../service/api';
@@ -48,7 +48,14 @@ async function getComponentNameCompletion(document: TextDocument, port: number, 
     const list = await getComponentNameCompletionApi({ port, info: { fileName: document.fileName }, vscodeCancelToken });
     if (list && list.length > 0) {
         return new CompletionList(
-            list.map((x) => new CompletionItem(kebabCase(x))),
+            list.map((x) => {
+                const tagName = kebabCase(x);
+                const item = new CompletionItem(tagName);
+                item.insertText = new SnippetString(`<${tagName} $0 />`);
+                item.detail = `[ng-helper]`;
+                item.documentation = `<${tagName} | />`;
+                return item;
+            }),
             false,
         );
     }
