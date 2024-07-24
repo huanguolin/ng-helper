@@ -199,3 +199,7 @@ export function getLeftmostAccessExpression(ctx: PluginContext, expr: ts.Express
 export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is ts.AccessExpression {
     return node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression || node.kind === ctx.ts.SyntaxKind.ElementAccessExpression;
 }
+
+export function getSourceFileVersion(sourceFile: ts.SourceFile): string {
+    return (sourceFile as unknown as { version: string }).version;
+}

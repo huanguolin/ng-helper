@@ -9,7 +9,7 @@ import {
 import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentControllerAs } from '../../service/api';
+import { getComponentControllerAsApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
@@ -73,7 +73,7 @@ async function getComponentControllerAsCompletion(document: TextDocument, port: 
         return;
     }
 
-    const res = await getComponentControllerAs({ port, info: { fileName: tsFilePath }, vscodeCancelToken });
+    const res = await getComponentControllerAsApi({ port, info: { fileName: tsFilePath }, vscodeCancelToken });
     if (res) {
         return new CompletionList([new CompletionItem(res)], false);
     }

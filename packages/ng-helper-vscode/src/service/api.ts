@@ -17,30 +17,39 @@ interface BizRequestInput<T> {
     vscodeCancelToken: CancellationToken;
 }
 
-export function getComponentHover({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
+export function getComponentHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
     return bizRequest<NgHoverRequest, NgHoverResponse>({
         url: buildUrl(port, 'component', 'hover'),
         info,
         vscodeCancelToken,
-        apiName: 'getComponentHover',
+        apiName: 'getComponentHoverApi',
     });
 }
 
-export function getComponentCompletion({ port, vscodeCancelToken, info }: ApiInput<NgCompletionRequest>) {
+export function getComponentTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgCompletionRequest>) {
     return bizRequest<NgCompletionRequest, NgCompletionResponse>({
         url: buildUrl(port, 'component', 'completion'),
         info,
         vscodeCancelToken,
-        apiName: 'getComponentCompletion',
+        apiName: 'getComponentTypeCompletionApi',
     });
 }
 
-export function getComponentControllerAs({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
+export function getComponentNameCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
+    return bizRequest<NgRequest, string[] | undefined>({
+        url: buildUrl(port, 'component', 'name', 'completion'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentNameCompletionApi',
+    });
+}
+
+export function getComponentControllerAsApi({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
     return bizRequest<NgRequest, string | undefined>({
         url: buildUrl(port, 'component', 'controller-as'),
         info,
         vscodeCancelToken,
-        apiName: 'getComponentControllerAs',
+        apiName: 'getComponentControllerAsApi',
     });
 }
 

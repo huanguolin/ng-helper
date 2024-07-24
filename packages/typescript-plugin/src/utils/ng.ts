@@ -70,6 +70,25 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLit
     }
 }
 
+export function getComponentName(ctx: PluginContext): string | undefined {
+    let name: string | undefined;
+    visit(ctx.sourceFile);
+    return name;
+
+    function visit(node: ts.Node) {
+        if (isAngularComponentRegisterNode(ctx, node)) {
+            // 第一个参数是字符串字面量
+            const theNode = node.arguments[0];
+            if (ctx.ts.isStringLiteralLike(theNode)) {
+                name = theNode.text;
+            }
+        }
+        if (!name) {
+            ctx.ts.forEachChild(node, visit);
+        }
+    }
+}
+
 export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsMap: Map<string, string>): NgTypeInfo[] | undefined {
     if (!bindingsMap.size) {
         return;

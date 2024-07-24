@@ -12,9 +12,9 @@ import {
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
 
-import { getComponentCompletions, getComponentControllerAs } from './completion';
+import { getComponentCompletions, getComponentControllerAs, getComponentNameCompletions } from './completion';
 import { getComponentHoverType } from './hover';
-import { CorePluginContext, GetCoreContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
+import { CorePluginContext, GetCoreContextFn, NgComponentFileInfo, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
 import { buildLogger } from './utils/log';
 
 export const ngHelperServer = createNgHelperServer();
@@ -22,6 +22,7 @@ export const ngHelperServer = createNgHelperServer();
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
     const _getContextMap = new Map<string, GetCoreContextFn>();
+    const _component2dMap = new Map<string, Map<string, NgComponentFileInfo>>();
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
 
@@ -31,6 +32,8 @@ function createNgHelperServer(): NgHelperServer {
         addProject,
         getContext,
         getCoreContext,
+        getComponentMap,
+        updateComponentMap,
     };
 
     function isExtensionActivated() {
@@ -114,13 +117,7 @@ function createNgHelperServer(): NgHelperServer {
             return;
         }
 
-        const sourceFile = coreCtx.program.getSourceFile(filePath);
-        if (!sourceFile) {
-            coreCtx.logger.info('getContext()', 'get source file failed');
-            return;
-        }
-
-        return Object.assign({ sourceFile }, coreCtx);
+        return getCtxOfCoreCtx(coreCtx, filePath);
     }
 
     function getProjectRoot(filePath: string): string | undefined {
@@ -131,6 +128,29 @@ function createNgHelperServer(): NgHelperServer {
                 return projectRoot;
             }
         }
+    }
+
+    function getComponentMap(filePath: string): Map<string, NgComponentFileInfo> | undefined {
+        const projectRoot = getProjectRoot(filePath);
+        if (!projectRoot) {
+            return;
+        }
+
+        let map = _component2dMap.get(projectRoot);
+        if (!map) {
+            map = new Map<string, NgComponentFileInfo>();
+        }
+
+        return map;
+    }
+
+    function updateComponentMap(filePath: string, componentMap: Map<string, NgComponentFileInfo>): void {
+        const projectRoot = getProjectRoot(filePath);
+        if (!projectRoot) {
+            return;
+        }
+
+        _component2dMap.set(projectRoot, componentMap);
     }
 }
 
@@ -174,6 +194,14 @@ function initHttpServer() {
         });
     });
 
+    app.post('/ng-helper/component/name/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgRequest, string[] | undefined>({
+            req,
+            res,
+            action: (ctx, body) => getComponentNameCompletions(ctx, body.fileName),
+        });
+    });
+
     app.post('/ng-helper/component/hover', (req, res) => {
         handleRequestWithCtx<NgHoverRequest, NgHoverResponse>({
             req,
@@ -197,7 +225,6 @@ function handleRequestWithCtx<TBody extends NgRequest, TResponse>({
     return handleRequest({ req, res, resolveCtx: (body) => ngHelperServer.getContext(body.fileName), action });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleRequestWithCoreCtx<TBody extends NgRequest, TResponse>({
     req,
     res,
@@ -240,4 +267,14 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
     } finally {
         ctx.logger.endGroup();
     }
+}
+
+function getCtxOfCoreCtx(coreCtx: CorePluginContext, filePath: string): PluginContext | undefined {
+    const sourceFile = coreCtx.program.getSourceFile(filePath);
+    if (!sourceFile) {
+        coreCtx.logger.info('getContextOfCoreCtx()', 'get source file failed');
+        return;
+    }
+
+    return Object.assign({ sourceFile }, coreCtx);
 }

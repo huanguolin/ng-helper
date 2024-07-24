@@ -19,7 +19,7 @@ import {
 } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentCompletion } from '../../service/api';
+import { getComponentTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
 
@@ -98,7 +98,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
             return;
         }
 
-        const res = await getComponentCompletion({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix } });
+        const res = await getComponentTypeCompletionApi({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix } });
         if (res) {
             const items = res.map((x, i) => {
                 const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);

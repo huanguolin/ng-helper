@@ -3,11 +3,11 @@ import { NgCompletionResponse } from '@ng-helper/shared/lib/plugin';
 import { ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getPublicMembersTypeInfoOfBindings, isComponentTsFile } from '../utils/ng';
+import { getPublicMembersTypeInfoOfBindings } from '../utils/ng';
 import { getComponentCoreInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
-import { getMinSyntaxNodeForCompletion, getCompletionType } from './utils';
+import { getMinSyntaxNodeForCompletion, getCompletionType, rebuildAllComponentFileInfo } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
@@ -59,24 +59,14 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgC
     }
 }
 
-export function updateComponentsInfo(coreCtx: CorePluginContext, filePath: string) {
-    // const logger = coreCtx.logger.prefix('getComponentNameCompletions()');
+export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): string[] | undefined {
+    const oldComponentMap = ngHelperServer.getComponentMap(filePath);
+    if (!oldComponentMap) {
+        return;
+    }
 
-    coreCtx.program.getSourceFiles().forEach((sourceFile) => {
-        if (!isComponentTsFile(sourceFile.fileName) || sourceFile.fileName === filePath) {
-            return;
-        }
+    const newComponentMap = rebuildAllComponentFileInfo(coreCtx, oldComponentMap);
+    ngHelperServer.updateComponentMap(filePath, newComponentMap);
 
-        const ctx = ngHelperServer.getContext(sourceFile.fileName);
-        if (!ctx) {
-            return;
-        }
-
-        const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-        if (!componentLiteralNode) {
-            return;
-        }
-
-        const info = getComponentCoreInfo(ctx, componentLiteralNode);
-    });
+    return Array.from(newComponentMap.values()).map((x) => x.componentName);
 }

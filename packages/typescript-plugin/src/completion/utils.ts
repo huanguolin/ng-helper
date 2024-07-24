@@ -1,7 +1,8 @@
 import type ts from 'typescript';
 
-import { PluginContext, SyntaxNodeInfo } from '../type';
-import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpression } from '../utils/common';
+import { CorePluginContext, NgComponentFileInfo, PluginContext, SyntaxNodeInfo } from '../type';
+import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpression, getSourceFileVersion } from '../utils/common';
+import { isComponentTsFile, getComponentName } from '../utils/ng';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -247,4 +248,51 @@ function getMinSyntaxNode(ctx: PluginContext, sourceFile: ts.SourceFile, node: t
         }
         // 其他情况不支持
     }
+}
+
+export function rebuildAllComponentFileInfo(
+    coreCtx: CorePluginContext,
+    oldComponentMap: Map<string, NgComponentFileInfo>,
+): Map<string, NgComponentFileInfo> {
+    const logger = coreCtx.logger.prefix('rebuildAllComponentFileInfo()');
+
+    const newComponentMap = new Map<string, NgComponentFileInfo>();
+    const sourceFiles = coreCtx.program.getSourceFiles();
+
+    logger.startGroup();
+    logger.info('input total component count:', oldComponentMap.size, 'sourceFiles count:', sourceFiles.length);
+
+    sourceFiles.forEach((sourceFile) => {
+        if (!isComponentTsFile(sourceFile.fileName)) {
+            return;
+        }
+
+        logger.info('component ts file:', sourceFile.fileName);
+
+        const oldComponentFile = oldComponentMap.get(sourceFile.fileName);
+        const version = getSourceFileVersion(sourceFile);
+        if (oldComponentFile && oldComponentFile.version === version) {
+            newComponentMap.set(sourceFile.fileName, oldComponentFile);
+            logger.info('component ts file:', sourceFile.fileName, ', version not change.');
+            return;
+        }
+
+        const ctx = Object.assign({ sourceFile }, coreCtx);
+
+        const componentName = getComponentName(ctx);
+        logger.info('component ts file:', sourceFile.fileName, ', componentName:', componentName);
+        if (!componentName) {
+            return;
+        }
+
+        newComponentMap.set(sourceFile.fileName, {
+            version,
+            componentName,
+        });
+    });
+
+    logger.info('output total component count:', newComponentMap.size);
+    logger.endGroup();
+
+    return newComponentMap;
 }

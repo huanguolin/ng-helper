@@ -360,3 +360,33 @@ export function getMapValues(mapString: string): TextSpan[] | undefined {
     }
     return result;
 }
+
+export function canCompletionComponentName(htmlText: string, cursor: Cursor): boolean {
+    const tag = getHtmlTagByCursor(htmlText, cursor);
+    if (!tag) {
+        return true;
+    }
+
+    const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
+    if (cursorAt < tag.start || cursorAt > tag.end) {
+        throw new Error('canCompletionComponentName() impossible here.');
+    }
+
+    if (typeof tag.startTagEnd === 'undefined') {
+        return false;
+    }
+
+    if (cursorAt >= tag.start && cursorAt <= tag.startTagEnd) {
+        return false;
+    }
+
+    if (typeof tag.endTagStart === 'undefined') {
+        return true;
+    }
+
+    if (cursorAt >= tag.endTagStart && cursorAt <= tag.startTagEnd) {
+        return false;
+    }
+
+    return true;
+}

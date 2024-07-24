@@ -68,6 +68,7 @@
     "@ng-helper/shared": "^0.0.1",
     "@ng-helper/typescript-plugin": "^0.0.1",
     "axios": "^1.7.2",
+    "change-case": "^5.4.4",
     "get-port": "^6.1.2"
   },
   "devDependencies": {

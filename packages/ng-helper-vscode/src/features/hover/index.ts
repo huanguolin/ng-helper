@@ -10,7 +10,7 @@ import {
 import { CancellationToken, ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentHover } from '../../service/api';
+import { getComponentHoverApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
 
@@ -98,7 +98,7 @@ async function getHoverInfo({
         return;
     }
 
-    const res = await getComponentHover({ port, info: { fileName: tsFilePath, contextString, cursorAt }, vscodeCancelToken });
+    const res = await getComponentHoverApi({ port, info: { fileName: tsFilePath, contextString, cursorAt }, vscodeCancelToken });
 
     if (res) {
         const markdownStr = new MarkdownString();
