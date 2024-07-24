@@ -22,26 +22,45 @@ export function componentName(port: number) {
     });
 }
 
+export function componentNameWithTrigger(port: number) {
+    return languages.registerCompletionItemProvider(
+        'html',
+        {
+            async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
+                return timeCost('provideComponentNameCompletion', async () => {
+                    try {
+                        return await provideComponentNameCompletion({ document, position, hasTriggerString: true, port, vscodeCancelToken: token });
+                    } catch (error) {
+                        console.error('provideComponentNameCompletion() error:', error);
+                        return undefined;
+                    }
+                });
+            },
+        },
+        '<',
+    );
+}
+
 async function provideComponentNameCompletion({
     document,
     position,
+    hasTriggerString,
     port,
     vscodeCancelToken,
 }: {
     document: TextDocument;
     position: Position;
+    hasTriggerString?: boolean;
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
 
-    if (canCompletionComponentName(docText, cursor)) {
-        return await getComponentNameCompletion(document, port, vscodeCancelToken);
+    if (!canCompletionComponentName(docText, cursor)) {
+        return;
     }
-}
 
-async function getComponentNameCompletion(document: TextDocument, port: number, vscodeCancelToken: CancellationToken) {
     if (!(await checkNgHelperServerRunning(document.fileName, port))) {
         return;
     }
@@ -56,12 +75,13 @@ async function getComponentNameCompletion(document: TextDocument, port: number, 
         list = list.map((x) => kebabCase(x)).filter((x) => x !== currentComponentName);
     }
 
+    const preChar = hasTriggerString ? '' : '<';
     return new CompletionList(
         list.map((tag) => {
             const item = new CompletionItem(tag);
-            item.insertText = new SnippetString(`<${tag} $0 />`);
+            item.insertText = new SnippetString(`${preChar}${tag} $0 />`);
             item.detail = `[ng-helper]`;
-            item.documentation = `<${tag} | />`;
+            item.documentation = `${tag} | />`;
             return item;
         }),
         false,
