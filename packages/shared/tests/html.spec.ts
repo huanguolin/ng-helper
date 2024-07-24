@@ -7,6 +7,8 @@ import {
     getBeforeCursorText,
     getHtmlTagByCursor,
     getTheAttrWhileCursorAtValue,
+    canCompletionComponentName,
+    Cursor,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -110,6 +112,7 @@ describe('canCompletionNgDirective()', () => {
         expect(v).toBe(output);
     });
 });
+
 describe('getBeforeCursorText()', () => {
     it.each([
         ['1234', 2, '12'],
@@ -166,6 +169,7 @@ describe('getMapValues()', () => {
         expect(result).toStrictEqual(output);
     });
 });
+
 describe('getHtmlTagByCursor()', () => {
     const h1Tag = {
         tagName: 'h1',
@@ -256,5 +260,26 @@ describe('getTheAttrWhileCursorAtValue()', () => {
     ])('given tag: %p and cursor: %p, should return %p', (tag, cursor, expectedOutput) => {
         const result = getTheAttrWhileCursorAtValue(tag, cursor);
         expect(result).toEqual(expectedOutput);
+    });
+});
+
+describe('canCompletionComponentName()', () => {
+    it.each([
+        ['  ', { at: 0, isHover: true }, true],
+        ['  ', { at: 1, isHover: false }, true],
+        ['<div> </div>', { at: 6, isHover: false }, true],
+        ['<div> </div>', { at: 5, isHover: false }, false],
+        ['<div></div>', { at: 6, isHover: false }, true],
+        ['<div></div>', { at: 5, isHover: false }, false],
+        ['<div></div>', { at: 7, isHover: false }, false],
+        ['<div> ', { at: 6, isHover: false }, true],
+        ['<div> ', { at: 5, isHover: false }, false],
+        ['<div> ', { at: 1, isHover: false }, false],
+        ['<div> ', { at: 0, isHover: false }, true],
+        ['<br /> ', { at: 7, isHover: false }, true],
+        ['<br /> ', { at: 6, isHover: false }, false],
+    ])('input: %s, cursor: %p => output: %p', (input: string, cursor: Cursor, output: boolean) => {
+        const v = canCompletionComponentName(input, cursor);
+        expect(v).toBe(output);
     });
 });

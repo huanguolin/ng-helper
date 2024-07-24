@@ -376,15 +376,12 @@ export function canCompletionComponentName(htmlText: string, cursor: Cursor): bo
     }
 
     const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
-    if (cursorAt < tag.start || cursorAt > tag.end) {
-        throw new Error('canCompletionComponentName() impossible here.');
-    }
 
     if (typeof tag.startTagEnd === 'undefined') {
         return false;
     }
 
-    if (cursorAt >= tag.start && cursorAt <= tag.startTagEnd) {
+    if (cursorAt >= tag.start && cursorAt < tag.startTagEnd) {
         return false;
     }
 
@@ -392,7 +389,8 @@ export function canCompletionComponentName(htmlText: string, cursor: Cursor): bo
         return true;
     }
 
-    if (cursorAt >= tag.endTagStart && cursorAt <= tag.startTagEnd) {
+    // 光标位置在靠后一个位置，所以这里不包含起始位置
+    if (cursorAt > tag.endTagStart && cursorAt < tag.end) {
         return false;
     }
 
