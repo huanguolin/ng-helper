@@ -31,20 +31,24 @@ function provideNgCompletion({ document, position }: { document: TextDocument; p
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
     const tag = getHtmlTagByCursor(docText, cursor);
-    if (tag) {
-        const tagTextBeforeCursor = docText.slice(tag.start, cursor.at);
-        if (canCompletionNgDirective(tagTextBeforeCursor)) {
-            return getNgDirectiveConfigList()
-                .map(([name, configs]) =>
-                    configs.length > 0 ? configs.map((c) => configToCompletionItem(name, c)) : [configToCompletionItem(name, defaultNgConfigExpr)],
-                )
-                .flat()
-                .map((item, index) => {
-                    item.sortText = index.toString().padStart(3, '0');
-                    return item;
-                });
-        }
+    if (!tag || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
+        return;
     }
+
+    const tagTextBeforeCursor = docText.slice(tag.start, cursor.at);
+    if (!canCompletionNgDirective(tagTextBeforeCursor)) {
+        return;
+    }
+
+    return getNgDirectiveConfigList()
+        .map(([name, configs]) =>
+            configs.length > 0 ? configs.map((c) => configToCompletionItem(name, c)) : [configToCompletionItem(name, defaultNgConfigExpr)],
+        )
+        .flat()
+        .map((item, index) => {
+            item.sortText = index.toString().padStart(3, '0');
+            return item;
+        });
 }
 
 function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
