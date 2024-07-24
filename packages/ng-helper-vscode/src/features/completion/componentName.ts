@@ -5,6 +5,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
+import { getComponentName } from '../utils';
 
 export function componentName(port: number) {
     return languages.registerCompletionItemProvider('html', {
@@ -45,18 +46,24 @@ async function getComponentNameCompletion(document: TextDocument, port: number, 
         return;
     }
 
-    const list = await getComponentNameCompletionApi({ port, info: { fileName: document.fileName }, vscodeCancelToken });
-    if (list && list.length > 0) {
-        return new CompletionList(
-            list.map((x) => {
-                const tagName = kebabCase(x);
-                const item = new CompletionItem(tagName);
-                item.insertText = new SnippetString(`<${tagName} $0 />`);
-                item.detail = `[ng-helper]`;
-                item.documentation = `<${tagName} | />`;
-                return item;
-            }),
-            false,
-        );
+    let list = await getComponentNameCompletionApi({ port, info: { fileName: document.fileName }, vscodeCancelToken });
+    if (!list || !list.length) {
+        return;
     }
+
+    const currentComponentName = getComponentName(document);
+    if (currentComponentName) {
+        list = list.map((x) => kebabCase(x)).filter((x) => x !== currentComponentName);
+    }
+
+    return new CompletionList(
+        list.map((tag) => {
+            const item = new CompletionItem(tag);
+            item.insertText = new SnippetString(`<${tag} $0 />`);
+            item.detail = `[ng-helper]`;
+            item.documentation = `<${tag} | />`;
+            return item;
+        }),
+        false,
+    );
 }
