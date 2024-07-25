@@ -362,14 +362,17 @@ export function getMapValues(mapString: string): TextSpan[] | undefined {
 }
 
 /**
- * Determines whether completion for component name is possible at the given cursor position in the HTML text.
+ * Checks if the completion component name can be added at the current cursor position in the HTML text.
  *
  * @param htmlText - The HTML text.
  * @param cursor - The cursor position.
- * @returns A boolean indicating whether completion for component name is possible.
- * @throws An error if the cursor position is invalid.
+ * @returns A boolean indicating whether the completion component name can be added.
  */
 export function canCompletionComponentName(htmlText: string, cursor: Cursor): boolean {
+    if (getTextInTemplate(htmlText, cursor)) {
+        return false;
+    }
+
     const tag = getHtmlTagByCursor(htmlText, cursor);
     if (!tag) {
         return true;

@@ -279,6 +279,9 @@ describe('canCompletionComponentName()', () => {
         ['<br /> ', { at: 7, isHover: false }, true],
         ['<br /> ', { at: 6, isHover: false }, false],
         ['<span><</span>', { at: 7, isHover: true }, true],
+        ['{{}}', { at: 2, isHover: true }, false],
+        ['<span>{{}}</span>', { at: 8, isHover: true }, false],
+        ['<span>{{}}</span>', { at: 6, isHover: true }, true],
     ])('input: %s, cursor: %p => output: %p', (input: string, cursor: Cursor, output: boolean) => {
         const v = canCompletionComponentName(input, cursor);
         expect(v).toBe(output);
