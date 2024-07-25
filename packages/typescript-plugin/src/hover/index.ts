@@ -63,4 +63,8 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
 
         return buildHoverInfo({ ctx, targetType: getPropertyType(ctx, parentType, targetNode.text)!, parentType, name: targetNode.text });
     }
+
+    if (info.bindings) {
+        // TODO 使用 bindings 提供有限的提示
+    }
 }
