@@ -9,6 +9,7 @@ import {
     getTheAttrWhileCursorAtValue,
     canCompletionComponentName,
     Cursor,
+    HtmlTag,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -171,10 +172,10 @@ describe('getMapValues()', () => {
 });
 
 describe('getHtmlTagByCursor()', () => {
-    const h1Tag = {
+    const h1Tag: HtmlTag = {
         tagName: 'h1',
         attrs: [],
-        parentInfo: {
+        parent: {
             end: 47,
             start: 4,
             tagName: 'div',
@@ -184,12 +185,19 @@ describe('getHtmlTagByCursor()', () => {
         startTagEnd: 31,
         endTagStart: 36,
     };
-    const divTag = {
+    const divTag: HtmlTag = {
         tagName: 'div',
         attrs: [
             {
                 name: { text: 'class', start: 9 },
                 value: { text: 'container', start: 16 },
+            },
+        ],
+        children: [
+            {
+                tagName: 'h1',
+                start: 27,
+                end: 41,
             },
         ],
         start: 4,
@@ -270,25 +278,26 @@ describe('getTheAttrWhileCursorAtValue()', () => {
 
 describe('canCompletionComponentName()', () => {
     it.each([
-        ['  ', { at: 0, isHover: true }, true],
-        ['  ', { at: 1, isHover: false }, true],
-        ['<div> </div>', { at: 6, isHover: false }, true],
-        ['<div> </div>', { at: 5, isHover: false }, false],
-        ['<div></div>', { at: 6, isHover: false }, true],
-        ['<div></div>', { at: 5, isHover: false }, false],
-        ['<div></div>', { at: 7, isHover: false }, false],
-        ['<div> ', { at: 6, isHover: false }, true],
-        ['<div> ', { at: 5, isHover: false }, false],
-        ['<div> ', { at: 1, isHover: false }, false],
-        ['<div> ', { at: 0, isHover: false }, true],
-        ['<br /> ', { at: 7, isHover: false }, true],
-        ['<br /> ', { at: 6, isHover: false }, false],
-        ['<span><</span>', { at: 7, isHover: true }, true],
-        ['{{}}', { at: 2, isHover: true }, false],
-        ['<span>{{}}</span>', { at: 8, isHover: true }, false],
-        ['<span>{{}}</span>', { at: 6, isHover: true }, true],
-    ])('input: %s, cursor: %p => output: %p', (input: string, cursor: Cursor, output: boolean) => {
+        ['  ', { at: 0, isHover: true }, true, undefined],
+        ['  ', { at: 1, isHover: false }, true, undefined],
+        ['<div> </div>', { at: 6, isHover: false }, true, 'div'],
+        ['<div> </div>', { at: 5, isHover: false }, false, undefined],
+        ['<div></div>', { at: 6, isHover: false }, true, 'div'],
+        ['<div></div>', { at: 5, isHover: false }, false, undefined],
+        ['<div></div>', { at: 7, isHover: false }, false, undefined],
+        ['<div> ', { at: 6, isHover: false }, true, 'div'],
+        ['<div> ', { at: 5, isHover: false }, false, undefined],
+        ['<div> ', { at: 1, isHover: false }, false, undefined],
+        ['<div> ', { at: 0, isHover: false }, true, undefined],
+        ['<br /> ', { at: 7, isHover: false }, true, undefined],
+        ['<br /> ', { at: 6, isHover: false }, false, undefined],
+        ['<span><</span>', { at: 7, isHover: true }, true, 'span'],
+        ['{{}}', { at: 2, isHover: true }, false, undefined],
+        ['<span>{{}}</span>', { at: 8, isHover: true }, false, undefined],
+        ['<span>{{}}</span>', { at: 6, isHover: true }, true, 'span'],
+    ])('input: %s, cursor: %p => canComplete: %p, tagName: %p', (input: string, cursor: Cursor, canComplete: boolean, tagName?: string) => {
         const v = canCompletionComponentName(input, cursor);
-        expect(v).toBe(output);
+        expect(v.canComplete).toBe(canComplete);
+        expect(v.tag?.tagName).toBe(tagName);
     });
 });

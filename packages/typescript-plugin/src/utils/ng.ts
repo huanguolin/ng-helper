@@ -93,10 +93,13 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
                             const list: string[] = [];
                             transclude.initializer.properties.forEach((x) => {
                                 if (ctx.ts.isPropertyAssignment(x) && ctx.ts.isStringLiteralLike(x.initializer)) {
-                                    list.push(x.initializer.text);
+                                    // 问号目前没有用处，直接去掉
+                                    list.push(x.initializer.text.replace('?', ''));
                                 }
                             });
-                            info.transclude = list;
+                            if (list.length) {
+                                info.transclude = list;
+                            }
                         } else if (ctx.ts.isTokenKind(ctx.ts.SyntaxKind.TrueKeyword)) {
                             info.transclude = true;
                         }

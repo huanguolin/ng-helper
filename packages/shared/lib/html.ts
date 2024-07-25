@@ -45,24 +45,22 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
-export type HtmlParentInfo = {
+export interface HtmlTagBase {
     tagName: string;
     start: number;
     end: number;
-};
+}
 
 /**
  * Represents an HTML tag.
  */
-export type HtmlTag = {
-    tagName: string;
+export interface HtmlTag extends HtmlTagBase {
     attrs: HtmlAttr[];
-    parentInfo?: HtmlParentInfo;
-    start: number;
-    end: number;
+    parent?: HtmlTagBase;
+    children?: HtmlTagBase[];
     startTagEnd: number | undefined;
     endTagStart: number | undefined;
-};
+}
 
 /**
  * Represents an HTML attribute.
@@ -70,6 +68,11 @@ export type HtmlTag = {
 export type HtmlAttr = {
     name: TextSpan;
     value?: TextSpan;
+};
+
+export type CanCompleteComponentNameResult = {
+    canComplete: boolean;
+    tag?: HtmlTag;
 };
 
 export const SPACE = '\u0020';
@@ -165,7 +168,8 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
     return {
         tagName: element.tagName,
         attrs: buildTagAttrs(),
-        parentInfo: buildParentInfo(),
+        parent: buildParent(),
+        children: buildChildren(),
         start,
         end,
         startTagEnd,
@@ -236,7 +240,7 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
         return `${attr.name}=${quote}${attr.value}${quote}`;
     }
 
-    function buildParentInfo(): HtmlParentInfo | undefined {
+    function buildParent(): HtmlTagBase | undefined {
         const p = tag?.parent;
         if (!p || p.type !== ElementType.Tag) {
             return;
@@ -247,6 +251,22 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
             start: p.startIndex!,
             end: p.endIndex! + 1,
         };
+    }
+
+    function buildChildren(): HtmlTagBase[] | undefined {
+        const childNodes = element.childNodes;
+        if (!childNodes.length) {
+            return;
+        }
+
+        const result = childNodes
+            .filter((x) => x.nodeName !== '#text')
+            .map((x) => ({
+                tagName: x.nodeName,
+                start: start + x.sourceCodeLocation!.startOffset,
+                end: start + x.sourceCodeLocation!.endOffset,
+            }));
+        return result.length ? result : undefined;
     }
 }
 
@@ -382,41 +402,34 @@ export function getMapValues(mapString: string): TextSpan[] | undefined {
     return result;
 }
 
-/**
- * Checks if the completion component name can be added at the current cursor position in the HTML text.
- *
- * @param htmlText - The HTML text.
- * @param cursor - The cursor position.
- * @returns A boolean indicating whether the completion component name can be added.
- */
-export function canCompletionComponentName(htmlText: string, cursor: Cursor): boolean {
+export function canCompletionComponentName(htmlText: string, cursor: Cursor): CanCompleteComponentNameResult {
     if (getTextInTemplate(htmlText, cursor)) {
-        return false;
+        return { canComplete: false };
     }
 
     const tag = getHtmlTagByCursor(htmlText, cursor);
     if (!tag) {
-        return true;
+        return { canComplete: true };
     }
 
     const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
 
     if (typeof tag.startTagEnd === 'undefined') {
-        return false;
+        return { canComplete: false };
     }
 
     if (cursorAt >= tag.start && cursorAt < tag.startTagEnd) {
-        return false;
+        return { canComplete: false };
     }
 
     if (typeof tag.endTagStart === 'undefined') {
-        return true;
+        return { canComplete: true, tag };
     }
 
     // 光标位置在靠后一个位置，所以这里不包含起始位置
     if (cursorAt > tag.endTagStart && cursorAt < tag.end) {
-        return false;
+        return { canComplete: false };
     }
 
-    return true;
+    return { canComplete: true, tag };
 }

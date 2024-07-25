@@ -1,4 +1,5 @@
 import { getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
+import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { TextDocument } from 'vscode';
 
@@ -10,7 +11,7 @@ export function isComponentHtml(document: TextDocument) {
 
 export function getControllerNameFromHtml(document: TextDocument): string | undefined {
     if (isComponentHtml(document)) {
-        throw new Error('Component html should not use this function!');
+        return;
     }
 
     const docText = document.getText();
@@ -56,13 +57,20 @@ export async function getCorrespondingTsFileName(document: TextDocument, searchK
     return tsFiles[0];
 }
 
+/**
+ * Retrieves the component name from the given document.
+ *
+ * @param document - The TextDocument object representing the document.
+ * @returns The component name (camelCase) if the document is a component HTML file, otherwise undefined.
+ */
 export function getComponentName(document: TextDocument): string | undefined {
     if (!isComponentHtml(document)) {
         return;
     }
 
     const fileName = normalizePath(document.fileName).split('/').pop();
-    return fileName?.replace('.component.html', '');
+    const kebabName = fileName?.replace('.component.html', '');
+    return kebabName ? camelCase(kebabName) : undefined;
 }
 
 export function isNgDirectiveAttr(attrName: string): boolean {
