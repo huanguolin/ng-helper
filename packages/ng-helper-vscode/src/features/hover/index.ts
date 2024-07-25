@@ -91,7 +91,7 @@ async function getHoverInfo({
     cursorAt: number;
     vscodeCancelToken: CancellationToken;
 }): Promise<Hover | undefined> {
-    const tsFilePath = getCorrespondingTsFileName(document);
+    const tsFilePath = (await getCorrespondingTsFileName(document))!;
 
     if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
         return;

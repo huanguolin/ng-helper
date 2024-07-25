@@ -66,7 +66,7 @@ async function provideCtrlCompletion({
 }
 
 async function getComponentControllerAsCompletion(document: TextDocument, port: number, vscodeCancelToken: CancellationToken) {
-    const tsFilePath = getCorrespondingTsFileName(document);
+    const tsFilePath = (await getCorrespondingTsFileName(document))!;
 
     if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
         return;

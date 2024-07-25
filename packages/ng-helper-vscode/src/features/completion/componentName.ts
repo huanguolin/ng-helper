@@ -5,7 +5,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getComponentName, getCorrespondingTsFileName } from '../utils';
+import { getComponentName, getControllerNameFromHtml, getCorrespondingTsFileName } from '../utils';
 
 export function componentName(port: number) {
     return languages.registerCompletionItemProvider(
@@ -56,7 +56,8 @@ async function provideComponentNameCompletion({
         return;
     }
 
-    if (!(await checkNgHelperServerRunning(getCorrespondingTsFileName(document), port))) {
+    const relatedTsFile = (await getCorrespondingTsFileName(document, getControllerNameFromHtml(document))) ?? document.fileName;
+    if (!(await checkNgHelperServerRunning(relatedTsFile, port))) {
         return;
     }
 

@@ -45,6 +45,11 @@ export async function triggerTsServerByProject(filePath: string) {
         const document = await workspace.openTextDocument(Uri.file(tsFilePath));
         await window.showTextDocument(document);
     }
+
+    async function getOneTsFile(filePath: string): Promise<string | undefined> {
+        const files = await getTsFiles(filePath, { limit: 1 });
+        return files[0];
+    }
 }
 
 export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
@@ -58,23 +63,30 @@ export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
     }
 }
 
-export async function getOneTsFile(filePath: string, fallbackCnt = 3): Promise<string | undefined> {
+export async function getTsFiles(
+    filePath: string,
+    options?: {
+        fallbackCnt?: number;
+        limit?: number;
+    },
+): Promise<string[]> {
     const dir = getParentDir(filePath);
     const rootDir = normalizePath(getWorkspacePath()?.fsPath ?? '');
 
     if (!dir.startsWith(rootDir)) {
-        return;
+        return [];
     }
 
+    const fallbackCnt = options?.fallbackCnt ?? 3;
     const files = await listFiles(dir, {
         suffix: '.ts',
-        limit: 1,
+        limit: options?.limit,
         recursive: true,
     });
     if (files.length) {
-        return files[0];
+        return files;
     } else {
-        return fallbackCnt > 0 ? getOneTsFile(dir, fallbackCnt - 1) : undefined;
+        return fallbackCnt > 0 ? getTsFiles(dir, { ...options, fallbackCnt: fallbackCnt - 1 }) : [];
     }
 }
 

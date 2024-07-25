@@ -91,7 +91,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         prefix: string,
         vscodeCancelToken: CancellationToken,
     ): Promise<CompletionList<CompletionItem> | undefined> {
-        const tsFilePath = getCorrespondingTsFileName(document);
+        const tsFilePath = (await getCorrespondingTsFileName(document))!;
 
         if (!(await checkNgHelperServerRunning(tsFilePath, this.port))) {
             return;

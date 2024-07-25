@@ -69,6 +69,7 @@
     "@ng-helper/typescript-plugin": "^0.0.1",
     "axios": "^1.7.2",
     "change-case": "^5.4.4",
+    "fuzzysort": "^3.0.2",
     "get-port": "^6.1.2"
   },
   "devDependencies": {
