@@ -8,21 +8,6 @@ import { checkNgHelperServerRunning } from '../../utils';
 import { getComponentName, getCorrespondingTsFileName } from '../utils';
 
 export function componentName(port: number) {
-    return languages.registerCompletionItemProvider('html', {
-        async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
-            return timeCost('provideComponentNameCompletion', async () => {
-                try {
-                    return await provideComponentNameCompletion({ document, position, port, vscodeCancelToken: token });
-                } catch (error) {
-                    console.error('provideComponentNameCompletion() error:', error);
-                    return undefined;
-                }
-            });
-        },
-    });
-}
-
-export function componentNameWithTrigger(port: number) {
     return languages.registerCompletionItemProvider(
         'html',
         {
@@ -43,6 +28,10 @@ export function componentNameWithTrigger(port: number) {
                 });
             },
         },
+        /**
+         * 有这个才会触发以 < 开头的补全,
+         * 但也会触发没有 < 的补全.
+         */
         '<',
     );
 }
@@ -89,7 +78,7 @@ async function provideComponentNameCompletion({
             const item = new CompletionItem(tag);
             item.insertText = new SnippetString(`${preChar}${tag} $0 />`);
             item.detail = `[ng-helper]`;
-            item.documentation = `${tag} | />`;
+            item.documentation = `<${tag} | />`;
             return item;
         }),
         false,
