@@ -2,7 +2,7 @@ import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { configTsPluginConfiguration } from './service/config';
-import { isFileExistsOnWorkspace, normalizeFileExt } from './utils';
+import { getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt } from './utils';
 
 export async function activateExt(): Promise<NgHelperConfigWithPort | undefined> {
     const canActivated = await canActivate();
@@ -64,15 +64,6 @@ function getConfigUri(): Uri | undefined {
         return;
     }
     return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
-}
-
-function getWorkspacePath(): Uri | undefined {
-    const workspaceFolders = workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        return;
-    }
-
-    return workspaceFolders[0].uri;
 }
 
 export interface NgHelperConfig {

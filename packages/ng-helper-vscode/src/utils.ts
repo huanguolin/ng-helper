@@ -1,11 +1,11 @@
 import { normalize } from 'node:path';
 
-import { window, workspace, Uri } from 'vscode';
+import { window, workspace, Uri, FileType } from 'vscode';
 
 import { checkNgHelperServerRunningApi } from './service/api';
 
 let tsRunning = false;
-export async function checkNgHelperServerRunning(tsFilePath: string, port: number): Promise<boolean> {
+export async function checkNgHelperServerRunning(filePath: string, port: number): Promise<boolean> {
     if (tsRunning) {
         return true;
     }
@@ -17,21 +17,33 @@ export async function checkNgHelperServerRunning(tsFilePath: string, port: numbe
         return true;
     }
 
-    await triggerTsServerByProject(tsFilePath);
+    await triggerTsServerByProject(filePath);
     return false;
 }
 
-export async function triggerTsServerByProject(tsFilePath: string) {
-    if (await isFileExistsOnWorkspace(Uri.file(tsFilePath))) {
-        const selection = await window.showErrorMessage(
-            "To access features like auto-completion, you need to open a TypeScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
-            'OK',
-        );
-        if (selection === 'OK') {
-            // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
-            const document = await workspace.openTextDocument(Uri.file(tsFilePath));
-            await window.showTextDocument(document);
+export async function triggerTsServerByProject(filePath: string) {
+    let tsFilePath = filePath;
+
+    if (!tsFilePath.endsWith('.ts')) {
+        tsFilePath = (await getOneTsFile(filePath)) ?? '';
+    }
+
+    if (!(await isFileExistsOnWorkspace(Uri.file(tsFilePath)))) {
+        const path = await getOneTsFile(filePath);
+        if (!path) {
+            return;
         }
+        tsFilePath = path;
+    }
+
+    const selection = await window.showErrorMessage(
+        "To access features like auto-completion, you need to open a TypeScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
+        'OK',
+    );
+    if (selection === 'OK') {
+        // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
+        const document = await workspace.openTextDocument(Uri.file(tsFilePath));
+        await window.showTextDocument(document);
     }
 }
 
@@ -44,6 +56,91 @@ export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+export async function getOneTsFile(filePath: string, fallbackCnt = 3): Promise<string | undefined> {
+    const dir = getParentDir(filePath);
+    const rootDir = normalizePath(getWorkspacePath()?.fsPath ?? '');
+
+    if (!dir.startsWith(rootDir)) {
+        return;
+    }
+
+    const files = await listFiles(dir, {
+        suffix: '.ts',
+        limit: 1,
+        recursive: true,
+    });
+    if (files.length) {
+        return files[0];
+    } else {
+        return fallbackCnt > 0 ? getOneTsFile(dir, fallbackCnt - 1) : undefined;
+    }
+}
+
+export async function listFiles(
+    dirPath: string,
+    options: {
+        suffix?: string;
+        limit?: number;
+        recursive?: boolean;
+    },
+): Promise<string[]> {
+    const result: string[] = [];
+
+    let files: [string, FileType][] = [];
+
+    try {
+        files = await workspace.fs.readDirectory(Uri.file(dirPath));
+    } catch (error) {
+        console.error('listFiles() error:', error);
+        return result;
+    }
+
+    const subDirNames: string[] = [];
+    for (const [name, fileType] of files) {
+        if (options.limit && result.length >= options.limit) {
+            break;
+        }
+
+        if (fileType === FileType.File) {
+            if (options.suffix && !name.endsWith(options.suffix)) {
+                continue;
+            }
+            result.push(`${dirPath}/${name}`);
+        } else if (options.recursive && fileType === FileType.Directory) {
+            subDirNames.push(name);
+        }
+    }
+
+    if (options.recursive && subDirNames.length) {
+        for (const subDirName of subDirNames) {
+            const subFiles = await listFiles(`${dirPath}/${subDirName}`, options);
+            result.push(...subFiles);
+            if (options.limit && result.length >= options.limit) {
+                result.splice(options.limit, result.length - options.limit);
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+export function getParentDir(filePath: string): string {
+    const path = normalizePath(filePath);
+    const pathArr = path.split('/');
+    pathArr.pop();
+    return pathArr.join('/');
+}
+
+export function getWorkspacePath(): Uri | undefined {
+    const workspaceFolders = workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        return;
+    }
+
+    return workspaceFolders[0].uri;
 }
 
 export function normalizeFileExt(ext: string): string {
