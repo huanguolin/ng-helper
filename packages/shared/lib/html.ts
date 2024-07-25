@@ -45,12 +45,19 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
+export type HtmlParentInfo = {
+    tagName: string;
+    start: number;
+    end: number;
+};
+
 /**
  * Represents an HTML tag.
  */
 export type HtmlTag = {
     tagName: string;
     attrs: HtmlAttr[];
+    parentInfo?: HtmlParentInfo;
     start: number;
     end: number;
     startTagEnd: number | undefined;
@@ -158,6 +165,7 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
     return {
         tagName: element.tagName,
         attrs: buildTagAttrs(),
+        parentInfo: buildParentInfo(),
         start,
         end,
         startTagEnd,
@@ -226,6 +234,19 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
 
     function guessAttrText(attr: Attribute, quote: string): string {
         return `${attr.name}=${quote}${attr.value}${quote}`;
+    }
+
+    function buildParentInfo(): HtmlParentInfo | undefined {
+        const p = tag?.parent;
+        if (!p || p.type !== ElementType.Tag) {
+            return;
+        }
+
+        return {
+            tagName: p.tagName,
+            start: p.startIndex!,
+            end: p.endIndex! + 1,
+        };
     }
 }
 

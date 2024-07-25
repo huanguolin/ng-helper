@@ -174,6 +174,11 @@ describe('getHtmlTagByCursor()', () => {
     const h1Tag = {
         tagName: 'h1',
         attrs: [],
+        parentInfo: {
+            end: 47,
+            start: 4,
+            tagName: 'div',
+        },
         start: 27,
         end: 41,
         startTagEnd: 31,
