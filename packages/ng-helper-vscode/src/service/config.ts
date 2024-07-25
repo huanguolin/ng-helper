@@ -4,22 +4,28 @@ import * as vscode from 'vscode';
 
 import { pluginId, typeScriptExtensionId } from '../constants';
 
+/**
+ * see https://github.com/Microsoft/vscode/blob/main/extensions/typescript-language-features/src/api.ts
+ */
 declare class ApiV0 {
     configurePlugin(pluginId: string, configuration: unknown): void;
 }
 
+/**
+ * see https://github.com/Microsoft/vscode/blob/main/extensions/typescript-language-features/src/api.ts
+ */
 interface Api {
     getAPI(version: 0): ApiV0 | undefined;
 }
 
 export async function configTsPluginConfiguration(defaultPort: number): Promise<number | undefined> {
-    const extension = vscode.extensions.getExtension(typeScriptExtensionId);
+    const extension = vscode.extensions.getExtension<Api>(typeScriptExtensionId);
     if (!extension) {
         return;
     }
 
     await extension.activate();
-    const extApi = extension.exports as Api | undefined;
+    const extApi = extension.exports;
     if (!extApi?.getAPI) {
         return;
     }
