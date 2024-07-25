@@ -76,9 +76,11 @@ async function provideComponentNameCompletion({
         return;
     }
 
+    list = list.map((x) => kebabCase(x));
+
     const currentComponentName = getComponentName(document);
     if (currentComponentName) {
-        list = list.map((x) => kebabCase(x)).filter((x) => x !== currentComponentName);
+        list = list.filter((x) => x !== currentComponentName);
     }
 
     const preChar = triggerString === '<' ? '' : '<';
