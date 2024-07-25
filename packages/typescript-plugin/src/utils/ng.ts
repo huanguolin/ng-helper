@@ -1,7 +1,7 @@
-import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import { NgComponentNameInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { ComponentCoreInfo, PluginContext } from '../type';
+import { NgComponentTypeInfo, PluginContext } from '../type';
 
 import { isTypeOfType } from './common';
 
@@ -21,8 +21,8 @@ export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node
     return false;
 }
 
-export function getComponentCoreInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): ComponentCoreInfo {
-    const result: ComponentCoreInfo = {
+export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): NgComponentTypeInfo {
+    const result: NgComponentTypeInfo = {
         controllerAs: '$ctrl',
         bindings: new Map(),
     };
@@ -70,20 +70,42 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLit
     }
 }
 
-export function getComponentName(ctx: PluginContext): string | undefined {
-    let name: string | undefined;
+export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | undefined {
+    let info: NgComponentNameInfo | undefined;
     visit(ctx.sourceFile);
-    return name;
+    return info;
 
     function visit(node: ts.Node) {
         if (isAngularComponentRegisterNode(ctx, node)) {
             // 第一个参数是字符串字面量
-            const theNode = node.arguments[0];
-            if (ctx.ts.isStringLiteralLike(theNode)) {
-                name = theNode.text;
+            const nameNode = node.arguments[0];
+            if (ctx.ts.isStringLiteralLike(nameNode)) {
+                info = {
+                    componentName: nameNode.text,
+                };
+
+                // 第二个参数是对象字面量
+                const configNode = node.arguments[1];
+                if (ctx.ts.isObjectLiteralExpression(configNode)) {
+                    const transclude = configNode.properties.find((x) => x.name && ctx.ts.isIdentifier(x.name) && x.name.text === 'transclude');
+                    if (transclude && ctx.ts.isPropertyAssignment(transclude)) {
+                        if (ctx.ts.isObjectLiteralExpression(transclude.initializer)) {
+                            const list: string[] = [];
+                            transclude.initializer.properties.forEach((x) => {
+                                if (ctx.ts.isPropertyAssignment(x) && ctx.ts.isStringLiteralLike(x.initializer)) {
+                                    list.push(x.initializer.text);
+                                }
+                            });
+                            info.transclude = list;
+                        } else if (ctx.ts.isTokenKind(ctx.ts.SyntaxKind.TrueKeyword)) {
+                            info.transclude = true;
+                        }
+                    }
+                }
             }
         }
-        if (!name) {
+
+        if (!info) {
             ctx.ts.forEachChild(node, visit);
         }
     }

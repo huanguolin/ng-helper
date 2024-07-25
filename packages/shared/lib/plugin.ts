@@ -44,3 +44,8 @@ export type NgHoverResponse = NgHoverInfo | undefined;
 
 export type NgCompletionResponseItem = NgTypeInfo;
 export type NgCompletionResponse = NgCompletionResponseItem[] | undefined;
+
+export interface NgComponentNameInfo {
+    componentName: string;
+    transclude?: boolean | string[];
+}

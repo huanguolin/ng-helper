@@ -1,5 +1,5 @@
 import { Cursor, canCompletionComponentName } from '@ng-helper/shared/lib/html';
-import { kebabCase } from 'change-case';
+import { camelCase, kebabCase } from 'change-case';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken, SnippetString } from 'vscode';
 
 import { timeCost } from '../../debug';
@@ -66,20 +66,19 @@ async function provideComponentNameCompletion({
         return;
     }
 
-    list = list.map((x) => kebabCase(x));
-
     const currentComponentName = getComponentName(document);
     if (currentComponentName) {
-        list = list.filter((x) => x !== currentComponentName);
+        list = list.filter((x) => x.componentName !== camelCase(currentComponentName));
     }
 
     const preChar = triggerString === '<' ? '' : '<';
     return new CompletionList(
-        list.map((tag) => {
+        list.map((x) => {
+            const tag = kebabCase(x.componentName);
             const item = new CompletionItem(tag);
-            item.insertText = new SnippetString(`${preChar}${tag} $0 />`);
+            item.insertText = new SnippetString(x.transclude ? `${preChar}${tag}>$0</${tag}>` : `${preChar}${tag} $0/>`);
+            item.documentation = x.transclude ? `<${tag}>|</${tag}>` : `<${tag} |/>`;
             item.detail = `[ng-helper]`;
-            item.documentation = `<${tag} | />`;
             return item;
         }),
         false,

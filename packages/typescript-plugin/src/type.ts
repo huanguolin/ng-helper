@@ -1,4 +1,4 @@
-import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgComponentNameInfo, NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 export interface PluginCoreLogger {
@@ -30,7 +30,7 @@ export type SyntaxNodeInfo = {
     node: ts.Node;
 };
 
-export type ComponentCoreInfo = {
+export type NgComponentTypeInfo = {
     controllerAs: string;
     controllerType?: ts.Type;
     bindings: Map<string, string>;
@@ -57,8 +57,6 @@ export type NgHelperServer = {
     updateComponentMap: (filePath: string, componentMap: Map<string, NgComponentFileInfo>) => void;
 };
 
-export interface NgComponentFileInfo {
+export interface NgComponentFileInfo extends NgComponentNameInfo {
     version: string;
-    componentName: string;
-    // TODO support transclude
 }

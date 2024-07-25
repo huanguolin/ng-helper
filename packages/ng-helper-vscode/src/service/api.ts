@@ -1,4 +1,12 @@
-import { NgCompletionRequest, NgCompletionResponse, NgHoverRequest, NgHoverResponse, NgRequest, NgResponse } from '@ng-helper/shared/lib/plugin';
+import {
+    NgCompletionRequest,
+    NgCompletionResponse,
+    NgComponentNameInfo,
+    NgHoverRequest,
+    NgHoverResponse,
+    NgRequest,
+    NgResponse,
+} from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
 
@@ -36,7 +44,7 @@ export function getComponentTypeCompletionApi({ port, vscodeCancelToken, info }:
 }
 
 export function getComponentNameCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
-    return bizRequest<NgRequest, string[] | undefined>({
+    return bizRequest<NgRequest, NgComponentNameInfo[] | undefined>({
         url: buildUrl(port, 'component', 'name', 'completion'),
         info,
         vscodeCancelToken,

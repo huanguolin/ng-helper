@@ -3,7 +3,7 @@ import { NgHoverRequest, NgHoverResponse } from '@ng-helper/shared/lib/plugin';
 import { getCompletionType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { PluginContext } from '../type';
 import { getNodeAtPosition, getPropertyType, typeToString } from '../utils/common';
-import { getComponentCoreInfo, getComponentDeclareLiteralNode } from '../utils/ng';
+import { getComponentTypeInfo, getComponentDeclareLiteralNode } from '../utils/ng';
 
 import { buildHoverInfo } from './utils';
 
@@ -26,7 +26,7 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return;
     }
 
-    const info = getComponentCoreInfo(ctx, componentLiteralNode);
+    const info = getComponentTypeInfo(ctx, componentLiteralNode);
     logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
     if (!minPrefix.startsWith(info.controllerAs)) {
         return;

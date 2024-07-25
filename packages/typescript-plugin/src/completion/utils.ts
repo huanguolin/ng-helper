@@ -2,7 +2,7 @@ import type ts from 'typescript';
 
 import { CorePluginContext, NgComponentFileInfo, PluginContext, SyntaxNodeInfo } from '../type';
 import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpression, getSourceFileVersion } from '../utils/common';
-import { isComponentTsFile, getComponentName } from '../utils/ng';
+import { isComponentTsFile, getComponentNameInfo } from '../utils/ng';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -279,15 +279,15 @@ export function rebuildAllComponentFileInfo(
 
         const ctx = Object.assign({ sourceFile }, coreCtx);
 
-        const componentName = getComponentName(ctx);
-        logger.info('component ts file:', sourceFile.fileName, ', componentName:', componentName);
-        if (!componentName) {
+        const componentNameInfo = getComponentNameInfo(ctx);
+        logger.info('component ts file:', sourceFile.fileName, ', componentNameInfo:', componentNameInfo);
+        if (!componentNameInfo) {
             return;
         }
 
         newComponentMap.set(sourceFile.fileName, {
             version,
-            componentName,
+            ...componentNameInfo,
         });
     });
 

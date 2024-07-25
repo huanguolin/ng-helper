@@ -3,6 +3,7 @@ import * as http from 'http';
 import {
     NgCompletionRequest,
     NgCompletionResponse,
+    NgComponentNameInfo,
     NgHoverRequest,
     NgHoverResponse,
     NgPluginConfiguration,
@@ -195,7 +196,7 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/name/completion', (req, res) => {
-        handleRequestWithCoreCtx<NgRequest, string[] | undefined>({
+        handleRequestWithCoreCtx<NgRequest, NgComponentNameInfo[] | undefined>({
             req,
             res,
             action: (ctx, body) => getComponentNameCompletions(ctx, body.fileName),
