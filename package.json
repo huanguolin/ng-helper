@@ -1,12 +1,5 @@
 {
-  "name": "angular-js-helper",
-  "version": "0.0.1",
-  "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "private": "true",
-  "description": "",
   "workspaces": [
     "packages/*"
   ],
