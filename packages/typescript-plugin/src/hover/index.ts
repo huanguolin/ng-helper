@@ -3,9 +3,9 @@ import { NgHoverRequest, NgHoverResponse } from '@ng-helper/shared/lib/plugin';
 import { getCompletionType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { PluginContext } from '../type';
 import { getNodeAtPosition, getPropertyType, typeToString } from '../utils/common';
-import { getComponentTypeInfo, getComponentDeclareLiteralNode } from '../utils/ng';
+import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings } from '../utils/ng';
 
-import { buildHoverInfo } from './utils';
+import { beautifyTypeString, buildHoverInfo } from './utils';
 
 export function getComponentHoverType(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
@@ -32,20 +32,24 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return;
     }
 
+    if (!info.controllerType && !info.bindings.size) {
+        return;
+    }
+
+    const targetNode = getNodeAtPosition(ctx, cursorAt, minSyntaxNode.sourceFile);
+    logger.info('targetNode:', targetNode ? targetNode.getText(minSyntaxNode.sourceFile) : undefined);
+
+    if (!targetNode) {
+        logger.error('targetNode not found at', cursorAt);
+        return;
+    }
+
+    if (!ctx.ts.isIdentifier(targetNode)) {
+        logger.error('targetNode should be an identifier, but got: ', targetNode.getText(minSyntaxNode.sourceFile));
+        return;
+    }
+
     if (info.controllerType) {
-        const targetNode = getNodeAtPosition(ctx, cursorAt, minSyntaxNode.sourceFile);
-        logger.info('targetNode:', targetNode ? targetNode.getText(minSyntaxNode.sourceFile) : undefined);
-
-        if (!targetNode) {
-            logger.error('targetNode not found at', cursorAt);
-            return;
-        }
-
-        if (!ctx.ts.isIdentifier(targetNode)) {
-            logger.error('targetNode should be an identifier, but got: ', targetNode.getText(minSyntaxNode.sourceFile));
-            return;
-        }
-
         // hover 在跟节点上
         if (targetNode.text === info.controllerAs) {
             logger.info('targetType:', typeToString(ctx, info.controllerType));
@@ -64,7 +68,35 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return buildHoverInfo({ ctx, targetType: getPropertyType(ctx, parentType, targetNode.text)!, parentType, name: targetNode.text });
     }
 
-    if (info.bindings) {
-        // TODO 使用 bindings 提供有限的提示
+    if (info.bindings.size > 0) {
+        const bindingTypes = getPublicMembersTypeInfoOfBindings(ctx, info.bindings)!;
+
+        // hover 在跟节点上
+        if (targetNode.text === info.controllerAs) {
+            const typeString =
+                '{ ' +
+                bindingTypes.reduce((acc, cur) => {
+                    const s = `${cur.name}: ${cur.typeString};`;
+                    return acc ? `${acc} ${s}` : s;
+                }, '') +
+                ' }';
+            return {
+                formattedTypeString: `(object) ${targetNode.text}: ${beautifyTypeString(typeString)}`,
+                document: '',
+            };
+        }
+
+        const targetType = bindingTypes.find((t) => t.name === targetNode.text);
+        if (targetType) {
+            return {
+                formattedTypeString: `(property) ${targetNode.text}: ${beautifyTypeString(targetType.typeString)}`,
+                document: targetType.document,
+            };
+        } else {
+            return {
+                formattedTypeString: `(property) ${targetNode.text}: any`,
+                document: '',
+            };
+        }
     }
 }
