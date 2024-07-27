@@ -117,7 +117,10 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
 export function getPublicMembersTypeInfoOfBindings(
     ctx: PluginContext,
     bindingsMap: Map<string, string>,
-    useInputName = false,
+    /**
+     * 站在使用组件的视角。
+     */
+    perspectivesOnUsing = false,
 ): NgTypeInfo[] | undefined {
     if (!bindingsMap.size) {
         return;
@@ -128,7 +131,7 @@ export function getPublicMembersTypeInfoOfBindings(
         const typeInfo = getBindType(v);
         const item: NgTypeInfo = {
             kind: 'property',
-            name: useInputName ? typeInfo.inputName || k : k,
+            name: perspectivesOnUsing ? typeInfo.inputName || k : k,
             typeString: typeInfo.typeString,
             document: `bindings config: "${v}"`,
             optional: typeInfo.optional,
@@ -150,14 +153,14 @@ export function getPublicMembersTypeInfoOfBindings(
     function getBindType(s: string) {
         const inputName = s.replace(/[@=<?]/g, '').trim();
         const result: {
-            type: 'unknown' | 'string' | 'function';
+            type: 'any' | 'string' | 'function';
             optional: boolean;
             typeString: string;
             inputName?: string;
         } = {
-            type: 'unknown',
+            type: 'any',
             optional: s.includes('?'),
-            typeString: 'unknown',
+            typeString: 'any',
             inputName: inputName ? inputName : undefined,
         };
 
@@ -166,7 +169,7 @@ export function getPublicMembersTypeInfoOfBindings(
             result.typeString = 'string';
         } else if (s.includes('&')) {
             result.type = 'function';
-            result.typeString = '(...args: unknown[]) => unknown';
+            result.typeString = perspectivesOnUsing ? 'expression' : '(...args: any[]) => any';
         }
 
         return result;
