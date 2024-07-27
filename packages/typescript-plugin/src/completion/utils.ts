@@ -254,6 +254,7 @@ export function rebuildAllComponentFileInfo(
     coreCtx: CorePluginContext,
     oldComponentMap: Map<string, NgComponentFileInfo>,
 ): Map<string, NgComponentFileInfo> {
+    const start = Date.now();
     const logger = coreCtx.logger.prefix('rebuildAllComponentFileInfo()');
 
     const newComponentMap = new Map<string, NgComponentFileInfo>();
@@ -291,7 +292,8 @@ export function rebuildAllComponentFileInfo(
         });
     });
 
-    logger.info('output total component count:', newComponentMap.size);
+    const end = Date.now();
+    logger.info('output total component count:', newComponentMap.size, 'cost:', `${end - start}ms`);
     logger.endGroup();
 
     return newComponentMap;
