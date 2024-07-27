@@ -1,4 +1,4 @@
-import { canCompletionNgDirective, Cursor, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
+import { canCompletionHtmlAttr, Cursor, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
 
 import { timeCost } from '../../debug';
@@ -36,7 +36,7 @@ function provideNgCompletion({ document, position }: { document: TextDocument; p
     }
 
     const tagTextBeforeCursor = docText.slice(tag.start, cursor.at);
-    if (!canCompletionNgDirective(tagTextBeforeCursor)) {
+    if (!canCompletionHtmlAttr(tagTextBeforeCursor)) {
         return;
     }
 

@@ -2,18 +2,20 @@ import * as http from 'http';
 
 import {
     NgCompletionRequest,
-    NgCompletionResponse,
-    NgComponentNameInfo,
+    NgTypeCompletionResponse,
     NgHoverRequest,
     NgHoverResponse,
     NgPluginConfiguration,
     NgRequest,
     NgResponse,
+    NgComponentNameCompletionResponse,
+    NgComponentAttrCompletionResponse,
+    NgComponentAttrRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
 
-import { getComponentCompletions, getComponentControllerAs, getComponentNameCompletions } from './completion';
+import { getComponentAttrCompletions, getComponentCompletions, getComponentControllerAs, getComponentNameCompletions } from './completion';
 import { getComponentHoverType } from './hover';
 import { CorePluginContext, GetCoreContextFn, NgComponentFileInfo, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
 import { buildLogger } from './utils/log';
@@ -188,7 +190,7 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/completion', (req, res) => {
-        handleRequestWithCtx<NgCompletionRequest, NgCompletionResponse>({
+        handleRequestWithCtx<NgCompletionRequest, NgTypeCompletionResponse>({
             req,
             res,
             action: (ctx, body) => getComponentCompletions(ctx, body.prefix),
@@ -196,10 +198,18 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/name/completion', (req, res) => {
-        handleRequestWithCoreCtx<NgRequest, NgComponentNameInfo[] | undefined>({
+        handleRequestWithCoreCtx<NgRequest, NgComponentNameCompletionResponse>({
             req,
             res,
             action: (ctx, body) => getComponentNameCompletions(ctx, body.fileName),
+        });
+    });
+
+    app.post('/ng-helper/component/attr/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgComponentAttrRequest, NgComponentAttrCompletionResponse>({
+            req,
+            res,
+            action: (ctx, body) => getComponentAttrCompletions(ctx, body.fileName, body.componentName),
         });
     });
 
@@ -270,7 +280,7 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
     }
 }
 
-function getCtxOfCoreCtx(coreCtx: CorePluginContext, filePath: string): PluginContext | undefined {
+export function getCtxOfCoreCtx(coreCtx: CorePluginContext, filePath: string): PluginContext | undefined {
     const sourceFile = coreCtx.program.getSourceFile(filePath);
     if (!sourceFile) {
         coreCtx.logger.info('getContextOfCoreCtx()', 'get source file failed');

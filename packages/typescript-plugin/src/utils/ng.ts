@@ -100,7 +100,7 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
                             if (list.length) {
                                 info.transclude = list;
                             }
-                        } else if (ctx.ts.isTokenKind(ctx.ts.SyntaxKind.TrueKeyword)) {
+                        } else if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
                             info.transclude = true;
                         }
                     }
@@ -114,7 +114,11 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
     }
 }
 
-export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsMap: Map<string, string>): NgTypeInfo[] | undefined {
+export function getPublicMembersTypeInfoOfBindings(
+    ctx: PluginContext,
+    bindingsMap: Map<string, string>,
+    useInputName = false,
+): NgTypeInfo[] | undefined {
     if (!bindingsMap.size) {
         return;
     }
@@ -124,9 +128,10 @@ export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsM
         const typeInfo = getBindType(v);
         const item: NgTypeInfo = {
             kind: 'property',
-            name: k,
+            name: useInputName ? typeInfo.inputName || k : k,
             typeString: typeInfo.typeString,
-            document: `bindings config: ${v}`,
+            document: `bindings config: "${v}"`,
+            optional: typeInfo.optional,
             isFunction: false,
         };
         if (typeInfo.type === 'function') {
@@ -143,14 +148,17 @@ export function getPublicMembersTypeInfoOfBindings(ctx: PluginContext, bindingsM
     return result;
 
     function getBindType(s: string) {
+        const inputName = s.replace(/[@=<?]/g, '').trim();
         const result: {
             type: 'unknown' | 'string' | 'function';
             optional: boolean;
             typeString: string;
+            inputName?: string;
         } = {
             type: 'unknown',
             optional: s.includes('?'),
             typeString: 'unknown',
+            inputName: inputName ? inputName : undefined,
         };
 
         if (s.includes('@')) {

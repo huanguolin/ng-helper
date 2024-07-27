@@ -1,5 +1,5 @@
 import {
-    canCompletionNgDirective,
+    canCompletionHtmlAttr,
     isContainsNgFilter,
     getTextInTemplate,
     indexOfNgFilter,
@@ -89,7 +89,7 @@ describe('getTextInTemplate()', () => {
     });
 });
 
-describe('canCompletionNgDirective()', () => {
+describe('canCompletionHtmlAttr()', () => {
     it.each([
         ['<', false],
         ['<di', false],
@@ -109,7 +109,7 @@ describe('canCompletionNgDirective()', () => {
         ['<div class="btn" ng-hide', true],
         ['<div class="btn" ng-hide ', true],
     ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = canCompletionNgDirective(input);
+        const v = canCompletionHtmlAttr(input);
         expect(v).toBe(output);
     });
 });

@@ -109,9 +109,9 @@ async function provideComponentNameCompletion({
     function buildCompletionItem(x: NgComponentNameInfo): CompletionItem {
         const tag = kebabCase(x.componentName);
         const item = new CompletionItem(tag);
-        item.insertText = new SnippetString(x.transclude ? `${preChar}${tag}>$0</${tag}>` : `${preChar}${tag} $0/>`);
+        item.insertText = new SnippetString(x.transclude ? `${preChar}${tag}>$0</${tag}>` : `${preChar}${tag}$0/>`);
         item.documentation = x.transclude ? `<${tag}>|</${tag}>` : `<${tag} |/>`;
-        item.detail = `[ng-helper]`;
+        item.detail = '[ng-helper]';
         return item;
     }
 }

@@ -11,7 +11,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentControllerAsApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getCorrespondingTsFileName, isComponentHtml, isComponentTag, isNgDirectiveAttr } from '../utils';
+import { getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgDirectiveAttr } from '../utils';
 
 export function componentCtrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
@@ -59,7 +59,7 @@ async function provideCtrlCompletion({
     const tag = getHtmlTagByCursor(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-        if (attr && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+        if (attr && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
             return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
         }
     }

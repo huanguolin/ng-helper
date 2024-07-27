@@ -12,7 +12,7 @@ import { CancellationToken, ExtensionContext, Hover, languages, MarkdownString, 
 import { timeCost } from '../../debug';
 import { getComponentHoverApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getCorrespondingTsFileName, isComponentHtml, isComponentTag, isNgDirectiveAttr, isValidIdentifier } from '../utils';
+import { getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgDirectiveAttr, isValidIdentifier } from '../utils';
 
 export function registerComponentHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
@@ -68,7 +68,7 @@ async function provideHover({
     const tag = getHtmlTagByCursor(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-        if (attr && attr.value && (isComponentTag(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+        if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
             let cursorAt = cursor.at - attr.value.start;
             let contextString = trimFilters(attr.value.text, cursorAt);
             // handle ng-class/ng-style map value

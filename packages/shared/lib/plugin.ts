@@ -9,6 +9,7 @@ export interface NgTypeInfo {
     name: string;
     typeString: string;
     document: string;
+    optional?: boolean;
     isFunction: boolean;
     paramNames?: string[];
 }
@@ -35,17 +36,21 @@ export interface NgHoverRequest extends NgRequest {
     cursorAt: number;
 }
 
+export interface NgComponentAttrRequest extends NgRequest {
+    componentName: string;
+}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;
 }
 
-export type NgHoverResponse = NgHoverInfo | undefined;
-
-export type NgCompletionResponseItem = NgTypeInfo;
-export type NgCompletionResponse = NgCompletionResponseItem[] | undefined;
-
 export interface NgComponentNameInfo {
     componentName: string;
     transclude?: boolean | string[];
 }
+
+export type NgHoverResponse = NgHoverInfo | undefined;
+export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
+export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefined;
+export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;

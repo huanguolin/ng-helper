@@ -1,4 +1,4 @@
-import { getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
+import { getHtmlTagByCursor, isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { TextDocument } from 'vscode';
@@ -77,10 +77,10 @@ export function isNgDirectiveAttr(attrName: string): boolean {
     return attrName.startsWith('ng-');
 }
 
-export function isComponentTag(tagName: string): boolean {
-    return tagName.includes('-');
-}
-
 export function isValidIdentifier(text: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z\d_$]*$/.test(text);
+}
+
+export function isComponentTagName(name: string): boolean {
+    return name.includes('-') || !isHtmlTagName(name);
 }
