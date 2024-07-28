@@ -8,7 +8,7 @@
     "email": "huanguolin@outlook.com"
   },
   "publisher": "huanguolin",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
     "Other"
   ],
   "tags": [
+    "AngularJS",
     "angular.js",
     "typescript",
     "helper"

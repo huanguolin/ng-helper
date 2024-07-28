@@ -4,10 +4,23 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.0.8](https://github.com/huanguolin/ng-helper/compare/v0.0.7...v0.0.8) (2024-07-19)
+
+### Feature
+- Support for multiple projects
+- Auto-completion for component names in HTML
+- Auto-completion for component property names in HTML
+
+### Improvement
+- Function completion split into two stages
+- Component hover support for cases without a class controller
+
+### Fixed
+- Incorrect suggestions for ng-* auto-completion in templates {{}} (#3)
 
 ## [v0.0.7](https://github.com/huanguolin/ng-helper/compare/v0.0.6...v0.0.7) (2024-07-19)
 
-### Improve
+### Improvement
 - Improved support for auto-completion, hover type hints for accessing elements such as arrays.
 
 
