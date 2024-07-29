@@ -11,24 +11,31 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentControllerAsApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgDirectiveAttr } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgDirectiveAttr } from '../utils';
 
-export function componentCtrl(port: number) {
+export function ctrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
         async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
-            return timeCost('provideCtrlCompletion', async () => {
-                try {
-                    return await provideCtrlCompletion({ document, position, port, vscodeCancelToken: token });
-                } catch (error) {
-                    console.error('provideCtrlCompletion() error:', error);
-                    return undefined;
-                }
-            });
+            if (isComponentHtml(document)) {
+                return timeCost('provideComponentCtrlCompletion', async () => {
+                    try {
+                        return await provideComponentCtrlCompletion({ document, position, port, vscodeCancelToken: token });
+                    } catch (error) {
+                        console.error('provideComponentCtrlCompletion() error:', error);
+                        return undefined;
+                    }
+                });
+            }
+
+            const ctrlInfo = getControllerNameInfoFromHtml(document);
+            if (ctrlInfo && ctrlInfo.controllerAs) {
+                return new CompletionList([new CompletionItem(ctrlInfo.controllerAs)], false);
+            }
         },
     });
 }
 
-async function provideCtrlCompletion({
+async function provideComponentCtrlCompletion({
     document,
     position,
     port,
@@ -39,10 +46,6 @@ async function provideCtrlCompletion({
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
-    if (!isComponentHtml(document)) {
-        return undefined;
-    }
-
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
 
