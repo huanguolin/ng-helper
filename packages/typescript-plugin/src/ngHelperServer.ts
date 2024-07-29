@@ -85,6 +85,7 @@ function createNgHelperServer(): NgHelperServer {
         function removeProject() {
             if (projectRoot) {
                 _getContextMap.delete(projectRoot);
+                _component2dMap.delete(projectRoot);
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {
                     _httpServer?.close();
