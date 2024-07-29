@@ -54,7 +54,7 @@ export type NgHelperServer = {
     getCoreContext: GetCoreContextFnViaFilePath;
     isExtensionActivated: () => boolean;
     getComponentMap: (filePath: string) => Map<string, NgComponentFileInfo> | undefined;
-    updateComponentMap: (filePath: string, componentMap: Map<string, NgComponentFileInfo>) => void;
+    refreshInternalMaps: (filePath: string) => void;
 };
 
 export interface NgComponentFileInfo extends NgComponentNameInfo {

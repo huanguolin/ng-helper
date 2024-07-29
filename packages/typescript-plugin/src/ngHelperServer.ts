@@ -17,8 +17,19 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { getComponentAttrCompletions, getComponentCompletions, getComponentControllerAs, getComponentNameCompletions } from './completion';
 import { getComponentHoverType } from './hover';
-import { CorePluginContext, GetCoreContextFn, NgComponentFileInfo, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from './type';
+import {
+    CorePluginContext,
+    GetCoreContextFn,
+    NgComponentFileInfo,
+    NgHelperServer,
+    PluginContext,
+    PluginCoreLogger,
+    PluginLogger,
+    ProjectInfo,
+} from './type';
+import { getSourceFileVersion } from './utils/common';
 import { buildLogger } from './utils/log';
+import { getComponentNameInfo, isComponentTsFile } from './utils/ng';
 
 export const ngHelperServer = createNgHelperServer();
 
@@ -36,7 +47,7 @@ function createNgHelperServer(): NgHelperServer {
         getContext,
         getCoreContext,
         getComponentMap,
-        updateComponentMap,
+        refreshInternalMaps,
     };
 
     function isExtensionActivated() {
@@ -148,13 +159,47 @@ function createNgHelperServer(): NgHelperServer {
         return map;
     }
 
-    function updateComponentMap(filePath: string, componentMap: Map<string, NgComponentFileInfo>): void {
+    function refreshInternalMaps(filePath: string): void {
         const projectRoot = getProjectRoot(filePath);
         if (!projectRoot) {
             return;
         }
 
-        _component2dMap.set(projectRoot, componentMap);
+        const coreCtx = getCoreContext(filePath)!;
+
+        const start = Date.now();
+        const logger = coreCtx.logger.prefix('refreshInternalMaps()');
+        logger.startGroup();
+
+        const oldComponentMap = getMap(_component2dMap);
+        const sourceFiles = coreCtx.program.getSourceFiles();
+        logger.info('input total component count:', oldComponentMap.size, 'sourceFiles count:', sourceFiles.length);
+
+        const newComponentMap = new Map<string, NgComponentFileInfo>();
+
+        sourceFiles.forEach((sourceFile) => {
+            if (isComponentTsFile(sourceFile.fileName)) {
+                fillNewComponentMap({ logger, oldComponentMap, newComponentMap, sourceFile, coreCtx });
+            }
+        });
+
+        setMap(_component2dMap, newComponentMap);
+
+        const end = Date.now();
+        logger.info('output total component count:', newComponentMap.size, 'cost:', `${end - start}ms`);
+        logger.endGroup();
+
+        function getMap<T>(mapOfMap: Map<string, T>): T {
+            let map = mapOfMap.get(projectRoot!);
+            if (!map) {
+                map = new Map() as T;
+            }
+            return map;
+        }
+
+        function setMap<T>(mapOfMap: Map<string, T>, map: T): void {
+            mapOfMap.set(projectRoot!, map);
+        }
     }
 }
 
@@ -279,6 +324,43 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
     } finally {
         ctx.logger.endGroup();
     }
+}
+
+function fillNewComponentMap({
+    logger,
+    oldComponentMap,
+    newComponentMap,
+    sourceFile,
+    coreCtx,
+}: {
+    oldComponentMap: Map<string, NgComponentFileInfo>;
+    newComponentMap: Map<string, NgComponentFileInfo>;
+    sourceFile: ts.SourceFile;
+    logger: PluginCoreLogger;
+    coreCtx: CorePluginContext;
+}): void {
+    logger.info('component ts file:', sourceFile.fileName);
+
+    const oldComponentFile = oldComponentMap.get(sourceFile.fileName);
+    const version = getSourceFileVersion(sourceFile);
+    if (oldComponentFile && oldComponentFile.version === version) {
+        newComponentMap.set(sourceFile.fileName, oldComponentFile);
+        logger.info('component ts file:', sourceFile.fileName, ', version not change.');
+        return;
+    }
+
+    const ctx = Object.assign({ sourceFile }, coreCtx);
+
+    const componentNameInfo = getComponentNameInfo(ctx);
+    logger.info('component ts file:', sourceFile.fileName, ', componentNameInfo:', componentNameInfo);
+    if (!componentNameInfo) {
+        return;
+    }
+
+    newComponentMap.set(sourceFile.fileName, {
+        version,
+        ...componentNameInfo,
+    });
 }
 
 export function getCtxOfCoreCtx(coreCtx: CorePluginContext, filePath: string): PluginContext | undefined {

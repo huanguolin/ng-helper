@@ -1,13 +1,13 @@
 import { NgTypeCompletionResponse, NgComponentNameInfo, NgTypeInfo, NgComponentNameCompletionResponse } from '@ng-helper/shared/lib/plugin';
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
-import { CorePluginContext, NgComponentFileInfo, PluginContext } from '../type';
+import { CorePluginContext, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import { getPublicMembersTypeInfoOfBindings } from '../utils/ng';
 import { getComponentTypeInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
-import { getMinSyntaxNodeForCompletion, getCompletionType, rebuildAllComponentFileInfo } from './utils';
+import { getMinSyntaxNodeForCompletion, getCompletionType } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
@@ -60,12 +60,14 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgT
 }
 
 export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
-    const componentMap = refreshComponentFileMap(coreCtx, filePath);
+    ngHelperServer.refreshInternalMaps(filePath);
+    const componentMap = ngHelperServer.getComponentMap(filePath);
     return componentMap ? Array.from(componentMap.values()) : undefined;
 }
 
 export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgTypeInfo[] | undefined {
-    const componentMap = refreshComponentFileMap(coreCtx, filePath);
+    ngHelperServer.refreshInternalMaps(filePath);
+    const componentMap = ngHelperServer.getComponentMap(filePath);
     if (!componentMap) {
         return;
     }
@@ -128,16 +130,4 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
         }
         return attrs;
     }
-}
-
-function refreshComponentFileMap(coreCtx: CorePluginContext, filePath: string): Map<string, NgComponentFileInfo> | undefined {
-    const oldComponentMap = ngHelperServer.getComponentMap(filePath);
-    if (!oldComponentMap) {
-        return;
-    }
-
-    const newComponentMap = rebuildAllComponentFileInfo(coreCtx, oldComponentMap);
-    ngHelperServer.updateComponentMap(filePath, newComponentMap);
-
-    return newComponentMap;
 }
