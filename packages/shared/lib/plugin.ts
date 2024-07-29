@@ -27,7 +27,7 @@ export type NgResponse<T> = {
     data?: T;
 };
 
-export interface NgCompletionRequest extends NgRequest {
+export interface NgTypeCompletionRequest extends NgRequest {
     prefix: string;
 }
 

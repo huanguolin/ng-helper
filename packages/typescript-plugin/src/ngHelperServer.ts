@@ -1,7 +1,7 @@
 import * as http from 'http';
 
 import {
-    NgCompletionRequest,
+    NgTypeCompletionRequest,
     NgTypeCompletionResponse,
     NgHoverRequest,
     NgHoverResponse,
@@ -245,7 +245,7 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/completion', (req, res) => {
-        handleRequestWithCtx<NgCompletionRequest, NgTypeCompletionResponse>({
+        handleRequestWithCtx<NgTypeCompletionRequest, NgTypeCompletionResponse>({
             req,
             res,
             action: (ctx, body) => getComponentCompletions(ctx, body.prefix),

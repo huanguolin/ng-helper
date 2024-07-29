@@ -1,5 +1,5 @@
 import {
-    NgCompletionRequest,
+    NgTypeCompletionRequest,
     NgTypeCompletionResponse,
     NgComponentAttrRequest,
     NgHoverRequest,
@@ -36,8 +36,8 @@ export function getComponentHoverApi({ port, vscodeCancelToken, info }: ApiInput
     });
 }
 
-export function getComponentTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgCompletionRequest>) {
-    return bizRequest<NgCompletionRequest, NgTypeCompletionResponse>({
+export function getComponentTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgTypeCompletionRequest>) {
+    return bizRequest<NgTypeCompletionRequest, NgTypeCompletionResponse>({
         url: buildUrl(port, 'component', 'completion'),
         info,
         vscodeCancelToken,
