@@ -1,9 +1,15 @@
-import { NgTypeCompletionResponse, NgComponentNameInfo, NgTypeInfo, NgComponentNameCompletionResponse } from '@ng-helper/shared/lib/plugin';
+import {
+    NgTypeCompletionResponse,
+    NgComponentNameInfo,
+    NgTypeInfo,
+    NgComponentNameCompletionResponse,
+    NgCtrlTypeCompletionRequest,
+} from '@ng-helper/shared/lib/plugin';
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
-import { CorePluginContext, PluginContext } from '../type';
+import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getPublicMembersTypeInfoOfBindings } from '../utils/ng';
+import { getControllerType, getPublicMembersTypeInfoOfBindings } from '../utils/ng';
 import { getComponentTypeInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
@@ -19,7 +25,7 @@ export function getComponentControllerAs(ctx: PluginContext): string | undefined
     return info.controllerAs;
 }
 
-export function getComponentCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
+export function getComponentTypeCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
     const logger = ctx.logger.prefix('getComponentCompletions()');
 
     const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
@@ -56,6 +62,80 @@ export function getComponentCompletions(ctx: PluginContext, prefix: string): NgT
         }
 
         return getPublicMembersTypeInfoOfType(ctx, targetType);
+    }
+}
+
+export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: NgCtrlTypeCompletionRequest): NgTypeCompletionResponse {
+    const logger = coreCtx.logger.prefix('getControllerTypeCompletions()');
+    logger.startGroup();
+
+    if (!info.controllerAs) {
+        logger.info('controllerAs not found!');
+        return;
+    }
+
+    const map = ngHelperServer.getTsCtrlMap(info.fileName);
+    if (!map) {
+        logger.info('tsCtrlMap not found!');
+        return;
+    }
+
+    let tsCtrlFilePath = getTsCtrlFilePath(map);
+    if (!tsCtrlFilePath) {
+        // lazy refresh
+        ngHelperServer.refreshInternalMaps(info.fileName);
+        // get again
+        tsCtrlFilePath = getTsCtrlFilePath(ngHelperServer.getTsCtrlMap(info.fileName)!);
+        if (!tsCtrlFilePath) {
+            logger.info('tsCtrlFilePath not found!');
+            return;
+        }
+    }
+    logger.info('tsCtrlFilePath:', tsCtrlFilePath);
+
+    const ctx = getCtxOfCoreCtx(coreCtx, tsCtrlFilePath);
+    if (!ctx) {
+        logger.info('ctx not found!');
+        return;
+    }
+
+    const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, info.prefix);
+    const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
+    logger.info('minPrefix:', minPrefix);
+    if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(info.controllerAs)) {
+        return;
+    }
+
+    const ctrlType = getControllerType(ctx);
+    if (!ctrlType) {
+        logger.info('ctrlType not found!');
+        return;
+    }
+
+    // ctrl. 的情况
+    if (minPrefix === info.controllerAs + '.') {
+        return getPublicMembersTypeInfoOfType(ctx, ctrlType);
+    }
+
+    const targetType = getCompletionType(ctx, ctrlType, minSyntaxNode);
+    logger.info('targetType:', typeToString(ctx, targetType));
+    if (!targetType) {
+        return;
+    }
+
+    logger.endGroup();
+
+    return getPublicMembersTypeInfoOfType(ctx, targetType);
+
+    function getTsCtrlFilePath(map: Map<string, NgTsCtrlFileInfo>) {
+        let tsCtrlFilePath: string | undefined;
+        for (const [k, v] of map.entries()) {
+            if (v.controllerName === info.controllerName) {
+                tsCtrlFilePath = k;
+                break;
+            }
+        }
+        return tsCtrlFilePath;
     }
 }
 

@@ -66,6 +66,41 @@ export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: t
     return result;
 }
 
+export function getControllerType(ctx: PluginContext): ts.Type | undefined {
+    const logger = ctx.logger.prefix('getControllerType()');
+
+    let targetNode: ts.Identifier | undefined;
+    visit(ctx.sourceFile);
+    if (!targetNode) {
+        logger.info('not found target node!');
+        return;
+    }
+
+    const controllerType = ctx.typeChecker.getTypeAtLocation(targetNode);
+    if (isTypeOfType(ctx, controllerType)) {
+        const targetSymbol = controllerType.symbol;
+        if (targetSymbol) {
+            return ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
+        }
+    }
+    return controllerType;
+
+    function visit(node: ts.Node) {
+        if (isAngularControllerRegisterNode(ctx, node)) {
+            // logger.info(node.getText(ctx.sourceFile));
+            // 第二个参数是对象字面量
+            const theNode = node.arguments[1];
+            if (ctx.ts.isIdentifier(theNode)) {
+                targetNode = theNode;
+            }
+        }
+
+        if (!targetNode) {
+            ctx.ts.forEachChild(node, visit);
+        }
+    }
+}
+
 export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLiteralExpression | undefined {
     let componentLiteralNode: ts.ObjectLiteralExpression | undefined;
     visit(ctx.sourceFile);

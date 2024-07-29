@@ -8,6 +8,7 @@ import {
     NgResponse,
     NgComponentNameCompletionResponse,
     NgComponentAttrCompletionResponse,
+    NgCtrlTypeCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -35,10 +36,18 @@ export function getComponentHoverApi({ port, vscodeCancelToken, info }: ApiInput
         apiName: 'getComponentHoverApi',
     });
 }
+export function getControllerTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlTypeCompletionRequest>) {
+    return bizRequest<NgCtrlTypeCompletionRequest, NgTypeCompletionResponse>({
+        url: buildUrl(port, 'controller', 'type', 'completion'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getControllerTypeCompletionApi',
+    });
+}
 
 export function getComponentTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgTypeCompletionRequest>) {
     return bizRequest<NgTypeCompletionRequest, NgTypeCompletionResponse>({
-        url: buildUrl(port, 'component', 'completion'),
+        url: buildUrl(port, 'component', 'type', 'completion'),
         info,
         vscodeCancelToken,
         apiName: 'getComponentTypeCompletionApi',

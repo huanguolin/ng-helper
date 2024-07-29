@@ -11,11 +11,18 @@ import {
     NgComponentNameCompletionResponse,
     NgComponentAttrCompletionResponse,
     NgComponentAttrRequest,
+    NgCtrlTypeCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
 
-import { getComponentAttrCompletions, getComponentCompletions, getComponentControllerAs, getComponentNameCompletions } from './completion';
+import {
+    getComponentAttrCompletions,
+    getComponentTypeCompletions,
+    getComponentControllerAs,
+    getComponentNameCompletions,
+    getControllerTypeCompletions,
+} from './completion';
 import { getComponentHoverType } from './hover';
 import {
     CorePluginContext,
@@ -49,6 +56,7 @@ function createNgHelperServer(): NgHelperServer {
         getContext,
         getCoreContext,
         getComponentMap,
+        getTsCtrlMap,
         refreshInternalMaps,
     };
 
@@ -154,13 +162,15 @@ function createNgHelperServer(): NgHelperServer {
         if (!projectRoot) {
             return;
         }
+        return getMap(projectRoot, _componentMapOfMap);
+    }
 
-        let map = _componentMapOfMap.get(projectRoot);
-        if (!map) {
-            map = new Map<string, NgComponentFileInfo>();
+    function getTsCtrlMap(filePath: string): Map<string, NgTsCtrlFileInfo> | undefined {
+        const projectRoot = getProjectRoot(filePath);
+        if (!projectRoot) {
+            return;
         }
-
-        return map;
+        return getMap(projectRoot, _tsCtrlMapOfMap);
     }
 
     function refreshInternalMaps(filePath: string): void {
@@ -169,14 +179,17 @@ function createNgHelperServer(): NgHelperServer {
             return;
         }
 
+        const get = <T>(mapOfMap: Map<string, T>): T => getMap(projectRoot, mapOfMap);
+        const set = <T>(mapOfMap: Map<string, T>, map: T): void => setMap(projectRoot, mapOfMap, map);
+
         const coreCtx = getCoreContext(filePath)!;
 
         const start = Date.now();
         const logger = coreCtx.logger.prefix('refreshInternalMaps()');
         logger.startGroup();
 
-        const oldComponentMap = getMap(_componentMapOfMap);
-        const oldTsCtrlMap = getMap(_tsCtrlMapOfMap);
+        const oldComponentMap = get(_componentMapOfMap);
+        const oldTsCtrlMap = get(_tsCtrlMapOfMap);
         const sourceFiles = coreCtx.program.getSourceFiles();
         logger.info('sourceFiles count:', sourceFiles.length, 'old component count:', oldComponentMap.size, 'old TsCtrl count:', oldTsCtrlMap.size);
 
@@ -191,24 +204,24 @@ function createNgHelperServer(): NgHelperServer {
             }
         });
 
-        setMap(_componentMapOfMap, newComponentMap);
-        setMap(_tsCtrlMapOfMap, newTsCtrlMap);
+        set(_componentMapOfMap, newComponentMap);
+        set(_tsCtrlMapOfMap, newTsCtrlMap);
 
         const end = Date.now();
         logger.info('new component count:', newComponentMap.size, 'new TsCtrl count:', newTsCtrlMap.size, 'cost:', `${end - start}ms`);
         logger.endGroup();
+    }
 
-        function getMap<T>(mapOfMap: Map<string, T>): T {
-            let map = mapOfMap.get(projectRoot!);
-            if (!map) {
-                map = new Map() as T;
-            }
-            return map;
+    function getMap<T>(projectRoot: string, mapOfMap: Map<string, T>): T {
+        let map = mapOfMap.get(projectRoot);
+        if (!map) {
+            map = new Map() as T;
         }
+        return map;
+    }
 
-        function setMap<T>(mapOfMap: Map<string, T>, map: T): void {
-            mapOfMap.set(projectRoot!, map);
-        }
+    function setMap<T>(projectRoot: string, mapOfMap: Map<string, T>, map: T): void {
+        mapOfMap.set(projectRoot, map);
     }
 }
 
@@ -244,11 +257,11 @@ function initHttpServer() {
         handleRequestWithCtx<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
     });
 
-    app.post('/ng-helper/component/completion', (req, res) => {
+    app.post('/ng-helper/component/type/completion', (req, res) => {
         handleRequestWithCtx<NgTypeCompletionRequest, NgTypeCompletionResponse>({
             req,
             res,
-            action: (ctx, body) => getComponentCompletions(ctx, body.prefix),
+            action: (ctx, body) => getComponentTypeCompletions(ctx, body.prefix),
         });
     });
 
@@ -264,7 +277,7 @@ function initHttpServer() {
         handleRequestWithCoreCtx<NgComponentAttrRequest, NgComponentAttrCompletionResponse>({
             req,
             res,
-            action: (ctx, body) => getComponentAttrCompletions(ctx, body.fileName, body.componentName),
+            action: (coreCtx, body) => getComponentAttrCompletions(coreCtx, body.fileName, body.componentName),
         });
     });
 
@@ -273,6 +286,14 @@ function initHttpServer() {
             req,
             res,
             action: (ctx, body) => getComponentHoverType(ctx, body),
+        });
+    });
+
+    app.post('/ng-helper/controller/type/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgCtrlTypeCompletionRequest, NgTypeCompletionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getControllerTypeCompletions(coreCtx, body),
         });
     });
 

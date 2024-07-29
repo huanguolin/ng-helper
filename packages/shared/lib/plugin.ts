@@ -31,6 +31,13 @@ export interface NgTypeCompletionRequest extends NgRequest {
     prefix: string;
 }
 
+export interface NgCtrlInfo {
+    controllerName: string;
+    controllerAs?: string;
+}
+
+export interface NgCtrlTypeCompletionRequest extends NgTypeCompletionRequest, NgCtrlInfo {}
+
 export interface NgHoverRequest extends NgRequest {
     contextString: string;
     cursorAt: number;

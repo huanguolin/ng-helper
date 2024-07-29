@@ -5,7 +5,7 @@ import { languages, TextDocument, Position, CompletionList, CancellationToken, C
 import { timeCost } from '../../debug';
 import { getComponentAttrCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameFromHtml, getCorrespondingTsFileName, isComponentTagName } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentTagName } from '../utils';
 
 export function componentAttr(port: number) {
     return languages.registerCompletionItemProvider(
@@ -54,7 +54,7 @@ async function provideComponentAttrCompletion({
         return;
     }
 
-    const relatedTsFile = (await getCorrespondingTsFileName(document, getControllerNameFromHtml(document))) ?? document.fileName;
+    const relatedTsFile = (await getCorrespondingTsFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
     if (!(await checkNgHelperServerRunning(relatedTsFile, port))) {
         return;
     }

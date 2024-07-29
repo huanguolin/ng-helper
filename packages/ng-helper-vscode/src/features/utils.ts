@@ -1,4 +1,5 @@
 import { getHtmlTagByCursor, isHtmlTagName } from '@ng-helper/shared/lib/html';
+import { NgCtrlInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { TextDocument } from 'vscode';
@@ -9,7 +10,7 @@ export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
-export function getControllerNameFromHtml(document: TextDocument): string | undefined {
+export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {
     if (isComponentHtml(document)) {
         return;
     }
@@ -30,11 +31,17 @@ export function getControllerNameFromHtml(document: TextDocument): string | unde
         return;
     }
 
-    const ctrlName = attrValue.text.split(/\s+/).shift();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [controllerName, asKey, controllerAs] = attrValue.text.split(/\s+/);
 
-    console.log('getControllerNameFromHtml() find controller name is:', ctrlName);
+    const result: NgCtrlInfo = {
+        controllerName,
+        controllerAs,
+    };
 
-    return ctrlName;
+    console.log('getControllerNameFromHtml() find controller name info:', result);
+
+    return result;
 }
 
 export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
