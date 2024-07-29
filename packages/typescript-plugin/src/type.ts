@@ -57,6 +57,12 @@ export type NgHelperServer = {
     refreshInternalMaps: (filePath: string) => void;
 };
 
-export interface NgComponentFileInfo extends NgComponentNameInfo {
+export interface TsFileInfo {
     version: string;
+}
+
+export interface NgComponentFileInfo extends NgComponentNameInfo, TsFileInfo {}
+
+export interface NgTsCtrlFileInfo extends TsFileInfo {
+    controllerName: string;
 }

@@ -21,6 +21,21 @@ export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node
     return false;
 }
 
+export function isAngularControllerRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    if (
+        ctx.ts.isCallExpression(node) &&
+        ctx.ts.isPropertyAccessExpression(node.expression) &&
+        ctx.ts.isCallExpression(node.expression.expression) &&
+        ctx.ts.isIdentifier(node.expression.name) &&
+        node.expression.name.text === 'controller' &&
+        node.arguments.length === 2 &&
+        ctx.ts.isStringLiteral(node.arguments[0])
+    ) {
+        return true;
+    }
+    return false;
+}
+
 export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): NgComponentTypeInfo {
     const result: NgComponentTypeInfo = {
         controllerAs: '$ctrl',
@@ -109,6 +124,26 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
         }
 
         if (!info) {
+            ctx.ts.forEachChild(node, visit);
+        }
+    }
+}
+
+export function getControllerNameInfo(ctx: PluginContext): string | undefined {
+    let name: string | undefined;
+    visit(ctx.sourceFile);
+    return name;
+
+    function visit(node: ts.Node) {
+        if (isAngularControllerRegisterNode(ctx, node)) {
+            // 第一个参数是字符串字面量
+            const nameNode = node.arguments[0];
+            if (ctx.ts.isStringLiteralLike(nameNode)) {
+                name = nameNode.text;
+            }
+        }
+
+        if (!name) {
             ctx.ts.forEachChild(node, visit);
         }
     }

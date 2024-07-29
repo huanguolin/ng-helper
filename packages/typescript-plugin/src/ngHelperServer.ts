@@ -22,6 +22,7 @@ import {
     GetCoreContextFn,
     NgComponentFileInfo,
     NgHelperServer,
+    NgTsCtrlFileInfo,
     PluginContext,
     PluginCoreLogger,
     PluginLogger,
@@ -29,14 +30,15 @@ import {
 } from './type';
 import { getSourceFileVersion } from './utils/common';
 import { buildLogger } from './utils/log';
-import { getComponentNameInfo, isComponentTsFile } from './utils/ng';
+import { getComponentNameInfo, getControllerNameInfo, isComponentTsFile, isControllerTsFile } from './utils/ng';
 
 export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
     const _getContextMap = new Map<string, GetCoreContextFn>();
-    const _component2dMap = new Map<string, Map<string, NgComponentFileInfo>>();
+    const _componentMapOfMap = new Map<string, Map<string, NgComponentFileInfo>>();
+    const _tsCtrlMapOfMap = new Map<string, Map<string, NgTsCtrlFileInfo>>();
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
 
@@ -96,7 +98,7 @@ function createNgHelperServer(): NgHelperServer {
         function removeProject() {
             if (projectRoot) {
                 _getContextMap.delete(projectRoot);
-                _component2dMap.delete(projectRoot);
+                _componentMapOfMap.delete(projectRoot);
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {
                     _httpServer?.close();
@@ -151,7 +153,7 @@ function createNgHelperServer(): NgHelperServer {
             return;
         }
 
-        let map = _component2dMap.get(projectRoot);
+        let map = _componentMapOfMap.get(projectRoot);
         if (!map) {
             map = new Map<string, NgComponentFileInfo>();
         }
@@ -171,22 +173,27 @@ function createNgHelperServer(): NgHelperServer {
         const logger = coreCtx.logger.prefix('refreshInternalMaps()');
         logger.startGroup();
 
-        const oldComponentMap = getMap(_component2dMap);
+        const oldComponentMap = getMap(_componentMapOfMap);
+        const oldTsCtrlMap = getMap(_tsCtrlMapOfMap);
         const sourceFiles = coreCtx.program.getSourceFiles();
-        logger.info('input total component count:', oldComponentMap.size, 'sourceFiles count:', sourceFiles.length);
+        logger.info('sourceFiles count:', sourceFiles.length, 'old component count:', oldComponentMap.size, 'old TsCtrl count:', oldTsCtrlMap.size);
 
         const newComponentMap = new Map<string, NgComponentFileInfo>();
+        const newTsCtrlMap = new Map<string, NgTsCtrlFileInfo>();
 
         sourceFiles.forEach((sourceFile) => {
             if (isComponentTsFile(sourceFile.fileName)) {
-                fillNewComponentMap({ logger, oldComponentMap, newComponentMap, sourceFile, coreCtx });
+                fillNewComponentMap({ logger, oldMap: oldComponentMap, newMap: newComponentMap, sourceFile, coreCtx });
+            } else if (isControllerTsFile(sourceFile.fileName)) {
+                fillNewTsCtrlMap({ logger, oldMap: oldTsCtrlMap, newMap: newTsCtrlMap, sourceFile, coreCtx });
             }
         });
 
-        setMap(_component2dMap, newComponentMap);
+        setMap(_componentMapOfMap, newComponentMap);
+        setMap(_tsCtrlMapOfMap, newTsCtrlMap);
 
         const end = Date.now();
-        logger.info('output total component count:', newComponentMap.size, 'cost:', `${end - start}ms`);
+        logger.info('new component count:', newComponentMap.size, 'new TsCtrl count:', newTsCtrlMap.size, 'cost:', `${end - start}ms`);
         logger.endGroup();
 
         function getMap<T>(mapOfMap: Map<string, T>): T {
@@ -328,23 +335,23 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
 
 function fillNewComponentMap({
     logger,
-    oldComponentMap,
-    newComponentMap,
+    oldMap,
+    newMap,
     sourceFile,
     coreCtx,
 }: {
-    oldComponentMap: Map<string, NgComponentFileInfo>;
-    newComponentMap: Map<string, NgComponentFileInfo>;
+    oldMap: Map<string, NgComponentFileInfo>;
+    newMap: Map<string, NgComponentFileInfo>;
     sourceFile: ts.SourceFile;
     logger: PluginCoreLogger;
     coreCtx: CorePluginContext;
 }): void {
     logger.info('component ts file:', sourceFile.fileName);
 
-    const oldComponentFile = oldComponentMap.get(sourceFile.fileName);
+    const oldComponentFile = oldMap.get(sourceFile.fileName);
     const version = getSourceFileVersion(sourceFile);
     if (oldComponentFile && oldComponentFile.version === version) {
-        newComponentMap.set(sourceFile.fileName, oldComponentFile);
+        newMap.set(sourceFile.fileName, oldComponentFile);
         logger.info('component ts file:', sourceFile.fileName, ', version not change.');
         return;
     }
@@ -357,9 +364,46 @@ function fillNewComponentMap({
         return;
     }
 
-    newComponentMap.set(sourceFile.fileName, {
+    newMap.set(sourceFile.fileName, {
         version,
         ...componentNameInfo,
+    });
+}
+
+function fillNewTsCtrlMap({
+    logger,
+    oldMap,
+    newMap,
+    sourceFile,
+    coreCtx,
+}: {
+    oldMap: Map<string, NgTsCtrlFileInfo>;
+    newMap: Map<string, NgTsCtrlFileInfo>;
+    sourceFile: ts.SourceFile;
+    logger: PluginCoreLogger;
+    coreCtx: CorePluginContext;
+}): void {
+    logger.info('controller ts file:', sourceFile.fileName);
+
+    const oldTsCtrlFile = oldMap.get(sourceFile.fileName);
+    const version = getSourceFileVersion(sourceFile);
+    if (oldTsCtrlFile && oldTsCtrlFile.version === version) {
+        newMap.set(sourceFile.fileName, oldTsCtrlFile);
+        logger.info('controller ts file:', sourceFile.fileName, ', version not change.');
+        return;
+    }
+
+    const ctx = Object.assign({ sourceFile }, coreCtx);
+
+    const controllerName = getControllerNameInfo(ctx);
+    logger.info('controller ts file:', sourceFile.fileName, ', controller name:', controllerName);
+    if (!controllerName) {
+        return;
+    }
+
+    newMap.set(sourceFile.fileName, {
+        version,
+        controllerName,
     });
 }
 

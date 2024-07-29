@@ -1,7 +1,7 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext } from '../type';
+import { PluginContext, TsFileInfo } from '../type';
 
 export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp') {
     return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, false, ctx.ts.ScriptKind.JS);
@@ -201,5 +201,5 @@ export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is t
 }
 
 export function getSourceFileVersion(sourceFile: ts.SourceFile): string {
-    return (sourceFile as unknown as { version: string }).version;
+    return (sourceFile as unknown as TsFileInfo).version;
 }
