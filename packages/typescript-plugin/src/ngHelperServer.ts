@@ -99,6 +99,8 @@ function createNgHelperServer(): NgHelperServer {
             if (projectRoot) {
                 _getContextMap.delete(projectRoot);
                 _componentMapOfMap.delete(projectRoot);
+                _tsCtrlMapOfMap.delete(projectRoot);
+
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {
                     _httpServer?.close();
