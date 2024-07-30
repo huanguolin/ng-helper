@@ -12,6 +12,7 @@ import {
     NgComponentAttrCompletionResponse,
     NgComponentAttrRequest,
     NgCtrlTypeCompletionRequest,
+    NgCtrlHoverRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -23,7 +24,7 @@ import {
     getComponentNameCompletions,
     getControllerTypeCompletions,
 } from './completion';
-import { getComponentHoverType } from './hover';
+import { getComponentHoverType, getControllerHoverType } from './hover';
 import {
     CorePluginContext,
     GetCoreContextFn,
@@ -286,6 +287,14 @@ function initHttpServer() {
             req,
             res,
             action: (ctx, body) => getComponentHoverType(ctx, body),
+        });
+    });
+
+    app.post('/ng-helper/controller/hover', (req, res) => {
+        handleRequestWithCoreCtx<NgCtrlHoverRequest, NgHoverResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getControllerHoverType(coreCtx, body),
         });
     });
 

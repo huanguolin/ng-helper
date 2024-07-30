@@ -43,6 +43,8 @@ export interface NgHoverRequest extends NgRequest {
     cursorAt: number;
 }
 
+export interface NgCtrlHoverRequest extends NgHoverRequest, NgCtrlInfo {}
+
 export interface NgComponentAttrRequest extends NgRequest {
     componentName: string;
 }

@@ -67,33 +67,13 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
 
 export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: NgCtrlTypeCompletionRequest): NgTypeCompletionResponse {
     const logger = coreCtx.logger.prefix('getControllerTypeCompletions()');
-    logger.startGroup();
 
     if (!info.controllerAs) {
         logger.info('controllerAs not found!');
         return;
     }
 
-    const map = ngHelperServer.getTsCtrlMap(info.fileName);
-    if (!map) {
-        logger.info('tsCtrlMap not found!');
-        return;
-    }
-
-    let tsCtrlFilePath = getTsCtrlFilePath(map);
-    if (!tsCtrlFilePath) {
-        // lazy refresh
-        ngHelperServer.refreshInternalMaps(info.fileName);
-        // get again
-        tsCtrlFilePath = getTsCtrlFilePath(ngHelperServer.getTsCtrlMap(info.fileName)!);
-        if (!tsCtrlFilePath) {
-            logger.info('tsCtrlFilePath not found!');
-            return;
-        }
-    }
-    logger.info('tsCtrlFilePath:', tsCtrlFilePath);
-
-    const ctx = getCtxOfCoreCtx(coreCtx, tsCtrlFilePath);
+    const ctx = resolveCtrlCtx(coreCtx, info.fileName, info.controllerName);
     if (!ctx) {
         logger.info('ctx not found!');
         return;
@@ -123,20 +103,7 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
         return;
     }
 
-    logger.endGroup();
-
     return getPublicMembersTypeInfoOfType(ctx, targetType);
-
-    function getTsCtrlFilePath(map: Map<string, NgTsCtrlFileInfo>) {
-        let tsCtrlFilePath: string | undefined;
-        for (const [k, v] of map.entries()) {
-            if (v.controllerName === info.controllerName) {
-                tsCtrlFilePath = k;
-                break;
-            }
-        }
-        return tsCtrlFilePath;
-    }
 }
 
 export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
@@ -209,5 +176,47 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
             }
         }
         return attrs;
+    }
+}
+
+export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, controllerName: string): PluginContext | undefined {
+    const logger = coreCtx.logger.prefix('resolveCtrlCtx()');
+
+    const map = ngHelperServer.getTsCtrlMap(fileName);
+    if (!map) {
+        logger.info('tsCtrlMap not found!');
+        return;
+    }
+
+    let tsCtrlFilePath = getTsCtrlFilePath(map);
+    if (!tsCtrlFilePath) {
+        // lazy refresh
+        ngHelperServer.refreshInternalMaps(fileName);
+        // get again
+        tsCtrlFilePath = getTsCtrlFilePath(ngHelperServer.getTsCtrlMap(fileName)!);
+        if (!tsCtrlFilePath) {
+            logger.info('tsCtrlFilePath not found!');
+            return;
+        }
+    }
+    logger.info('tsCtrlFilePath:', tsCtrlFilePath);
+
+    const ctx = getCtxOfCoreCtx(coreCtx, tsCtrlFilePath);
+    if (!ctx) {
+        logger.info('ctx not found!');
+        return;
+    }
+
+    return ctx;
+
+    function getTsCtrlFilePath(map: Map<string, NgTsCtrlFileInfo>) {
+        let tsCtrlFilePath: string | undefined;
+        for (const [k, v] of map.entries()) {
+            if (v.controllerName === controllerName) {
+                tsCtrlFilePath = k;
+                break;
+            }
+        }
+        return tsCtrlFilePath;
     }
 }
