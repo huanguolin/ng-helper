@@ -17,8 +17,8 @@ import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpressi
  * @param minSyntaxNode 查找目标类型的最小语法节点
  * @returns 目标类型
  */
-export function getCompletionType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
-    const logger = ctx.logger.prefix('getCompletionType()');
+export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
+    const logger = ctx.logger.prefix('getNodeType()');
     return visit(minSyntaxNode.node);
 
     function visit(node: ts.Node): ts.Type | undefined {

@@ -3,8 +3,8 @@ import type ts from 'typescript';
 
 import { PluginContext, TsFileInfo } from '../type';
 
-export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp') {
-    return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, false, ctx.ts.ScriptKind.JS);
+export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp', setParentNodes?: boolean): ts.SourceFile {
+    return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, setParentNodes, ctx.ts.ScriptKind.JS);
 }
 
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {

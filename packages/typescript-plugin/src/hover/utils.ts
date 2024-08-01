@@ -99,14 +99,14 @@ export function beautifyTypeString(typeString: string): string {
 }
 
 export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: string, cursorAt: number): SyntaxNodeInfo | undefined {
-    const sourceFile = createTmpSourceFile(ctx, contextString);
+    const sourceFile = createTmpSourceFile(ctx, contextString, 'tmp', /* setParentNodes */ true);
     const node = getNodeAtPosition(ctx, cursorAt, sourceFile);
 
     if (!node) {
         return;
     }
 
-    if (node.parent && ctx.ts.isPropertyAccessExpression(node.parent)) {
+    if (node.parent && ctx.ts.isPropertyAccessExpression(node.parent) && node !== node.parent.expression) {
         return { sourceFile, node: node.parent };
     } else {
         return { sourceFile, node };

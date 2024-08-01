@@ -13,7 +13,7 @@ import { getControllerType, getPublicMembersTypeInfoOfBindings } from '../utils/
 import { getComponentTypeInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
-import { getMinSyntaxNodeForCompletion, getCompletionType } from './utils';
+import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
@@ -55,7 +55,7 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
     }
 
     if (info.controllerType) {
-        const targetType = getCompletionType(ctx, info.controllerType, minSyntaxNode);
+        const targetType = getNodeType(ctx, info.controllerType, minSyntaxNode);
         logger.info('targetType:', typeToString(ctx, targetType));
         if (!targetType) {
             return;
@@ -97,7 +97,7 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
         return getPublicMembersTypeInfoOfType(ctx, ctrlType);
     }
 
-    const targetType = getCompletionType(ctx, ctrlType, minSyntaxNode);
+    const targetType = getNodeType(ctx, ctrlType, minSyntaxNode);
     logger.info('targetType:', typeToString(ctx, targetType));
     if (!targetType) {
         return;

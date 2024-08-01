@@ -1,12 +1,12 @@
 import { NgCtrlHoverRequest, NgHoverRequest, NgHoverResponse } from '@ng-helper/shared/lib/plugin';
 
 import { resolveCtrlCtx } from '../completion';
-import { getCompletionType, getMinSyntaxNodeForCompletion } from '../completion/utils';
+import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { getNodeAtPosition, getPropertyType, typeToString } from '../utils/common';
 import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo } from './utils';
+import { beautifyTypeString, buildHoverInfo, getMinSyntaxNodeForHover } from './utils';
 
 export function getComponentHoverType(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
@@ -20,7 +20,7 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
     if (!contextString.endsWith('.')) {
         contextString += '.';
     }
-    const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, contextString);
+    const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix) {
@@ -57,16 +57,22 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
             return buildHoverInfo({ ctx, targetType: info.controllerType, name: targetNode.text });
         }
 
-        // hover 在后代节点上, 取父节点的类型，然后在取目标节点类型
+        // hover 在后代节点上, 取父节点的类型，然后再取目标节点类型
         const prefixContextString = contextString.slice(0, targetNode.getStart(minSyntaxNode.sourceFile));
         const prefixMinSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefixContextString)!;
-        const parentType = getCompletionType(ctx, info.controllerType, prefixMinSyntaxNode);
+        const parentType = getNodeType(ctx, info.controllerType, prefixMinSyntaxNode);
         logger.info('parentType:', typeToString(ctx, parentType));
         if (!parentType) {
             return;
         }
 
-        return buildHoverInfo({ ctx, targetType: getPropertyType(ctx, parentType, targetNode.text)!, parentType, name: targetNode.text });
+        const targetType = getPropertyType(ctx, parentType, targetNode.text);
+        logger.info('targetType:', typeToString(ctx, targetType));
+        if (!targetType) {
+            return;
+        }
+
+        return buildHoverInfo({ ctx, targetType, parentType, name: targetNode.text });
     }
 
     if (info.bindings.size > 0) {
@@ -123,7 +129,7 @@ export function getControllerHoverType(
         contextString += '.';
     }
 
-    const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, contextString);
+    const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(controllerAs)) {
@@ -158,15 +164,21 @@ export function getControllerHoverType(
     // hover 在后代节点上, 取父节点的类型，然后在取目标节点类型
     const prefixContextString = contextString.slice(0, targetNode.getStart(minSyntaxNode.sourceFile));
     const prefixMinSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefixContextString)!;
-    const parentType = getCompletionType(ctx, ctrlType, prefixMinSyntaxNode);
+    const parentType = getNodeType(ctx, ctrlType, prefixMinSyntaxNode);
     logger.info('parentType:', typeToString(ctx, parentType));
     if (!parentType) {
         return;
     }
 
+    const targetType = getPropertyType(ctx, parentType, targetNode.text);
+    logger.info('targetType:', typeToString(ctx, targetType));
+    if (!targetType) {
+        return;
+    }
+
     return buildHoverInfo({
         ctx,
-        targetType: getPropertyType(ctx, parentType, targetNode.text)!,
+        targetType,
         parentType,
         name: targetNode.text,
     });

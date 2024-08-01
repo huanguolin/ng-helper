@@ -1,11 +1,11 @@
 import type ts from 'typescript';
 
-import { getCompletionType, getMinSyntaxNodeForCompletion } from '../../src/completion/utils';
+import { getNodeType, getMinSyntaxNodeForCompletion } from '../../src/completion/utils';
 import { PluginContext } from '../../src/type';
 import { typeToString } from '../../src/utils/common';
 import { prepareTestContext } from '../helper';
 
-describe('getCompletionType()', () => {
+describe('getNodeType()', () => {
     const className = 'ComponentController';
     let type: ts.Type;
     let ctx: PluginContext;
@@ -83,14 +83,14 @@ describe('getCompletionType()', () => {
         ['"a".', '"a"'],
     ])('input: %s => output: %s', (input, output) => {
         const node = getMinSyntaxNodeForCompletion(ctx, input)!;
-        const result = getCompletionType(ctx, type, node);
+        const result = getNodeType(ctx, type, node);
         expect(typeToString(ctx, result)).toBe(output);
     });
 
     // it('debug & test', () => {
     //     const [input, output] = ['"a".', 'string'];
     //     const node = getMinSyntaxNodeForCompletion(ctx, input)!;
-    //     const result = getCompletionType(ctx, type, node);
+    //     const result = getNodeType(ctx, type, node);
     //     expect(typeToString(ctx, result)).toBe(output);
     // });
 });
