@@ -2,7 +2,7 @@ import { NgCtrlHoverRequest, NgHoverRequest, NgHoverResponse } from '@ng-helper/
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
-import { CorePluginContext, PluginContext } from '../type';
+import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { getNodeAtPosition, getPropertyType, typeToString } from '../utils/common';
 import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
 
@@ -69,35 +69,39 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
     }
 
     if (info.bindings.size > 0) {
-        const bindingTypes = getPublicMembersTypeInfoOfBindings(ctx, info.bindings)!;
+        return getHoverInfoForBindings(ctx, info, targetNode.text);
+    }
+}
 
-        // hover 在跟节点上
-        if (targetNode.text === info.controllerAs) {
-            const typeString =
-                '{ ' +
-                bindingTypes.reduce((acc, cur) => {
-                    const s = `${cur.name}: ${cur.typeString};`;
-                    return acc ? `${acc} ${s}` : s;
-                }, '') +
-                ' }';
-            return {
-                formattedTypeString: `(object) ${targetNode.text}: ${beautifyTypeString(typeString)}`,
-                document: '',
-            };
-        }
+function getHoverInfoForBindings(ctx: PluginContext, info: NgComponentTypeInfo, targetPropName: string): NgHoverResponse {
+    const bindingTypes = getPublicMembersTypeInfoOfBindings(ctx, info.bindings)!;
 
-        const targetType = bindingTypes.find((t) => t.name === targetNode.text);
-        if (targetType) {
-            return {
-                formattedTypeString: `(property) ${targetNode.text}: ${beautifyTypeString(targetType.typeString)}`,
-                document: targetType.document,
-            };
-        } else {
-            return {
-                formattedTypeString: `(property) ${targetNode.text}: any`,
-                document: '',
-            };
-        }
+    // hover 在跟节点上
+    if (targetPropName === info.controllerAs) {
+        const typeString =
+            '{ ' +
+            bindingTypes.reduce((acc, cur) => {
+                const s = `${cur.name}: ${cur.typeString};`;
+                return acc ? `${acc} ${s}` : s;
+            }, '') +
+            ' }';
+        return {
+            formattedTypeString: `(object) ${targetPropName}: ${beautifyTypeString(typeString)}`,
+            document: '',
+        };
+    }
+
+    const targetType = bindingTypes.find((t) => t.name === targetPropName);
+    if (targetType) {
+        return {
+            formattedTypeString: `(property) ${targetPropName}: ${beautifyTypeString(targetType.typeString)}`,
+            document: targetType.document,
+        };
+    } else {
+        return {
+            formattedTypeString: `(property) ${targetPropName}: any`,
+            document: '',
+        };
     }
 }
 
