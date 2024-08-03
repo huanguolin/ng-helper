@@ -83,5 +83,8 @@ describe('getMinSyntaxNodeForHover()', () => {
     ])('input: %s, %s => output: %s', (contextString: string, cursorAt: number, output: string) => {
         const v = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
         expect(v?.node.getText(v?.sourceFile)).toBe(output);
+        if (v && ctx.ts.isIdentifier(v.node)) {
+            expect(v.node === v.targetNode).toBeTruthy();
+        }
     });
 });

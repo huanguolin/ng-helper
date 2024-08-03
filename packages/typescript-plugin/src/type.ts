@@ -30,6 +30,10 @@ export type SyntaxNodeInfo = {
     node: ts.Node;
 };
 
+export type SyntaxNodeInfoEx = SyntaxNodeInfo & {
+    targetNode: ts.Node;
+};
+
 export type NgComponentTypeInfo = {
     controllerAs: string;
     controllerType?: ts.Type;

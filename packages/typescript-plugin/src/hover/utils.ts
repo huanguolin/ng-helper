@@ -1,7 +1,7 @@
 import { NgHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext, SyntaxNodeInfo } from '../type';
+import { PluginContext, SyntaxNodeInfoEx } from '../type';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
 
 export function buildHoverInfo({
@@ -98,7 +98,7 @@ export function beautifyTypeString(typeString: string): string {
     }
 }
 
-export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: string, cursorAt: number): SyntaxNodeInfo | undefined {
+export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: string, cursorAt: number): SyntaxNodeInfoEx | undefined {
     const sourceFile = createTmpSourceFile(ctx, contextString, 'tmp', /* setParentNodes */ true);
     const node = getNodeAtPosition(ctx, cursorAt, sourceFile);
 
@@ -107,8 +107,8 @@ export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: stri
     }
 
     if (node.parent && ctx.ts.isPropertyAccessExpression(node.parent) && node !== node.parent.expression) {
-        return { sourceFile, node: node.parent };
+        return { sourceFile, node: node.parent, targetNode: node };
     } else {
-        return { sourceFile, node };
+        return { sourceFile, node, targetNode: node };
     }
 }
