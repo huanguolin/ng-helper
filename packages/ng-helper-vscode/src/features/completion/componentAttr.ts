@@ -92,7 +92,7 @@ async function provideComponentAttrCompletion({
         list.map((x, i) => {
             const item = new CompletionItem(x.name);
             item.insertText = new SnippetString(`${x.name}="$1"$0`);
-            item.documentation = `${x.name}="${x.typeString}"\n` + x.document;
+            item.documentation = `type: ${x.typeString}\n` + x.document;
             item.detail = '[ng-helper]';
             item.sortText = i.toString().padStart(2, '0');
             return item;
