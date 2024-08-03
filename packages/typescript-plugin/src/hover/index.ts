@@ -17,20 +17,16 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return;
     }
 
+    const info = getComponentTypeInfo(ctx, componentLiteralNode);
+    logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
+    if (!info.controllerType && !info.bindings.size) {
+        return;
+    }
+
     const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
-    if (!minSyntaxNode || !minPrefix) {
-        return;
-    }
-
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
-    if (!minPrefix.startsWith(info.controllerAs)) {
-        return;
-    }
-
-    if (!info.controllerType && !info.bindings.size) {
+    if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(info.controllerAs)) {
         return;
     }
 
@@ -122,16 +118,16 @@ export function getControllerHoverType(
         return;
     }
 
+    const ctrlType = getControllerType(ctx);
+    if (!ctrlType) {
+        logger.info('ctrlType not found!');
+        return;
+    }
+
     const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(controllerAs)) {
-        return;
-    }
-
-    const ctrlType = getControllerType(ctx);
-    if (!ctrlType) {
-        logger.info('ctrlType not found!');
         return;
     }
 
