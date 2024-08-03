@@ -17,9 +17,6 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return;
     }
 
-    if (!contextString.endsWith('.')) {
-        contextString += '.';
-    }
     const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
     const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
@@ -123,10 +120,6 @@ export function getControllerHoverType(
     if (!ctx) {
         logger.info('ctx not found!');
         return;
-    }
-
-    if (!contextString.endsWith('.')) {
-        contextString += '.';
     }
 
     const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
