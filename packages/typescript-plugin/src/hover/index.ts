@@ -3,7 +3,7 @@ import { NgCtrlHoverRequest, NgHoverRequest, NgHoverResponse } from '@ng-helper/
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
-import { getNodeAtPosition, getPropertyType, typeToString } from '../utils/common';
+import { getPropertyType, typeToString } from '../utils/common';
 import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, getMinSyntaxNodeForHover } from './utils';
@@ -23,23 +23,16 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
         return;
     }
 
-    const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
-    const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
-    logger.info('minPrefix:', minPrefix);
-    if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(info.controllerAs)) {
+    const minSyntax = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
+    if (!minSyntax) {
+        logger.info('minSyntax not found!');
         return;
     }
 
-    const targetNode = getNodeAtPosition(ctx, cursorAt, minSyntaxNode.sourceFile);
-    logger.info('targetNode:', targetNode ? targetNode.getText(minSyntaxNode.sourceFile) : undefined);
-
-    if (!targetNode) {
-        logger.error('targetNode not found at', cursorAt);
-        return;
-    }
-
-    if (!ctx.ts.isIdentifier(targetNode)) {
-        logger.error('targetNode should be an identifier, but got: ', targetNode.getText(minSyntaxNode.sourceFile));
+    const { sourceFile, minNode, targetNode } = minSyntax;
+    const minPrefix = minNode.getText(sourceFile);
+    logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
+    if (!minPrefix.startsWith(info.controllerAs) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
@@ -50,8 +43,8 @@ export function getComponentHoverType(ctx: PluginContext, { contextString, curso
             return buildHoverInfo({ ctx, targetType: info.controllerType, name: targetNode.text });
         }
 
-        // hover 在后代节点上, 取父节点的类型，然后再取目标节点类型
-        const prefixContextString = contextString.slice(0, targetNode.getStart(minSyntaxNode.sourceFile));
+        // hover 在后代节点上, 取父节点的类型(目的是需要通过它获取关联的文档)，然后再取目标节点类型
+        const prefixContextString = contextString.slice(0, targetNode.getStart(sourceFile));
         const prefixMinSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefixContextString)!;
         const parentType = getNodeType(ctx, info.controllerType, prefixMinSyntaxNode);
         logger.info('parentType:', typeToString(ctx, parentType));
@@ -128,23 +121,16 @@ export function getControllerHoverType(
         return;
     }
 
-    const minSyntaxNode = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
-    const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
-    logger.info('minPrefix:', minPrefix);
-    if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(controllerAs)) {
+    const minSyntax = getMinSyntaxNodeForHover(ctx, contextString, cursorAt);
+    if (!minSyntax) {
+        logger.info('minSyntax not found!');
         return;
     }
 
-    const targetNode = getNodeAtPosition(ctx, cursorAt, minSyntaxNode.sourceFile);
-    logger.info('targetNode:', targetNode ? targetNode.getText(minSyntaxNode.sourceFile) : undefined);
-
-    if (!targetNode) {
-        logger.error('targetNode not found at', cursorAt);
-        return;
-    }
-
-    if (!ctx.ts.isIdentifier(targetNode)) {
-        logger.error('targetNode should be an identifier, but got: ', targetNode.getText(minSyntaxNode.sourceFile));
+    const { sourceFile, minNode, targetNode } = minSyntax;
+    const minPrefix = minNode.getText(sourceFile);
+    logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
+    if (!minPrefix.startsWith(controllerAs) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
@@ -155,7 +141,7 @@ export function getControllerHoverType(
     }
 
     // hover 在后代节点上, 取父节点的类型，然后在取目标节点类型
-    const prefixContextString = contextString.slice(0, targetNode.getStart(minSyntaxNode.sourceFile));
+    const prefixContextString = contextString.slice(0, targetNode.getStart(sourceFile));
     const prefixMinSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefixContextString)!;
     const parentType = getNodeType(ctx, ctrlType, prefixMinSyntaxNode);
     logger.info('parentType:', typeToString(ctx, parentType));
