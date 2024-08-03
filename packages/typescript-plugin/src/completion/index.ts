@@ -35,7 +35,7 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
     }
 
     const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefix);
-    const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
+    const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix) {
         return;
@@ -80,7 +80,7 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
     }
 
     const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, info.prefix);
-    const minPrefix = minSyntaxNode?.node.getText(minSyntaxNode?.sourceFile);
+    const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(info.controllerAs)) {
         return;

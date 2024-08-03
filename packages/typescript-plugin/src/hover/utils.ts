@@ -107,8 +107,8 @@ export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: stri
     }
 
     if (node.parent && ctx.ts.isPropertyAccessExpression(node.parent) && node !== node.parent.expression) {
-        return { sourceFile, node: node.parent, targetNode: node };
+        return { sourceFile, minNode: node.parent, targetNode: node };
     } else {
-        return { sourceFile, node, targetNode: node };
+        return { sourceFile, minNode: node, targetNode: node };
     }
 }

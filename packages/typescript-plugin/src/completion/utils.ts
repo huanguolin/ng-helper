@@ -19,7 +19,7 @@ import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpressi
  */
 export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode: SyntaxNodeInfo): ts.Type | undefined {
     const logger = ctx.logger.prefix('getNodeType()');
-    return visit(minSyntaxNode.node);
+    return visit(minSyntaxNode.minNode);
 
     function visit(node: ts.Node): ts.Type | undefined {
         logger.info('node text:', node.getText(minSyntaxNode.sourceFile));
@@ -82,16 +82,16 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
                 return;
             }
 
-            if (ctx.ts.isLiteralExpression(syntaxNode.node)) {
+            if (ctx.ts.isLiteralExpression(syntaxNode.minNode)) {
                 // 它只是表达的部分结果，所以不能直接返回 getLiteralType()。
                 // 这里只需考虑 number 和 string 类型。
-                if (ctx.ts.isNumericLiteral(syntaxNode.node)) {
+                if (ctx.ts.isNumericLiteral(syntaxNode.minNode)) {
                     return ctx.typeChecker.getNumberType();
-                } else if (ctx.ts.isStringLiteral(syntaxNode.node)) {
+                } else if (ctx.ts.isStringLiteral(syntaxNode.minNode)) {
                     return ctx.typeChecker.getStringType();
                 }
             } else {
-                return visit(syntaxNode.node);
+                return visit(syntaxNode.minNode);
             }
         }
     }
@@ -241,9 +241,9 @@ function getMinSyntaxNode(ctx: PluginContext, sourceFile: ts.SourceFile, node: t
         } else if (ctx.ts.isArrayLiteralExpression(node)) {
             return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isPropertyAccessExpression(node)) {
-            return { sourceFile, node };
+            return { sourceFile, minNode: node };
         } else if (ctx.ts.isLiteralExpression(node)) {
-            return { sourceFile, node };
+            return { sourceFile, minNode: node };
         }
         // 其他情况不支持
     }

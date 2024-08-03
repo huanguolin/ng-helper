@@ -27,7 +27,7 @@ export interface PluginContext extends CorePluginContext {
 
 export type SyntaxNodeInfo = {
     sourceFile: ts.SourceFile;
-    node: ts.Node;
+    minNode: ts.Node;
 };
 
 export type SyntaxNodeInfoEx = SyntaxNodeInfo & {

@@ -138,6 +138,6 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         ['"a"', '"a"'],
     ])('input: %s => output: %s', (input: string, output: string) => {
         const v = getMinSyntaxNodeForCompletion(ctx, input);
-        expect(v?.node.getText(v?.sourceFile)).toBe(output);
+        expect(v?.minNode.getText(v?.sourceFile)).toBe(output);
     });
 });
