@@ -31,17 +31,20 @@ export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInf
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [controllerName, asKey, controllerAs] = attrValue.text.split(/\s+/);
-
-    const result: NgCtrlInfo = {
-        controllerName,
-        controllerAs,
-    };
+    const result: NgCtrlInfo = getNgCtrlInfo(attrValue.text);
 
     console.log('getControllerNameFromHtml() find controller name info:', result);
 
     return result;
+}
+
+export function getNgCtrlInfo(text: string): NgCtrlInfo {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [controllerName, asKey, controllerAs] = text.split(/\s+/);
+    return {
+        controllerName,
+        controllerAs,
+    };
 }
 
 export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
