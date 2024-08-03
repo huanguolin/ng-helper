@@ -85,8 +85,12 @@ export function getControllerHoverType(
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
-    if (!minPrefix.startsWith(controllerAs) || !ctx.ts.isIdentifier(targetNode)) {
+    if ((!minPrefix.startsWith(controllerAs) && minPrefix !== controllerName) || !ctx.ts.isIdentifier(targetNode)) {
         return;
+    }
+
+    if (minPrefix === controllerName) {
+        controllerAs = controllerName;
     }
 
     return getHoverInfoOfType({
