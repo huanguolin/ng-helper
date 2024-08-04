@@ -13,6 +13,7 @@ import {
     NgComponentAttrRequest,
     NgCtrlTypeCompletionRequest,
     NgCtrlHoverRequest,
+    NgComponentNameOrAttrNameHoverRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -24,7 +25,7 @@ import {
     getComponentNameCompletions,
     getControllerTypeCompletions,
 } from './completion';
-import { getComponentHoverType, getControllerHoverType } from './hover';
+import { getComponentNameOrAttrNameHoverInfo, getComponentTypeHoverInfo, getControllerTypeHoverInfo } from './hover';
 import {
     CorePluginContext,
     GetCoreContextFn,
@@ -282,19 +283,35 @@ function initHttpServer() {
         });
     });
 
-    app.post('/ng-helper/component/hover', (req, res) => {
+    app.post('/ng-helper/component/type/hover', (req, res) => {
         handleRequestWithCtx<NgHoverRequest, NgHoverResponse>({
             req,
             res,
-            action: (ctx, body) => getComponentHoverType(ctx, body),
+            action: (ctx, body) => getComponentTypeHoverInfo(ctx, body),
         });
     });
 
-    app.post('/ng-helper/controller/hover', (req, res) => {
+    app.post('/ng-helper/component/name/hover', (req, res) => {
+        handleRequestWithCoreCtx<NgComponentNameOrAttrNameHoverRequest, NgHoverResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getComponentNameOrAttrNameHoverInfo(coreCtx, body),
+        });
+    });
+
+    app.post('/ng-helper/component/attr/hover', (req, res) => {
+        handleRequestWithCoreCtx<NgComponentNameOrAttrNameHoverRequest, NgHoverResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getComponentNameOrAttrNameHoverInfo(coreCtx, body),
+        });
+    });
+
+    app.post('/ng-helper/controller/type/hover', (req, res) => {
         handleRequestWithCoreCtx<NgCtrlHoverRequest, NgHoverResponse>({
             req,
             res,
-            action: (coreCtx, body) => getControllerHoverType(coreCtx, body),
+            action: (coreCtx, body) => getControllerTypeHoverInfo(coreCtx, body),
         });
     });
 

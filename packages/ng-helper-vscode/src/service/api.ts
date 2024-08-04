@@ -10,6 +10,7 @@ import {
     NgComponentAttrCompletionResponse,
     NgCtrlTypeCompletionRequest,
     NgCtrlHoverRequest,
+    NgComponentNameOrAttrNameHoverRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -29,21 +30,30 @@ interface BizRequestInput<T> {
     vscodeCancelToken: CancellationToken;
 }
 
-export function getControllerHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlHoverRequest>) {
+export function getControllerTypeHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlHoverRequest>) {
     return bizRequest<NgCtrlHoverRequest, NgHoverResponse>({
-        url: buildUrl(port, 'controller', 'hover'),
+        url: buildUrl(port, 'controller', 'type', 'hover'),
         info,
         vscodeCancelToken,
-        apiName: 'getControllerHoverApi',
+        apiName: 'getControllerTypeHoverApi',
     });
 }
 
-export function getComponentHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
+export function getComponentTypeHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
     return bizRequest<NgHoverRequest, NgHoverResponse>({
-        url: buildUrl(port, 'component', 'hover'),
+        url: buildUrl(port, 'component', 'type', 'hover'),
         info,
         vscodeCancelToken,
-        apiName: 'getComponentHoverApi',
+        apiName: 'getComponentTypeHoverApi',
+    });
+}
+
+export function getComponentNameOrAttrNameHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentNameOrAttrNameHoverRequest>) {
+    return bizRequest<NgComponentNameOrAttrNameHoverRequest, NgHoverResponse>({
+        url: buildUrl(port, 'component', info.hoverInfo.type === 'attrName' ? 'attr' : 'name', 'hover'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentNameOrAttrNameHoverApi',
     });
 }
 

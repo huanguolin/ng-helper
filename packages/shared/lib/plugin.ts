@@ -36,11 +36,31 @@ export interface NgCtrlInfo {
     controllerAs?: string;
 }
 
+export interface NgElementHoverInfo {
+    type: 'tagName' | 'attrName';
+    /**
+     * camelCase(tagName)
+     */
+    name: string;
+    /**
+     * camelCase(tagName)
+     */
+    tagName: string;
+    /**
+     * camelCase(tagName)
+     */
+    parentTagName?: string;
+}
+
 export interface NgCtrlTypeCompletionRequest extends NgTypeCompletionRequest, NgCtrlInfo {}
 
 export interface NgHoverRequest extends NgRequest {
     contextString: string;
     cursorAt: number;
+}
+
+export interface NgComponentNameOrAttrNameHoverRequest extends NgRequest {
+    hoverInfo: NgElementHoverInfo;
 }
 
 export interface NgCtrlHoverRequest extends NgHoverRequest, NgCtrlInfo {}

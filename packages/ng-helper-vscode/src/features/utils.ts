@@ -1,5 +1,5 @@
 import { getHtmlTagByCursor, isHtmlTagName } from '@ng-helper/shared/lib/html';
-import { NgCtrlInfo } from '@ng-helper/shared/lib/plugin';
+import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { TextDocument } from 'vscode';
@@ -8,6 +8,33 @@ import { getTsFiles, normalizePath } from '../utils';
 
 export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
+}
+
+export function getHoveredComponentNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
+    const docText = document.getText();
+    const tag = getHtmlTagByCursor(docText, { at: cursorAt, isHover: true });
+    if (!tag || !isComponentTagName(tag.tagName)) {
+        return;
+    }
+
+    if (cursorAt > tag.start && cursorAt < tag.start + tag.tagName.length) {
+        return {
+            type: 'tagName',
+            name: camelCase(tag.tagName),
+            tagName: camelCase(tag.tagName),
+            parentTagName: tag.parent?.tagName && camelCase(tag.parent?.tagName),
+        };
+    }
+
+    const attr = tag.attrs.find((attr) => cursorAt >= attr.name.start && cursorAt < attr.name.start + attr.name.text.length);
+    if (attr) {
+        return {
+            type: 'attrName',
+            name: camelCase(attr.name.text),
+            tagName: camelCase(tag.tagName),
+            parentTagName: tag.parent?.tagName && camelCase(tag.parent?.tagName),
+        };
+    }
 }
 
 export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {

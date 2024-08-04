@@ -11,11 +11,12 @@ import { NgHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { ExtensionContext, Hover, languages, MarkdownString, Position, TextDocument } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentHoverApi, getControllerHoverApi } from '../../service/api';
+import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import {
     getControllerNameInfoFromHtml,
     getCorrespondingTsFileName,
+    getHoveredComponentNameOrAttr,
     isComponentHtml,
     isComponentTagName,
     isNgDirectiveAttr,
@@ -27,17 +28,42 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
         languages.registerHoverProvider('html', {
             async provideHover(document, position, vscodeCancelToken) {
                 if (isComponentHtml(document)) {
-                    return timeCost('provideComponentHover', async () => {
+                    return timeCost('provideComponentTypeHover', async () => {
                         try {
-                            return await provideHover({
+                            return await provideTypeHover({
                                 document,
                                 position,
                                 port,
                                 getHoverApi: (tsFilePath, contextString, cursorAt) =>
-                                    getComponentHoverApi({ port, vscodeCancelToken, info: { fileName: tsFilePath, contextString, cursorAt } }),
+                                    getComponentTypeHoverApi({ port, vscodeCancelToken, info: { fileName: tsFilePath, contextString, cursorAt } }),
                             });
                         } catch (error) {
-                            console.error('provideComponentHover() error:', error);
+                            console.error('provideComponentTypeHover() error:', error);
+                            return undefined;
+                        }
+                    });
+                }
+
+                const componentHoverInfo = getHoveredComponentNameOrAttr(document, document.offsetAt(position));
+                if (componentHoverInfo) {
+                    return timeCost('provideComponentNameOrAttrNameHover', async () => {
+                        try {
+                            if (componentHoverInfo.type === 'attrName' && componentHoverInfo.name.startsWith('ng')) {
+                                // TODO ng-* 处理
+                                return;
+                            }
+                            return await getHoverInfo({
+                                document,
+                                port,
+                                getHoverApi: (tsFilePath) =>
+                                    getComponentNameOrAttrNameHoverApi({
+                                        port,
+                                        vscodeCancelToken,
+                                        info: { fileName: tsFilePath, hoverInfo: componentHoverInfo },
+                                    }),
+                            });
+                        } catch (error) {
+                            console.error('provideComponentNameOrAttrNameHover() error:', error);
                             return undefined;
                         }
                     });
@@ -45,21 +71,21 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
 
                 const ctrlInfo = getControllerNameInfoFromHtml(document);
                 if (ctrlInfo && ctrlInfo.controllerAs) {
-                    return timeCost('provideControllerHover', async () => {
+                    return timeCost('provideControllerTypeHover', async () => {
                         try {
-                            return await provideHover({
+                            return await provideTypeHover({
                                 document,
                                 position,
                                 port,
                                 getHoverApi: (tsFilePath, contextString, cursorAt) =>
-                                    getControllerHoverApi({
+                                    getControllerTypeHoverApi({
                                         port,
                                         vscodeCancelToken,
                                         info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
                                     }),
                             });
                         } catch (error) {
-                            console.error('provideControllerHover() error:', error);
+                            console.error('provideControllerTypeHover() error:', error);
                             return undefined;
                         }
                     });
@@ -69,7 +95,7 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
     );
 }
 
-async function provideHover({
+async function provideTypeHover({
     document,
     position,
     port,
