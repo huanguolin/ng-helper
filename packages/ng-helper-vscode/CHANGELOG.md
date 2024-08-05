@@ -7,8 +7,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [v0.1.0](https://github.com/huanguolin/ng-helper/compare/v0.0.8...v0.1.0) (2024-08-05)
 
 ### Feature
-- Auto-completion for data binding for HTML using `ng-controller="XController as ctrl"` with `XController` 
-- Type hints on hover for HTML using `ng-controller="XController as ctrl"` with `XController` 
+- HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS
+  - Auto-completion for data binding
+  - Type hints on hover
 - Hover information for component tag names
 - Hover information for component attributes
 
