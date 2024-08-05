@@ -27,23 +27,6 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document, position, vscodeCancelToken) {
-                if (isComponentHtml(document)) {
-                    return timeCost('provideComponentTypeHover', async () => {
-                        try {
-                            return await provideTypeHover({
-                                document,
-                                position,
-                                port,
-                                getHoverApi: (tsFilePath, contextString, cursorAt) =>
-                                    getComponentTypeHoverApi({ port, vscodeCancelToken, info: { fileName: tsFilePath, contextString, cursorAt } }),
-                            });
-                        } catch (error) {
-                            console.error('provideComponentTypeHover() error:', error);
-                            return undefined;
-                        }
-                    });
-                }
-
                 const componentHoverInfo = getHoveredComponentNameOrAttr(document, document.offsetAt(position));
                 if (componentHoverInfo) {
                     return timeCost('provideComponentNameOrAttrNameHover', async () => {
@@ -64,6 +47,23 @@ export function registerComponentHover(context: ExtensionContext, port: number) 
                             });
                         } catch (error) {
                             console.error('provideComponentNameOrAttrNameHover() error:', error);
+                            return undefined;
+                        }
+                    });
+                }
+
+                if (isComponentHtml(document)) {
+                    return timeCost('provideComponentTypeHover', async () => {
+                        try {
+                            return await provideTypeHover({
+                                document,
+                                position,
+                                port,
+                                getHoverApi: (tsFilePath, contextString, cursorAt) =>
+                                    getComponentTypeHoverApi({ port, vscodeCancelToken, info: { fileName: tsFilePath, contextString, cursorAt } }),
+                            });
+                        } catch (error) {
+                            console.error('provideComponentTypeHover() error:', error);
                             return undefined;
                         }
                     });
