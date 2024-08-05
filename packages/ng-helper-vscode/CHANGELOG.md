@@ -4,14 +4,21 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+
+## [v0.1.1](https://github.com/huanguolin/ng-helper/compare/v0.1.0...v0.1.1) (2024-08-06)
+
+### Fixed
+- Hover hint for component name & attr name not working on component html (#7)
+
+
 ## [v0.1.0](https://github.com/huanguolin/ng-helper/compare/v0.0.8...v0.1.0) (2024-08-05)
 
 ### Feature
 - HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS
   - Auto-completion for data binding
   - Type hints on hover
-- Hover information for component tag names
-- Hover information for component attributes
+- Hover information for component tag names in HTML
+- Hover information for component attributes in HTML
 
 ### Fixed
 - Hover hint not working on `<x-label ng-if="ctrl.type === 'content'" ng-class="[ctrl.editable]" />` (#4, #5)
