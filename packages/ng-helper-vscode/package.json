@@ -21,11 +21,11 @@
     "Programming Languages",
     "Other"
   ],
-  "tags": [
+  "keywords": [
     "AngularJS",
     "angular.js",
-    "typescript",
-    "helper"
+    "helper",
+    "completion"
   ],
   "activationEvents": [
     "workspaceContains:.vscode/ng-helper.json"
