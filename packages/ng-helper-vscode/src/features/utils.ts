@@ -17,7 +17,9 @@ export function getHoveredComponentNameOrAttr(document: TextDocument, cursorAt: 
         return;
     }
 
-    if (cursorAt > tag.start && cursorAt < tag.start + tag.tagName.length) {
+    const hoverAtStartTagName = cursorAt > tag.start && cursorAt < tag.start + tag.tagName.length;
+    const hoverAtEndTagName = tag.endTagStart !== undefined && cursorAt > tag.endTagStart + 1 && cursorAt < tag.end;
+    if (hoverAtStartTagName || hoverAtEndTagName) {
         return {
             type: 'tagName',
             name: camelCase(tag.tagName),
