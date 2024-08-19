@@ -77,10 +77,13 @@ export function getComponentNameOrAttrNameHoverInfo(
             .join('\n');
         let transclude = '';
         if (componentFileInfo.transclude) {
-            if (Array.isArray(componentFileInfo.transclude) && componentFileInfo.transclude.length) {
-                // TODO transclude 信息
-            } else {
+            if (typeof componentFileInfo.transclude === 'boolean') {
                 transclude = `transclude: true`;
+            } else {
+                transclude = Object.entries(componentFileInfo.transclude)
+                    .map(([k, v]) => `${SPACE.repeat(4)}${k}: "${v}"`)
+                    .join('\n');
+                transclude = `transclude: {\n${transclude}\n}`;
             }
         }
         return {

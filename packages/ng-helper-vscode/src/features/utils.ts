@@ -97,7 +97,7 @@ export async function getCorrespondingTsFileName(document: TextDocument, searchK
 }
 
 /**
- * Retrieves the component name from the given document.
+ * Retrieves the component name(camelCase) from the given document.
  *
  * @param document - The TextDocument object representing the document.
  * @returns The component name (camelCase) if the document is a component HTML file, otherwise undefined.

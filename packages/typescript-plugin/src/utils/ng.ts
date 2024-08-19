@@ -140,16 +140,13 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
                     const transclude = configNode.properties.find((x) => x.name && ctx.ts.isIdentifier(x.name) && x.name.text === 'transclude');
                     if (transclude && ctx.ts.isPropertyAssignment(transclude)) {
                         if (ctx.ts.isObjectLiteralExpression(transclude.initializer)) {
-                            const list: string[] = [];
+                            const transcludeObj: Record<string, string> = {};
                             transclude.initializer.properties.forEach((x) => {
-                                if (ctx.ts.isPropertyAssignment(x) && ctx.ts.isStringLiteralLike(x.initializer)) {
-                                    // 问号目前没有用处，直接去掉
-                                    list.push(x.initializer.text.replace('?', ''));
+                                if (ctx.ts.isPropertyAssignment(x) && ctx.ts.isIdentifier(x.name) && ctx.ts.isStringLiteralLike(x.initializer)) {
+                                    transcludeObj[x.name.text] = x.initializer.text;
                                 }
                             });
-                            if (list.length) {
-                                info.transclude = list;
-                            }
+                            info.transclude = transcludeObj;
                         } else if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
                             info.transclude = true;
                         }

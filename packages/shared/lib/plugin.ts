@@ -76,7 +76,7 @@ export interface NgHoverInfo {
 
 export interface NgComponentNameInfo {
     componentName: string;
-    transclude?: boolean | string[];
+    transclude?: boolean | Record<string, string>;
 }
 
 export type NgHoverResponse = NgHoverInfo | undefined;

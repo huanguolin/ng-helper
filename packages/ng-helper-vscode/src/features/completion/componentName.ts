@@ -6,7 +6,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getComponentName, getControllerNameInfoFromHtml, getCorrespondingTsFileName } from '../utils';
+import { getComponentName, getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentTagName } from '../utils';
 
 export function componentName(port: number) {
     return languages.registerCompletionItemProvider(
@@ -74,8 +74,10 @@ async function provideComponentNameCompletion({
     }
 
     let matchTransclude: NgComponentNameInfo | undefined;
-    if (canCompleteInfo.tag) {
-        const i = list.findIndex((x) => x.componentName === camelCase(canCompleteInfo.tag!.tagName) && x.transclude);
+    // 光标在一个标签下，尝试找到这个标签的 transclude 信息。
+    const currentTag = canCompleteInfo.tag;
+    if (currentTag && isComponentTagName(currentTag.tagName)) {
+        const i = list.findIndex((x) => x.componentName === camelCase(currentTag.tagName) && x.transclude);
         if (i >= 0) {
             matchTransclude = list[i];
             list.splice(i, 1);
@@ -85,11 +87,11 @@ async function provideComponentNameCompletion({
     const preChar = triggerString === '<' ? '' : '<';
     const items = list.map((x) => buildCompletionItem(x));
 
-    if (matchTransclude && Array.isArray(matchTransclude.transclude) && matchTransclude.transclude.length) {
-        let transcludeItems = matchTransclude.transclude;
+    if (matchTransclude && matchTransclude.transclude && typeof matchTransclude.transclude !== 'boolean') {
+        let transcludeItems = Object.values(matchTransclude.transclude).map((x) => x.replaceAll('?', ''));
 
         // 移除已经存在的兄弟节点
-        const sibling = canCompleteInfo.tag!.children;
+        const sibling = currentTag!.children;
         if (sibling && sibling.length) {
             transcludeItems = transcludeItems.filter((componentName) => !sibling.some((s) => camelCase(s.tagName) === componentName));
         }
