@@ -8,7 +8,7 @@
     "email": "huanguolin@outlook.com"
   },
   "publisher": "huanguolin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,15 +17,10 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": [
-    "Programming Languages",
-    "Other"
-  ],
+  "categories": ["Programming Languages"],
   "keywords": [
     "AngularJS",
-    "angular.js",
-    "helper",
-    "completion"
+    "angular.js"
   ],
   "activationEvents": [
     "workspaceContains:.vscode/ng-helper.json"

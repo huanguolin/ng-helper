@@ -4,6 +4,10 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.1.2](https://github.com/huanguolin/ng-helper/compare/v0.1.1...v0.1.2) (2024-08-19)
+
+### Fixed
+- Do not auto-complete component name with self-closing (#9)
 
 ## [v0.1.1](https://github.com/huanguolin/ng-helper/compare/v0.1.0...v0.1.1) (2024-08-06)
 
