@@ -1,4 +1,4 @@
-import { Cursor, canCompletionComponentName } from '@ng-helper/shared/lib/html';
+import { Cursor, SPACE, canCompletionComponentName } from '@ng-helper/shared/lib/html';
 import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken, SnippetString } from 'vscode';
@@ -111,9 +111,33 @@ async function provideComponentNameCompletion({
     function buildCompletionItem(x: NgComponentNameInfo): CompletionItem {
         const tag = kebabCase(x.componentName);
         const item = new CompletionItem(tag);
-        item.insertText = new SnippetString(x.transclude ? `${preChar}${tag}>$0</${tag}>` : `${preChar}${tag}$0/></${tag}>`);
-        item.documentation = x.transclude ? `<${tag}>|</${tag}>` : `<${tag} |></${tag}>`;
+        item.insertText = new SnippetString(buildSnippet());
+        item.documentation = buildDocumentation();
         item.detail = '[ng-helper]';
         return item;
+
+        function buildSnippet() {
+            return buildCore('$0', preChar);
+        }
+
+        function buildDocumentation() {
+            return buildCore(' | ', '<');
+        }
+
+        function buildCore(cursor: string, prefixChar: string) {
+            if (x.transclude) {
+                if (typeof x.transclude === 'object') {
+                    const requiredItems = Object.values(x.transclude).filter((x) => !x.includes('?'));
+                    const indent = SPACE.repeat(4);
+                    if (requiredItems.length) {
+                        const children = requiredItems.map((x) => `${indent}<${x}></${x}>`).join('\n');
+                        return `${prefixChar}${tag}${cursor}>\n${children}\n</${tag}>`;
+                    }
+                }
+                return `${prefixChar}${tag}>${cursor}</${tag}>`;
+            } else {
+                return `${prefixChar}${tag}${cursor}></${tag}>`;
+            }
+        }
     }
 }
