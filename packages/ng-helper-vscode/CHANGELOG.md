@@ -4,6 +4,14 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+// TODO release v0.1.5
+## [v0.1.5](https://github.com/huanguolin/ng-helper/compare/v0.1.4...v0.1.5) (====TODO====)
+
+### Fixed
+- Autocomplete transclude element name should use 'kebabCase' but got 'camelCase' (#14).
+- Hover last char of start tag name of component is not popup hint info (#12).
+- get wrong type info while autocomplete component attr or hover it (#8).
+
 
 ## [v0.1.4](https://github.com/huanguolin/ng-helper/compare/v0.1.3...v0.1.4) (2024-08-20)
 
