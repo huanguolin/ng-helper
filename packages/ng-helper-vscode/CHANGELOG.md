@@ -5,6 +5,12 @@ All notable changes to the "ng-helper" extension will be documented in this file
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 
+## [v0.1.4](https://github.com/huanguolin/ng-helper/compare/v0.1.3...v0.1.4) (2024-08-20)
+
+### Fixed
+- Autocomplete component attr did not contain the '&' bindings prop (#11).
+
+
 ## [v0.1.3](https://github.com/huanguolin/ng-helper/compare/v0.1.2...v0.1.3) (2024-08-20)
 
 ### Improve
