@@ -127,7 +127,9 @@ async function provideComponentNameCompletion({
         function buildCore(cursor: string, prefixChar: string) {
             if (x.transclude) {
                 if (typeof x.transclude === 'object') {
-                    const requiredItems = Object.values(x.transclude).filter((x) => !x.includes('?'));
+                    const requiredItems = Object.values(x.transclude)
+                        .filter((x) => !x.includes('?'))
+                        .map((x) => kebabCase(x));
                     const indent = SPACE.repeat(4);
                     if (requiredItems.length) {
                         const children = requiredItems.map((x) => `${indent}<${x}></${x}>`).join('\n');
