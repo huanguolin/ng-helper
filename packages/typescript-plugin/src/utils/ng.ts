@@ -1,7 +1,7 @@
 import { NgComponentNameInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { NgComponentTypeInfo, PluginContext } from '../type';
+import { NgComponentTypeInfo, PluginContext, type CorePluginContext } from '../type';
 
 import { isTypeOfType } from './common';
 
@@ -55,11 +55,8 @@ export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: t
             } else if (prop.name.text === 'controllerAs' && ctx.ts.isStringLiteral(prop.initializer)) {
                 result.controllerAs = prop.initializer.text;
             } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
-                for (const f of prop.initializer.properties) {
-                    if (ctx.ts.isPropertyAssignment(f) && ctx.ts.isIdentifier(f.name) && ctx.ts.isStringLiteral(f.initializer)) {
-                        result.bindings.set(f.name.text, f.initializer.text);
-                    }
-                }
+                const bindingsObj = getObjLiteral(ctx, prop.initializer);
+                result.bindings = new Map(Object.entries(bindingsObj));
             }
         }
     }
@@ -137,19 +134,9 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
                 // 第二个参数是对象字面量
                 const configNode = node.arguments[1];
                 if (ctx.ts.isObjectLiteralExpression(configNode)) {
-                    const transclude = configNode.properties.find((x) => x.name && ctx.ts.isIdentifier(x.name) && x.name.text === 'transclude');
-                    if (transclude && ctx.ts.isPropertyAssignment(transclude)) {
-                        if (ctx.ts.isObjectLiteralExpression(transclude.initializer)) {
-                            const transcludeObj: Record<string, string> = {};
-                            transclude.initializer.properties.forEach((x) => {
-                                if (ctx.ts.isPropertyAssignment(x) && ctx.ts.isIdentifier(x.name) && ctx.ts.isStringLiteralLike(x.initializer)) {
-                                    transcludeObj[x.name.text] = x.initializer.text;
-                                }
-                            });
-                            info.transclude = transcludeObj;
-                        } else if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
-                            info.transclude = true;
-                        }
+                    const transcludeObj = configNode.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
+                    if (transcludeObj) {
+                        info.transclude = getTranscludeInfo(transcludeObj);
                     }
                 }
             }
@@ -157,6 +144,16 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
 
         if (!info) {
             ctx.ts.forEachChild(node, visit);
+        }
+    }
+
+    function getTranscludeInfo(transclude: ts.ObjectLiteralElementLike): boolean | Record<string, string> | undefined {
+        if (ctx.ts.isPropertyAssignment(transclude)) {
+            if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
+                return true;
+            } else if (ctx.ts.isObjectLiteralExpression(transclude.initializer)) {
+                return getObjLiteral(ctx, transclude.initializer);
+            }
         }
     }
 }
@@ -241,6 +238,16 @@ export function getPublicMembersTypeInfoOfBindings(
 
         return result;
     }
+}
+
+export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression): Record<string, string> {
+    const obj: Record<string, string> = {};
+    for (const p of objLiteral.properties) {
+        if (coreCtx.ts.isPropertyAssignment(p) && coreCtx.ts.isIdentifier(p.name) && coreCtx.ts.isStringLiteralLike(p.initializer)) {
+            obj[p.name.text] = p.initializer.text;
+        }
+    }
+    return obj;
 }
 
 export function isComponentTsFile(fileName: string): boolean {
