@@ -69,10 +69,11 @@ export function getComponentNameOrAttrNameHoverInfo(
 
     const attrTypeMap = new Map<string, NgTypeInfo>(attrsFromType.map((x) => [x.name, x]));
     if (hoverInfo.type === 'tagName') {
+        const indent = SPACE.repeat(4);
         const bindings = attrsFromBindings
             .map(
                 (x) =>
-                    `${SPACE.repeat(4)}${x.name}: ${x.document.split(':').pop()?.trim()}; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
+                    `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
             )
             .join('\n');
         let transclude = '';
@@ -81,7 +82,7 @@ export function getComponentNameOrAttrNameHoverInfo(
                 transclude = `transclude: true`;
             } else {
                 transclude = Object.entries(componentFileInfo.transclude)
-                    .map(([k, v]) => `${SPACE.repeat(4)}${k}: "${v}"`)
+                    .map(([k, v]) => `${indent}${k}: "${v}"`)
                     .join('\n');
                 transclude = `transclude: {\n${transclude}\n}`;
             }
@@ -97,12 +98,16 @@ export function getComponentNameOrAttrNameHoverInfo(
             document: '',
         };
 
-        if (attrBindingsMap.has(hoverInfo.name)) {
-            result.document = '' + attrBindingsMap.get(hoverInfo.name)!.document;
+        // 从 bindings 中获取在 class 上对应属性的名字
+        const toPropsNameMap = getToPropsNameMap(info.bindings);
+        const propName = toPropsNameMap.get(hoverInfo.name)!;
+
+        if (attrBindingsMap.has(propName)) {
+            result.document += '\n' + attrBindingsMap.get(propName)!.document;
         }
 
-        if (attrTypeMap.has(hoverInfo.name)) {
-            const typeInfo = attrTypeMap.get(hoverInfo.name)!;
+        if (attrTypeMap.has(propName)) {
+            const typeInfo = attrTypeMap.get(propName)!;
             result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(typeInfo.typeString)}`;
             if (typeInfo.document) {
                 result.document += `\n${typeInfo.document}`;
@@ -111,6 +116,15 @@ export function getComponentNameOrAttrNameHoverInfo(
             result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(attrBindingsMap.get(hoverInfo.name)!.typeString)}`;
         }
 
+        return result;
+    }
+
+    function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
+        const result = new Map<string, string>();
+        for (const [k, v] of bindingsMap) {
+            const inputName = v.replace(/[@=<?&]/g, '').trim();
+            result.set(inputName || k, k);
+        }
         return result;
     }
 }

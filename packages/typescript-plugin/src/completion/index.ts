@@ -143,39 +143,52 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    const attrs = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, true);
-    if (!info.controllerType) {
-        return attrs;
+    const componentTypeInfo = getComponentTypeInfo(ctx, componentLiteralNode);
+    const typeFromBindings = getPublicMembersTypeInfoOfBindings(ctx, componentTypeInfo.bindings, true);
+    if (!componentTypeInfo.controllerType) {
+        return typeFromBindings;
     }
 
-    const props = getPublicMembersTypeInfoOfType(ctx, info.controllerType);
-    return mergeTypeInfo(attrs, props);
+    const typeFromProps = getPublicMembersTypeInfoOfType(ctx, componentTypeInfo.controllerType);
+    return mergeTypeInfo(typeFromBindings, typeFromProps, getToPropsNameMap(componentTypeInfo.bindings));
 
-    function mergeTypeInfo(attrs: NgTypeInfo[] | undefined, props: NgTypeInfo[] | undefined): NgTypeInfo[] | undefined {
-        if (!attrs && !props) {
+    function mergeTypeInfo(
+        typeFromBindings: NgTypeInfo[] | undefined,
+        typeFromProps: NgTypeInfo[] | undefined,
+        toPropsNameMap: Map<string, string>,
+    ): NgTypeInfo[] | undefined {
+        if (!typeFromBindings && !typeFromProps) {
             return;
         }
 
-        if (!attrs) {
-            return props;
+        if (!typeFromBindings) {
+            return typeFromProps;
         }
 
-        if (!props) {
-            return attrs;
+        if (!typeFromProps) {
+            return typeFromBindings;
         }
 
-        const propMap = new Map(props.map((x) => [x.name, x]));
-        for (const attr of attrs) {
-            attr.kind = 'property';
-            const prop = propMap.get(attr.name);
+        const propMap = new Map(typeFromProps.map((x) => [x.name, x]));
+        for (const p of typeFromBindings) {
+            p.kind = 'property';
+            const prop = propMap.get(toPropsNameMap.get(p.name)!);
             if (prop) {
-                attr.isFunction = prop.isFunction;
-                attr.typeString = prop.typeString;
-                attr.document = [attr.document, prop.document].filter((x) => !!x).join('\n\n');
+                p.isFunction = prop.isFunction;
+                p.typeString = prop.typeString;
+                p.document = [p.document, prop.document].filter((x) => !!x).join('\n\n');
             }
         }
-        return attrs;
+        return typeFromBindings;
+    }
+
+    function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
+        const result = new Map<string, string>();
+        for (const [k, v] of bindingsMap) {
+            const inputName = v.replace(/[@=<?&]/g, '').trim();
+            result.set(inputName || k, k);
+        }
+        return result;
     }
 }
 
