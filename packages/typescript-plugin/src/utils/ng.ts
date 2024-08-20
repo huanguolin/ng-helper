@@ -218,7 +218,7 @@ export function getPublicMembersTypeInfoOfBindings(
     return result;
 
     function getBindType(s: string) {
-        const inputName = s.replace(/[@=<?]/g, '').trim();
+        const inputName = s.replace(/[@=<?&]/g, '').trim();
         const result: {
             type: 'any' | 'string' | 'function';
             optional: boolean;
