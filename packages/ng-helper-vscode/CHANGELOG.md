@@ -4,8 +4,10 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-// TODO release v0.1.5
-## [v0.1.5](https://github.com/huanguolin/ng-helper/compare/v0.1.4...v0.1.5) (====TODO====)
+## [v0.1.5](https://github.com/huanguolin/ng-helper/compare/v0.1.4...v0.1.5) (2024-08-21)
+
+### Feature
+- Support hover hint for transclude element.
 
 ### Fixed
 - Autocomplete transclude element name should use 'kebabCase' but got 'camelCase' (#14).
