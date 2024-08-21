@@ -6,13 +6,14 @@ import {
     NgHoverRequest,
     NgHoverResponse,
     NgTypeInfo,
+    type NgElementHoverInfo,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
-import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
+import { CorePluginContext, NgComponentTypeInfo, PluginContext, type NgComponentFileInfo } from '../type';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
 
@@ -29,21 +30,14 @@ export function getComponentNameOrAttrNameHoverInfo(
         return;
     }
 
-    let componentFilePath: string | undefined;
-    let componentFileInfo: NgComponentNameInfo | undefined;
-    for (const [key, value] of componentMap.entries()) {
-        if (value.componentName === hoverInfo.tagName) {
-            componentFilePath = key;
-            componentFileInfo = value;
-            break;
-        }
-    }
+    const { componentFilePath, componentFileInfo, transcludeConfig } = findComponentInfo(componentMap, hoverInfo);
 
     if (!componentFilePath || !componentFileInfo) {
-        if (hoverInfo.type === 'tagName') {
-            // TODO transclude 处理
-        }
         return;
+    }
+
+    if (transcludeConfig) {
+        return getTranscludeHoverInfo();
     }
 
     const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
@@ -69,19 +63,33 @@ export function getComponentNameOrAttrNameHoverInfo(
 
     const attrTypeMap = new Map<string, NgTypeInfo>(attrsFromType.map((x) => [x.name, x]));
     if (hoverInfo.type === 'tagName') {
+        return getComponentNameHoverInfo();
+    } else {
+        return getComponentAttrHoverInfo();
+    }
+
+    function getTranscludeHoverInfo() {
+        const arr = [`(transclude) ${hoverInfo.tagName}`, `config: "${transcludeConfig}"`, `component: "${hoverInfo.parentTagName}"`];
+        return {
+            formattedTypeString: arr.join('\n'),
+            document: '',
+        };
+    }
+
+    function getComponentNameHoverInfo() {
         const indent = SPACE.repeat(4);
-        const bindings = attrsFromBindings
+        const bindings = attrsFromBindings!
             .map(
                 (x) =>
                     `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
             )
             .join('\n');
         let transclude = '';
-        if (componentFileInfo.transclude) {
-            if (typeof componentFileInfo.transclude === 'boolean') {
+        if (componentFileInfo!.transclude) {
+            if (typeof componentFileInfo!.transclude === 'boolean') {
                 transclude = `transclude: true`;
             } else {
-                transclude = Object.entries(componentFileInfo.transclude)
+                transclude = Object.entries(componentFileInfo!.transclude)
                     .map(([k, v]) => `${indent}${k}: "${v}"`)
                     .join('\n');
                 transclude = `transclude: {\n${transclude}\n}`;
@@ -91,8 +99,10 @@ export function getComponentNameOrAttrNameHoverInfo(
             formattedTypeString: [`(component) ${hoverInfo.tagName}`, `bindings: {\n${bindings}\n}`, transclude].filter((x) => !!x).join('\n'),
             document: '',
         };
-    } else {
-        const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings.map((x) => [x.name, x]));
+    }
+
+    function getComponentAttrHoverInfo() {
+        const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings!.map((x) => [x.name, x]));
         const result = {
             formattedTypeString: `(property) ${hoverInfo.name}: any`,
             document: '',
@@ -127,6 +137,35 @@ export function getComponentNameOrAttrNameHoverInfo(
         }
         return result;
     }
+}
+
+function findComponentInfo(componentMap: Map<string, NgComponentFileInfo>, hoverInfo: NgElementHoverInfo) {
+    let componentFilePath: string | undefined;
+    let componentFileInfo: NgComponentNameInfo | undefined;
+    let transcludeConfig: string | undefined;
+    for (const [key, value] of componentMap.entries()) {
+        if (value.componentName === hoverInfo.tagName) {
+            componentFilePath = key;
+            componentFileInfo = value;
+            break;
+        } else if (
+            hoverInfo.parentTagName &&
+            hoverInfo.parentTagName === value.componentName &&
+            !!value.transclude &&
+            typeof value.transclude === 'object'
+        ) {
+            for (const [, v] of Object.entries(value.transclude)) {
+                const transcludeElementName = v.replace('?', '').trim();
+                if (transcludeElementName === hoverInfo.tagName) {
+                    componentFilePath = key;
+                    componentFileInfo = value;
+                    transcludeConfig = v;
+                    break;
+                }
+            }
+        }
+    }
+    return { componentFilePath, componentFileInfo, transcludeConfig };
 }
 
 export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
