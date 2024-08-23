@@ -11,6 +11,8 @@ import {
     NgCtrlTypeCompletionRequest,
     NgCtrlHoverRequest,
     NgComponentNameOrAttrNameHoverRequest,
+    type NgComponentNameOrAttrNameDefinitionRequest,
+    type NgDefinitionResponse,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -28,6 +30,15 @@ interface BizRequestInput<T> {
     info: T;
     apiName: string;
     vscodeCancelToken: CancellationToken;
+}
+
+export function getComponentNameOrAttrNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentNameOrAttrNameDefinitionRequest>) {
+    return bizRequest<NgComponentNameOrAttrNameDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'component', info.hoverInfo.type === 'attrName' ? 'attr' : 'name', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentNameOrAttrNameDefinitionApi',
+    });
 }
 
 export function getControllerTypeHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlHoverRequest>) {

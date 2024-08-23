@@ -1,7 +1,7 @@
-import { NgHoverInfo } from '@ng-helper/shared/lib/plugin';
+import { NgHoverInfo, type NgComponentNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext, SyntaxNodeInfoEx } from '../type';
+import { PluginContext, SyntaxNodeInfoEx, type NgComponentFileInfo } from '../type';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
 
 export function buildHoverInfo({
@@ -111,4 +111,33 @@ export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: stri
     } else {
         return { sourceFile, minNode: node, targetNode: node };
     }
+}
+
+export function findComponentInfo(componentMap: Map<string, NgComponentFileInfo>, hoverInfo: NgElementHoverInfo) {
+    let componentFilePath: string | undefined;
+    let componentFileInfo: NgComponentNameInfo | undefined;
+    let transcludeConfig: string | undefined;
+    for (const [key, value] of componentMap.entries()) {
+        if (value.componentName === hoverInfo.tagName) {
+            componentFilePath = key;
+            componentFileInfo = value;
+            break;
+        } else if (
+            hoverInfo.parentTagName &&
+            hoverInfo.parentTagName === value.componentName &&
+            !!value.transclude &&
+            typeof value.transclude === 'object'
+        ) {
+            for (const [, v] of Object.entries(value.transclude)) {
+                const transcludeElementName = v.replace('?', '').trim();
+                if (transcludeElementName === hoverInfo.tagName) {
+                    componentFilePath = key;
+                    componentFileInfo = value;
+                    transcludeConfig = v;
+                    break;
+                }
+            }
+        }
+    }
+    return { componentFilePath, componentFileInfo, transcludeConfig };
 }

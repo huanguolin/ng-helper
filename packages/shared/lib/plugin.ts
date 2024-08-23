@@ -69,6 +69,10 @@ export interface NgComponentNameOrAttrNameHoverRequest extends NgRequest {
 
 export interface NgCtrlHoverRequest extends NgHoverRequest, NgCtrlInfo {}
 
+export interface NgComponentNameOrAttrNameDefinitionRequest extends NgRequest {
+    hoverInfo: NgElementHoverInfo;
+}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;
@@ -79,6 +83,13 @@ export interface NgComponentNameInfo {
     transclude?: boolean | Record<string, string>;
 }
 
+export interface NgDefinitionInfo {
+    filePath: string;
+    start: number;
+    end: number;
+}
+
+export type NgDefinitionResponse = NgDefinitionInfo | undefined;
 export type NgHoverResponse = NgHoverInfo | undefined;
 export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefined;

@@ -1,23 +1,15 @@
 import { SPACE } from '@ng-helper/shared/lib/html';
-import {
-    NgComponentNameInfo,
-    NgComponentNameOrAttrNameHoverRequest,
-    NgCtrlHoverRequest,
-    NgHoverRequest,
-    NgHoverResponse,
-    NgTypeInfo,
-    type NgElementHoverInfo,
-} from '@ng-helper/shared/lib/plugin';
+import { NgComponentNameOrAttrNameHoverRequest, NgCtrlHoverRequest, NgHoverRequest, NgHoverResponse, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
-import { CorePluginContext, NgComponentTypeInfo, PluginContext, type NgComponentFileInfo } from '../type';
+import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo, getMinSyntaxNodeForHover } from './utils';
+import { beautifyTypeString, buildHoverInfo, findComponentInfo, getMinSyntaxNodeForHover } from './utils';
 
 export function getComponentNameOrAttrNameHoverInfo(
     coreCtx: CorePluginContext,
@@ -137,35 +129,6 @@ export function getComponentNameOrAttrNameHoverInfo(
         }
         return result;
     }
-}
-
-function findComponentInfo(componentMap: Map<string, NgComponentFileInfo>, hoverInfo: NgElementHoverInfo) {
-    let componentFilePath: string | undefined;
-    let componentFileInfo: NgComponentNameInfo | undefined;
-    let transcludeConfig: string | undefined;
-    for (const [key, value] of componentMap.entries()) {
-        if (value.componentName === hoverInfo.tagName) {
-            componentFilePath = key;
-            componentFileInfo = value;
-            break;
-        } else if (
-            hoverInfo.parentTagName &&
-            hoverInfo.parentTagName === value.componentName &&
-            !!value.transclude &&
-            typeof value.transclude === 'object'
-        ) {
-            for (const [, v] of Object.entries(value.transclude)) {
-                const transcludeElementName = v.replace('?', '').trim();
-                if (transcludeElementName === hoverInfo.tagName) {
-                    componentFilePath = key;
-                    componentFileInfo = value;
-                    transcludeConfig = v;
-                    break;
-                }
-            }
-        }
-    }
-    return { componentFilePath, componentFileInfo, transcludeConfig };
 }
 
 export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {

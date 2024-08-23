@@ -10,10 +10,12 @@ import {
     NgResponse,
     NgComponentNameCompletionResponse,
     NgComponentAttrCompletionResponse,
-    NgComponentAttrRequest,
     NgCtrlTypeCompletionRequest,
     NgCtrlHoverRequest,
     NgComponentNameOrAttrNameHoverRequest,
+    type NgComponentNameOrAttrNameDefinitionRequest,
+    type NgDefinitionResponse,
+    type NgComponentAttrCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -25,6 +27,7 @@ import {
     getComponentNameCompletions,
     getControllerTypeCompletions,
 } from './completion';
+import { getComponentNameOrAttrNameDefinitionInfo } from './definition';
 import { getComponentNameOrAttrNameHoverInfo, getComponentTypeHoverInfo, getControllerTypeHoverInfo } from './hover';
 import {
     CorePluginContext,
@@ -276,10 +279,18 @@ function initHttpServer() {
     });
 
     app.post('/ng-helper/component/attr/completion', (req, res) => {
-        handleRequestWithCoreCtx<NgComponentAttrRequest, NgComponentAttrCompletionResponse>({
+        handleRequestWithCoreCtx<NgComponentAttrCompletionRequest, NgComponentAttrCompletionResponse>({
             req,
             res,
             action: (coreCtx, body) => getComponentAttrCompletions(coreCtx, body.fileName, body.componentName),
+        });
+    });
+
+    app.post('/ng-helper/controller/type/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgCtrlTypeCompletionRequest, NgTypeCompletionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getControllerTypeCompletions(coreCtx, body),
         });
     });
 
@@ -315,11 +326,19 @@ function initHttpServer() {
         });
     });
 
-    app.post('/ng-helper/controller/type/completion', (req, res) => {
-        handleRequestWithCoreCtx<NgCtrlTypeCompletionRequest, NgTypeCompletionResponse>({
+    app.post('/ng-helper/component/name/definition', (req, res) => {
+        handleRequestWithCoreCtx<NgComponentNameOrAttrNameDefinitionRequest, NgDefinitionResponse>({
             req,
             res,
-            action: (coreCtx, body) => getControllerTypeCompletions(coreCtx, body),
+            action: (coreCtx, body) => getComponentNameOrAttrNameDefinitionInfo(coreCtx, body),
+        });
+    });
+
+    app.post('/ng-helper/component/attr/definition', (req, res) => {
+        handleRequestWithCoreCtx<NgComponentNameOrAttrNameDefinitionRequest, NgDefinitionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getComponentNameOrAttrNameDefinitionInfo(coreCtx, body),
         });
     });
 
