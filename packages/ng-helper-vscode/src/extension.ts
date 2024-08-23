@@ -2,8 +2,8 @@ import { ExtensionContext } from 'vscode';
 
 import { activateExt } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
-import { registerComponentCompletions } from './features/completion';
-import { registerComponentHover } from './features/hover';
+import { registerCompletion } from './features/completion';
+import { registerHover } from './features/hover';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -21,10 +21,10 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(createComponentCommand(config.componentCssFileExt));
 
     // completion
-    registerComponentCompletions(context, config.port);
+    registerCompletion(context, config.port);
 
     // hover
-    registerComponentHover(context, config.port);
+    registerHover(context, config.port);
 }
 
 // This method is called when your extension is deactivated

@@ -23,7 +23,7 @@ import {
     isValidIdentifier,
 } from '../utils';
 
-export function registerComponentHover(context: ExtensionContext, port: number) {
+export function registerHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document, position, vscodeCancelToken) {
