@@ -54,6 +54,10 @@ export interface NgElementHoverInfo {
 
 export interface NgCtrlTypeCompletionRequest extends NgTypeCompletionRequest, NgCtrlInfo {}
 
+export interface NgComponentAttrCompletionRequest extends NgRequest {
+    componentName: string;
+}
+
 export interface NgHoverRequest extends NgRequest {
     contextString: string;
     cursorAt: number;
@@ -64,10 +68,6 @@ export interface NgComponentNameOrAttrNameHoverRequest extends NgRequest {
 }
 
 export interface NgCtrlHoverRequest extends NgHoverRequest, NgCtrlInfo {}
-
-export interface NgComponentAttrRequest extends NgRequest {
-    componentName: string;
-}
 
 export interface NgHoverInfo {
     formattedTypeString: string;
