@@ -4,7 +4,7 @@ import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { TextDocument } from 'vscode';
 
-import { getTsFiles, normalizePath } from '../utils';
+import { checkNgHelperServerRunning, getTsFiles, normalizePath } from '../utils';
 
 export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
@@ -122,4 +122,14 @@ export function isValidIdentifier(text: string): boolean {
 
 export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
+}
+
+export async function checkServiceAndGetTsFilePath(document: TextDocument, port: number): Promise<string | undefined> {
+    const tsFilePath = (await getCorrespondingTsFileName(document))!;
+
+    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
+        return;
+    }
+
+    return tsFilePath;
 }

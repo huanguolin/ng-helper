@@ -16,6 +16,8 @@ import {
     type NgComponentNameOrAttrNameDefinitionRequest,
     type NgDefinitionResponse,
     type NgComponentAttrCompletionRequest,
+    type NgTypeDefinitionRequest,
+    type NgCtrlTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -27,7 +29,7 @@ import {
     getComponentNameCompletions,
     getControllerTypeCompletions,
 } from './completion';
-import { getComponentNameOrAttrNameDefinitionInfo } from './definition';
+import { getComponentNameOrAttrNameDefinitionInfo, getComponentTypeDefinitionInfo, getControllerTypeDefinitionInfo } from './definition';
 import { getComponentNameOrAttrNameHoverInfo, getComponentTypeHoverInfo, getControllerTypeHoverInfo } from './hover';
 import {
     CorePluginContext,
@@ -339,6 +341,22 @@ function initHttpServer() {
             req,
             res,
             action: (coreCtx, body) => getComponentNameOrAttrNameDefinitionInfo(coreCtx, body),
+        });
+    });
+
+    app.post('/ng-helper/component/type/definition', (req, res) => {
+        handleRequestWithCtx<NgTypeDefinitionRequest, NgDefinitionResponse>({
+            req,
+            res,
+            action: (ctx, body) => getComponentTypeDefinitionInfo(ctx, body),
+        });
+    });
+
+    app.post('/ng-helper/controller/type/definition', (req, res) => {
+        handleRequestWithCoreCtx<NgCtrlTypeDefinitionRequest, NgDefinitionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getControllerTypeDefinitionInfo(coreCtx, body),
         });
     });
 

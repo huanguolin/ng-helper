@@ -242,7 +242,7 @@ function getHoverInfoOfType({
 }): NgHoverResponse {
     const logger = ctx.logger.prefix('getHoverInfoForType()');
 
-    // hover 在跟节点上
+    // hover 在根节点上
     if (targetNode.text === controllerAs) {
         logger.info('targetType:', typeToString(ctx, controllerType));
         return buildHoverInfo({ ctx, targetType: controllerType, name: targetNode.text });
@@ -269,7 +269,7 @@ function getHoverInfoOfType({
 function getHoverInfoOfBindings(ctx: PluginContext, info: NgComponentTypeInfo, targetPropName: string): NgHoverResponse {
     const bindingTypes = getPublicMembersTypeInfoOfBindings(ctx, info.bindings)!;
 
-    // hover 在跟节点上
+    // hover 在根节点上
     if (targetPropName === info.controllerAs) {
         const typeString =
             '{ ' +

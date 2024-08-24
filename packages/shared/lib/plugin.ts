@@ -73,6 +73,10 @@ export interface NgComponentNameOrAttrNameDefinitionRequest extends NgRequest {
     hoverInfo: NgElementHoverInfo;
 }
 
+export interface NgTypeDefinitionRequest extends NgHoverRequest {}
+
+export interface NgCtrlTypeDefinitionRequest extends NgCtrlHoverRequest {}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;

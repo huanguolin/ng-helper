@@ -1,10 +1,10 @@
 import type { NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
-import { Location, Range, Uri, languages, workspace, type Definition, type ExtensionContext, type TextDocument } from 'vscode';
+import { Location, Range, Uri, languages, workspace, type Definition, type ExtensionContext } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentNameOrAttrNameDefinitionApi } from '../../service/api';
-import { checkNgHelperServerRunning } from '../../utils';
-import { getCorrespondingTsFileName, getHoveredComponentNameOrAttr } from '../utils';
+import { getComponentNameOrAttrNameDefinitionApi, getComponentTypeDefinitionApi, getControllerTypeDefinitionApi } from '../../service/api';
+import { provideTypeHoverInfo } from '../hover/utils';
+import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredComponentNameOrAttr, isComponentHtml } from '../utils';
 
 export function registerDefinition(context: ExtensionContext, port: number) {
     context.subscriptions.push(
@@ -30,19 +30,54 @@ export function registerDefinition(context: ExtensionContext, port: number) {
                         }
                     });
                 }
+
+                if (isComponentHtml(document)) {
+                    return timeCost('provideComponentTypeDefinition', async () => {
+                        try {
+                            const definitionInfo = await provideTypeHoverInfo({
+                                document,
+                                position,
+                                port,
+                                api: (tsFilePath, contextString, cursorAt) =>
+                                    getComponentTypeDefinitionApi({
+                                        port,
+                                        vscodeCancelToken: token,
+                                        info: { fileName: tsFilePath, contextString, cursorAt },
+                                    }),
+                            });
+                            return await buildDefinition(definitionInfo);
+                        } catch (error) {
+                            console.error('provideComponentTypeDefinition() error:', error);
+                            return undefined;
+                        }
+                    });
+                }
+
+                const ctrlInfo = getControllerNameInfoFromHtml(document);
+                if (ctrlInfo && ctrlInfo.controllerAs) {
+                    return timeCost('provideControllerTypeDefinition`', async () => {
+                        try {
+                            const definitionInfo = await provideTypeHoverInfo({
+                                document,
+                                position,
+                                port,
+                                api: (tsFilePath, contextString, cursorAt) =>
+                                    getControllerTypeDefinitionApi({
+                                        port,
+                                        vscodeCancelToken: token,
+                                        info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
+                                    }),
+                            });
+                            return await buildDefinition(definitionInfo);
+                        } catch (error) {
+                            console.error('provideControllerTypeDefinition`() error:', error);
+                            return undefined;
+                        }
+                    });
+                }
             },
         }),
     );
-}
-
-async function checkServiceAndGetTsFilePath(document: TextDocument, port: number): Promise<string | undefined> {
-    const tsFilePath = (await getCorrespondingTsFileName(document))!;
-
-    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
-        return;
-    }
-
-    return tsFilePath;
 }
 
 async function buildDefinition(definitionInfo: NgDefinitionInfo | undefined): Promise<Definition | undefined> {

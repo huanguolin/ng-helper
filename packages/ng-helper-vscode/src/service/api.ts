@@ -13,6 +13,8 @@ import {
     NgComponentNameOrAttrNameHoverRequest,
     type NgComponentNameOrAttrNameDefinitionRequest,
     type NgDefinitionResponse,
+    type NgTypeDefinitionRequest,
+    type NgCtrlTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -30,6 +32,24 @@ interface BizRequestInput<T> {
     info: T;
     apiName: string;
     vscodeCancelToken: CancellationToken;
+}
+
+export function getControllerTypeDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlTypeDefinitionRequest>) {
+    return bizRequest<NgCtrlTypeDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'controller', 'type', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getControllerTypeDefinitionApi',
+    });
+}
+
+export function getComponentTypeDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgTypeDefinitionRequest>) {
+    return bizRequest<NgTypeDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'component', 'type', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getComponentTypeDefinitionApi',
+    });
 }
 
 export function getComponentNameOrAttrNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentNameOrAttrNameDefinitionRequest>) {
