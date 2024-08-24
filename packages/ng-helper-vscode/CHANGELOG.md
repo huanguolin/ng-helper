@@ -4,6 +4,13 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.2.0](https://github.com/huanguolin/ng-helper/compare/v0.1.5...v0.2.0) (2024-08-24)
+
+### Feature
+- Support go to definition for component and controller data bindings.
+- Support go to definition for component name and attr.
+
+
 ## [v0.1.5](https://github.com/huanguolin/ng-helper/compare/v0.1.4...v0.1.5) (2024-08-21)
 
 ### Feature

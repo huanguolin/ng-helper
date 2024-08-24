@@ -18,16 +18,17 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
   - [ ] 使用 `ng-controller="XController as ctrl"` 的 html, 且 `XController` 使用 ts 实现
     - [x] 数据绑定自动补全
     - [x] hover 类型提示
+    - [x] component 标签或者其属性跳转到定义位置
+    - [x] 绑定的数据跳转到 ts 定义位置
     - [ ] 绑定的数据跳转到 ts 定义位置
-    - [ ] component 标签或者其属性跳转到定义位置
 - [x] Component:
   - [x] 创建 component 的右键菜单
   - [x] html 数据绑定自动补全
   - [x] html hover 类型提示
   - [x] html 中 component 标签名字自动补全
   - [x] html 中 component 属性自动补全
-  - [ ] html 中绑定的数据跳转到 ts 定义位置
-  - [ ] component 标签或者其属性跳转到定义位置
+  - [x] component 标签或者其属性跳转到定义位置
+  - [x] html 中绑定的数据跳转到 ts 定义位置
   - [ ] html 中语法高亮
   - [ ] html 函数签名帮助
 - [x] ts 文件注入匹配校验

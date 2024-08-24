@@ -22,7 +22,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
     - [x] Auto-completion for data binding
     - [x] Type hints on hover
     - [x] Jump to definition of component tags or their attributes
-    - [ ] Jump to TS definition of bound data
+    - [x] Jump to TS definition of bound data
     - [ ] Function signature help in HTML
 - [x] Component:
   - [x] Right-click menu to create component
@@ -31,7 +31,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
   - [x] Auto-completion for component tag names in HTML
   - [x] Auto-completion for component attributes in HTML
   - [x] Jump to definition of component tags or their attributes in HTML
-  - [ ] Jump to TS definition of bound data in HTML
+  - [x] Jump to TS definition of bound data in HTML
   - [ ] Function signature help in HTML
   - [ ] Syntax highlighting in HTML
 - [x] Injection matching validation in TS files
