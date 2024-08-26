@@ -10,10 +10,10 @@ export function isComponentHtml(document: TextDocument) {
     return document.fileName.endsWith('.component.html');
 }
 
-export function getHoveredComponentNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
+export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
     const docText = document.getText();
     const tag = getHtmlTagByCursor(docText, { at: cursorAt, isHover: true });
-    if (!tag || !isComponentTagName(tag.tagName)) {
+    if (!tag) {
         return;
     }
 

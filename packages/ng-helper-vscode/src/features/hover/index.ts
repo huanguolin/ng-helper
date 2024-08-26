@@ -3,7 +3,7 @@ import { ExtensionContext, Hover, languages, MarkdownString } from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi } from '../../service/api';
-import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredComponentNameOrAttr, isComponentHtml } from '../utils';
+import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
 
 import { provideTypeHoverInfo } from './utils';
 
@@ -11,12 +11,18 @@ export function registerHover(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document, position, vscodeCancelToken) {
-                const componentHoverInfo = getHoveredComponentNameOrAttr(document, document.offsetAt(position));
-                if (componentHoverInfo) {
+                const hoverInfo = getHoveredTagNameOrAttr(document, document.offsetAt(position));
+                if (hoverInfo) {
                     return timeCost('provideComponentNameOrAttrNameHover', async () => {
                         try {
-                            if (componentHoverInfo.type === 'attrName' && componentHoverInfo.name.startsWith('ng')) {
-                                // TODO ng-* 处理
+                            if (hoverInfo.type === 'attrName' && hoverInfo.name.startsWith('ng')) {
+                                return buildHoverResult({
+                                    formattedTypeString: `(directive) ${hoverInfo.name}`,
+                                    document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${hoverInfo.name}).`,
+                                });
+                            }
+
+                            if (!isComponentTagName(hoverInfo.tagName)) {
                                 return;
                             }
 
@@ -28,7 +34,7 @@ export function registerHover(context: ExtensionContext, port: number) {
                             const res = await getComponentNameOrAttrNameHoverApi({
                                 port,
                                 vscodeCancelToken,
-                                info: { fileName: tsFilePath, hoverInfo: componentHoverInfo },
+                                info: { fileName: tsFilePath, hoverInfo: hoverInfo },
                             });
                             return buildHoverResult(res);
                         } catch (error) {
@@ -90,7 +96,7 @@ function buildHoverResult(res: NgHoverInfo | undefined): Hover | undefined {
     const markdownStr = new MarkdownString();
     markdownStr.appendCodeblock(res.formattedTypeString, 'typescript');
     if (res.document) {
-        markdownStr.appendText(res.document);
+        markdownStr.appendMarkdown(res.document);
     }
     return new Hover(markdownStr);
 }
