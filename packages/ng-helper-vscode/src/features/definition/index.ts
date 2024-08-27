@@ -1,12 +1,58 @@
 import type { NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
-import { Location, Range, Uri, languages, workspace, type Definition, type ExtensionContext } from 'vscode';
+import { Location, Position, Range, Uri, languages, workspace, type Definition, type ExtensionContext } from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentNameOrAttrNameDefinitionApi, getComponentTypeDefinitionApi, getControllerTypeDefinitionApi } from '../../service/api';
+import { isFileExistsOnWorkspace } from '../../utils';
 import { provideTypeHoverInfo } from '../hover/utils';
 import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
 
 export function registerDefinition(context: ExtensionContext, port: number) {
+    registerGotoTs(context, port);
+    registerGotoHtml(context);
+}
+
+function registerGotoHtml(context: ExtensionContext) {
+    context.subscriptions.push(
+        languages.registerDefinitionProvider(
+            [
+                { scheme: 'file', language: 'javascript' },
+                { scheme: 'file', language: 'typescript' },
+            ],
+            {
+                async provideDefinition(document, position) {
+                    // TODO: 字符串开头引号要和结尾匹配，还要考虑转义的问题
+                    const range = document.getWordRangeAtPosition(position, /templateUrl\s*:\s*['"][^'"]+['"]/);
+                    if (!range) {
+                        return;
+                    }
+
+                    const text = document.getText(range);
+                    // TODO: 字符串开头引号要和结尾匹配，还要考虑转义的问题
+                    const filePath = text.match(/templateUrl\s*:\s*['"]([^'"]+)['"]/);
+
+                    if (!filePath || filePath.length < 2) {
+                        return;
+                    }
+
+                    const relativePath = filePath[1];
+                    const targetPath = resolveHtmlPath(relativePath);
+
+                    if (await isFileExistsOnWorkspace(Uri.file(targetPath))) {
+                        return new Location(Uri.file(targetPath), new Position(0, 0));
+                    }
+                },
+            },
+        ),
+    );
+}
+
+function resolveHtmlPath(templateUrl: string): string {
+    // TODO: resolve
+    return templateUrl;
+}
+
+function registerGotoTs(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
             async provideDefinition(document, position, token) {
