@@ -70,6 +70,19 @@ export async function getTsFiles(
         limit?: number;
     },
 ): Promise<string[]> {
+    return getFiles(filePath, { suffix: '.ts', ...options });
+}
+
+export async function getFiles(
+    filePath: string,
+    options?: {
+        suffix?: string;
+        predicate?: (filePath: string) => boolean;
+        excludePaths?: string[];
+        fallbackCnt?: number;
+        limit?: number;
+    },
+): Promise<string[]> {
     const dir = getParentDir(filePath);
     const rootDir = normalizePath(getWorkspacePath()?.fsPath ?? '');
 
@@ -79,14 +92,15 @@ export async function getTsFiles(
 
     const fallbackCnt = options?.fallbackCnt ?? 3;
     const files = await listFiles(dir, {
-        suffix: '.ts',
+        suffix: options?.suffix,
+        predicate: options?.predicate,
         limit: options?.limit,
         recursive: true,
     });
     if (files.length) {
         return files;
     } else {
-        return fallbackCnt > 0 ? getTsFiles(dir, { ...options, fallbackCnt: fallbackCnt - 1 }) : [];
+        return fallbackCnt > 0 ? getFiles(dir, { ...options, excludePaths: [dir], fallbackCnt: fallbackCnt - 1 }) : [];
     }
 }
 
@@ -94,14 +108,20 @@ export async function listFiles(
     dirPath: string,
     options: {
         suffix?: string;
+        predicate?: (filePath: string) => boolean;
+        excludePaths?: string[];
         limit?: number;
         recursive?: boolean;
     },
 ): Promise<string[]> {
     const result: string[] = [];
 
-    let files: [string, FileType][] = [];
+    // 避免遍历 node_modules
+    if (dirPath.includes('node_modules')) {
+        return result;
+    }
 
+    let files: [string, FileType][] = [];
     try {
         files = await workspace.fs.readDirectory(Uri.file(dirPath));
     } catch (error) {
@@ -110,6 +130,7 @@ export async function listFiles(
     }
 
     const subDirNames: string[] = [];
+    const excludePaths = options.excludePaths?.map((path) => normalizePath(path)) ?? [];
     for (const [name, fileType] of files) {
         if (options.limit && result.length >= options.limit) {
             break;
@@ -119,8 +140,17 @@ export async function listFiles(
             if (options.suffix && !name.endsWith(options.suffix)) {
                 continue;
             }
-            result.push(`${dirPath}/${name}`);
+
+            const filePath = `${dirPath}/${name}`;
+            if (options.predicate && !options.predicate(filePath)) {
+                continue;
+            }
+
+            result.push(filePath);
         } else if (options.recursive && fileType === FileType.Directory) {
+            if (options.excludePaths && excludePaths.some((path) => `${dirPath}/${name}`.startsWith(path))) {
+                continue;
+            }
             subDirNames.push(name);
         }
     }

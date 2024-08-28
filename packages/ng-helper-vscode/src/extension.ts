@@ -4,6 +4,7 @@ import { activateExt } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
+import { registerGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
 
 // This method is called when your extension is activated
@@ -29,6 +30,9 @@ export async function activate(context: ExtensionContext) {
 
     // definition
     registerDefinition(context, config.port);
+
+    // goto html
+    registerGotoHtml(context);
 }
 
 // This method is called when your extension is deactivated
