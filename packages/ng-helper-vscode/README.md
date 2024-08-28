@@ -35,6 +35,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
   - [ ] Function signature help in HTML
   - [ ] Syntax highlighting in HTML
 - [x] Injection matching validation in TS files
+- [x] Support go to HTML file via 'templateUrl' form ts/js
 
 
 ## Requirements
@@ -45,7 +46,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 ## Installation
 
 1. Install the extension
-2. Create an empty `ng-helper.json` file in the `.vscode` directory of your workspace
+2. Create an empty `ng-helper.json` file in the `.vscode` directory of your workspace(***This file is a plugin startup flag, without which the plugin will not start***)
 3. Restart vscode
 
 ## Extension Settings
