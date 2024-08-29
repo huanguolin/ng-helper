@@ -52,10 +52,23 @@
     ],
     "grammars": [
       {
+        "path": "./syntaxes/inline-template.json",
+        "scopeName": "inline-template.ng",
+        "injectTo": [
+          "source.js",
+          "source.ts"
+        ],
+        "embeddedLanguages": {
+          "text.html.derivative": "html",
+          "source.js": "javascript"
+        }
+      },
+      {
         "path": "./syntaxes/template.json",
         "scopeName": "template.ng",
         "injectTo": [
-          "text.html.directive"
+          "text.html.derivative",
+          "source.ts"
         ],
         "embeddedLanguages": {
           "text.html": "html",
@@ -66,7 +79,8 @@
         "path": "./syntaxes/template-tag.json",
         "scopeName": "template.tag.ng",
         "injectTo": [
-          "text.html.derivative"
+          "text.html.derivative",
+          "source.ts"
         ]
       },
       {
