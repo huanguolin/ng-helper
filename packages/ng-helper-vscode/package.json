@@ -17,7 +17,9 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Programming Languages"],
+  "categories": [
+    "Programming Languages"
+  ],
   "keywords": [
     "AngularJS",
     "angular.js"
@@ -46,6 +48,30 @@
       {
         "name": "@ng-helper/typescript-plugin",
         "enableForWorkspaceTypeScriptVersions": true
+      }
+    ],
+    "grammars": [
+      {
+        "path": "./syntaxes/template.json",
+        "scopeName": "template.ng",
+        "injectTo": [
+          "text.html.directive"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/template-tag.json",
+        "scopeName": "template.tag.ng",
+        "injectTo": [
+          "text.html.derivative"
+        ]
+      },
+      {
+        "path": "./syntaxes/expression.json",
+        "scopeName": "expression.ng"
       }
     ]
   },
