@@ -6,6 +6,7 @@ import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
 import { registerGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
+import { supportInlineTemplate } from './features/inlineTemplate';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -33,6 +34,9 @@ export async function activate(context: ExtensionContext) {
 
     // goto html
     registerGotoHtml(context);
+
+    // inline template
+    supportInlineTemplate(context);
 }
 
 // This method is called when your extension is deactivated

@@ -6,8 +6,17 @@ import { TextDocument } from 'vscode';
 
 import { checkNgHelperServerRunning, getTsFiles, normalizePath } from '../utils';
 
-export function isComponentHtml(document: TextDocument) {
-    return document.fileName.endsWith('.component.html');
+export function isInlinedTemplate(document: TextDocument): boolean {
+    const fileName = document.fileName;
+    return fileName.endsWith('.ts.html') || fileName.endsWith('.js.html');
+}
+
+export function isComponentHtml(document: TextDocument): boolean {
+    const fileName = document.fileName;
+    if (isInlinedTemplate(document)) {
+        return fileName.endsWith('.component.ts.html') || fileName.endsWith('component.js.html');
+    }
+    return fileName.endsWith('.component.html');
 }
 
 export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
@@ -76,7 +85,19 @@ export function getNgCtrlInfo(text: string): NgCtrlInfo {
     };
 }
 
+export function getOriginalFileName(fileName: string): string {
+    // Remove leading `/` and ending `.html` to get original path.
+    const originalPath = fileName.slice(1).slice(0, -5);
+    return originalPath;
+}
+
 export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
+    if (isInlinedTemplate(document)) {
+        const originalPath = getOriginalFileName(document.fileName);
+        // Remove leading `file://` to get real path.
+        return originalPath.slice('file://'.length);
+    }
+
     if (isComponentHtml(document)) {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
