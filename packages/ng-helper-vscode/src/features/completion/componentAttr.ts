@@ -61,7 +61,7 @@ async function provideComponentAttrCompletion({
 
     let list = await getComponentAttrCompletionApi({
         port,
-        info: { fileName: document.fileName, componentName: camelCase(tag.tagName) },
+        info: { fileName: relatedTsFile, componentName: camelCase(tag.tagName) },
         vscodeCancelToken,
     });
     if (!list || !list.length) {

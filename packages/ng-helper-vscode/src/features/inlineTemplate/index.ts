@@ -1,21 +1,29 @@
-import { Uri, commands, languages, workspace, type ExtensionContext, type Hover, type Position, type TextDocument } from 'vscode';
+import {
+    Uri,
+    commands,
+    languages,
+    workspace,
+    type CompletionList,
+    type Definition,
+    type ExtensionContext,
+    type Hover,
+    type Position,
+    type TextDocument,
+} from 'vscode';
 
 import { getOriginalFileName } from '../utils';
 
 const virtualDocumentContents = new Map<string, string>();
 
 export function supportInlineTemplate(context: ExtensionContext) {
-    context.subscriptions.push(
-        workspace.registerTextDocumentContentProvider('embedded-content', {
-            provideTextDocumentContent: (uri) => {
-                const originalUri = getOriginalFileName(uri.path);
-                const decodedUri = decodeURIComponent(originalUri);
-                const docText = virtualDocumentContents.get(decodedUri);
-                return docText || '';
-            },
-        }),
-    );
+    registerVirtualDocumentProvider(context);
 
+    requestForwardHover(context);
+    requestForwardDefinition(context);
+    requestForwardCompletion(context);
+}
+
+function requestForwardHover(context: ExtensionContext) {
     context.subscriptions.push(
         languages.registerHoverProvider(
             [
@@ -30,13 +38,80 @@ export function supportInlineTemplate(context: ExtensionContext) {
                     }
 
                     const vDocUri = prepareVirtualDocument(document, vDocText);
-                    const hoverInfo = await commands.executeCommand<Hover[]>('vscode.executeHoverProvider', vDocUri, position);
-                    if (hoverInfo && hoverInfo.length) {
-                        return hoverInfo[0];
+                    const info = await commands.executeCommand<Hover[]>('vscode.executeHoverProvider', vDocUri, position);
+                    if (info && info.length) {
+                        return info[0];
                     }
                 },
             },
         ),
+    );
+}
+
+function requestForwardDefinition(context: ExtensionContext) {
+    context.subscriptions.push(
+        languages.registerDefinitionProvider(
+            [
+                { scheme: 'file', language: 'typescript' },
+                { scheme: 'file', language: 'javascript' },
+            ],
+            {
+                async provideDefinition(document, position) {
+                    const vDocText = getRelateTemplate(document, position);
+                    if (!vDocText) {
+                        return;
+                    }
+
+                    const vDocUri = prepareVirtualDocument(document, vDocText);
+                    const info = await commands.executeCommand<Definition | undefined>('vscode.executeDefinitionProvider', vDocUri, position);
+                    return info;
+                },
+            },
+        ),
+    );
+}
+
+function requestForwardCompletion(context: ExtensionContext) {
+    context.subscriptions.push(
+        languages.registerCompletionItemProvider(
+            [
+                { scheme: 'file', language: 'typescript' },
+                { scheme: 'file', language: 'javascript' },
+            ],
+            {
+                async provideCompletionItems(document, position, _, ctx) {
+                    const vDocText = getRelateTemplate(document, position);
+                    if (!vDocText) {
+                        return;
+                    }
+
+                    const vDocUri = prepareVirtualDocument(document, vDocText);
+                    const info = await commands.executeCommand<CompletionList>(
+                        'vscode.executeCompletionItemProvider',
+                        vDocUri,
+                        position,
+                        ctx.triggerCharacter,
+                    );
+                    return info;
+                },
+            },
+            '.', // for ng data binding
+            '<', // for html tag start
+            ' ', // for html tag attr
+        ),
+    );
+}
+
+function registerVirtualDocumentProvider(context: ExtensionContext) {
+    context.subscriptions.push(
+        workspace.registerTextDocumentContentProvider('embedded-content', {
+            provideTextDocumentContent: (uri) => {
+                const originalUri = getOriginalFileName(uri.path);
+                const decodedUri = decodeURIComponent(originalUri);
+                const docText = virtualDocumentContents.get(decodedUri);
+                return docText || '';
+            },
+        }),
     );
 }
 
@@ -59,7 +134,9 @@ function getRelateTemplate(document: TextDocument, position: Position): string |
         const matchStr = match[0];
         const strBegin = index + matchStr.indexOf(match[1]) + 1;
         const strEnd = index + matchStr.lastIndexOf(match[1]);
-        if (offsetAt >= strBegin && offsetAt < strEnd) {
+        if (offsetAt < strBegin) {
+            return;
+        } else if (offsetAt < strEnd) {
             return getVirtualDocText(text, strBegin, strEnd);
         }
     }
