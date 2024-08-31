@@ -67,7 +67,25 @@
                 }
             },
             "contentName": "text.html.derivative",
-            "patterns": [
+            "patterns": [{
+                "begin": "\\$\\{(?!\\{)",
+                "beginCaptures": {
+                    "0": {
+                        "name": "punctuation.definition.template-expression.begin.js"
+                    }
+                },
+                "end": "\\}",
+                "endCaptures": {
+                    "0": {
+                        "name": "punctuation.definition.template-expression.end.js"
+                    }
+                },
+                "patterns": [
+                    {
+                        "include": "source.js"
+                    }
+                ]
+            },
                 {
                     "include": "text.html.derivative"
                 },
