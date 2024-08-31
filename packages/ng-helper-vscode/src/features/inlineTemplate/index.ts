@@ -13,7 +13,15 @@ import {
 
 import { getOriginalFileName } from '../utils';
 
-const virtualDocumentContents = new Map<string, string>();
+type VirtualDocumentInfo = {
+    timestamp: number;
+    documentText: string;
+};
+
+const NG_TPL_REG = /\btemplate\s*:\s*(['"`])[\s\S]*?(?!\\)(\1)/g;
+const MAX_COUNT = 5;
+const EXPIRE_TIME = 5 * 60 * 1000;
+const virtualDocumentContents = new Map<string, VirtualDocumentInfo>();
 
 export function supportInlineTemplate(context: ExtensionContext) {
     registerVirtualDocumentProvider(context);
@@ -109,7 +117,7 @@ function registerVirtualDocumentProvider(context: ExtensionContext) {
                 const originalUri = getOriginalFileName(uri.path);
                 const decodedUri = decodeURIComponent(originalUri);
                 const docText = virtualDocumentContents.get(decodedUri);
-                return docText || '';
+                return docText?.documentText || '';
             },
         }),
     );
@@ -117,13 +125,27 @@ function registerVirtualDocumentProvider(context: ExtensionContext) {
 
 function prepareVirtualDocument(document: TextDocument, vDocText: string) {
     const originalUri = document.uri.toString(true);
-    virtualDocumentContents.set(originalUri, vDocText);
+    virtualDocumentContents.set(originalUri, {
+        timestamp: Date.now(),
+        documentText: vDocText,
+    });
+    gc();
     const vDocUriStr = `embedded-content://html/${encodeURIComponent(originalUri)}.html`;
     const vDocUri = Uri.parse(vDocUriStr);
     return vDocUri;
 }
 
-const NG_TPL_REG = /\btemplate\s*:\s*(['"`])[\s\S]*?(?!\\)(\1)/g;
+function gc() {
+    if (virtualDocumentContents.size > MAX_COUNT) {
+        const now = Date.now();
+        for (const [uri, info] of virtualDocumentContents.entries()) {
+            if (now - info.timestamp > EXPIRE_TIME) {
+                virtualDocumentContents.delete(uri);
+            }
+        }
+    }
+}
+
 function getRelateTemplate(document: TextDocument, position: Position): string | undefined {
     const offsetAt = document.offsetAt(position);
     const text = document.getText();
