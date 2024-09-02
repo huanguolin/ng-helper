@@ -1,10 +1,6 @@
 {
     "scopeName": "inline-template.ng",
-    "fileTypes": [
-        "js",
-        "ts"
-    ],
-    "injectionSelector": "L:source -comment -text.html",
+    "injectionSelector": "L:meta.objectliteral.js  -comment -text.html, L:meta.objectliteral.ts -comment -text.html",
     "patterns": [
         {
             "include": "#inlineTemplate"
@@ -15,10 +11,10 @@
             "begin": "(template)\\s*(:)",
             "beginCaptures": {
                 "1": {
-                    "name": "meta.object-literal.key.ts"
+                    "name": "meta.object-literal.key.js"
                 },
                 "2": {
-                    "name": "meta.object-literal.key.ts punctuation.separator.key-value.ts"
+                    "name": "meta.object-literal.key.js punctuation.separator.key-value.js"
                 }
             },
             "end": "(?=,|})",
@@ -35,13 +31,13 @@
             "begin": "\\G\\s*(\\()",
             "beginCaptures": {
                 "1": {
-                    "name": "meta.brace.round.ts"
+                    "name": "meta.brace.round.js"
                 }
             },
             "end": "\\)",
             "endCaptures": {
                 "0": {
-                    "name": "meta.brace.round.ts"
+                    "name": "meta.brace.round.js"
                 }
             },
             "patterns": [
@@ -82,7 +78,7 @@
                 },
                 "patterns": [
                     {
-                        "include": "source.js"
+                        "include": "meta.template.expression.js"
                     }
                 ]
             },
