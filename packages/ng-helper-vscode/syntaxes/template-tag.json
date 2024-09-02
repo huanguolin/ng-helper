@@ -8,7 +8,7 @@
     ],
     "repository": {
         "dataBinding": {
-            "begin": "((?!data-)[a-z]+(?:-[-a-z]+)+)(=)(['\"])",
+            "begin": "((?!data-)[a-z]+(?:-[a-z]+)+)(=)(['\"])",
             "beginCaptures": {
                 "1": {
                     "name": "entity.other.attribute-name.html"
