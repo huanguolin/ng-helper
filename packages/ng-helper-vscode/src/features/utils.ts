@@ -1,3 +1,5 @@
+import os from 'node:os';
+
 import { getHtmlTagByCursor, isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
@@ -94,8 +96,14 @@ export function getOriginalFileName(fileName: string): string {
 export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
     if (isInlinedTemplate(document)) {
         const originalPath = getOriginalFileName(document.fileName);
-        // Remove leading `file://` to get real path.
-        return originalPath.slice('file://'.length);
+        let path = originalPath;
+        if (os.platform() === 'win32') {
+            // Here do not use normalizePath()
+            path = path.replace(/\\/g, '/').slice('file:///'.length);
+        } else {
+            path = path.slice('file://'.length);
+        }
+        return normalizePath(path);
     }
 
     if (isComponentHtml(document)) {
