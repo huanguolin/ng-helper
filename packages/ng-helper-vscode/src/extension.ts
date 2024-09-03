@@ -7,6 +7,7 @@ import { registerDefinition } from './features/definition';
 import { registerGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
 import { supportInlineTemplate } from './features/inlineTemplate';
+import { registerSemantic } from './features/semantic';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -37,6 +38,9 @@ export async function activate(context: ExtensionContext) {
 
     // inline template
     supportInlineTemplate(context);
+
+    // semantic
+    registerSemantic(context, config.port);
 }
 
 // This method is called when your extension is deactivated

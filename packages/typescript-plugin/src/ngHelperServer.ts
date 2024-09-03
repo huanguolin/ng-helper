@@ -18,6 +18,8 @@ import {
     type NgComponentAttrCompletionRequest,
     type NgTypeDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
+    type NgComponentsStringAttrsResponse,
+    type NgListComponentsStringAttrsRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -31,6 +33,7 @@ import {
 } from './completion';
 import { getComponentNameOrAttrNameDefinitionInfo, getComponentTypeDefinitionInfo, getControllerTypeDefinitionInfo } from './definition';
 import { getComponentNameOrAttrNameHoverInfo, getComponentTypeHoverInfo, getControllerTypeHoverInfo } from './hover';
+import { getComponentsStringAttrsInfo } from './other';
 import {
     CorePluginContext,
     GetCoreContextFn,
@@ -259,6 +262,14 @@ function initHttpServer() {
     app.use(express.json());
 
     app.get('/ng-helper/hc', (_, res) => res.send());
+
+    app.post('/ng-helper/components/string/attrs', (req, res) => {
+        handleRequestWithCoreCtx<NgListComponentsStringAttrsRequest, NgComponentsStringAttrsResponse>({
+            req,
+            res,
+            action: (ctx, body) => getComponentsStringAttrsInfo(ctx, body),
+        });
+    });
 
     app.post('/ng-helper/component/controller-as', (req, res) => {
         handleRequestWithCtx<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
