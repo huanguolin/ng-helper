@@ -1,14 +1,14 @@
 {
-    "scopeName": "template.tag.ng",
+    "scopeName": "template.attr.ng",
     "injectionSelector": "L:text.html#meta.tag -comment",
     "patterns": [
         {
-            "include": "#dataBinding"
+            "include": "#ngAttrBinding"
         }
     ],
     "repository": {
-        "dataBinding": {
-            "begin": "((?!data-)[a-z]+(?:-[a-z]+)+)(=)(['\"])",
+        "ngAttrBinding": {
+            "begin": "(ng(?:-[a-z]+)+)(=)(['\"])",
             "beginCaptures": {
                 "1": {
                     "name": "entity.other.attribute-name.html"
@@ -26,7 +26,7 @@
                 "name": "string.quoted.html punctuation.definition.string.end.html"
               }
             },
-            "name": "meta.custom-binding.property.html",
+            "name": "meta.ng-attr.property.html",
             "contentName": "expression.ng",
             "patterns": [
                 {

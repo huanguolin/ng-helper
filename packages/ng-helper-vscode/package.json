@@ -64,11 +64,12 @@
         }
       },
       {
-        "path": "./syntaxes/template.json",
-        "scopeName": "template.ng",
+        "path": "./syntaxes/attr-ng.json",
+        "scopeName": "template.attr.ng",
         "injectTo": [
           "text.html.derivative",
-          "source.ts"
+          "source.ts",
+          "source.js"
         ],
         "embeddedLanguages": {
           "text.html": "html",
@@ -76,12 +77,30 @@
         }
       },
       {
-        "path": "./syntaxes/template-tag.json",
-        "scopeName": "template.tag.ng",
+        "path": "./syntaxes/attr-custom.json",
+        "scopeName": "template.custom.attr.ng",
         "injectTo": [
           "text.html.derivative",
-          "source.ts"
-        ]
+          "source.ts",
+          "source.js"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/template.json",
+        "scopeName": "template.ng",
+        "injectTo": [
+          "text.html.derivative",
+          "source.ts",
+          "source.js"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
       },
       {
         "path": "./syntaxes/expression.json",
