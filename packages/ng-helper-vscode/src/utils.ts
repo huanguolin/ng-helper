@@ -196,3 +196,7 @@ export function normalizePath(filePath: string): string {
     filePath = normalize(filePath);
     return filePath.replace(/\\/g, '/');
 }
+
+export function uniq<T>(arr: T[]): T[] {
+    return Array.from(new Set(arr));
+}

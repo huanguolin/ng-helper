@@ -12,6 +12,7 @@ import {
 } from 'vscode';
 
 import { listComponentsStringAttrs } from '../../service/api';
+import { uniq } from '../../utils';
 import { isComponentTagName } from '../utils';
 
 export function registerSemantic(context: ExtensionContext, port: number) {
@@ -24,7 +25,7 @@ export function registerSemantic(context: ExtensionContext, port: number) {
 
             const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
             const componentNodes = getComponentNodes(htmlAst);
-            const componentNames = componentNodes.map((node) => camelCase(node.tagName));
+            const componentNames = uniq(componentNodes.map((node) => camelCase(node.tagName)));
             if (componentNames.length) {
                 const componentsStringAttrs = await listComponentsStringAttrs({
                     port,
