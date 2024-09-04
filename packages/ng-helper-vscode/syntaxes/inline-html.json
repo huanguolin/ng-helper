@@ -1,0 +1,40 @@
+{
+    "scopeName": "inline-html.ng",
+    "injectionSelector": "L:meta.objectliteral.js -comment -text.html, L:meta.objectliteral.ts -comment -text.html",
+    "patterns": [
+        {
+            "include": "#inlineHtml"
+        }
+    ],
+    "repository": {
+        "inlineHtml": {
+            "begin": "(template)\\s*(:)\\s*([`|'|\"])",
+            "beginCaptures": {
+                "1": {
+                    "name": "meta.object-literal.key.js"
+                },
+                "2": {
+                    "name": "meta.object-literal.key.js punctuation.separator.key-value.js"
+                },
+                "3": {
+                    "name": "string"
+                }
+            },
+            "end": "\\3",
+            "endCaptures": {
+                "0": {
+                    "name": "string"
+                }
+            },
+            "contentName": "text.html.derivative",
+            "patterns": [
+                {
+                    "include": "text.html.derivative"
+                },
+                {
+                    "include": "template.ng"
+                }
+            ]
+        }
+    }
+}

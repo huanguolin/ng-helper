@@ -63,7 +63,7 @@ async function provideComponentNameCompletion({
         return;
     }
 
-    let list = await getComponentNameCompletionApi({ port, info: { fileName: document.fileName }, vscodeCancelToken });
+    let list = await getComponentNameCompletionApi({ port, info: { fileName: relatedTsFile }, vscodeCancelToken });
     if (!list || !list.length) {
         return;
     }

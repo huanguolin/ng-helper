@@ -15,6 +15,8 @@ import {
     type NgDefinitionResponse,
     type NgTypeDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
+    type NgListComponentsStringAttrsRequest,
+    type NgComponentsStringAttrsResponse,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -32,6 +34,15 @@ interface BizRequestInput<T> {
     info: T;
     apiName: string;
     vscodeCancelToken: CancellationToken;
+}
+
+export function listComponentsStringAttrs({ port, vscodeCancelToken, info }: ApiInput<NgListComponentsStringAttrsRequest>) {
+    return bizRequest<NgListComponentsStringAttrsRequest, NgComponentsStringAttrsResponse>({
+        url: buildUrl(port, 'components', 'string', 'attrs'),
+        info,
+        vscodeCancelToken,
+        apiName: 'listComponentsStringAttrs',
+    });
 }
 
 export function getControllerTypeDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlTypeDefinitionRequest>) {

@@ -15,7 +15,12 @@ import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentH
 
 export function ctrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
-        async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken) {
+        async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context) {
+            // 避免在 inline template 中扰乱 data binding 的 completion
+            if (context.triggerCharacter) {
+                return;
+            }
+
             if (isComponentHtml(document)) {
                 return timeCost('provideComponentCtrlCompletion', async () => {
                     try {

@@ -77,6 +77,10 @@ export interface NgTypeDefinitionRequest extends NgHoverRequest {}
 
 export interface NgCtrlTypeDefinitionRequest extends NgCtrlHoverRequest {}
 
+export interface NgListComponentsStringAttrsRequest extends NgRequest {
+    componentNames: string[];
+}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;
@@ -98,3 +102,4 @@ export type NgHoverResponse = NgHoverInfo | undefined;
 export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefined;
 export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
+export type NgComponentsStringAttrsResponse = Record<string, string[]> | undefined;

@@ -1,8 +1,10 @@
-import { ChildNode, Document } from 'domhandler';
+import type { ChildNode, Document } from 'domhandler';
 import { ElementType, parseDocument } from 'htmlparser2';
 import { parseFragment } from 'parse5';
-import { Attribute, Location } from 'parse5/dist/common/token';
-import { Element } from 'parse5/dist/tree-adapters/default';
+import type { Attribute, Location } from 'parse5/dist/common/token';
+import type { Element, DocumentFragment } from 'parse5/dist/tree-adapters/default';
+
+export { parseFragment, DocumentFragment, Attribute, Location, Element };
 
 /**
  * Represents a span of text with its starting position.

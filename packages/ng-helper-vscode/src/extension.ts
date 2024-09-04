@@ -4,8 +4,10 @@ import { activateExt } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
-import { registerGotoHtml } from './features/gotoHtml';
+import { supportGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
+import { supportInlineHtml } from './features/inlineHtml';
+import { registerSemantic } from './features/semantic';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -31,8 +33,14 @@ export async function activate(context: ExtensionContext) {
     // definition
     registerDefinition(context, config.port);
 
+    // semantic
+    registerSemantic(context, config.port);
+
     // goto html
-    registerGotoHtml(context);
+    supportGotoHtml(context);
+
+    // inline html
+    supportInlineHtml(context, config.port);
 }
 
 // This method is called when your extension is deactivated

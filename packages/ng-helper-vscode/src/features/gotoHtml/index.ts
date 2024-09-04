@@ -9,7 +9,7 @@ const TEMPLATE_URL_REGEX_STR = `templateUrl\\s*:\\s*${URL_REGEX_STR}`;
 const MATCH_URL = new RegExp(URL_REGEX_STR);
 const MATCH_ALL_TEMPLATE_URL = new RegExp(TEMPLATE_URL_REGEX_STR, 'g');
 
-export function registerGotoHtml(context: ExtensionContext) {
+export function supportGotoHtml(context: ExtensionContext) {
     context.subscriptions.push(
         languages.registerDocumentLinkProvider(
             [

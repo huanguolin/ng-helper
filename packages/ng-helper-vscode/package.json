@@ -17,7 +17,9 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Programming Languages"],
+  "categories": [
+    "Programming Languages"
+  ],
   "keywords": [
     "AngularJS",
     "angular.js"
@@ -46,6 +48,63 @@
       {
         "name": "@ng-helper/typescript-plugin",
         "enableForWorkspaceTypeScriptVersions": true
+      }
+    ],
+    "grammars": [
+      {
+        "path": "./syntaxes/inline-html.json",
+        "scopeName": "inline-html.ng",
+        "injectTo": [
+          "source.js",
+          "source.ts"
+        ],
+        "embeddedLanguages": {
+          "text.html.derivative": "html",
+          "source.js": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/attr-ng.json",
+        "scopeName": "template.attr.ng",
+        "injectTo": [
+          "text.html.derivative",
+          "source.ts",
+          "source.js"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/attr-custom.json",
+        "scopeName": "template.custom.attr.ng",
+        "injectTo": [
+          "text.html.derivative",
+          "source.ts",
+          "source.js"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/template.json",
+        "scopeName": "template.ng",
+        "injectTo": [
+          "text.html.derivative",
+          "source.ts",
+          "source.js"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "expression.ng": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/expression.json",
+        "scopeName": "expression.ng"
       }
     ]
   },
