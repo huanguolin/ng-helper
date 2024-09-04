@@ -4,7 +4,7 @@ import { activateExt } from './activate';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
-import { registerGotoHtml } from './features/gotoHtml';
+import { supportGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
 import { registerSemantic } from './features/semantic';
@@ -37,7 +37,7 @@ export async function activate(context: ExtensionContext) {
     registerSemantic(context, config.port);
 
     // goto html
-    registerGotoHtml(context);
+    supportGotoHtml(context);
 
     // inline html
     supportInlineHtml(context, config.port);
