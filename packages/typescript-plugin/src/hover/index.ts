@@ -66,13 +66,22 @@ export function getComponentNameOrAttrNameHoverInfo(
     }
 
     function getComponentNameHoverInfo() {
+        const component = `(component) ${hoverInfo.tagName}`;
+
         const indent = SPACE.repeat(4);
-        const bindings = attrsFromBindings
-            .map(
-                (x) =>
-                    `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
-            )
-            .join('\n');
+        let bindings = '';
+        if (attrsFromBindings.length === 0) {
+            bindings = `bindings: { }`;
+        } else {
+            bindings = attrsFromBindings
+                .map(
+                    (x) =>
+                        `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
+                )
+                .join('\n');
+            bindings = `bindings: {\n${bindings}\n}`;
+        }
+
         let transclude = '';
         if (componentFileInfo!.transclude) {
             if (typeof componentFileInfo!.transclude === 'boolean') {
@@ -84,8 +93,9 @@ export function getComponentNameOrAttrNameHoverInfo(
                 transclude = `transclude: {\n${transclude}\n}`;
             }
         }
+
         return {
-            formattedTypeString: [`(component) ${hoverInfo.tagName}`, `bindings: {\n${bindings}\n}`, transclude].filter((x) => !!x).join('\n'),
+            formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
             document: '',
         };
     }
