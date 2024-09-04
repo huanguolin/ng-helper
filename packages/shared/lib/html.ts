@@ -209,7 +209,7 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
                     start: start + location.startOffset,
                 },
             };
-            const attrValueStart = getAttrValueStart(attr, location);
+            const attrValueStart = getAttrValueStart(attr, location, fragment);
             if (typeof attrValueStart === 'undefined') {
                 return item;
             }
@@ -219,27 +219,6 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
             };
             return item;
         });
-    }
-
-    function getAttrValueStart(attr: Attribute, location: Location): number | undefined {
-        const realAttrText = htmlText.slice(start + location.startOffset, start + location.endOffset);
-        const guessedAttrText = guessAttrText(attr, '"');
-        if (realAttrText.length === guessedAttrText.length) {
-            if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
-                return attr.name.length + '="'.length + '"'.length - 1; // base zero
-            } else {
-                throw new Error('getAttrValueStart(): Impossible here.');
-            }
-        } else if (realAttrText.length === attr.name.length) {
-            // <span disabled></span>
-            return undefined;
-        }
-        const v = realAttrText.lastIndexOf(attr.value);
-        return v >= 0 ? v : undefined;
-    }
-
-    function guessAttrText(attr: Attribute, quote: string): string {
-        return `${attr.name}=${quote}${attr.value}${quote}`;
     }
 
     function buildParent(): HtmlTagBase | undefined {
@@ -269,6 +248,27 @@ export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | 
                 end: start + x.sourceCodeLocation!.endOffset,
             }));
         return result.length ? result : undefined;
+    }
+}
+
+export function getAttrValueStart(attr: Attribute, location: Location, htmlText: string): number | undefined {
+    const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
+    const guessedAttrText = guessAttrText(attr, '"');
+    if (realAttrText.length === guessedAttrText.length) {
+        if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
+            return attr.name.length + '="'.length + '"'.length - 1; // base zero
+        } else {
+            throw new Error('getAttrValueStart(): Impossible here.');
+        }
+    } else if (realAttrText.length === attr.name.length) {
+        // <span disabled></span>
+        return undefined;
+    }
+    const v = realAttrText.lastIndexOf(attr.value);
+    return v >= 0 ? v : undefined;
+
+    function guessAttrText(attr: Attribute, quote: string): string {
+        return `${attr.name}=${quote}${attr.value}${quote}`;
     }
 }
 

@@ -1,4 +1,4 @@
-import { parseFragment, type Attribute, type DocumentFragment, type Element, type Location } from '@ng-helper/shared/lib/html';
+import { getAttrValueStart, parseFragment, type DocumentFragment, type Element } from '@ng-helper/shared/lib/html';
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
@@ -93,7 +93,7 @@ function fillSemanticTokens({
             for (const attr of node.attrs) {
                 if (attr.value && attrNames.includes(camelCase(attr.name))) {
                     const attrLocation = attrsLocation[attr.name];
-                    let attrValueStart = getAttrValueStart(attr, attrLocation);
+                    let attrValueStart = getAttrValueStart(attr, attrLocation, htmlText);
                     if (typeof attrValueStart === 'undefined') {
                         continue;
                     }
@@ -104,28 +104,6 @@ function fillSemanticTokens({
                     tokensBuilder.push(new Range(start, end), 'string');
                 }
             }
-        }
-    }
-
-    // TODO extract to shared
-    function getAttrValueStart(attr: Attribute, location: Location): number | undefined {
-        const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
-        const guessedAttrText = guessAttrText(attr, '"');
-        if (realAttrText.length === guessedAttrText.length) {
-            if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
-                return attr.name.length + '="'.length + '"'.length - 1; // base zero
-            } else {
-                throw new Error('getAttrValueStart(): Impossible here.');
-            }
-        } else if (realAttrText.length === attr.name.length) {
-            // <span disabled></span>
-            return undefined;
-        }
-        const v = realAttrText.lastIndexOf(attr.value);
-        return v >= 0 ? v : undefined;
-
-        function guessAttrText(attr: Attribute, quote: string): string {
-            return `${attr.name}=${quote}${attr.value}${quote}`;
         }
     }
 }
