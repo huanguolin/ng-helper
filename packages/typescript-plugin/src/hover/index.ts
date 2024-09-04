@@ -43,10 +43,7 @@ export function getComponentNameOrAttrNameHoverInfo(
     }
 
     const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    const attrsFromBindings = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, false);
-    if (!attrsFromBindings) {
-        return;
-    }
+    const attrsFromBindings = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, false) ?? [];
 
     let attrsFromType: NgTypeInfo[] = [];
     if (info.controllerType) {
@@ -70,7 +67,7 @@ export function getComponentNameOrAttrNameHoverInfo(
 
     function getComponentNameHoverInfo() {
         const indent = SPACE.repeat(4);
-        const bindings = attrsFromBindings!
+        const bindings = attrsFromBindings
             .map(
                 (x) =>
                     `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
@@ -94,7 +91,7 @@ export function getComponentNameOrAttrNameHoverInfo(
     }
 
     function getComponentAttrHoverInfo() {
-        const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings!.map((x) => [x.name, x]));
+        const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings.map((x) => [x.name, x]));
         const result = {
             formattedTypeString: `(property) ${hoverInfo.name}: any`,
             document: '',
