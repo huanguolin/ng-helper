@@ -17,7 +17,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
   - [x] Auto-completion for component attributes
   - [x] Hover information for component tag names
   - [x] Hover information for component attributes
-  - [ ] Syntax highlighting
+  - [x] Syntax highlighting
   - [ ] For HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS
     - [x] Auto-completion for data binding
     - [x] Type hints on hover
@@ -32,10 +32,11 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
   - [x] Auto-completion for component attributes in HTML
   - [x] Jump to definition of component tags or their attributes in HTML
   - [x] Jump to TS definition of bound data in HTML
+  - [x] Syntax highlighting in HTML
   - [ ] Function signature help in HTML
-  - [ ] Syntax highlighting in HTML
 - [x] Injection matching validation in TS files
 - [x] Support go to HTML file via 'templateUrl' form ts/js
+- [x] Inline HTML support in ts/js (including code highlighting, auto-completion, hover, etc.)
 
 
 ## Requirements
