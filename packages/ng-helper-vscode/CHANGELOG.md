@@ -4,6 +4,13 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.3.0](https://github.com/huanguolin/ng-helper/compare/v0.2.0...v0.3.0) (2024-08-28)
+
+### Feature
+- Support go to HTML file via 'templateUrl' form ts/js
+- Support hover hint for ng-*
+
+
 ## [v0.2.0](https://github.com/huanguolin/ng-helper/compare/v0.1.5...v0.2.0) (2024-08-24)
 
 ### Feature

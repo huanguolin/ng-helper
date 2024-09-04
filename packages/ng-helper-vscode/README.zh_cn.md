@@ -32,6 +32,7 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
   - [ ] html 中语法高亮
   - [ ] html 函数签名帮助
 - [x] ts 文件注入匹配校验
+- [x] 从 ts/js 中的 'templateUrl' 跳转到对应的 HTML
 
 
 ## Requirements
@@ -43,7 +44,7 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 ## Installation
 
 1. 安装插件
-2. 在 workspace 下的 .vscode 目录中，创建一个 ng-helper.json 空文件
+2. 在 workspace 下的 .vscode 目录中，创建一个 ng-helper.json 空文件（***这个文件是插件启动的标志， 没有的话插件不会启动***）
 3. 重启 vscode
 
 ## Extension Settings
