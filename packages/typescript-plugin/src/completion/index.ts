@@ -113,7 +113,10 @@ export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath
 }
 
 export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgTypeInfo[] | undefined {
+    const logger = coreCtx.logger.prefix('getComponentAttrCompletions()');
+
     ngHelperServer.refreshInternalMaps(filePath);
+
     const componentMap = ngHelperServer.getComponentMap(filePath);
     if (!componentMap) {
         return;
@@ -144,31 +147,24 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
     }
 
     const componentTypeInfo = getComponentTypeInfo(ctx, componentLiteralNode);
+    logger.info('componentTypeInfo.bindings.keys:', Array.from(componentTypeInfo.bindings.keys()));
     const typeFromBindings = getPublicMembersTypeInfoOfBindings(ctx, componentTypeInfo.bindings, true);
-    if (!componentTypeInfo.controllerType) {
+    if (!typeFromBindings || !componentTypeInfo.controllerType) {
         return typeFromBindings;
     }
 
     const typeFromProps = getPublicMembersTypeInfoOfType(ctx, componentTypeInfo.controllerType);
+    if (!typeFromProps) {
+        return typeFromBindings;
+    }
+
     return mergeTypeInfo(typeFromBindings, typeFromProps, getToPropsNameMap(componentTypeInfo.bindings));
 
     function mergeTypeInfo(
-        typeFromBindings: NgTypeInfo[] | undefined,
-        typeFromProps: NgTypeInfo[] | undefined,
+        typeFromBindings: NgTypeInfo[],
+        typeFromProps: NgTypeInfo[],
         toPropsNameMap: Map<string, string>,
     ): NgTypeInfo[] | undefined {
-        if (!typeFromBindings && !typeFromProps) {
-            return;
-        }
-
-        if (!typeFromBindings) {
-            return typeFromProps;
-        }
-
-        if (!typeFromProps) {
-            return typeFromBindings;
-        }
-
         const propMap = new Map(typeFromProps.map((x) => [x.name, x]));
         for (const p of typeFromBindings) {
             p.kind = 'property';
