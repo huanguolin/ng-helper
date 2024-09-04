@@ -37,7 +37,7 @@ export async function activate(context: ExtensionContext) {
     registerGotoHtml(context);
 
     // inline template
-    supportInlineTemplate(context);
+    supportInlineTemplate(context, config.port);
 
     // semantic
     registerSemantic(context, config.port);

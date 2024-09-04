@@ -1,4 +1,5 @@
 import {
+    Range,
     Uri,
     commands,
     languages,
@@ -7,10 +8,10 @@ import {
     type Definition,
     type ExtensionContext,
     type Hover,
-    type Position,
     type TextDocument,
 } from 'vscode';
 
+import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
 
 type VirtualDocumentInfo = {
@@ -23,12 +24,36 @@ const MAX_COUNT = 5;
 const EXPIRE_TIME = 5 * 60 * 1000;
 const virtualDocumentContents = new Map<string, VirtualDocumentInfo>();
 
-export function supportInlineTemplate(context: ExtensionContext) {
+export function supportInlineTemplate(context: ExtensionContext, port: number) {
     registerVirtualDocumentProvider(context);
+
+    providerSemantic(context, port);
 
     requestForwardHover(context);
     requestForwardDefinition(context);
     requestForwardCompletion(context);
+}
+
+function providerSemantic(context: ExtensionContext, port: number) {
+    context.subscriptions.push(
+        languages.registerDocumentSemanticTokensProvider(
+            [
+                { scheme: 'file', language: 'typescript' },
+                { scheme: 'file', language: 'javascript' },
+            ],
+            {
+                async provideDocumentSemanticTokens(document, token) {
+                    const vDocText = resolveVirtualDocText(document);
+                    if (!vDocText) {
+                        return;
+                    }
+
+                    return await htmlSemanticProvider(document, port, token);
+                },
+            },
+            legend,
+        ),
+    );
 }
 
 function requestForwardHover(context: ExtensionContext) {
@@ -40,7 +65,7 @@ function requestForwardHover(context: ExtensionContext) {
             ],
             {
                 async provideHover(document, position) {
-                    const vDocText = getRelateTemplate(document, position);
+                    const vDocText = resolveVirtualDocText(document);
                     if (!vDocText) {
                         return;
                     }
@@ -65,7 +90,7 @@ function requestForwardDefinition(context: ExtensionContext) {
             ],
             {
                 async provideDefinition(document, position) {
-                    const vDocText = getRelateTemplate(document, position);
+                    const vDocText = resolveVirtualDocText(document);
                     if (!vDocText) {
                         return;
                     }
@@ -88,7 +113,7 @@ function requestForwardCompletion(context: ExtensionContext) {
             ],
             {
                 async provideCompletionItems(document, position, _, ctx) {
-                    const vDocText = getRelateTemplate(document, position);
+                    const vDocText = resolveVirtualDocText(document);
                     if (!vDocText) {
                         return;
                     }
@@ -146,9 +171,11 @@ function gc() {
     }
 }
 
-function getRelateTemplate(document: TextDocument, position: Position): string | undefined {
-    const offsetAt = document.offsetAt(position);
+function resolveVirtualDocText(document: TextDocument): string | undefined {
     const text = document.getText();
+
+    const ranges: Range[] = [];
+
     let match: RegExpExecArray | null;
     NG_TPL_REG.lastIndex = 0;
     while ((match = NG_TPL_REG.exec(text)) !== null) {
@@ -156,22 +183,28 @@ function getRelateTemplate(document: TextDocument, position: Position): string |
         const matchStr = match[0];
         const strBegin = index + matchStr.indexOf(match[1]) + 1;
         const strEnd = index + matchStr.lastIndexOf(match[1]);
-        if (offsetAt < strBegin) {
-            return;
-        } else if (offsetAt < strEnd) {
-            return getVirtualDocText(text, strBegin, strEnd);
-        }
+        ranges.push(new Range(document.positionAt(strBegin), document.positionAt(strEnd)));
+    }
+
+    if (ranges.length) {
+        return getVirtualDocText(document, ranges);
     }
 }
 
-function getVirtualDocText(text: string, start: number, end: number): string {
-    const targetContent = text.slice(start, end);
+function getVirtualDocText(document: TextDocument, ranges: Range[]): string {
+    const text = document.getText();
     let content = text
         .split('\n')
         .map((line) => {
             return ' '.repeat(line.length);
         })
         .join('\n');
-    content = content.slice(0, start) + targetContent + content.slice(end);
+
+    for (const range of ranges) {
+        const start = document.offsetAt(range.start);
+        const end = document.offsetAt(range.end);
+        const targetContent = text.slice(start, end);
+        content = content.slice(0, start) + targetContent + content.slice(end);
+    }
     return content;
 }

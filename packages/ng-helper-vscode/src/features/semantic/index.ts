@@ -2,48 +2,57 @@ import { parseFragment, type Attribute, type DocumentFragment, type Element, typ
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
-    type DocumentSemanticTokensProvider,
     type SemanticTokens,
     SemanticTokensBuilder,
     Range,
     languages,
     type ExtensionContext,
     type TextDocument,
+    type CancellationToken,
 } from 'vscode';
 
 import { listComponentsStringAttrs } from '../../service/api';
 import { uniq } from '../../utils';
-import { isComponentTagName } from '../utils';
+import { checkServiceAndGetTsFilePath, isComponentTagName } from '../utils';
+
+const tokenTypes = ['string'];
+export const legend = new SemanticTokensLegend(tokenTypes);
 
 export function registerSemantic(context: ExtensionContext, port: number) {
-    const tokenTypes = ['string'];
-    const legend = new SemanticTokensLegend(tokenTypes);
-
-    const provider: DocumentSemanticTokensProvider = {
-        async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens> {
-            const tokensBuilder = new SemanticTokensBuilder(legend);
-
-            const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
-            const componentNodes = getComponentNodes(htmlAst);
-            const componentNames = uniq(componentNodes.map((node) => camelCase(node.tagName)));
-            if (componentNames.length) {
-                const componentsStringAttrs = await listComponentsStringAttrs({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { componentNames, fileName: document.fileName },
-                });
-                if (componentsStringAttrs) {
-                    fillSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
-                }
-            }
-
-            return tokensBuilder.build();
+    const disposable = languages.registerDocumentSemanticTokensProvider(
+        'html',
+        {
+            async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens> {
+                return await htmlSemanticProvider(document, port, token);
+            },
         },
-    };
-
-    const disposable = languages.registerDocumentSemanticTokensProvider('html', provider, legend);
+        legend,
+    );
 
     context.subscriptions.push(disposable);
+}
+
+export async function htmlSemanticProvider(document: TextDocument, port: number, token: CancellationToken) {
+    const tokensBuilder = new SemanticTokensBuilder(legend);
+
+    const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
+    const componentNodes = getComponentNodes(htmlAst);
+    const componentNames = uniq(componentNodes.map((node) => camelCase(node.tagName)));
+    if (componentNames.length) {
+        const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+        if (tsFilePath) {
+            const componentsStringAttrs = await listComponentsStringAttrs({
+                port,
+                vscodeCancelToken: token,
+                info: { componentNames, fileName: tsFilePath },
+            });
+            if (componentsStringAttrs) {
+                fillSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
+            }
+        }
+    }
+
+    return tokensBuilder.build();
 }
 
 function getComponentNodes(htmlAst: DocumentFragment): Element[] {
