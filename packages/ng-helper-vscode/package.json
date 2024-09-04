@@ -52,8 +52,8 @@
     ],
     "grammars": [
       {
-        "path": "./syntaxes/inline-template.json",
-        "scopeName": "inline-template.ng",
+        "path": "./syntaxes/inline-html.json",
+        "scopeName": "inline-html.ng",
         "injectTo": [
           "source.js",
           "source.ts"

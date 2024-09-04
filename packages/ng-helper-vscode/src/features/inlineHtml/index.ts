@@ -24,7 +24,7 @@ const MAX_COUNT = 5;
 const EXPIRE_TIME = 5 * 60 * 1000;
 const virtualDocumentContents = new Map<string, VirtualDocumentInfo>();
 
-export function supportInlineTemplate(context: ExtensionContext, port: number) {
+export function supportInlineHtml(context: ExtensionContext, port: number) {
     registerVirtualDocumentProvider(context);
 
     providerSemantic(context, port);

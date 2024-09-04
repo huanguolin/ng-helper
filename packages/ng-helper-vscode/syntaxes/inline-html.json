@@ -1,13 +1,13 @@
 {
-    "scopeName": "inline-template.ng",
+    "scopeName": "inline-html.ng",
     "injectionSelector": "L:meta.objectliteral.js -comment -text.html, L:meta.objectliteral.ts -comment -text.html",
     "patterns": [
         {
-            "include": "#inlineTemplate"
+            "include": "#inlineHtml"
         }
     ],
     "repository": {
-        "inlineTemplate": {
+        "inlineHtml": {
             "begin": "(template)\\s*(:)\\s*([`|'|\"])",
             "beginCaptures": {
                 "1": {

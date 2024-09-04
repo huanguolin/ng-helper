@@ -6,7 +6,7 @@ import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
 import { registerGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
-import { supportInlineTemplate } from './features/inlineTemplate';
+import { supportInlineHtml } from './features/inlineHtml';
 import { registerSemantic } from './features/semantic';
 
 // This method is called when your extension is activated
@@ -33,14 +33,14 @@ export async function activate(context: ExtensionContext) {
     // definition
     registerDefinition(context, config.port);
 
+    // semantic
+    registerSemantic(context, config.port);
+
     // goto html
     registerGotoHtml(context);
 
-    // inline template
-    supportInlineTemplate(context, config.port);
-
-    // semantic
-    registerSemantic(context, config.port);
+    // inline html
+    supportInlineHtml(context, config.port);
 }
 
 // This method is called when your extension is deactivated
