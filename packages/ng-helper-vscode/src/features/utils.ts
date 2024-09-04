@@ -8,14 +8,14 @@ import { TextDocument } from 'vscode';
 
 import { checkNgHelperServerRunning, getTsFiles, normalizePath } from '../utils';
 
-export function isInlinedTemplate(document: TextDocument): boolean {
+export function isInlinedHtml(document: TextDocument): boolean {
     const fileName = document.fileName;
     return fileName.endsWith('.ts.html') || fileName.endsWith('.js.html');
 }
 
 export function isComponentHtml(document: TextDocument): boolean {
     const fileName = document.fileName;
-    if (isInlinedTemplate(document)) {
+    if (isInlinedHtml(document)) {
         return fileName.endsWith('.component.ts.html') || fileName.endsWith('component.js.html');
     }
     return fileName.endsWith('.component.html');
@@ -94,7 +94,7 @@ export function getOriginalFileName(fileName: string): string {
 }
 
 export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
-    if (isInlinedTemplate(document)) {
+    if (isInlinedHtml(document)) {
         const originalPath = getOriginalFileName(document.fileName);
         let path = originalPath;
         if (os.platform() === 'win32') {
@@ -137,7 +137,8 @@ export function getComponentName(document: TextDocument): string | undefined {
     }
 
     const fileName = normalizePath(document.fileName).split('/').pop();
-    const kebabName = fileName?.replace('.component.html', '');
+    const suffix = isInlinedHtml(document) ? '.component.ts.html' : '.component.html';
+    const kebabName = fileName?.replace(suffix, '');
     return kebabName ? camelCase(kebabName) : undefined;
 }
 
