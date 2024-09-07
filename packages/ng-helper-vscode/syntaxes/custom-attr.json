@@ -1,5 +1,5 @@
 {
-    "scopeName": "template.attr.ng",
+    "scopeName": "template.custom.attr.ng",
     "injectionSelector": "L:text.html#meta.tag -comment",
     "patterns": [
         {
@@ -8,7 +8,7 @@
     ],
     "repository": {
         "ngAttrBinding": {
-            "begin": "(ng(?:-[a-z]+)+)(=)(['\"])",
+            "begin": "((?:(?!data-)[a-z]+)(?:-[a-z]+)+)(=)(['\"])",
             "beginCaptures": {
                 "1": {
                     "name": "entity.other.attribute-name.html"

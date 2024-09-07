@@ -64,8 +64,8 @@
         }
       },
       {
-        "path": "./syntaxes/attr-ng.json",
-        "scopeName": "template.attr.ng",
+        "path": "./syntaxes/custom-attr.json",
+        "scopeName": "template.custom.attr.ng",
         "injectTo": [
           "text.html.derivative",
           "source.ts",
@@ -77,8 +77,8 @@
         }
       },
       {
-        "path": "./syntaxes/attr-custom.json",
-        "scopeName": "template.custom.attr.ng",
+        "path": "./syntaxes/custom-tag-attr.json",
+        "scopeName": "template.custom.tag.attr.ng",
         "injectTo": [
           "text.html.derivative",
           "source.ts",
