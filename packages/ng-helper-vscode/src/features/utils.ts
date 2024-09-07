@@ -146,6 +146,10 @@ export function isNgDirectiveAttr(attrName: string): boolean {
     return attrName.startsWith('ng-');
 }
 
+export function isNgCustomAttr(attrName: string): boolean {
+    return attrName.includes('-') && !attrName.startsWith('data-') && attrName !== 'accept-charset';
+}
+
 export function isValidIdentifier(text: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z\d_$]*$/.test(text);
 }
