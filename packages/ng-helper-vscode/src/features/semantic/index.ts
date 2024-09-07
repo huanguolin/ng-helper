@@ -13,7 +13,7 @@ import {
 
 import { listComponentsStringAttrs } from '../../service/api';
 import { uniq } from '../../utils';
-import { checkServiceAndGetTsFilePath, isComponentTagName } from '../utils';
+import { checkServiceAndGetTsFilePath, getCorrespondingTsFileName, isComponentTagName } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
@@ -23,7 +23,7 @@ export function registerSemantic(context: ExtensionContext, port: number) {
         'html',
         {
             async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens> {
-                return await htmlSemanticProvider(document, port, token);
+                return await htmlSemanticProvider({ document, port, token });
             },
         },
         legend,
@@ -32,14 +32,24 @@ export function registerSemantic(context: ExtensionContext, port: number) {
     context.subscriptions.push(disposable);
 }
 
-export async function htmlSemanticProvider(document: TextDocument, port: number, token: CancellationToken) {
+export async function htmlSemanticProvider({
+    document,
+    port,
+    token,
+    noServiceRunningCheck,
+}: {
+    document: TextDocument;
+    port: number;
+    token: CancellationToken;
+    noServiceRunningCheck?: boolean;
+}) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
     const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
     const componentNodes = getComponentNodes(htmlAst);
     const componentNames = uniq(componentNodes.map((node) => camelCase(node.tagName)));
     if (componentNames.length) {
-        const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+        const tsFilePath = noServiceRunningCheck ? (await getCorrespondingTsFileName(document))! : await checkServiceAndGetTsFilePath(document, port);
         if (tsFilePath) {
             const componentsStringAttrs = await listComponentsStringAttrs({
                 port,

@@ -48,7 +48,7 @@ function providerSemantic(context: ExtensionContext, port: number) {
                         return;
                     }
 
-                    return await htmlSemanticProvider(document, port, token);
+                    return await htmlSemanticProvider({ document, port, token, noServiceRunningCheck: true });
                 },
             },
             legend,
