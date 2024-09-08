@@ -8,6 +8,7 @@ import {
     type Definition,
     type ExtensionContext,
     type Hover,
+    type Position,
     type TextDocument,
 } from 'vscode';
 
@@ -65,7 +66,7 @@ function requestForwardHover(context: ExtensionContext) {
             ],
             {
                 async provideHover(document, position) {
-                    const vDocText = resolveVirtualDocText(document);
+                    const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;
                     }
@@ -90,7 +91,7 @@ function requestForwardDefinition(context: ExtensionContext) {
             ],
             {
                 async provideDefinition(document, position) {
-                    const vDocText = resolveVirtualDocText(document);
+                    const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;
                     }
@@ -113,7 +114,7 @@ function requestForwardCompletion(context: ExtensionContext) {
             ],
             {
                 async provideCompletionItems(document, position, _, ctx) {
-                    const vDocText = resolveVirtualDocText(document);
+                    const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;
                     }
@@ -171,7 +172,7 @@ function gc() {
     }
 }
 
-function resolveVirtualDocText(document: TextDocument): string | undefined {
+function resolveVirtualDocText(document: TextDocument, position?: Position): string | undefined {
     const text = document.getText();
 
     const ranges: Range[] = [];
@@ -184,6 +185,14 @@ function resolveVirtualDocText(document: TextDocument): string | undefined {
         const strBegin = index + matchStr.indexOf(match[1]) + 1;
         const strEnd = index + matchStr.lastIndexOf(match[1]);
         ranges.push(new Range(document.positionAt(strBegin), document.positionAt(strEnd)));
+    }
+
+    // fix #18
+    if (position) {
+        const inRange = ranges.find((r) => r.contains(position));
+        if (!inRange) {
+            return;
+        }
     }
 
     if (ranges.length) {
