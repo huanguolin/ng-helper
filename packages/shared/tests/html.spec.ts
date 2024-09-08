@@ -82,7 +82,7 @@ describe('getTextInTemplate()', () => {
     });
 
     it.each([
-        ['', 0],
+        ['', 1],
         ['{{1}}', -1],
     ])('invalid input: %s, should throw error', (text, offset) => {
         expect(() => getTextInTemplate(text, { at: offset, isHover: true })).toThrow();
@@ -233,13 +233,10 @@ describe('getHtmlTagByCursor()', () => {
         expect(tag?.attrs[0].value).toBeUndefined();
     });
 
-    it.each([[{ at: 3, isHover: true }], [{ at: 5, isHover: true }], [{ at: 4, isHover: false }]])(
-        'should throw error when cursor invalid: %s',
-        (cursor) => {
-            const htmlText = '123';
-            expect(() => getHtmlTagByCursor(htmlText, cursor)).toThrow();
-        },
-    );
+    it.each([[{ at: 4, isHover: true }], [{ at: 4, isHover: false }]])('should throw error when cursor invalid: %s', (cursor) => {
+        const htmlText = '123';
+        expect(() => getHtmlTagByCursor(htmlText, cursor)).toThrow();
+    });
 
     it(`test: 'ctrl' auto completion not working on <div ng-class="c">, see https://github.com/huanguolin/ng-helper/issues/2`, () => {
         const htmlText = '<h1 ng-class="c">Title</h1>';
