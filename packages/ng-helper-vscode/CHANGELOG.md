@@ -4,6 +4,18 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.4.0](https://github.com/huanguolin/ng-helper/compare/v0.3.0...v0.4.0) (2024-09-08)
+
+### Feature
+- Syntax highlight for js in HTML.
+- Syntax highlight for HTML in js/ts.
+- Completion, hover hint, go to definition for HTML in js/ts.
+- Improve go to HTML file via 'templateUrl' form ts/js
+
+### Fixed
+- Hovering does not work on ng directive attrs (#15).
+
+
 ## [v0.3.0](https://github.com/huanguolin/ng-helper/compare/v0.2.0...v0.3.0) (2024-08-28)
 
 ### Feature
