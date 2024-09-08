@@ -261,7 +261,7 @@ function initHttpServer() {
     const app = express();
     app.use(express.json());
 
-    app.get('/ng-helper/hc', (_, res) => res.send());
+    app.get('/ng-helper/hc', (_, res) => res.send('ok'));
 
     app.post('/ng-helper/components/string/attrs', (req, res) => {
         handleRequestWithCoreCtx<NgListComponentsStringAttrsRequest, NgComponentsStringAttrsResponse>({
