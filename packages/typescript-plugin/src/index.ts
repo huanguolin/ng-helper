@@ -10,9 +10,6 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
     return {
         create(info: ts.server.PluginCreateInfo) {
             const removeProject = ngHelperServer.addProject({ info, modules });
-            if (!removeProject) {
-                return info.languageService;
-            }
 
             // Set up decorator object
             const proxy: ts.LanguageService = buildProxy(info);

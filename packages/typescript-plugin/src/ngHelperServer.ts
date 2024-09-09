@@ -89,7 +89,7 @@ function createNgHelperServer(): NgHelperServer {
         }
     }
 
-    function addProject(projectInfo: ProjectInfo): (() => void) | undefined {
+    function addProject(projectInfo: ProjectInfo): () => void {
         const { info, modules } = projectInfo;
         const logger = buildLogger(modules.typescript, info);
         const initLogger = logger.prefix('[init]');
