@@ -246,6 +246,25 @@ describe('getHtmlTagAt()', () => {
         expect(tag?.attrs[0].name).toEqual({ text: 'ng-class', start: 4 });
         expect(tag?.attrs[0].value).toEqual({ text: 'c', start: 14 });
     });
+
+    it('parse pure text', () => {
+        const htmlText = 'some text';
+        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
+        expect(tag).toBeUndefined();
+    });
+
+    it('text + <tag> and cursor at text', () => {
+        const htmlText = 'text <h1>h1</h1>';
+        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
+        expect(tag).toBeUndefined();
+    });
+
+    it('text + <tag> and cursor at <tag>', () => {
+        const htmlText = 'text <h1>h1</h1>';
+        const tag = getHtmlTagAt(htmlText, { at: 7, isHover: true });
+        expect(tag?.tagName).toEqual('h1');
+        expect(tag?.attrs.length).toEqual(0);
+    });
 });
 
 describe('getTheAttrWhileCursorAtValue()', () => {
