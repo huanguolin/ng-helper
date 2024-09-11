@@ -1,4 +1,4 @@
-import { canCompletionHtmlAttr, Cursor, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
+import { canCompletionHtmlAttr, Cursor, getHtmlTagAt } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
 
 import { timeCost } from '../../debug';
@@ -34,7 +34,7 @@ export function ngDirective(_port: number) {
 function provideNgCompletion({ document, position }: { document: TextDocument; position: Position }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-    const tag = getHtmlTagByCursor(docText, cursor);
+    const tag = getHtmlTagAt(docText, cursor);
     if (!tag || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
         return;
     }

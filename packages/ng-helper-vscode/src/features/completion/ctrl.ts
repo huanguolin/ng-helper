@@ -4,7 +4,7 @@ import {
     getBeforeCursorText,
     Cursor,
     getTheAttrWhileCursorAtValue,
-    getHtmlTagByCursor,
+    getHtmlTagAt,
 } from '@ng-helper/shared/lib/html';
 import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken } from 'vscode';
 
@@ -64,7 +64,7 @@ async function provideComponentCtrlCompletion({
     }
 
     // 组件属性值中 或者 ng-* 属性值中
-    const tag = getHtmlTagByCursor(docText, cursor);
+    const tag = getHtmlTagAt(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
         if (attr && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {

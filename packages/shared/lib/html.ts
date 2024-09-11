@@ -137,7 +137,7 @@ export function parseHtml(htmlText: string): Document {
  * @param cursor - The cursor position.
  * @returns The HTML tag at the cursor position, or undefined if no tag is found.
  */
-export function getHtmlTagByCursor(htmlText: string, cursor: Cursor): HtmlTag | undefined {
+export function getHtmlTagAt(htmlText: string, cursor: Cursor): HtmlTag | undefined {
     ensureInputValid(htmlText, cursor);
 
     const document = parseHtml(htmlText);
@@ -409,7 +409,7 @@ export function canCompletionComponentName(htmlText: string, cursor: Cursor): Ca
         return { canComplete: false };
     }
 
-    const tag = getHtmlTagByCursor(htmlText, cursor);
+    const tag = getHtmlTagAt(htmlText, cursor);
     if (!tag) {
         return { canComplete: true };
     }

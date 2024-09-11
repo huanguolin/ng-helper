@@ -5,7 +5,7 @@ import {
     indexOfNgFilter,
     getMapValues,
     getBeforeCursorText,
-    getHtmlTagByCursor,
+    getHtmlTagAt,
     getTheAttrWhileCursorAtValue,
     canCompletionComponentName,
     Cursor,
@@ -171,7 +171,7 @@ describe('getMapValues()', () => {
     });
 });
 
-describe('getHtmlTagByCursor()', () => {
+describe('getHtmlTagAt()', () => {
     const h1Tag: HtmlTag = {
         tagName: 'h1',
         attrs: [],
@@ -220,13 +220,13 @@ describe('getHtmlTagByCursor()', () => {
         [{ at: 47, isHover: false }, divTag],
     ])('input cursor: %s, return tag: %s', (cursor, htmlTag) => {
         const htmlText = 'text<div class="container"><h1>Title</h1></div>';
-        const tag = getHtmlTagByCursor(htmlText, cursor);
+        const tag = getHtmlTagAt(htmlText, cursor);
         expect(tag).toEqual(htmlTag);
     });
 
     it('parse no value attr should ok', () => {
         const htmlText = '<h1 disabled>Title</h1>';
-        const tag = getHtmlTagByCursor(htmlText, { at: 3, isHover: true });
+        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
         expect(tag?.tagName).toEqual('h1');
         expect(tag?.attrs.length).toEqual(1);
         expect(tag?.attrs[0].name.text).toEqual('disabled');
@@ -235,12 +235,12 @@ describe('getHtmlTagByCursor()', () => {
 
     it.each([[{ at: 4, isHover: true }], [{ at: 4, isHover: false }]])('should throw error when cursor invalid: %s', (cursor) => {
         const htmlText = '123';
-        expect(() => getHtmlTagByCursor(htmlText, cursor)).toThrow();
+        expect(() => getHtmlTagAt(htmlText, cursor)).toThrow();
     });
 
     it(`test: 'ctrl' auto completion not working on <div ng-class="c">, see https://github.com/huanguolin/ng-helper/issues/2`, () => {
         const htmlText = '<h1 ng-class="c">Title</h1>';
-        const tag = getHtmlTagByCursor(htmlText, { at: 15, isHover: false });
+        const tag = getHtmlTagAt(htmlText, { at: 15, isHover: false });
         expect(tag?.tagName).toEqual('h1');
         expect(tag?.attrs.length).toEqual(1);
         expect(tag?.attrs[0].name).toEqual({ text: 'ng-class', start: 4 });

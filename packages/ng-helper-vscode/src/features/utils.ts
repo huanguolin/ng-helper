@@ -1,6 +1,6 @@
 import os from 'node:os';
 
-import { getHtmlTagByCursor, isHtmlTagName } from '@ng-helper/shared/lib/html';
+import { getHtmlTagAt, isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
@@ -23,7 +23,7 @@ export function isComponentHtml(document: TextDocument): boolean {
 
 export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
     const docText = document.getText();
-    const tag = getHtmlTagByCursor(docText, { at: cursorAt, isHover: true });
+    const tag = getHtmlTagAt(docText, { at: cursorAt, isHover: true });
     if (!tag) {
         return;
     }
@@ -61,7 +61,7 @@ export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInf
         return;
     }
 
-    const tag = getHtmlTagByCursor(docText, { at: pos, isHover: true });
+    const tag = getHtmlTagAt(docText, { at: pos, isHover: true });
     if (!tag) {
         return;
     }

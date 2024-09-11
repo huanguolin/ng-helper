@@ -4,7 +4,7 @@ import {
     getBeforeCursorText,
     Cursor,
     getTheAttrWhileCursorAtValue,
-    getHtmlTagByCursor,
+    getHtmlTagAt,
 } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import {
@@ -84,7 +84,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
 
         // 组件属性值中 或者 ng-* 属性值中
-        const tag = getHtmlTagByCursor(docText, cursor);
+        const tag = getHtmlTagAt(docText, cursor);
         if (tag) {
             const attr = getTheAttrWhileCursorAtValue(tag, cursor);
             if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
@@ -121,7 +121,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         }
 
         // 组件属性值中 或者 ng-* 属性值中
-        const tag = getHtmlTagByCursor(docText, cursor);
+        const tag = getHtmlTagAt(docText, cursor);
         if (tag) {
             const attr = getTheAttrWhileCursorAtValue(tag, cursor);
             if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {

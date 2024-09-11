@@ -1,7 +1,7 @@
 import {
     type Cursor,
     getTextInTemplate,
-    getHtmlTagByCursor,
+    getHtmlTagAt,
     getTheAttrWhileCursorAtValue,
     indexOfNgFilter,
     getMapValues,
@@ -41,7 +41,7 @@ export async function provideTypeHoverInfo<T>({
     }
 
     // 组件属性值中 或者 ng-* 属性值中
-    const tag = getHtmlTagByCursor(docText, cursor);
+    const tag = getHtmlTagAt(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
         if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text) || isNgCustomAttr(attr.name.text))) {

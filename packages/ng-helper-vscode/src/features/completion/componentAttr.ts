@@ -1,4 +1,4 @@
-import { Cursor, canCompletionHtmlAttr, getHtmlTagByCursor } from '@ng-helper/shared/lib/html';
+import { Cursor, canCompletionHtmlAttr, getHtmlTagAt } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
 import { languages, TextDocument, Position, CompletionList, CancellationToken, CompletionItem, SnippetString } from 'vscode';
 
@@ -44,7 +44,7 @@ async function provideComponentAttrCompletion({
 }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-    const tag = getHtmlTagByCursor(docText, cursor);
+    const tag = getHtmlTagAt(docText, cursor);
     if (!tag || !isComponentTagName(tag.tagName) || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
         return;
     }
