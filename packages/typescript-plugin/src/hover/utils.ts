@@ -1,8 +1,9 @@
-import { NgHoverInfo, type NgComponentNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
+import { NgHoverInfo, type NgComponentNameInfo, type NgDirectiveNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext, SyntaxNodeInfoEx, type NgComponentFileInfo } from '../type';
+import { PluginContext, SyntaxNodeInfoEx, type NgComponentDirectiveFileInfo } from '../type';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
+import { isElementDirective } from '../utils/ng';
 
 export function buildHoverInfo({
     ctx,
@@ -113,31 +114,78 @@ export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: stri
     }
 }
 
-export function findComponentInfo(componentMap: Map<string, NgComponentFileInfo>, hoverInfo: NgElementHoverInfo) {
-    let componentFilePath: string | undefined;
-    let componentFileInfo: NgComponentNameInfo | undefined;
-    let transcludeConfig: string | undefined;
-    for (const [key, value] of componentMap.entries()) {
-        if (value.componentName === hoverInfo.tagName) {
-            componentFilePath = key;
-            componentFileInfo = value;
-            break;
-        } else if (
-            hoverInfo.parentTagName &&
-            hoverInfo.parentTagName === value.componentName &&
-            !!value.transclude &&
-            typeof value.transclude === 'object'
-        ) {
-            for (const [, v] of Object.entries(value.transclude)) {
-                const transcludeElementName = v.replace('?', '').trim();
-                if (transcludeElementName === hoverInfo.tagName) {
-                    componentFilePath = key;
-                    componentFileInfo = value;
-                    transcludeConfig = v;
-                    break;
+export function findComponentOrDirectiveInfo(
+    componentDirectiveMap: Map<string, NgComponentDirectiveFileInfo>,
+    hoverInfo: NgElementHoverInfo,
+): {
+    filePath?: string;
+    componentNameInfo?: NgComponentNameInfo;
+    directiveNameInfo?: NgDirectiveNameInfo;
+    transcludeConfig?: string;
+} {
+    for (const [key, value] of componentDirectiveMap.entries()) {
+        const componentInfo = findFromComponents(value.components);
+        if (componentInfo) {
+            return { filePath: key, ...componentInfo };
+        }
+        const directiveInfo = findFromDirectives(value.directives);
+        if (directiveInfo) {
+            return { filePath: key, ...directiveInfo };
+        }
+    }
+    return {};
+
+    function findFromDirectives(directives: NgDirectiveNameInfo[]):
+        | {
+              directiveNameInfo: NgDirectiveNameInfo;
+              transcludeConfig?: string;
+          }
+        | undefined {
+        for (const directive of directives) {
+            if (!isElementDirective(directive)) {
+                continue;
+            }
+
+            if (directive.directiveName === hoverInfo.tagName) {
+                return { directiveNameInfo: directive };
+            } else if (
+                hoverInfo.parentTagName &&
+                hoverInfo.parentTagName === directive.directiveName &&
+                !!directive.transclude &&
+                typeof directive.transclude === 'object'
+            ) {
+                for (const [, v] of Object.entries(directive.transclude)) {
+                    const transcludeElementName = v.replace('?', '').trim();
+                    if (transcludeElementName === hoverInfo.tagName) {
+                        return { directiveNameInfo: directive, transcludeConfig: v };
+                    }
                 }
             }
         }
     }
-    return { componentFilePath, componentFileInfo, transcludeConfig };
+
+    function findFromComponents(components: NgComponentNameInfo[]):
+        | {
+              componentNameInfo: NgComponentNameInfo;
+              transcludeConfig?: string;
+          }
+        | undefined {
+        for (const component of components) {
+            if (component.componentName === hoverInfo.tagName) {
+                return { componentNameInfo: component };
+            } else if (
+                hoverInfo.parentTagName &&
+                hoverInfo.parentTagName === component.componentName &&
+                !!component.transclude &&
+                typeof component.transclude === 'object'
+            ) {
+                for (const [, v] of Object.entries(component.transclude)) {
+                    const transcludeElementName = v.replace('?', '').trim();
+                    if (transcludeElementName === hoverInfo.tagName) {
+                        return { componentNameInfo: component, transcludeConfig: v };
+                    }
+                }
+            }
+        }
+    }
 }

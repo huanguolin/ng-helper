@@ -1,4 +1,4 @@
-import { NgComponentNameInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import { NgComponentNameInfo, NgTypeInfo, type NgComponentDirectiveNamesInfo, type NgDirectiveNameInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { NgComponentTypeInfo, PluginContext, type CorePluginContext } from '../type';
@@ -15,6 +15,22 @@ export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node
         node.arguments.length === 2 &&
         ctx.ts.isStringLiteral(node.arguments[0]) &&
         ctx.ts.isObjectLiteralExpression(node.arguments[1])
+    ) {
+        return true;
+    }
+    return false;
+}
+
+export function isAngularDirectiveRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    if (
+        ctx.ts.isCallExpression(node) &&
+        ctx.ts.isPropertyAccessExpression(node.expression) &&
+        ctx.ts.isCallExpression(node.expression.expression) &&
+        ctx.ts.isIdentifier(node.expression.name) &&
+        node.expression.name.text === 'directive' &&
+        node.arguments.length === 2 &&
+        ctx.ts.isStringLiteral(node.arguments[0]) &&
+        (ctx.ts.isArrayLiteralExpression(node.arguments[1]) || ctx.ts.isFunctionExpression(node.arguments[1]))
     ) {
         return true;
     }
@@ -117,24 +133,94 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLit
     }
 }
 
-export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | undefined {
-    let info: NgComponentNameInfo | undefined;
+export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDirectiveNamesInfo | undefined {
+    const info: NgComponentDirectiveNamesInfo = {
+        components: [],
+        directives: [],
+    };
     visit(ctx.sourceFile);
-    return info;
+    return info.components.length || info.directives.length ? info : undefined;
 
     function visit(node: ts.Node) {
         if (isAngularComponentRegisterNode(ctx, node)) {
-            // 第一个参数是字符串字面量
-            const nameNode = node.arguments[0];
-            if (ctx.ts.isStringLiteralLike(nameNode)) {
-                info = {
-                    componentName: nameNode.text,
-                };
+            const componentInfo = getComponentNameInfo(node);
+            if (componentInfo) {
+                info.components.push(componentInfo);
+            }
+        } else if (isAngularDirectiveRegisterNode(ctx, node)) {
+            const directiveInfo = getDirectiveNameInfo(node);
+            if (directiveInfo) {
+                info.directives.push(directiveInfo);
+            }
+        }
 
-                // 第二个参数是对象字面量
-                const configNode = node.arguments[1];
-                if (ctx.ts.isObjectLiteralExpression(configNode)) {
-                    const transcludeObj = configNode.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
+        // components 和 directives 都为空时，继续遍历.
+        // 且这里仅仅考虑两者在 AST 的同一层的情况。
+        if (!info.components.length && !info.directives.length) {
+            ctx.ts.forEachChild(node, visit);
+        }
+    }
+
+    function getComponentNameInfo(node: ts.CallExpression): NgComponentNameInfo | undefined {
+        let info: NgComponentNameInfo | undefined;
+
+        // 第一个参数是字符串字面量
+        const nameNode = node.arguments[0];
+        if (ctx.ts.isStringLiteralLike(nameNode)) {
+            info = {
+                componentName: nameNode.text,
+            };
+
+            // 第二个参数是对象字面量
+            const configNode = node.arguments[1];
+            if (ctx.ts.isObjectLiteralExpression(configNode)) {
+                const transcludeObj = configNode.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
+                if (transcludeObj) {
+                    info.transclude = getTranscludeInfo(transcludeObj);
+                }
+            }
+        }
+
+        return info;
+    }
+
+    function getDirectiveNameInfo(node: ts.CallExpression): NgDirectiveNameInfo | undefined {
+        let info: NgDirectiveNameInfo | undefined;
+
+        // 第一个参数是字符串字面量
+        const nameNode = node.arguments[0];
+        if (ctx.ts.isStringLiteralLike(nameNode)) {
+            info = {
+                directiveName: nameNode.text,
+                restrict: 'EA', // default value, see: https://docs.angularjs.org/api/ng/service/$compile#directive-definition-object
+            };
+
+            // 第二个参数是数组字面量或者函数表达式
+            const configNode = node.arguments[1];
+            let directiveFuncExpr: ts.FunctionExpression | undefined;
+            if (ctx.ts.isFunctionExpression(configNode)) {
+                directiveFuncExpr = configNode;
+            } else if (
+                ctx.ts.isArrayLiteralExpression(configNode) &&
+                ctx.ts.isFunctionExpression(configNode.elements[configNode.elements.length - 1])
+            ) {
+                directiveFuncExpr = configNode.elements[configNode.elements.length - 1] as ts.FunctionExpression;
+            }
+
+            // 获取函数的返回值
+            if (directiveFuncExpr) {
+                const returnStatement = directiveFuncExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
+                if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
+                    const returnObj = returnStatement.expression;
+
+                    // restrict
+                    const restrictStr = returnObj.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'restrict');
+                    if (restrictStr && ctx.ts.isPropertyAssignment(restrictStr) && ctx.ts.isStringLiteralLike(restrictStr.initializer)) {
+                        info.restrict = restrictStr.initializer.text;
+                    }
+
+                    // transclude
+                    const transcludeObj = returnObj.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
                     if (transcludeObj) {
                         info.transclude = getTranscludeInfo(transcludeObj);
                     }
@@ -142,9 +228,7 @@ export function getComponentNameInfo(ctx: PluginContext): NgComponentNameInfo | 
             }
         }
 
-        if (!info) {
-            ctx.ts.forEachChild(node, visit);
-        }
+        return info;
     }
 
     function getTranscludeInfo(transclude: ts.ObjectLiteralElementLike): boolean | Record<string, string> | undefined {
@@ -215,7 +299,7 @@ export function getPublicMembersTypeInfoOfBindings(
     return result;
 
     function getBindType(s: string) {
-        const inputName = s.replace(/[@=<?&]/g, '').trim();
+        const inputName = removeBindingControlChars(s).trim();
         const result: {
             type: 'any' | 'string' | 'function';
             optional: boolean;
@@ -248,6 +332,31 @@ export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectL
         }
     }
     return obj;
+}
+
+export function isStringBinding(bindingName: string): boolean {
+    return bindingName.includes('@');
+}
+
+export function removeBindingControlChars(bindingName: string): string {
+    return bindingName.replace(/[@=<?&]/g, '');
+}
+
+export function isElementDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
+    return directiveNameInfo.restrict.includes('E');
+}
+
+export function isAttributeDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
+    return directiveNameInfo.restrict.includes('A');
+}
+
+export function isComponentOrDirectiveFile(fileName: string): boolean {
+    // Note: Not support '.component.js' file.
+    return isComponentTsFile(fileName) || isDirectiveFile(fileName);
+}
+
+export function isDirectiveFile(fileName: string): boolean {
+    return fileName.endsWith('.directive.ts') || fileName.endsWith('.directive.js');
 }
 
 export function isComponentTsFile(fileName: string): boolean {

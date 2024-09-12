@@ -37,24 +37,24 @@ import { getComponentsStringAttrsInfo } from './other';
 import {
     CorePluginContext,
     GetCoreContextFn,
-    NgComponentFileInfo,
     NgHelperServer,
     NgTsCtrlFileInfo,
     PluginContext,
     PluginCoreLogger,
     PluginLogger,
     ProjectInfo,
+    type NgComponentDirectiveFileInfo,
 } from './type';
 import { getSourceFileVersion } from './utils/common';
 import { buildLogger } from './utils/log';
-import { getComponentNameInfo, getControllerNameInfo, isComponentTsFile, isControllerTsFile } from './utils/ng';
+import { getComponentDirectiveNameInfo, getControllerNameInfo, isComponentOrDirectiveFile, isControllerTsFile } from './utils/ng';
 
 export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
     const _getContextMap = new Map<string, GetCoreContextFn>();
-    const _componentMapOfMap = new Map<string, Map<string, NgComponentFileInfo>>();
+    const _componentDirectiveMapOfMap = new Map<string, Map<string, NgComponentDirectiveFileInfo>>();
     const _tsCtrlMapOfMap = new Map<string, Map<string, NgTsCtrlFileInfo>>();
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
@@ -65,7 +65,7 @@ function createNgHelperServer(): NgHelperServer {
         addProject,
         getContext,
         getCoreContext,
-        getComponentMap,
+        getComponentDirectiveMap,
         getTsCtrlMap,
         refreshInternalMaps,
     };
@@ -116,7 +116,7 @@ function createNgHelperServer(): NgHelperServer {
         function removeProject() {
             if (projectRoot) {
                 _getContextMap.delete(projectRoot);
-                _componentMapOfMap.delete(projectRoot);
+                _componentDirectiveMapOfMap.delete(projectRoot);
                 _tsCtrlMapOfMap.delete(projectRoot);
 
                 initLogger.info('dispose:', projectRoot);
@@ -167,12 +167,12 @@ function createNgHelperServer(): NgHelperServer {
         }
     }
 
-    function getComponentMap(filePath: string): Map<string, NgComponentFileInfo> | undefined {
+    function getComponentDirectiveMap(filePath: string): Map<string, NgComponentDirectiveFileInfo> | undefined {
         const projectRoot = getProjectRoot(filePath);
         if (!projectRoot) {
             return;
         }
-        return getMap(projectRoot, _componentMapOfMap);
+        return getMap(projectRoot, _componentDirectiveMapOfMap);
     }
 
     function getTsCtrlMap(filePath: string): Map<string, NgTsCtrlFileInfo> | undefined {
@@ -198,27 +198,41 @@ function createNgHelperServer(): NgHelperServer {
         const logger = coreCtx.logger.prefix('refreshInternalMaps()');
         logger.startGroup();
 
-        const oldComponentMap = get(_componentMapOfMap);
+        const oldComponentDirectiveMap = get(_componentDirectiveMapOfMap);
         const oldTsCtrlMap = get(_tsCtrlMapOfMap);
         const sourceFiles = coreCtx.program.getSourceFiles();
-        logger.info('sourceFiles count:', sourceFiles.length, 'old component count:', oldComponentMap.size, 'old TsCtrl count:', oldTsCtrlMap.size);
+        logger.info(
+            'sourceFiles count:',
+            sourceFiles.length,
+            'old component/directive file count:',
+            oldComponentDirectiveMap.size,
+            'old TsCtrl count:',
+            oldTsCtrlMap.size,
+        );
 
-        const newComponentMap = new Map<string, NgComponentFileInfo>();
+        const newComponentDirectiveMap = new Map<string, NgComponentDirectiveFileInfo>();
         const newTsCtrlMap = new Map<string, NgTsCtrlFileInfo>();
 
         sourceFiles.forEach((sourceFile) => {
-            if (isComponentTsFile(sourceFile.fileName)) {
-                fillNewComponentMap({ logger, oldMap: oldComponentMap, newMap: newComponentMap, sourceFile, coreCtx });
+            if (isComponentOrDirectiveFile(sourceFile.fileName)) {
+                fillNewComponentDirectiveMap({ logger, oldMap: oldComponentDirectiveMap, newMap: newComponentDirectiveMap, sourceFile, coreCtx });
             } else if (isControllerTsFile(sourceFile.fileName)) {
                 fillNewTsCtrlMap({ logger, oldMap: oldTsCtrlMap, newMap: newTsCtrlMap, sourceFile, coreCtx });
             }
         });
 
-        set(_componentMapOfMap, newComponentMap);
+        set(_componentDirectiveMapOfMap, newComponentDirectiveMap);
         set(_tsCtrlMapOfMap, newTsCtrlMap);
 
         const end = Date.now();
-        logger.info('new component count:', newComponentMap.size, 'new TsCtrl count:', newTsCtrlMap.size, 'cost:', `${end - start}ms`);
+        logger.info(
+            'new component/directive file:',
+            newComponentDirectiveMap.size,
+            'new TsCtrl count:',
+            newTsCtrlMap.size,
+            'cost:',
+            `${end - start}ms`,
+        );
         logger.endGroup();
     }
 
@@ -430,40 +444,40 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
     }
 }
 
-function fillNewComponentMap({
+function fillNewComponentDirectiveMap({
     logger,
     oldMap,
     newMap,
     sourceFile,
     coreCtx,
 }: {
-    oldMap: Map<string, NgComponentFileInfo>;
-    newMap: Map<string, NgComponentFileInfo>;
+    oldMap: Map<string, NgComponentDirectiveFileInfo>;
+    newMap: Map<string, NgComponentDirectiveFileInfo>;
     sourceFile: ts.SourceFile;
     logger: PluginCoreLogger;
     coreCtx: CorePluginContext;
 }): void {
-    logger.info('component ts file:', sourceFile.fileName);
+    logger.info('component/directive file:', sourceFile.fileName);
 
     const oldComponentFile = oldMap.get(sourceFile.fileName);
     const version = getSourceFileVersion(sourceFile);
     if (oldComponentFile && oldComponentFile.version === version) {
         newMap.set(sourceFile.fileName, oldComponentFile);
-        logger.info('component ts file:', sourceFile.fileName, ', version not change.');
+        logger.info('component/directive file:', sourceFile.fileName, ', version not change.');
         return;
     }
 
     const ctx = Object.assign({ sourceFile }, coreCtx);
 
-    const componentNameInfo = getComponentNameInfo(ctx);
-    logger.info('component ts file:', sourceFile.fileName, ', componentNameInfo:', componentNameInfo);
-    if (!componentNameInfo) {
+    const componentDirectiveInfo = getComponentDirectiveNameInfo(ctx);
+    logger.info('component/directive file:', sourceFile.fileName, ', componentDirectiveInfo:', componentDirectiveInfo);
+    if (!componentDirectiveInfo) {
         return;
     }
 
     newMap.set(sourceFile.fileName, {
         version,
-        ...componentNameInfo,
+        ...componentDirectiveInfo,
     });
 }
 

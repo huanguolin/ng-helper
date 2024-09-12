@@ -7,7 +7,7 @@ import {
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
-import { findComponentInfo, getMinSyntaxNodeForHover } from '../hover/utils';
+import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, type PluginContext } from '../type';
 import { typeToString } from '../utils/common';
@@ -21,58 +21,75 @@ export function getComponentNameOrAttrNameDefinitionInfo(
 
     const logger = coreCtx.logger.prefix('getComponentNameOrAttrNameDefinitionInfo()');
 
-    const componentMap = ngHelperServer.getComponentMap(fileName);
+    const componentMap = ngHelperServer.getComponentDirectiveMap(fileName);
     if (!componentMap) {
         return;
     }
 
-    const { componentFilePath, componentFileInfo, transcludeConfig } = findComponentInfo(componentMap, hoverInfo);
-    logger.info('componentFilePath:', componentFilePath, 'componentFileInfo:', componentFileInfo, 'transcludeConfig:', transcludeConfig);
+    const { filePath, componentNameInfo, directiveNameInfo, transcludeConfig } = findComponentOrDirectiveInfo(componentMap, hoverInfo);
+    logger.info(
+        'filePath:',
+        filePath,
+        'componentNameInfo:',
+        componentNameInfo,
+        'directiveNameInfo:',
+        directiveNameInfo,
+        'transcludeConfig:',
+        transcludeConfig,
+    );
 
-    if (!componentFilePath || !componentFileInfo) {
+    if (!filePath || (!componentNameInfo && !directiveNameInfo)) {
         return;
     }
 
-    const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
     if (!ctx) {
         return;
     }
 
-    const componentDeclareNode = getComponentDeclareNode(ctx);
-    logger.info('componentDeclareNode', componentDeclareNode?.getText(ctx.sourceFile));
-    if (!componentDeclareNode) {
-        return;
+    if (componentNameInfo) {
+        return getFromComponent(ctx, filePath);
+    } else if (directiveNameInfo) {
+        // TODO: directive
     }
 
-    if (hoverInfo.type === 'tagName' && !transcludeConfig) {
-        const componentNameNode = componentDeclareNode.arguments[0];
-        return {
-            filePath: componentFilePath,
-            start: componentNameNode.getStart(ctx.sourceFile),
-            end: componentNameNode.getEnd(),
-        };
-    }
+    function getFromComponent(ctx: PluginContext, filePath: string): NgDefinitionResponse {
+        const componentDeclareNode = getComponentDeclareNode(ctx);
+        logger.info('componentDeclareNode', componentDeclareNode?.getText(ctx.sourceFile));
+        if (!componentDeclareNode) {
+            return;
+        }
 
-    const componentLiteralObjectNode = componentDeclareNode.arguments[1] as ts.ObjectLiteralExpression;
-    if (hoverInfo.type === 'attrName' || transcludeConfig) {
-        const propName = hoverInfo.type === 'attrName' ? 'bindings' : 'transclude';
-        const prop = getPropOfObjectLiteral(ctx, componentLiteralObjectNode, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === propName);
-        if (prop && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
-            const propObj = prop.initializer;
-            const p = getPropOfObjectLiteral(
-                ctx,
-                propObj,
-                (p) =>
-                    ctx.ts.isIdentifier(p.name) &&
-                    ctx.ts.isStringLiteralLike(p.initializer) &&
-                    (p.initializer.text.includes(hoverInfo.name) || p.name.text === hoverInfo.name),
-            );
-            if (p) {
-                return {
-                    filePath: componentFilePath,
-                    start: p.getStart(ctx.sourceFile),
-                    end: p.getEnd(),
-                };
+        if (hoverInfo.type === 'tagName' && !transcludeConfig) {
+            const componentNameNode = componentDeclareNode.arguments[0];
+            return {
+                filePath,
+                start: componentNameNode.getStart(ctx.sourceFile),
+                end: componentNameNode.getEnd(),
+            };
+        }
+
+        const componentLiteralObjectNode = componentDeclareNode.arguments[1] as ts.ObjectLiteralExpression;
+        if (hoverInfo.type === 'attrName' || transcludeConfig) {
+            const propName = hoverInfo.type === 'attrName' ? 'bindings' : 'transclude';
+            const prop = getPropOfObjectLiteral(ctx, componentLiteralObjectNode, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === propName);
+            if (prop && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
+                const propObj = prop.initializer;
+                const p = getPropOfObjectLiteral(
+                    ctx,
+                    propObj,
+                    (p) =>
+                        ctx.ts.isIdentifier(p.name) &&
+                        ctx.ts.isStringLiteralLike(p.initializer) &&
+                        (p.initializer.text.includes(hoverInfo.name) || p.name.text === hoverInfo.name),
+                );
+                if (p) {
+                    return {
+                        filePath,
+                        start: p.getStart(ctx.sourceFile),
+                        end: p.getEnd(),
+                    };
+                }
             }
         }
     }

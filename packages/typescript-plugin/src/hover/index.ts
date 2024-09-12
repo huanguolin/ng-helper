@@ -7,9 +7,15 @@ import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils'
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getComponentTypeInfo, getComponentDeclareLiteralNode, getPublicMembersTypeInfoOfBindings, getControllerType } from '../utils/ng';
+import {
+    getComponentTypeInfo,
+    getComponentDeclareLiteralNode,
+    getPublicMembersTypeInfoOfBindings,
+    getControllerType,
+    removeBindingControlChars,
+} from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo, findComponentInfo, getMinSyntaxNodeForHover } from './utils';
+import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
 
 export function getComponentNameOrAttrNameHoverInfo(
     coreCtx: CorePluginContext,
@@ -17,14 +23,14 @@ export function getComponentNameOrAttrNameHoverInfo(
 ): NgHoverResponse {
     ngHelperServer.refreshInternalMaps(fileName);
 
-    const componentMap = ngHelperServer.getComponentMap(fileName);
-    if (!componentMap) {
+    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
+    if (!componentDirectiveMap) {
         return;
     }
 
-    const { componentFilePath, componentFileInfo, transcludeConfig } = findComponentInfo(componentMap, hoverInfo);
+    const { filePath, componentNameInfo, directiveNameInfo, transcludeConfig } = findComponentOrDirectiveInfo(componentDirectiveMap, hoverInfo);
 
-    if (!componentFilePath || !componentFileInfo) {
+    if (!filePath || (!componentNameInfo && !directiveNameInfo)) {
         return;
     }
 
@@ -32,109 +38,121 @@ export function getComponentNameOrAttrNameHoverInfo(
         return getTranscludeHoverInfo();
     }
 
-    const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
     if (!ctx) {
         return;
     }
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    if (!componentLiteralNode) {
-        return;
+    if (componentNameInfo) {
+        return getComponentHoverInfo(ctx);
+    } else if (directiveNameInfo) {
+        // TODO directive
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    const attrsFromBindings = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, false) ?? [];
+    function getComponentHoverInfo(ctx: PluginContext): NgHoverResponse {
+        const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+        if (!componentLiteralNode) {
+            return;
+        }
 
-    let attrsFromType: NgTypeInfo[] = [];
-    if (info.controllerType) {
-        attrsFromType = getPublicMembersTypeInfoOfType(ctx, info.controllerType) ?? [];
-    }
+        const info = getComponentTypeInfo(ctx, componentLiteralNode);
+        const attrsFromBindings = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, false) ?? [];
 
-    const attrTypeMap = new Map<string, NgTypeInfo>(attrsFromType.map((x) => [x.name, x]));
-    if (hoverInfo.type === 'tagName') {
-        return getComponentNameHoverInfo();
-    } else {
-        return getComponentAttrHoverInfo();
+        let attrsFromType: NgTypeInfo[] = [];
+        if (info.controllerType) {
+            attrsFromType = getPublicMembersTypeInfoOfType(ctx, info.controllerType) ?? [];
+        }
+
+        const attrTypeMap = new Map<string, NgTypeInfo>(attrsFromType.map((x) => [x.name, x]));
+        if (hoverInfo.type === 'tagName') {
+            return getComponentNameHoverInfo();
+        } else {
+            return getComponentAttrHoverInfo();
+        }
+
+        function getComponentNameHoverInfo() {
+            const component = `(component) ${hoverInfo.tagName}`;
+
+            const indent = SPACE.repeat(4);
+            let bindings = '';
+            if (attrsFromBindings.length === 0) {
+                bindings = `bindings: { }`;
+            } else {
+                bindings = attrsFromBindings
+                    .map(
+                        (x) =>
+                            `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
+                    )
+                    .join('\n');
+                bindings = `bindings: {\n${bindings}\n}`;
+            }
+
+            let transclude = '';
+            if (componentNameInfo!.transclude) {
+                if (typeof componentNameInfo!.transclude === 'boolean') {
+                    transclude = `transclude: true`;
+                } else {
+                    transclude = Object.entries(componentNameInfo!.transclude)
+                        .map(([k, v]) => `${indent}${k}: "${v}"`)
+                        .join('\n');
+                    transclude = `transclude: {\n${transclude}\n}`;
+                }
+            }
+
+            return {
+                formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
+                document: '',
+            };
+        }
+
+        function getComponentAttrHoverInfo() {
+            const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings.map((x) => [x.name, x]));
+            const result = {
+                formattedTypeString: `(property) ${hoverInfo.name}: any`,
+                document: '',
+            };
+
+            // 从 bindings 中获取在 class 上对应属性的名字
+            const toPropsNameMap = getToPropsNameMap(info.bindings);
+            const propName = toPropsNameMap.get(hoverInfo.name)!;
+
+            if (attrBindingsMap.has(propName)) {
+                result.document += '\n' + attrBindingsMap.get(propName)!.document;
+            }
+
+            if (attrTypeMap.has(propName)) {
+                const typeInfo = attrTypeMap.get(propName)!;
+                result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(typeInfo.typeString)}`;
+                if (typeInfo.document) {
+                    result.document += `\n${typeInfo.document}`;
+                }
+            } else if (attrBindingsMap.has(hoverInfo.name)) {
+                result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(attrBindingsMap.get(hoverInfo.name)!.typeString)}`;
+            }
+
+            return result;
+        }
+
+        function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
+            const result = new Map<string, string>();
+            for (const [k, v] of bindingsMap) {
+                const inputName = removeBindingControlChars(v).trim();
+                result.set(inputName || k, k);
+            }
+            return result;
+        }
     }
 
     function getTranscludeHoverInfo() {
-        const arr = [`(transclude) ${hoverInfo.tagName}`, `config: "${transcludeConfig}"`, `component: "${hoverInfo.parentTagName}"`];
+        const arr = [
+            `(transclude) ${hoverInfo.tagName}`,
+            `config: "${transcludeConfig}"`,
+            `${componentNameInfo ? 'component' : 'directive'}: "${hoverInfo.parentTagName}"`,
+        ];
         return {
             formattedTypeString: arr.join('\n'),
             document: '',
         };
-    }
-
-    function getComponentNameHoverInfo() {
-        const component = `(component) ${hoverInfo.tagName}`;
-
-        const indent = SPACE.repeat(4);
-        let bindings = '';
-        if (attrsFromBindings.length === 0) {
-            bindings = `bindings: { }`;
-        } else {
-            bindings = attrsFromBindings
-                .map(
-                    (x) =>
-                        `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
-                )
-                .join('\n');
-            bindings = `bindings: {\n${bindings}\n}`;
-        }
-
-        let transclude = '';
-        if (componentFileInfo!.transclude) {
-            if (typeof componentFileInfo!.transclude === 'boolean') {
-                transclude = `transclude: true`;
-            } else {
-                transclude = Object.entries(componentFileInfo!.transclude)
-                    .map(([k, v]) => `${indent}${k}: "${v}"`)
-                    .join('\n');
-                transclude = `transclude: {\n${transclude}\n}`;
-            }
-        }
-
-        return {
-            formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
-            document: '',
-        };
-    }
-
-    function getComponentAttrHoverInfo() {
-        const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings.map((x) => [x.name, x]));
-        const result = {
-            formattedTypeString: `(property) ${hoverInfo.name}: any`,
-            document: '',
-        };
-
-        // 从 bindings 中获取在 class 上对应属性的名字
-        const toPropsNameMap = getToPropsNameMap(info.bindings);
-        const propName = toPropsNameMap.get(hoverInfo.name)!;
-
-        if (attrBindingsMap.has(propName)) {
-            result.document += '\n' + attrBindingsMap.get(propName)!.document;
-        }
-
-        if (attrTypeMap.has(propName)) {
-            const typeInfo = attrTypeMap.get(propName)!;
-            result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(typeInfo.typeString)}`;
-            if (typeInfo.document) {
-                result.document += `\n${typeInfo.document}`;
-            }
-        } else if (attrBindingsMap.has(hoverInfo.name)) {
-            result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(attrBindingsMap.get(hoverInfo.name)!.typeString)}`;
-        }
-
-        return result;
-    }
-
-    function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
-        const result = new Map<string, string>();
-        for (const [k, v] of bindingsMap) {
-            const inputName = v.replace(/[@=<?&]/g, '').trim();
-            result.set(inputName || k, k);
-        }
-        return result;
     }
 }
 

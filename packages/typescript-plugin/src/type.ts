@@ -1,4 +1,4 @@
-import { NgComponentNameInfo, NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration, type NgComponentDirectiveNamesInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 export interface PluginCoreLogger {
@@ -57,17 +57,17 @@ export type NgHelperServer = {
     getContext: GetContextFnViaFilePath;
     getCoreContext: GetCoreContextFnViaFilePath;
     isExtensionActivated: () => boolean;
-    getComponentMap: (filePath: string) => Map<string, NgComponentFileInfo> | undefined;
+    getComponentDirectiveMap: (filePath: string) => Map<string, NgComponentDirectiveFileInfo> | undefined;
     getTsCtrlMap: (filePath: string) => Map<string, NgTsCtrlFileInfo> | undefined;
     refreshInternalMaps: (filePath: string) => void;
 };
 
-export interface TsFileInfo {
+export interface FileVersion {
     version: string;
 }
 
-export interface NgComponentFileInfo extends NgComponentNameInfo, TsFileInfo {}
+export interface NgComponentDirectiveFileInfo extends NgComponentDirectiveNamesInfo, FileVersion {}
 
-export interface NgTsCtrlFileInfo extends TsFileInfo {
+export interface NgTsCtrlFileInfo extends FileVersion {
     controllerName: string;
 }

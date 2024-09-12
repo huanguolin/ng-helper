@@ -4,12 +4,13 @@ import {
     NgTypeInfo,
     NgComponentNameCompletionResponse,
     NgCtrlTypeCompletionRequest,
+    type NgDirectiveNameInfo,
 } from '@ng-helper/shared/lib/plugin';
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getControllerType, getPublicMembersTypeInfoOfBindings } from '../utils/ng';
+import { getControllerType, getPublicMembersTypeInfoOfBindings, isElementDirective, removeBindingControlChars } from '../utils/ng';
 import { getComponentTypeInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
@@ -108,29 +109,77 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
 
 export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
     ngHelperServer.refreshInternalMaps(filePath);
-    const componentMap = ngHelperServer.getComponentMap(filePath);
-    return componentMap ? Array.from(componentMap.values()) : undefined;
-}
-
-export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgTypeInfo[] | undefined {
-    const logger = coreCtx.logger.prefix('getComponentAttrCompletions()');
-
-    ngHelperServer.refreshInternalMaps(filePath);
-
-    const componentMap = ngHelperServer.getComponentMap(filePath);
-    if (!componentMap) {
+    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
+    if (!componentDirectiveMap) {
         return;
     }
 
-    let componentFilePath: string | undefined;
-    let componentFileInfo: NgComponentNameInfo | undefined;
-    for (const [key, value] of componentMap.entries()) {
-        if (value.componentName === componentName) {
-            componentFilePath = key;
-            componentFileInfo = value;
-            break;
+    const result: NgComponentNameInfo[] = [];
+    for (const item of componentDirectiveMap.values()) {
+        if (item.components.length) {
+            result.push(...item.components);
+        }
+        if (item.directives.length) {
+            const asComponents = item.directives
+                .filter((x) => isElementDirective(x))
+                .map((x) => ({
+                    componentName: x.directiveName,
+                    transclude: x.transclude,
+                }));
+            result.push(...asComponents);
         }
     }
+    return result;
+}
+
+export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgTypeInfo[] | undefined {
+    ngHelperServer.refreshInternalMaps(filePath);
+
+    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
+    if (!componentDirectiveMap) {
+        return;
+    }
+
+    for (const [key, value] of componentDirectiveMap.entries()) {
+        const component = value.components.find((x) => x.componentName === componentName);
+        if (component) {
+            return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, key, component);
+        }
+
+        const directive = value.directives.find((x) => isElementDirective(x) && x.directiveName === componentName);
+        if (directive) {
+            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, key, directive);
+        }
+    }
+}
+
+function getComponentAttrCompletionsViaDirectiveFileInfo(
+    coreCtx: CorePluginContext,
+    componentFilePath: string,
+    directiveFileInfo: NgDirectiveNameInfo,
+): NgTypeInfo[] | undefined {
+    if (!componentFilePath || !directiveFileInfo) {
+        return;
+    }
+
+    const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
+    if (!ctx) {
+        return;
+    }
+
+    // TODO directive
+    // const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+    // if (!componentLiteralNode) {
+    //     return;
+    // }
+}
+
+function getComponentAttrCompletionsViaComponentFileInfo(
+    coreCtx: CorePluginContext,
+    componentFilePath: string,
+    componentFileInfo: NgComponentNameInfo,
+): NgTypeInfo[] | undefined {
+    const logger = coreCtx.logger.prefix('getComponentAttrCompletionsViaComponentFileInfo()');
 
     if (!componentFilePath || !componentFileInfo) {
         return;
@@ -181,7 +230,7 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
     function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
         const result = new Map<string, string>();
         for (const [k, v] of bindingsMap) {
-            const inputName = v.replace(/[@=<?&]/g, '').trim();
+            const inputName = removeBindingControlChars(v).trim();
             result.set(inputName || k, k);
         }
         return result;
