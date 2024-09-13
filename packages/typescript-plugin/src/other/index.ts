@@ -6,6 +6,10 @@ import { getComponentDeclareLiteralNode, getComponentTypeInfo, isStringBinding, 
 
 type ComponentDirectivePathInfo = {
     type: 'component' | 'directive';
+    /**
+     * component or directive name.
+     */
+    name: string;
     filePath: string;
 };
 
@@ -23,10 +27,10 @@ export function getComponentsStringAttrsInfo(
     const componentNameMap = new Map<string, ComponentDirectivePathInfo>();
     for (const [filePath, componentDirectiveInfo] of componentDirectiveMap) {
         for (const component of componentDirectiveInfo.components) {
-            componentNameMap.set(component.componentName, { type: 'component', filePath });
+            componentNameMap.set(component.componentName, { type: 'component', name: component.componentName, filePath });
         }
         for (const directive of componentDirectiveInfo.directives) {
-            componentNameMap.set(directive.directiveName, { type: 'directive', filePath });
+            componentNameMap.set(directive.directiveName, { type: 'directive', name: directive.directiveName, filePath });
         }
     }
 
@@ -55,14 +59,14 @@ export function getComponentsStringAttrsInfo(
 
     return Object.keys(result).length > 0 ? result : undefined;
 
-    function getBindings({ type, filePath }: ComponentDirectivePathInfo) {
+    function getBindings({ type, name, filePath }: ComponentDirectivePathInfo) {
         const ctx = getCtxOfCoreCtx(coreCtx, filePath);
         if (!ctx) {
             return;
         }
 
         if (type === 'component') {
-            const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+            const componentLiteralNode = getComponentDeclareLiteralNode(ctx, name);
             if (!componentLiteralNode) {
                 return;
             }

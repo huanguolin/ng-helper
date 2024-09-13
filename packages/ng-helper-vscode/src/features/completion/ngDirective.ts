@@ -15,15 +15,15 @@ const defaultNgConfigStr: NgDirectiveConfig = {
 export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position, _, context) {
-            return timeCost('provideNgCompletion', () => {
+            return timeCost('provideNgDirectiveCompletion', () => {
                 try {
                     // 避免在 inline template 中扰乱 component attr 的 completion
                     if (context.triggerCharacter) {
                         return;
                     }
-                    return provideNgCompletion({ document, position });
+                    return provideNgDirectiveCompletion({ document, position });
                 } catch (error) {
-                    console.error('provideNgCompletion() error:', error);
+                    console.error('provideNgDirectiveCompletion() error:', error);
                     return undefined;
                 }
             });
@@ -31,7 +31,7 @@ export function ngDirective(_port: number) {
     });
 }
 
-function provideNgCompletion({ document, position }: { document: TextDocument; position: Position }) {
+function provideNgDirectiveCompletion({ document, position }: { document: TextDocument; position: Position }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
     const tag = getHtmlTagAt(docText, cursor);

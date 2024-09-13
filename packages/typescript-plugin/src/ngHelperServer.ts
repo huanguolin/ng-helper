@@ -20,6 +20,8 @@ import {
     type NgCtrlTypeDefinitionRequest,
     type NgComponentsStringAttrsResponse,
     type NgListComponentsStringAttrsRequest,
+    type NgDirectiveCompletionResponse,
+    type NgDirectiveCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
@@ -30,6 +32,7 @@ import {
     getComponentControllerAs,
     getComponentNameCompletions,
     getControllerTypeCompletions,
+    getDirectiveCompletions,
 } from './completion';
 import { getComponentNameOrAttrNameDefinitionInfo, getComponentTypeDefinitionInfo, getControllerTypeDefinitionInfo } from './definition';
 import { getComponentNameOrAttrNameHoverInfo, getComponentTypeHoverInfo, getControllerTypeHoverInfo } from './hover';
@@ -310,6 +313,14 @@ function initHttpServer() {
             req,
             res,
             action: (coreCtx, body) => getComponentAttrCompletions(coreCtx, body.fileName, body.componentName),
+        });
+    });
+
+    app.post('/ng-helper/directive/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgDirectiveCompletionRequest, NgDirectiveCompletionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getDirectiveCompletions(coreCtx, body),
         });
     });
 

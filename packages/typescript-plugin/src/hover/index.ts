@@ -1,5 +1,13 @@
 import { SPACE } from '@ng-helper/shared/lib/html';
-import { NgComponentNameOrAttrNameHoverRequest, NgCtrlHoverRequest, NgHoverRequest, NgHoverResponse, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import {
+    NgComponentNameOrAttrNameHoverRequest,
+    NgCtrlHoverRequest,
+    NgHoverRequest,
+    NgHoverResponse,
+    NgTypeInfo,
+    type NgComponentNameInfo,
+    type NgDirectiveNameInfo,
+} from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
@@ -47,13 +55,13 @@ export function getComponentNameOrAttrNameHoverInfo(
     }
 
     if (componentNameInfo) {
-        return getComponentHoverInfo(ctx);
+        return getComponentHoverInfo(ctx, componentNameInfo);
     } else if (directiveNameInfo) {
-        return getDirectiveHoverInfo(ctx);
+        return getDirectiveHoverInfo(ctx, directiveNameInfo);
     }
 
-    function getDirectiveHoverInfo(ctx: PluginContext): NgHoverResponse {
-        const directiveConfigNode = getDirectiveConfigNode(ctx);
+    function getDirectiveHoverInfo(ctx: PluginContext, directiveNameInfo: NgDirectiveNameInfo): NgHoverResponse {
+        const directiveConfigNode = getDirectiveConfigNode(ctx, directiveNameInfo.directiveName);
         if (!directiveConfigNode) {
             return;
         }
@@ -132,8 +140,8 @@ export function getComponentNameOrAttrNameHoverInfo(
         }
     }
 
-    function getComponentHoverInfo(ctx: PluginContext): NgHoverResponse {
-        const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+    function getComponentHoverInfo(ctx: PluginContext, componentNameInfo: NgComponentNameInfo): NgHoverResponse {
+        const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentNameInfo.componentName);
         if (!componentLiteralNode) {
             return;
         }

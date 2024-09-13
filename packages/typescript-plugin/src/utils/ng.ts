@@ -114,17 +114,19 @@ export function getControllerType(ctx: PluginContext): ts.Type | undefined {
     }
 }
 
-export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLiteralExpression | undefined {
+export function getComponentDeclareLiteralNode(ctx: PluginContext, componentName?: string): ts.ObjectLiteralExpression | undefined {
     let componentLiteralNode: ts.ObjectLiteralExpression | undefined;
     visit(ctx.sourceFile);
     return componentLiteralNode;
 
     function visit(node: ts.Node) {
         if (isAngularComponentRegisterNode(ctx, node)) {
-            // 第二个参数是对象字面量
-            const theNode = node.arguments[1];
-            if (ctx.ts.isObjectLiteralExpression(theNode)) {
-                componentLiteralNode = theNode;
+            if (!componentName || (ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === componentName)) {
+                // 第二个参数是对象字面量
+                const theNode = node.arguments[1];
+                if (ctx.ts.isObjectLiteralExpression(theNode)) {
+                    componentLiteralNode = theNode;
+                }
             }
         }
         if (!componentLiteralNode) {
@@ -133,13 +135,13 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLit
     }
 }
 
-export function getDirectiveConfigNode(ctx: PluginContext): ts.ObjectLiteralExpression | undefined {
+export function getDirectiveConfigNode(ctx: PluginContext, directiveName: string): ts.ObjectLiteralExpression | undefined {
     let directiveConfigLiteralNode: ts.ObjectLiteralExpression | undefined;
     visit(ctx.sourceFile);
     return directiveConfigLiteralNode;
 
     function visit(node: ts.Node) {
-        if (isAngularDirectiveRegisterNode(ctx, node)) {
+        if (isAngularDirectiveRegisterNode(ctx, node) && ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === directiveName) {
             // 第二个参数是数组字面量或者函数表达式
             const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
             // 获取函数的返回值

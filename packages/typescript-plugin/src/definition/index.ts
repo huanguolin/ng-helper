@@ -2,6 +2,7 @@ import {
     type NgComponentNameOrAttrNameDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
     type NgDefinitionResponse,
+    type NgDirectiveNameInfo,
     type NgTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
@@ -59,10 +60,10 @@ export function getComponentNameOrAttrNameDefinitionInfo(
     if (componentNameInfo) {
         return getFromComponent(ctx, filePath);
     } else if (directiveNameInfo) {
-        return getFromDirective(ctx, filePath);
+        return getFromDirective(ctx, filePath, directiveNameInfo);
     }
 
-    function getFromDirective(ctx: PluginContext, filePath: string): NgDefinitionResponse {
+    function getFromDirective(ctx: PluginContext, filePath: string, directiveNameInfo: NgDirectiveNameInfo): NgDefinitionResponse {
         if (hoverInfo.type === 'tagName' && !transcludeConfig) {
             const directiveDeclareNode = getDirectiveDeclareNode(ctx);
             if (!directiveDeclareNode) {
@@ -77,7 +78,7 @@ export function getComponentNameOrAttrNameDefinitionInfo(
             };
         }
 
-        const directiveConfigNode = getDirectiveConfigNode(ctx);
+        const directiveConfigNode = getDirectiveConfigNode(ctx, directiveNameInfo.directiveName);
         if (directiveConfigNode && (hoverInfo.type === 'attrName' || transcludeConfig)) {
             const propName = hoverInfo.type === 'attrName' ? 'scope' : 'transclude';
             const prop = getPropByName(ctx, directiveConfigNode, propName);

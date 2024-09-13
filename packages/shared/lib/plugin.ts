@@ -2,7 +2,7 @@
  * 表示与父类型的关系。
  * NgFieldKind 并不是表示 type 的类型分类。
  */
-export type NgFieldKind = 'property' | 'method';
+export type NgFieldKind = 'property' | 'method' | 'directive';
 
 export interface NgTypeInfo {
     kind: NgFieldKind;
@@ -36,6 +36,21 @@ export interface NgCtrlInfo {
     controllerAs?: string;
 }
 
+export interface NgCtrlTypeCompletionRequest extends NgTypeCompletionRequest, NgCtrlInfo {}
+
+export interface NgComponentAttrCompletionRequest extends NgRequest {
+    componentName: string;
+}
+
+export interface NgDirectiveCompletionRequest extends NgRequest {
+    attrNames: string[];
+}
+
+export interface NgHoverRequest extends NgRequest {
+    contextString: string;
+    cursorAt: number;
+}
+
 export interface NgElementHoverInfo {
     type: 'tagName' | 'attrName';
     /**
@@ -51,18 +66,6 @@ export interface NgElementHoverInfo {
      */
     parentTagName?: string;
 }
-
-export interface NgCtrlTypeCompletionRequest extends NgTypeCompletionRequest, NgCtrlInfo {}
-
-export interface NgComponentAttrCompletionRequest extends NgRequest {
-    componentName: string;
-}
-
-export interface NgHoverRequest extends NgRequest {
-    contextString: string;
-    cursorAt: number;
-}
-
 export interface NgComponentNameOrAttrNameHoverRequest extends NgRequest {
     hoverInfo: NgElementHoverInfo;
 }
@@ -119,4 +122,5 @@ export type NgHoverResponse = NgHoverInfo | undefined;
 export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefined;
 export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
+export type NgDirectiveCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentsStringAttrsResponse = Record<string, string[]> | undefined;

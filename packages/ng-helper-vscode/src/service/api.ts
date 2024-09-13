@@ -17,6 +17,8 @@ import {
     type NgCtrlTypeDefinitionRequest,
     type NgListComponentsStringAttrsRequest,
     type NgComponentsStringAttrsResponse,
+    type NgDirectiveCompletionRequest,
+    type NgDirectiveCompletionResponse,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -105,6 +107,15 @@ export function getControllerTypeCompletionApi({ port, vscodeCancelToken, info }
         info,
         vscodeCancelToken,
         apiName: 'getControllerTypeCompletionApi',
+    });
+}
+
+export function getDirectiveCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgDirectiveCompletionRequest>) {
+    return bizRequest<NgDirectiveCompletionRequest, NgDirectiveCompletionResponse>({
+        url: buildUrl(port, 'directive', 'completion'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getDirectiveCompletionApi',
     });
 }
 

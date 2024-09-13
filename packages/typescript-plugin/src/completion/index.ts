@@ -5,10 +5,14 @@ import {
     NgComponentNameCompletionResponse,
     NgCtrlTypeCompletionRequest,
     type NgDirectiveNameInfo,
+    type NgComponentAttrCompletionResponse,
+    type NgDirectiveCompletionResponse,
+    type NgDirectiveCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
+import { findMatchedDirectives, findUnmatchedDirectives, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getControllerType,
@@ -140,7 +144,7 @@ export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath
     return result;
 }
 
-export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgTypeInfo[] | undefined {
+export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgComponentAttrCompletionResponse {
     ngHelperServer.refreshInternalMaps(filePath);
 
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
@@ -163,19 +167,19 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
 
 function getComponentAttrCompletionsViaDirectiveFileInfo(
     coreCtx: CorePluginContext,
-    componentFilePath: string,
-    directiveFileInfo: NgDirectiveNameInfo,
+    filePath: string,
+    directiveNameInfo: NgDirectiveNameInfo,
 ): NgTypeInfo[] | undefined {
-    if (!componentFilePath || !directiveFileInfo) {
+    if (!filePath || !directiveNameInfo) {
         return;
     }
 
-    const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
     if (!ctx) {
         return;
     }
 
-    const directiveConfigNode = getDirectiveConfigNode(ctx);
+    const directiveConfigNode = getDirectiveConfigNode(ctx, directiveNameInfo.directiveName);
     if (!directiveConfigNode) {
         return;
     }
@@ -192,21 +196,21 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
 
 function getComponentAttrCompletionsViaComponentFileInfo(
     coreCtx: CorePluginContext,
-    componentFilePath: string,
-    componentFileInfo: NgComponentNameInfo,
+    filePath: string,
+    componentNameInfo: NgComponentNameInfo,
 ): NgTypeInfo[] | undefined {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletionsViaComponentFileInfo()');
 
-    if (!componentFilePath || !componentFileInfo) {
+    if (!filePath || !componentNameInfo) {
         return;
     }
 
-    const ctx = getCtxOfCoreCtx(coreCtx, componentFilePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
     if (!ctx) {
         return;
     }
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
+    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentNameInfo.componentName);
     if (!componentLiteralNode) {
         return;
     }
@@ -293,4 +297,42 @@ export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, con
         }
         return tsCtrlFilePath;
     }
+}
+
+export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDirectiveCompletionRequest): NgDirectiveCompletionResponse {
+    ngHelperServer.refreshInternalMaps(info.fileName);
+
+    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(info.fileName);
+    if (!componentDirectiveMap) {
+        return;
+    }
+
+    const matchedDirectives = findMatchedDirectives(componentDirectiveMap, info.attrNames);
+    const unmatchedDirectives = findUnmatchedDirectives(componentDirectiveMap, info.attrNames);
+    // TODO 要排除已经出现过的属性名
+    const result = getTypeInfosFromDirectives(coreCtx, matchedDirectives);
+    const unmatchedDirectiveNames: NgTypeInfo[] = unmatchedDirectives.map((directive) => ({
+        kind: 'directive',
+        name: directive.directiveInfo.directiveName,
+        typeString: 'directive',
+        document: '',
+        isFunction: false,
+    }));
+
+    result.push(...unmatchedDirectiveNames);
+
+    return result.length > 0 ? result : undefined;
+}
+
+function getTypeInfosFromDirectives(coreCtx: CorePluginContext, matchedDirectives: DirectiveFileInfo[]): NgTypeInfo[] {
+    const result: NgTypeInfo[] = [];
+
+    for (const item of matchedDirectives) {
+        const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, item);
+        if (typeInfos) {
+            result.push(...typeInfos);
+        }
+    }
+
+    return result;
 }
