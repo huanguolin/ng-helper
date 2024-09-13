@@ -15,9 +15,11 @@ import {
     getComponentDeclareLiteralNode,
     getComponentTypeInfo,
     getControllerType,
+    getDirectiveConfigNode,
     getProp,
     getPropByName,
     isAngularComponentRegisterNode,
+    isAngularDirectiveRegisterNode,
 } from '../utils/ng';
 
 export function getComponentNameOrAttrNameDefinitionInfo(
@@ -57,7 +59,47 @@ export function getComponentNameOrAttrNameDefinitionInfo(
     if (componentNameInfo) {
         return getFromComponent(ctx, filePath);
     } else if (directiveNameInfo) {
-        // TODO: directive
+        return getFromDirective(ctx, filePath);
+    }
+
+    function getFromDirective(ctx: PluginContext, filePath: string): NgDefinitionResponse {
+        if (hoverInfo.type === 'tagName' && !transcludeConfig) {
+            const directiveDeclareNode = getDirectiveDeclareNode(ctx);
+            if (!directiveDeclareNode) {
+                return;
+            }
+
+            const directiveNameNode = directiveDeclareNode.arguments[0];
+            return {
+                filePath,
+                start: directiveNameNode.getStart(ctx.sourceFile),
+                end: directiveNameNode.getEnd(),
+            };
+        }
+
+        const directiveConfigNode = getDirectiveConfigNode(ctx);
+        if (directiveConfigNode && (hoverInfo.type === 'attrName' || transcludeConfig)) {
+            const propName = hoverInfo.type === 'attrName' ? 'scope' : 'transclude';
+            const prop = getPropByName(ctx, directiveConfigNode, propName);
+            if (prop && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
+                const propObj = prop.initializer;
+                const p = getProp(
+                    ctx,
+                    propObj,
+                    (p) =>
+                        ctx.ts.isIdentifier(p.name) &&
+                        ctx.ts.isStringLiteralLike(p.initializer) &&
+                        (p.initializer.text.includes(hoverInfo.name) || p.name.text === hoverInfo.name),
+                );
+                if (p) {
+                    return {
+                        filePath,
+                        start: p.getStart(ctx.sourceFile),
+                        end: p.getEnd(),
+                    };
+                }
+            }
+        }
     }
 
     function getFromComponent(ctx: PluginContext, filePath: string): NgDefinitionResponse {
@@ -98,6 +140,21 @@ export function getComponentNameOrAttrNameDefinitionInfo(
                     };
                 }
             }
+        }
+    }
+}
+
+function getDirectiveDeclareNode(ctx: PluginContext): ts.CallExpression | undefined {
+    let directiveDeclareNode: ts.CallExpression | undefined;
+    visit(ctx.sourceFile);
+    return directiveDeclareNode;
+
+    function visit(node: ts.Node) {
+        if (isAngularDirectiveRegisterNode(ctx, node)) {
+            directiveDeclareNode = node;
+        }
+        if (!directiveDeclareNode) {
+            ctx.ts.forEachChild(node, visit);
         }
     }
 }
