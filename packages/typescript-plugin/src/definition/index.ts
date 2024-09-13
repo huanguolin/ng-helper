@@ -11,7 +11,14 @@ import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, type PluginContext } from '../type';
 import { typeToString } from '../utils/common';
-import { getComponentDeclareLiteralNode, getComponentTypeInfo, getControllerType, isAngularComponentRegisterNode } from '../utils/ng';
+import {
+    getComponentDeclareLiteralNode,
+    getComponentTypeInfo,
+    getControllerType,
+    getProp,
+    getPropByName,
+    isAngularComponentRegisterNode,
+} from '../utils/ng';
 
 export function getComponentNameOrAttrNameDefinitionInfo(
     coreCtx: CorePluginContext,
@@ -72,10 +79,10 @@ export function getComponentNameOrAttrNameDefinitionInfo(
         const componentLiteralObjectNode = componentDeclareNode.arguments[1] as ts.ObjectLiteralExpression;
         if (hoverInfo.type === 'attrName' || transcludeConfig) {
             const propName = hoverInfo.type === 'attrName' ? 'bindings' : 'transclude';
-            const prop = getPropOfObjectLiteral(ctx, componentLiteralObjectNode, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === propName);
+            const prop = getPropByName(ctx, componentLiteralObjectNode, propName);
             if (prop && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
                 const propObj = prop.initializer;
-                const p = getPropOfObjectLiteral(
+                const p = getProp(
                     ctx,
                     propObj,
                     (p) =>
@@ -93,14 +100,6 @@ export function getComponentNameOrAttrNameDefinitionInfo(
             }
         }
     }
-}
-
-function getPropOfObjectLiteral(
-    ctx: PluginContext,
-    obj: ts.ObjectLiteralExpression,
-    predicate: (p: ts.PropertyAssignment) => boolean,
-): ts.PropertyAssignment | undefined {
-    return obj.properties.find((p) => ctx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
 }
 
 function getComponentDeclareNode(ctx: PluginContext): ts.CallExpression | undefined {
@@ -165,7 +164,7 @@ export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextStri
 
     // hover 在根节点上
     if (propDeep === 1 && targetNode.text === info.controllerAs) {
-        const controllerAs = getPropOfObjectLiteral(ctx, componentLiteralNode, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === 'controllerAs');
+        const controllerAs = getPropByName(ctx, componentLiteralNode, 'controllerAs');
         if (controllerAs) {
             return {
                 filePath: ctx.sourceFile.fileName,
@@ -180,12 +179,12 @@ export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextStri
             };
         }
     } else if (info.bindings.get(targetNode.text)) {
-        const bindings = getPropOfObjectLiteral(ctx, componentLiteralNode, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === 'bindings');
+        const bindings = getPropByName(ctx, componentLiteralNode, 'bindings');
         if (!bindings || !ctx.ts.isObjectLiteralExpression(bindings.initializer)) {
             return;
         }
 
-        const prop = getPropOfObjectLiteral(ctx, bindings.initializer, (p) => ctx.ts.isIdentifier(p.name) && p.name.text === targetNode.text);
+        const prop = getPropByName(ctx, bindings.initializer, targetNode.text);
         if (!prop) {
             return;
         }

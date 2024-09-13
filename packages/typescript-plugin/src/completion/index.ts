@@ -10,7 +10,15 @@ import {
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getControllerType, getPublicMembersTypeInfoOfBindings, isElementDirective, removeBindingControlChars } from '../utils/ng';
+import {
+    getControllerType,
+    getDirectiveConfigNode,
+    getObjLiteral,
+    getPropValueByName,
+    getPublicMembersTypeInfoOfBindings,
+    isElementDirective,
+    removeBindingControlChars,
+} from '../utils/ng';
 import { getComponentTypeInfo } from '../utils/ng';
 import { getComponentDeclareLiteralNode } from '../utils/ng';
 
@@ -167,11 +175,19 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
         return;
     }
 
-    // TODO directive
-    // const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    // if (!componentLiteralNode) {
-    //     return;
-    // }
+    const directiveConfigNode = getDirectiveConfigNode(ctx);
+    if (!directiveConfigNode) {
+        return;
+    }
+
+    const scopePropertyValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
+    if (!scopePropertyValue || !ctx.ts.isObjectLiteralExpression(scopePropertyValue)) {
+        return;
+    }
+
+    const obj = getObjLiteral(ctx, scopePropertyValue);
+    const map = new Map<string, string>(Object.entries(obj));
+    return getPublicMembersTypeInfoOfBindings(ctx, map, true);
 }
 
 function getComponentAttrCompletionsViaComponentFileInfo(

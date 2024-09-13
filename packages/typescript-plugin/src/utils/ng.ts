@@ -133,6 +133,29 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext): ts.ObjectLit
     }
 }
 
+export function getDirectiveConfigNode(ctx: PluginContext): ts.ObjectLiteralExpression | undefined {
+    let directiveConfigLiteralNode: ts.ObjectLiteralExpression | undefined;
+    visit(ctx.sourceFile);
+    return directiveConfigLiteralNode;
+
+    function visit(node: ts.Node) {
+        if (isAngularDirectiveRegisterNode(ctx, node)) {
+            // 第二个参数是数组字面量或者函数表达式
+            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
+            // 获取函数的返回值
+            if (directiveFuncExpr) {
+                const returnStatement = directiveFuncExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
+                if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
+                    directiveConfigLiteralNode = returnStatement.expression;
+                }
+            }
+        }
+        if (!directiveConfigLiteralNode) {
+            ctx.ts.forEachChild(node, visit);
+        }
+    }
+}
+
 export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDirectiveNamesInfo | undefined {
     const info: NgComponentDirectiveNamesInfo = {
         components: [],
@@ -196,16 +219,7 @@ export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDi
             };
 
             // 第二个参数是数组字面量或者函数表达式
-            const configNode = node.arguments[1];
-            let directiveFuncExpr: ts.FunctionExpression | undefined;
-            if (ctx.ts.isFunctionExpression(configNode)) {
-                directiveFuncExpr = configNode;
-            } else if (
-                ctx.ts.isArrayLiteralExpression(configNode) &&
-                ctx.ts.isFunctionExpression(configNode.elements[configNode.elements.length - 1])
-            ) {
-                directiveFuncExpr = configNode.elements[configNode.elements.length - 1] as ts.FunctionExpression;
-            }
+            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
 
             // 获取函数的返回值
             if (directiveFuncExpr) {
@@ -240,6 +254,16 @@ export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDi
             }
         }
     }
+}
+
+function getDirectiveFunctionExpression(ctx: PluginContext, configNode: ts.Expression) {
+    let directiveFuncExpr: ts.FunctionExpression | undefined;
+    if (ctx.ts.isFunctionExpression(configNode)) {
+        directiveFuncExpr = configNode;
+    } else if (ctx.ts.isArrayLiteralExpression(configNode) && ctx.ts.isFunctionExpression(configNode.elements[configNode.elements.length - 1])) {
+        directiveFuncExpr = configNode.elements[configNode.elements.length - 1] as ts.FunctionExpression;
+    }
+    return directiveFuncExpr;
 }
 
 export function getControllerNameInfo(ctx: PluginContext): string | undefined {
@@ -332,6 +356,27 @@ export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectL
         }
     }
     return obj;
+}
+
+export function getPropValueByName(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression, propName: string): ts.Expression | undefined {
+    const prop = getPropByName(coreCtx, objLiteral, propName);
+    return prop?.initializer;
+}
+
+export function getPropByName(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    propName: string,
+): ts.PropertyAssignment | undefined {
+    return getProp(coreCtx, objLiteral, (p) => p.name && coreCtx.ts.isIdentifier(p.name) && p.name.text === propName);
+}
+
+export function getProp(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    predicate: (p: ts.PropertyAssignment) => boolean,
+): ts.PropertyAssignment | undefined {
+    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
 }
 
 export function isStringBinding(bindingName: string): boolean {
