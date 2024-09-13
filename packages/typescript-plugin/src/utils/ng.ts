@@ -401,7 +401,12 @@ export function isComponentOrDirectiveFile(fileName: string): boolean {
 }
 
 export function isDirectiveFile(fileName: string): boolean {
-    return fileName.endsWith('.directive.ts') || fileName.endsWith('.directive.js');
+    return (
+        fileName.endsWith('.directive.ts') ||
+        fileName.endsWith('.directives.ts') ||
+        fileName.endsWith('.directive.js') ||
+        fileName.endsWith('.directives.js')
+    );
 }
 
 export function isComponentTsFile(fileName: string): boolean {

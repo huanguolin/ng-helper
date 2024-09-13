@@ -13,6 +13,9 @@ import {
     getPublicMembersTypeInfoOfBindings,
     getControllerType,
     removeBindingControlChars,
+    getDirectiveConfigNode,
+    getPropValueByName,
+    getObjLiteral,
 } from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
@@ -46,7 +49,87 @@ export function getComponentNameOrAttrNameHoverInfo(
     if (componentNameInfo) {
         return getComponentHoverInfo(ctx);
     } else if (directiveNameInfo) {
-        // TODO directive
+        return getDirectiveHoverInfo(ctx);
+    }
+
+    function getDirectiveHoverInfo(ctx: PluginContext): NgHoverResponse {
+        const directiveConfigNode = getDirectiveConfigNode(ctx);
+        if (!directiveConfigNode) {
+            return;
+        }
+
+        const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
+        let attrsFromScope: NgTypeInfo[] = [];
+        let scopeMap = new Map<string, string>();
+        if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
+            scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
+            attrsFromScope = getPublicMembersTypeInfoOfBindings(ctx, scopeMap, false) ?? [];
+        }
+
+        if (hoverInfo.type === 'tagName') {
+            return getDirectiveNameHoverInfo();
+        } else {
+            return getDirectiveAttrHoverInfo();
+        }
+
+        function getDirectiveNameHoverInfo() {
+            const indent = SPACE.repeat(4);
+            const directive = `(directive) ${hoverInfo.tagName}`;
+            const others = getOtherProps(['restrict', 'require', 'priority', 'terminal']);
+
+            return {
+                formattedTypeString: [directive, ...others, getScope(), getTransclude()].filter((x) => !!x).join('\n'),
+                document: '',
+            };
+
+            function getOtherProps(propNames: string[]): string[] {
+                return propNames.map((p) => {
+                    const v = getPropValueByName(ctx, directiveConfigNode!, p);
+                    return v ? `${p}: ${v.getText(ctx.sourceFile)}` : '';
+                });
+            }
+
+            function getTransclude() {
+                let transclude = '';
+                if (directiveNameInfo?.transclude) {
+                    if (typeof directiveNameInfo.transclude === 'boolean') {
+                        transclude = `transclude: true`;
+                    } else {
+                        transclude = Object.entries(directiveNameInfo.transclude)
+                            .map(([k, v]) => `${indent}${k}: "${v}"`)
+                            .join('\n');
+                        transclude = `transclude: {\n${transclude}\n}`;
+                    }
+                }
+                return transclude;
+            }
+
+            function getScope() {
+                let scope = '';
+                if (attrsFromScope.length === 0) {
+                    scope = `scope: { }`;
+                } else {
+                    scope = attrsFromScope.map((x) => `${indent}${x.name}: "${scopeMap.get(x.name)}"; // ${x.typeString}`).join('\n');
+                    scope = `scope: {\n${scope}\n}`;
+                }
+                return scope;
+            }
+        }
+
+        function getDirectiveAttrHoverInfo() {
+            const attr = attrsFromScope.find((x) => x.name === hoverInfo.name);
+            if (!attr) {
+                return;
+            }
+
+            const attrInfo = `(property) ${attr.name}: ${attr.typeString}`;
+            const scopeInfo = `scope configs: "${scopeMap.get(attr.name)}"`;
+
+            return {
+                formattedTypeString: [attrInfo, scopeInfo].filter((x) => !!x).join('\n'),
+                document: '',
+            };
+        }
     }
 
     function getComponentHoverInfo(ctx: PluginContext): NgHoverResponse {
@@ -88,11 +171,11 @@ export function getComponentNameOrAttrNameHoverInfo(
             }
 
             let transclude = '';
-            if (componentNameInfo!.transclude) {
-                if (typeof componentNameInfo!.transclude === 'boolean') {
+            if (componentNameInfo?.transclude) {
+                if (typeof componentNameInfo.transclude === 'boolean') {
                     transclude = `transclude: true`;
                 } else {
-                    transclude = Object.entries(componentNameInfo!.transclude)
+                    transclude = Object.entries(componentNameInfo.transclude)
                         .map(([k, v]) => `${indent}${k}: "${v}"`)
                         .join('\n');
                     transclude = `transclude: {\n${transclude}\n}`;
