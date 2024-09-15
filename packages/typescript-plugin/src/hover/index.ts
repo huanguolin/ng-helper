@@ -125,7 +125,11 @@ export function getComponentNameOrAttrNameHoverInfo(
         }
 
         function getDirectiveAttrHoverInfo() {
-            const attr = attrsFromScope.find((x) => x.name === hoverInfo.name);
+            // 从 bindings 中获取在 class 上对应属性的名字
+            const toPropsNameMap = getToPropsNameMap(scopeMap);
+            const propName = toPropsNameMap.get(hoverInfo.name)!;
+
+            const attr = attrsFromScope.find((x) => x.name === propName);
             if (!attr) {
                 return;
             }
@@ -223,15 +227,15 @@ export function getComponentNameOrAttrNameHoverInfo(
 
             return result;
         }
+    }
 
-        function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
-            const result = new Map<string, string>();
-            for (const [k, v] of bindingsMap) {
-                const inputName = removeBindingControlChars(v).trim();
-                result.set(inputName || k, k);
-            }
-            return result;
+    function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
+        const result = new Map<string, string>();
+        for (const [k, v] of bindingsMap) {
+            const inputName = removeBindingControlChars(v).trim();
+            result.set(inputName || k, k);
         }
+        return result;
     }
 
     function getTranscludeHoverInfo() {
