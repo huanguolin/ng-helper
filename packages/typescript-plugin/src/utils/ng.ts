@@ -179,11 +179,7 @@ export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDi
             }
         }
 
-        // components 和 directives 都为空时，继续遍历.
-        // 且这里仅仅考虑两者在 AST 的同一层的情况。
-        if (!info.components.length && !info.directives.length) {
-            ctx.ts.forEachChild(node, visit);
-        }
+        ctx.ts.forEachChild(node, visit);
     }
 
     function getComponentNameInfo(node: ts.CallExpression): NgComponentNameInfo | undefined {
