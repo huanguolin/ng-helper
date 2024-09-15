@@ -23,7 +23,7 @@ export function findMatchedDirectives(componentDirectiveMap: Map<string, NgCompo
     return matchedDirectives;
 }
 
-export function getAttributeDirectives(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>): DirectiveFileInfo[] {
+export function getDirectivesUsableAsAttributes(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>): DirectiveFileInfo[] {
     const directives: DirectiveFileInfo[] = [];
     for (const [filePath, value] of componentDirectiveMap.entries()) {
         for (const directive of value.directives) {

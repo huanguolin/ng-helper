@@ -8,5 +8,5 @@ import { ngDirective } from './ngDirective';
 import { type } from './type';
 
 export function registerCompletion(context: ExtensionContext, port: number) {
-    context.subscriptions.push(type(port), ctrl(port), ngDirective(port), customDirective(port), componentName(port), componentAttr(port));
+    context.subscriptions.push(type(port), ctrl(port), ngDirective(port), ...customDirective(port), componentName(port), componentAttr(port));
 }

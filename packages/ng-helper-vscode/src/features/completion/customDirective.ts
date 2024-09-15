@@ -1,6 +1,16 @@
-import { canCompletionHtmlAttr, Cursor, getHtmlTagAt } from '@ng-helper/shared/lib/html';
+import { canCompletionHtmlAttr, Cursor, getHtmlTagAt, SPACE } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
-import { languages, TextDocument, Position, CompletionItem, CompletionList, SnippetString, type CancellationToken, CompletionItemKind } from 'vscode';
+import {
+    languages,
+    TextDocument,
+    Position,
+    CompletionItem,
+    CompletionList,
+    SnippetString,
+    type CancellationToken,
+    CompletionItemKind,
+    type CompletionItemProvider,
+} from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getDirectiveCompletionApi } from '../../service/api';
@@ -8,22 +18,38 @@ import { checkNgHelperServerRunning } from '../../utils';
 import { getCorrespondingTsFileName, getControllerNameInfoFromHtml, isComponentTagName } from '../utils';
 
 export function customDirective(port: number) {
-    return languages.registerCompletionItemProvider('html', {
-        async provideCompletionItems(document, position, token, context) {
-            return timeCost('provideCustomDirectiveCompletion', async () => {
-                try {
-                    // 要 undefined 时才能触发自动补全
-                    if (context.triggerCharacter) {
-                        return;
+    // 这里拆成两个是为了兼容 html 和 inline html. (componentName 和 componentAttr 也有这样的处理)
+    return [
+        languages.registerCompletionItemProvider('html', buildProvider('directive')),
+        languages.registerCompletionItemProvider('html', buildProvider('directiveAttr'), ' '),
+    ];
+
+    function buildProvider(queryType: 'directive' | 'directiveAttr'): CompletionItemProvider {
+        const provider: CompletionItemProvider<CompletionItem> = {
+            async provideCompletionItems(document, position, token, context) {
+                return timeCost('provideCustomDirectiveCompletion', async () => {
+                    if (
+                        (queryType === 'directive' && typeof context.triggerCharacter === 'undefined') ||
+                        (queryType === 'directiveAttr' && context.triggerCharacter === SPACE)
+                    ) {
+                        try {
+                            return await provideCustomDirectiveCompletion({
+                                document,
+                                position,
+                                queryType,
+                                port,
+                                vscodeCancelToken: token,
+                            });
+                        } catch (error) {
+                            console.error('provideCustomDirectiveCompletion() error:', error);
+                            return undefined;
+                        }
                     }
-                    return await provideCustomDirectiveCompletion({ document, position, port, vscodeCancelToken: token });
-                } catch (error) {
-                    console.error('provideCustomDirectiveCompletion() error:', error);
-                    return undefined;
-                }
-            });
-        },
-    });
+                });
+            },
+        };
+        return provider;
+    }
 }
 
 async function provideCustomDirectiveCompletion({
@@ -31,11 +57,13 @@ async function provideCustomDirectiveCompletion({
     position,
     port,
     vscodeCancelToken,
+    queryType,
 }: {
     document: TextDocument;
     position: Position;
     port: number;
     vscodeCancelToken: CancellationToken;
+    queryType: 'directive' | 'directiveAttr';
 }) {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
@@ -54,23 +82,28 @@ async function provideCustomDirectiveCompletion({
         return;
     }
 
-    const attrNames = tag.attrs.sort((a, b) => a.name.start - b.name.start).map((a) => camelCase(a.name.text));
+    const attrs = tag.attrs.sort((a, b) => a.name.start - b.name.start);
+    const attrNames = attrs.map((a) => camelCase(a.name.text));
+    const afterCursorAttrName = camelCase(attrs.find((a) => a.name.start > cursor.at)?.name.text ?? '');
+
     const list = await getDirectiveCompletionApi({
         port,
-        info: { fileName: relatedTsFile, attrNames },
+        info: { fileName: relatedTsFile, attrNames, queryType, afterCursorAttrName },
         vscodeCancelToken,
     });
     if (!list || !list.length) {
         return;
     }
 
+    const isDirectiveAttr = queryType === 'directiveAttr';
     return new CompletionList(
         list.map((x, i) => {
             const directiveName = kebabCase(x.name);
-            const item = new CompletionItem(directiveName, x.kind === 'directiveAttr' ? CompletionItemKind.Field : CompletionItemKind.Property);
-            // TODO 等号什么时候需要？另外要区分是指令的属性还是指令本身
-            item.insertText = new SnippetString(`${directiveName}="$1"$0`);
-            item.documentation = [x.kind, x.typeString && `type: ${x.typeString}`, x.document].filter(Boolean).join('\n');
+            const item = new CompletionItem(directiveName, isDirectiveAttr ? CompletionItemKind.Field : CompletionItemKind.Property);
+            item.insertText = new SnippetString(isDirectiveAttr ? `${directiveName}="$1"$0` : `${directiveName}$0`);
+            item.documentation = [isDirectiveAttr ? '(attribute of directive)' : '(directive)', x.typeString && `type: ${x.typeString}`, x.document]
+                .filter(Boolean)
+                .join('\n');
             item.detail = '[ng-helper]';
             item.sortText = i.toString().padStart(2, '0');
             return item;

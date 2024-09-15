@@ -292,15 +292,7 @@ export function getTypeInfoOfDirectiveScope(
      */
     perspectivesOnUsing = true,
 ): NgTypeInfo[] | undefined {
-    const result = getPublicMembersTypeInfoOfBindings(ctx, scopeMap, perspectivesOnUsing);
-    if (!result) {
-        return;
-    }
-
-    return result.map((x) => {
-        x.kind = 'directiveAttr';
-        return x;
-    });
+    return getPublicMembersTypeInfoOfBindings(ctx, scopeMap, perspectivesOnUsing);
 }
 
 export function getPublicMembersTypeInfoOfBindings(

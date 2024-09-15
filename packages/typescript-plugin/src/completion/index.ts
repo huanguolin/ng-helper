@@ -12,7 +12,7 @@ import {
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
-import { findMatchedDirectives, getAttributeDirectives, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
+import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getControllerType,
@@ -301,6 +301,7 @@ export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, con
 }
 
 export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDirectiveCompletionRequest): NgDirectiveCompletionResponse {
+    const logger = coreCtx.logger.prefix('getDirectiveCompletions()');
     ngHelperServer.refreshInternalMaps(info.fileName);
 
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(info.fileName);
@@ -308,14 +309,32 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
         return;
     }
 
-    // 如果有匹配到的指令，则不再提供指令自动补全，转而提供指令的属性自动补全。
     const matchedDirectives = findMatchedDirectives(componentDirectiveMap, info.attrNames);
-    if (matchedDirectives.length) {
-        return getTypeInfosFromDirectives(coreCtx, matchedDirectives);
-    } else {
-        const attributeDirectives = getAttributeDirectives(componentDirectiveMap);
+    logger.info(
+        'Matched directives:',
+        matchedDirectives.map((d) => d.directiveInfo.directiveName),
+    );
+
+    if (info.queryType === 'directiveAttr' && matchedDirectives.length) {
+        const closestDirective = findClosestMatchedDirective(matchedDirectives, info.attrNames, info.afterCursorAttrName);
+
+        logger.info('Closest directive:', closestDirective ? closestDirective.directiveInfo.directiveName : 'None');
+
+        if (closestDirective) {
+            const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, closestDirective);
+            return typeInfos?.filter((typeInfo) => !info.attrNames.includes(typeInfo.name)) || [];
+        }
+        return [];
+    }
+
+    if (info.queryType === 'directive') {
+        let attributeDirectives = getDirectivesUsableAsAttributes(componentDirectiveMap);
+        if (matchedDirectives.length) {
+            const matchedDirectiveNames = new Set(matchedDirectives.map((d) => d.directiveInfo.directiveName));
+            attributeDirectives = attributeDirectives.filter((d) => !matchedDirectiveNames.has(d.directiveInfo.directiveName));
+        }
         return attributeDirectives.map((directive) => ({
-            kind: 'directive',
+            kind: 'property',
             name: directive.directiveInfo.directiveName,
             typeString: '',
             document: '',
@@ -324,15 +343,17 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
     }
 }
 
-function getTypeInfosFromDirectives(coreCtx: CorePluginContext, matchedDirectives: DirectiveFileInfo[]): NgTypeInfo[] {
-    const result: NgTypeInfo[] = [];
-
-    for (const item of matchedDirectives) {
-        const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, item);
-        if (typeInfos) {
-            result.push(...typeInfos);
+function findClosestMatchedDirective(
+    matchedDirectives: DirectiveFileInfo[],
+    attrNames: string[],
+    afterCursorAttrName: string,
+): DirectiveFileInfo | undefined {
+    const cursorIndex = afterCursorAttrName ? attrNames.indexOf(afterCursorAttrName) : attrNames.length;
+    for (let i = cursorIndex - 1; i >= 0; i--) {
+        const directive = matchedDirectives.find((d) => d.directiveInfo.directiveName === attrNames[i]);
+        if (directive) {
+            return directive;
         }
     }
-
-    return result;
+    return undefined;
 }

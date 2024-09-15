@@ -2,7 +2,7 @@
  * 表示与父类型的关系。
  * NgFieldKind 并不是表示 type 的类型分类。
  */
-export type NgFieldKind = 'property' | 'method' | 'directive' | 'directiveAttr';
+export type NgFieldKind = 'property' | 'method';
 
 export interface NgTypeInfo {
     kind: NgFieldKind;
@@ -43,7 +43,13 @@ export interface NgComponentAttrCompletionRequest extends NgRequest {
 }
 
 export interface NgDirectiveCompletionRequest extends NgRequest {
+    queryType: 'directive' | 'directiveAttr';
     attrNames: string[];
+    /**
+     * 光标后面是哪个属性。
+     * 必须是 attrNames 中的一个，或者为空字符串（代表在最前面）。
+     */
+    afterCursorAttrName: string;
 }
 
 export interface NgHoverRequest extends NgRequest {
