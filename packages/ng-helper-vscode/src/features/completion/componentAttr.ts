@@ -1,6 +1,6 @@
 import { Cursor, canCompletionHtmlAttr, getHtmlTagAt } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
-import { languages, TextDocument, Position, CompletionList, CancellationToken, CompletionItem, SnippetString } from 'vscode';
+import { languages, TextDocument, Position, CompletionList, CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentAttrCompletionApi } from '../../service/api';
@@ -90,7 +90,7 @@ async function provideComponentAttrCompletion({
 
     return new CompletionList(
         list.map((x, i) => {
-            const item = new CompletionItem(x.name);
+            const item = new CompletionItem(x.name, CompletionItemKind.Field);
             item.insertText = new SnippetString(`${x.name}="$1"$0`);
             item.documentation = `type: ${x.typeString}\n` + x.document;
             item.detail = '[ng-helper]';
