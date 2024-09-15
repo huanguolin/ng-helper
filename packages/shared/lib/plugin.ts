@@ -2,7 +2,7 @@
  * 表示与父类型的关系。
  * NgFieldKind 并不是表示 type 的类型分类。
  */
-export type NgFieldKind = 'property' | 'method' | 'directive';
+export type NgFieldKind = 'property' | 'method' | 'directive' | 'directiveAttr';
 
 export interface NgTypeInfo {
     kind: NgFieldKind;

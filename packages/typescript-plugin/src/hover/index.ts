@@ -24,6 +24,7 @@ import {
     getDirectiveConfigNode,
     getPropValueByName,
     getObjLiteral,
+    getTypeInfoOfDirectiveScope,
 } from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
@@ -71,7 +72,7 @@ export function getComponentNameOrAttrNameHoverInfo(
         let scopeMap = new Map<string, string>();
         if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
             scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
-            attrsFromScope = getPublicMembersTypeInfoOfBindings(ctx, scopeMap, false) ?? [];
+            attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
         }
 
         if (hoverInfo.type === 'tagName') {

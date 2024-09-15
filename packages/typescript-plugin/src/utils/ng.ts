@@ -284,6 +284,25 @@ export function getControllerNameInfo(ctx: PluginContext): string | undefined {
     }
 }
 
+export function getTypeInfoOfDirectiveScope(
+    ctx: PluginContext,
+    scopeMap: Map<string, string>,
+    /**
+     * 站在使用组件的视角。
+     */
+    perspectivesOnUsing = true,
+): NgTypeInfo[] | undefined {
+    const result = getPublicMembersTypeInfoOfBindings(ctx, scopeMap, perspectivesOnUsing);
+    if (!result) {
+        return;
+    }
+
+    return result.map((x) => {
+        x.kind = 'directiveAttr';
+        return x;
+    });
+}
+
 export function getPublicMembersTypeInfoOfBindings(
     ctx: PluginContext,
     bindingsMap: Map<string, string>,

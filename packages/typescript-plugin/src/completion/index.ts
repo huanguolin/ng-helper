@@ -12,7 +12,7 @@ import {
 
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
-import { findMatchedDirectives, findUnmatchedDirectives, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
+import { findMatchedDirectives, getAttributeDirectives, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getControllerType,
@@ -20,6 +20,7 @@ import {
     getObjLiteral,
     getPropValueByName,
     getPublicMembersTypeInfoOfBindings,
+    getTypeInfoOfDirectiveScope,
     isElementDirective,
     removeBindingControlChars,
 } from '../utils/ng';
@@ -191,7 +192,7 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
 
     const obj = getObjLiteral(ctx, scopePropertyValue);
     const map = new Map<string, string>(Object.entries(obj));
-    return getPublicMembersTypeInfoOfBindings(ctx, map, true);
+    return getTypeInfoOfDirectiveScope(ctx, map);
 }
 
 function getComponentAttrCompletionsViaComponentFileInfo(
@@ -307,21 +308,20 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
         return;
     }
 
+    // 如果有匹配到的指令，则不再提供指令自动补全，转而提供指令的属性自动补全。
     const matchedDirectives = findMatchedDirectives(componentDirectiveMap, info.attrNames);
-    const unmatchedDirectives = findUnmatchedDirectives(componentDirectiveMap, info.attrNames);
-    // TODO 要排除已经出现过的属性名
-    const result = getTypeInfosFromDirectives(coreCtx, matchedDirectives);
-    const unmatchedDirectiveNames: NgTypeInfo[] = unmatchedDirectives.map((directive) => ({
-        kind: 'directive',
-        name: directive.directiveInfo.directiveName,
-        typeString: 'directive',
-        document: '',
-        isFunction: false,
-    }));
-
-    result.push(...unmatchedDirectiveNames);
-
-    return result.length > 0 ? result : undefined;
+    if (matchedDirectives.length) {
+        return getTypeInfosFromDirectives(coreCtx, matchedDirectives);
+    } else {
+        const attributeDirectives = getAttributeDirectives(componentDirectiveMap);
+        return attributeDirectives.map((directive) => ({
+            kind: 'directive',
+            name: directive.directiveInfo.directiveName,
+            typeString: '',
+            document: '',
+            isFunction: false,
+        }));
+    }
 }
 
 function getTypeInfosFromDirectives(coreCtx: CorePluginContext, matchedDirectives: DirectiveFileInfo[]): NgTypeInfo[] {

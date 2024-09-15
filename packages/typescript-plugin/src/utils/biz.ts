@@ -3,7 +3,7 @@ import type { NgComponentDirectiveNamesInfo, NgDirectiveNameInfo, NgTypeInfo } f
 import { getCtxOfCoreCtx } from '../ngHelperServer';
 import type { CorePluginContext } from '../type';
 
-import { getDirectiveConfigNode, getObjLiteral, getPropValueByName, getPublicMembersTypeInfoOfBindings, isAttributeDirective } from './ng';
+import { getDirectiveConfigNode, getObjLiteral, getPropValueByName, getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
 
 export interface DirectiveFileInfo {
     filePath: string;
@@ -23,17 +23,16 @@ export function findMatchedDirectives(componentDirectiveMap: Map<string, NgCompo
     return matchedDirectives;
 }
 
-export function findUnmatchedDirectives(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>, attrNames: string[]): DirectiveFileInfo[] {
-    const unmatchedDirectives: DirectiveFileInfo[] = [];
-    const attrNamesSet = new Set(attrNames);
+export function getAttributeDirectives(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>): DirectiveFileInfo[] {
+    const directives: DirectiveFileInfo[] = [];
     for (const [filePath, value] of componentDirectiveMap.entries()) {
         for (const directive of value.directives) {
-            if (isAttributeDirective(directive) && !attrNamesSet.has(directive.directiveName)) {
-                unmatchedDirectives.push({ filePath, directiveInfo: directive });
+            if (isAttributeDirective(directive)) {
+                directives.push({ filePath, directiveInfo: directive });
             }
         }
     }
-    return unmatchedDirectives;
+    return directives;
 }
 
 export function getTypeInfosFromDirectiveScope(coreCtx: CorePluginContext, directiveFileInfo: DirectiveFileInfo): NgTypeInfo[] | undefined {
@@ -55,5 +54,5 @@ export function getTypeInfosFromDirectiveScope(coreCtx: CorePluginContext, direc
 
     const obj = getObjLiteral(ctx, scopePropertyValue);
     const map = new Map<string, string>(Object.entries(obj));
-    return getPublicMembersTypeInfoOfBindings(ctx, map, true);
+    return getTypeInfoOfDirectiveScope(ctx, map);
 }
