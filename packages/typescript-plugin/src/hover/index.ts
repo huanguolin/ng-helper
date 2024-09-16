@@ -15,7 +15,7 @@ import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
-import { findMatchedDirectives } from '../utils/biz';
+import { findMatchedDirectives, type DirectiveFileInfo } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getComponentTypeInfo,
@@ -69,13 +69,7 @@ export function getComponentNameOrAttrNameHoverInfo(
             return;
         }
 
-        const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-        let attrsFromScope: NgTypeInfo[] = [];
-        let scopeMap = new Map<string, string>();
-        if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
-            scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
-            attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
-        }
+        const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
 
         if (hoverInfo.type === 'tagName') {
             return getDirectiveNameHoverInfo({ ctx, tagName: hoverInfo.tagName, directiveNameInfo, directiveConfigNode, scopeMap, attrsFromScope });
@@ -470,23 +464,13 @@ export function getDirectiveHoverInfo(
 
     const hoverDirective = matchedDirectives.find((x) => x.directiveInfo.directiveName === cursorAtAttrName);
     if (hoverDirective) {
-        const ctx = getCtxOfCoreCtx(coreCtx, hoverDirective.filePath);
-        if (!ctx) {
+        const directiveContext = getDirectiveContext(coreCtx, hoverDirective);
+        if (!directiveContext) {
             return;
         }
 
-        const directiveConfigNode = getDirectiveConfigNode(ctx, hoverDirective.directiveInfo.directiveName);
-        if (!directiveConfigNode) {
-            return;
-        }
-
-        const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-        let attrsFromScope: NgTypeInfo[] = [];
-        let scopeMap = new Map<string, string>();
-        if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
-            scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
-            attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
-        }
+        const { ctx, directiveConfigNode } = directiveContext;
+        const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
 
         return getDirectiveNameHoverInfo({
             ctx,
@@ -498,34 +482,49 @@ export function getDirectiveHoverInfo(
         });
     } else {
         for (const directive of matchedDirectives) {
-            const ctx = getCtxOfCoreCtx(coreCtx, directive.filePath);
-            if (!ctx) {
+            const directiveContext = getDirectiveContext(coreCtx, directive);
+            if (!directiveContext) {
                 continue;
             }
 
-            const directiveConfigNode = getDirectiveConfigNode(ctx, directive.directiveInfo.directiveName);
-            if (!directiveConfigNode) {
-                continue;
-            }
-
-            const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-            let attrsFromScope: NgTypeInfo[] = [];
-            let scopeMap = new Map<string, string>();
-            if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
-                scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
-                attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
-                const attrHoverInfo = getDirectiveAttrHoverInfo({
-                    attrName: cursorAtAttrName,
-                    scopeMap,
-                    attrsFromScope,
-                    isDirectiveStyle: true,
-                    directiveName: directive.directiveInfo.directiveName,
-                });
-                // 如果找到了，则立即返回
-                if (attrHoverInfo) {
-                    return attrHoverInfo;
-                }
+            const { ctx, directiveConfigNode } = directiveContext;
+            const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
+            const attrHoverInfo = getDirectiveAttrHoverInfo({
+                attrName: cursorAtAttrName,
+                scopeMap,
+                attrsFromScope,
+                isDirectiveStyle: true,
+                directiveName: directive.directiveInfo.directiveName,
+            });
+            // 如果找到了，则立即返回
+            if (attrHoverInfo) {
+                return attrHoverInfo;
             }
         }
     }
+}
+
+function getDirectiveContext(coreCtx: CorePluginContext, directive: DirectiveFileInfo) {
+    const ctx = getCtxOfCoreCtx(coreCtx, directive.filePath);
+    if (!ctx) {
+        return null;
+    }
+
+    const directiveConfigNode = getDirectiveConfigNode(ctx, directive.directiveInfo.directiveName);
+    if (!directiveConfigNode) {
+        return null;
+    }
+
+    return { ctx, directiveConfigNode };
+}
+
+function getDirectiveScopeInfo(ctx: PluginContext, directiveConfigNode: ts.ObjectLiteralExpression) {
+    const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
+    let attrsFromScope: NgTypeInfo[] = [];
+    let scopeMap = new Map<string, string>();
+    if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
+        scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
+        attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
+    }
+    return { attrsFromScope, scopeMap };
 }
