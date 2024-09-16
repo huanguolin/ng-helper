@@ -2,7 +2,7 @@ import { NgHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { ExtensionContext, Hover, languages, MarkdownString } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi } from '../../service/api';
+import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi, getDirectiveHoverApi } from '../../service/api';
 import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
 
 import { provideTypeHoverInfo } from './utils';
@@ -22,21 +22,30 @@ export function registerHover(context: ExtensionContext, port: number) {
                                 });
                             }
 
-                            if (!isComponentTagName(hoverInfo.tagName)) {
-                                return;
-                            }
+                            if (isComponentTagName(hoverInfo.tagName) || (hoverInfo.type === 'attrName' && hoverInfo.attrNames.length)) {
+                                const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+                                if (!tsFilePath) {
+                                    return;
+                                }
 
-                            const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
-                            if (!tsFilePath) {
-                                return;
+                                if (isComponentTagName(hoverInfo.tagName)) {
+                                    hoverInfo.attrNames = []; // component 查询目前不需要所有属性名字
+                                    const res = await getComponentNameOrAttrNameHoverApi({
+                                        port,
+                                        vscodeCancelToken,
+                                        info: { fileName: tsFilePath, hoverInfo: hoverInfo },
+                                    });
+                                    return buildHoverResult(res);
+                                } else {
+                                    const cursorAtAttrName = hoverInfo.name;
+                                    const res = await getDirectiveHoverApi({
+                                        port,
+                                        vscodeCancelToken,
+                                        info: { fileName: tsFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
+                                    });
+                                    return buildHoverResult(res);
+                                }
                             }
-
-                            const res = await getComponentNameOrAttrNameHoverApi({
-                                port,
-                                vscodeCancelToken,
-                                info: { fileName: tsFilePath, hoverInfo: hoverInfo },
-                            });
-                            return buildHoverResult(res);
                         } catch (error) {
                             console.error('provideComponentNameOrAttrNameHover() error:', error);
                             return undefined;

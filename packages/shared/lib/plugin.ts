@@ -71,12 +71,21 @@ export interface NgElementHoverInfo {
      * camelCase(tagName)
      */
     parentTagName?: string;
+    /**
+     * camelCase(attrName)
+     */
+    attrNames: string[];
 }
 export interface NgComponentNameOrAttrNameHoverRequest extends NgRequest {
     hoverInfo: NgElementHoverInfo;
 }
 
 export interface NgCtrlHoverRequest extends NgHoverRequest, NgCtrlInfo {}
+
+export interface NgDirectiveHoverRequest extends NgRequest {
+    attrNames: string[];
+    cursorAtAttrName: string;
+}
 
 export interface NgComponentNameOrAttrNameDefinitionRequest extends NgRequest {
     hoverInfo: NgElementHoverInfo;

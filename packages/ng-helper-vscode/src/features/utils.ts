@@ -28,14 +28,19 @@ export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number
         return;
     }
 
+    const tagName = camelCase(tag.tagName);
+    const parentTagName = tag.parent?.tagName && camelCase(tag.parent?.tagName);
+    const attrNames = tag.attrs.sort((a, b) => a.name.start - b.name.start).map((x) => camelCase(x.name.text));
+
     const hoverAtStartTagName = cursorAt > tag.start && cursorAt <= tag.start + tag.tagName.length;
     const hoverAtEndTagName = tag.endTagStart !== undefined && cursorAt > tag.endTagStart + 1 && cursorAt < tag.end;
     if (hoverAtStartTagName || hoverAtEndTagName) {
         return {
             type: 'tagName',
-            name: camelCase(tag.tagName),
-            tagName: camelCase(tag.tagName),
-            parentTagName: tag.parent?.tagName && camelCase(tag.parent?.tagName),
+            name: tagName,
+            tagName,
+            parentTagName,
+            attrNames,
         };
     }
 
@@ -44,8 +49,9 @@ export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number
         return {
             type: 'attrName',
             name: camelCase(attr.name.text),
-            tagName: camelCase(tag.tagName),
-            parentTagName: tag.parent?.tagName && camelCase(tag.parent?.tagName),
+            tagName,
+            parentTagName,
+            attrNames,
         };
     }
 }

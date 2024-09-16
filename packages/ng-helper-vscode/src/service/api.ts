@@ -19,6 +19,7 @@ import {
     type NgComponentsStringAttrsResponse,
     type NgDirectiveCompletionRequest,
     type NgDirectiveCompletionResponse,
+    type NgDirectiveHoverRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -98,6 +99,15 @@ export function getComponentNameOrAttrNameHoverApi({ port, vscodeCancelToken, in
         info,
         vscodeCancelToken,
         apiName: 'getComponentNameOrAttrNameHoverApi',
+    });
+}
+
+export function getDirectiveHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgDirectiveHoverRequest>) {
+    return bizRequest<NgDirectiveHoverRequest, NgHoverResponse>({
+        url: buildUrl(port, 'directive', 'hover'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getDirectiveHoverApi',
     });
 }
 
