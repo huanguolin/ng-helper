@@ -59,7 +59,6 @@ export type NgHelperServer = {
     isExtensionActivated: () => boolean;
     getComponentDirectiveMap: (filePath: string) => Map<string, NgComponentDirectiveFileInfo> | undefined;
     getTsCtrlMap: (filePath: string) => Map<string, NgTsCtrlFileInfo> | undefined;
-    refreshInternalMaps: (filePath: string) => void;
 };
 
 export interface FileVersion {

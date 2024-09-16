@@ -57,11 +57,15 @@ export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
-    const _getContextMap = new Map<string, GetCoreContextFn>();
-    const _componentDirectiveMapOfMap = new Map<string, Map<string, NgComponentDirectiveFileInfo>>();
-    const _tsCtrlMapOfMap = new Map<string, Map<string, NgTsCtrlFileInfo>>();
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
+
+    const _getContextMap = new Map<string, GetCoreContextFn>();
+
+    const REFRESH_THRESHOLDS = 1000; // 1s
+    let lastRefreshed = 0;
+    const _componentDirectiveMapOfMap = new Map<string, Map<string, NgComponentDirectiveFileInfo>>();
+    const _tsCtrlMapOfMap = new Map<string, Map<string, NgTsCtrlFileInfo>>();
 
     return {
         isExtensionActivated,
@@ -71,7 +75,6 @@ function createNgHelperServer(): NgHelperServer {
         getCoreContext,
         getComponentDirectiveMap,
         getTsCtrlMap,
-        refreshInternalMaps,
     };
 
     function isExtensionActivated() {
@@ -176,6 +179,7 @@ function createNgHelperServer(): NgHelperServer {
         if (!projectRoot) {
             return;
         }
+        refreshInternalMaps(projectRoot, filePath);
         return getMap(projectRoot, _componentDirectiveMapOfMap);
     }
 
@@ -184,14 +188,17 @@ function createNgHelperServer(): NgHelperServer {
         if (!projectRoot) {
             return;
         }
+        refreshInternalMaps(projectRoot, filePath);
         return getMap(projectRoot, _tsCtrlMapOfMap);
     }
 
-    function refreshInternalMaps(filePath: string): void {
-        const projectRoot = getProjectRoot(filePath);
-        if (!projectRoot) {
+    function refreshInternalMaps(projectRoot: string, filePath: string): void {
+        const diff = Date.now() - lastRefreshed;
+        if (diff < REFRESH_THRESHOLDS) {
+            // Skip refresh if less than REFRESH_THRESHOLDS ms has passed since last refresh
             return;
         }
+        lastRefreshed = Date.now();
 
         const get = <T>(mapOfMap: Map<string, T>): T => getMap(projectRoot, mapOfMap);
         const set = <T>(mapOfMap: Map<string, T>, map: T): void => setMap(projectRoot, mapOfMap, map);

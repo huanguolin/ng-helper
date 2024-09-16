@@ -35,8 +35,6 @@ export function getComponentNameOrAttrNameHoverInfo(
     coreCtx: CorePluginContext,
     { fileName, hoverInfo }: NgComponentNameOrAttrNameHoverRequest,
 ): NgHoverResponse {
-    ngHelperServer.refreshInternalMaps(fileName);
-
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
     if (!componentDirectiveMap) {
         return;
@@ -447,7 +445,6 @@ export function getDirectiveHoverInfo(
     { fileName, attrNames, cursorAtAttrName }: NgDirectiveHoverRequest,
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getDirectiveHoverInfo()');
-    ngHelperServer.refreshInternalMaps(fileName);
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
     if (!componentDirectiveMap) {
         return;

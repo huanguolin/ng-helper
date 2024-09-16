@@ -121,7 +121,6 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
 }
 
 export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
-    ngHelperServer.refreshInternalMaps(filePath);
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
     if (!componentDirectiveMap) {
         return;
@@ -146,8 +145,6 @@ export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath
 }
 
 export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgComponentAttrCompletionResponse {
-    ngHelperServer.refreshInternalMaps(filePath);
-
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
     if (!componentDirectiveMap) {
         return;
@@ -267,16 +264,10 @@ export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, con
         return;
     }
 
-    let tsCtrlFilePath = getTsCtrlFilePath(map);
+    const tsCtrlFilePath = getTsCtrlFilePath(map);
     if (!tsCtrlFilePath) {
-        // lazy refresh
-        ngHelperServer.refreshInternalMaps(fileName);
-        // get again
-        tsCtrlFilePath = getTsCtrlFilePath(ngHelperServer.getTsCtrlMap(fileName)!);
-        if (!tsCtrlFilePath) {
-            logger.info('tsCtrlFilePath not found!');
-            return;
-        }
+        logger.info('tsCtrlFilePath not found!');
+        return;
     }
     logger.info('tsCtrlFilePath:', tsCtrlFilePath);
 
@@ -302,7 +293,6 @@ export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, con
 
 export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDirectiveCompletionRequest): NgDirectiveCompletionResponse {
     const logger = coreCtx.logger.prefix('getDirectiveCompletions()');
-    ngHelperServer.refreshInternalMaps(info.fileName);
 
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(info.fileName);
     if (!componentDirectiveMap) {

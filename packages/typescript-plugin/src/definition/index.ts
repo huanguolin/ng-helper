@@ -27,8 +27,6 @@ export function getComponentNameOrAttrNameDefinitionInfo(
     coreCtx: CorePluginContext,
     { fileName, hoverInfo }: NgComponentNameOrAttrNameDefinitionRequest,
 ): NgDefinitionResponse {
-    ngHelperServer.refreshInternalMaps(fileName);
-
     const logger = coreCtx.logger.prefix('getComponentNameOrAttrNameDefinitionInfo()');
 
     const componentMap = ngHelperServer.getComponentDirectiveMap(fileName);

@@ -17,8 +17,6 @@ export function getComponentsStringAttrsInfo(
     coreCtx: CorePluginContext,
     { fileName, componentNames }: NgListComponentsStringAttrsRequest,
 ): NgComponentsStringAttrsResponse {
-    ngHelperServer.refreshInternalMaps(fileName);
-
     const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
     if (!componentDirectiveMap) {
         return;
