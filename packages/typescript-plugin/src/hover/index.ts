@@ -15,7 +15,7 @@ import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
-import { findMatchedDirectives, type DirectiveFileInfo } from '../utils/biz';
+import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getComponentTypeInfo,
@@ -29,7 +29,7 @@ import {
     getTypeInfoOfDirectiveScope,
 } from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
+import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getDirectiveContext, getMinSyntaxNodeForHover } from './utils';
 
 export function getComponentNameOrAttrNameHoverInfo(
     coreCtx: CorePluginContext,
@@ -499,20 +499,6 @@ export function getDirectiveHoverInfo(
             }
         }
     }
-}
-
-function getDirectiveContext(coreCtx: CorePluginContext, directive: DirectiveFileInfo) {
-    const ctx = getCtxOfCoreCtx(coreCtx, directive.filePath);
-    if (!ctx) {
-        return null;
-    }
-
-    const directiveConfigNode = getDirectiveConfigNode(ctx, directive.directiveInfo.directiveName);
-    if (!directiveConfigNode) {
-        return null;
-    }
-
-    return { ctx, directiveConfigNode };
 }
 
 function getDirectiveScopeInfo(ctx: PluginContext, directiveConfigNode: ts.ObjectLiteralExpression) {

@@ -2,15 +2,17 @@ import {
     type NgComponentNameOrAttrNameDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
     type NgDefinitionResponse,
+    type NgDirectiveDefinitionRequest,
     type NgDirectiveNameInfo,
     type NgTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
-import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
+import { findComponentOrDirectiveInfo, getDirectiveContext, getMinSyntaxNodeForHover } from '../hover/utils';
 import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, type PluginContext } from '../type';
+import { findMatchedDirectives } from '../utils/biz';
 import { typeToString } from '../utils/common';
 import {
     getComponentDeclareLiteralNode,
@@ -19,9 +21,79 @@ import {
     getDirectiveConfigNode,
     getProp,
     getPropByName,
+    getPropValueByName,
     isAngularComponentRegisterNode,
     isAngularDirectiveRegisterNode,
 } from '../utils/ng';
+
+export function getDirectiveDefinitionInfo(
+    coreCtx: CorePluginContext,
+    { fileName, attrNames, cursorAtAttrName }: NgDirectiveDefinitionRequest,
+): NgDefinitionResponse {
+    const logger = coreCtx.logger.prefix('getDirectiveDefinitionInfo()');
+
+    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
+    if (!componentDirectiveMap) {
+        return;
+    }
+
+    const matchedDirectives = findMatchedDirectives(componentDirectiveMap, attrNames);
+    logger.info(
+        'Matched directives:',
+        matchedDirectives.map((d) => d.directiveInfo.directiveName),
+    );
+    if (!matchedDirectives.length) {
+        return;
+    }
+
+    const hoverDirective = matchedDirectives.find((d) => d.directiveInfo.directiveName === cursorAtAttrName);
+    if (hoverDirective) {
+        const ctx = getCtxOfCoreCtx(coreCtx, hoverDirective.filePath);
+        if (!ctx) {
+            return;
+        }
+
+        const directiveConfigNode = getDirectiveDeclareNode(ctx);
+        if (!directiveConfigNode) {
+            return;
+        }
+
+        const directiveNameNode = directiveConfigNode.arguments[0];
+        return {
+            filePath: hoverDirective.filePath,
+            start: directiveNameNode.getStart(ctx.sourceFile),
+            end: directiveNameNode.getEnd(),
+        };
+    } else {
+        for (const directive of matchedDirectives) {
+            const directiveContext = getDirectiveContext(coreCtx, directive);
+            if (!directiveContext) {
+                continue;
+            }
+
+            const { ctx, directiveConfigNode } = directiveContext;
+
+            const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
+            if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
+                const p = getProp(
+                    ctx,
+                    scopePropValue,
+                    (p) =>
+                        ctx.ts.isIdentifier(p.name) &&
+                        ctx.ts.isStringLiteralLike(p.initializer) &&
+                        (p.initializer.text.includes(cursorAtAttrName) || p.name.text === cursorAtAttrName),
+                );
+                if (p) {
+                    return {
+                        filePath: directive.filePath,
+                        start: p.getStart(ctx.sourceFile),
+                        end: p.getEnd(),
+                    };
+                }
+            }
+        }
+    }
+}
 
 export function getComponentNameOrAttrNameDefinitionInfo(
     coreCtx: CorePluginContext,

@@ -95,6 +95,8 @@ export interface NgTypeDefinitionRequest extends NgHoverRequest {}
 
 export interface NgCtrlTypeDefinitionRequest extends NgCtrlHoverRequest {}
 
+export interface NgDirectiveDefinitionRequest extends NgDirectiveHoverRequest {}
+
 export interface NgListComponentsStringAttrsRequest extends NgRequest {
     componentNames: string[];
 }

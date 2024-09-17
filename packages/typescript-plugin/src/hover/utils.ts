@@ -1,9 +1,11 @@
 import { NgHoverInfo, type NgComponentNameInfo, type NgDirectiveNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext, SyntaxNodeInfoEx, type NgComponentDirectiveFileInfo } from '../type';
+import { getCtxOfCoreCtx } from '../ngHelperServer';
+import { PluginContext, SyntaxNodeInfoEx, type CorePluginContext, type NgComponentDirectiveFileInfo } from '../type';
+import type { DirectiveFileInfo } from '../utils/biz';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
-import { isElementDirective } from '../utils/ng';
+import { getDirectiveConfigNode, isElementDirective } from '../utils/ng';
 
 export function buildHoverInfo({
     ctx,
@@ -188,4 +190,18 @@ export function findComponentOrDirectiveInfo(
             }
         }
     }
+}
+
+export function getDirectiveContext(coreCtx: CorePluginContext, directive: DirectiveFileInfo) {
+    const ctx = getCtxOfCoreCtx(coreCtx, directive.filePath);
+    if (!ctx) {
+        return null;
+    }
+
+    const directiveConfigNode = getDirectiveConfigNode(ctx, directive.directiveInfo.directiveName);
+    if (!directiveConfigNode) {
+        return null;
+    }
+
+    return { ctx, directiveConfigNode };
 }

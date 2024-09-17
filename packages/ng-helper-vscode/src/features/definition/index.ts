@@ -2,7 +2,12 @@ import type { NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
 import { Location, Range, Uri, languages, workspace, type Definition, type ExtensionContext } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentNameOrAttrNameDefinitionApi, getComponentTypeDefinitionApi, getControllerTypeDefinitionApi } from '../../service/api';
+import {
+    getComponentNameOrAttrNameDefinitionApi,
+    getComponentTypeDefinitionApi,
+    getControllerTypeDefinitionApi,
+    getDirectiveDefinitionApi,
+} from '../../service/api';
 import { provideTypeHoverInfo } from '../hover/utils';
 import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
 
@@ -18,17 +23,30 @@ export function registerDefinition(context: ExtensionContext, port: number) {
                                 return;
                             }
 
-                            if (!isComponentTagName(hoverInfo.tagName)) {
-                                return;
-                            }
+                            if (isComponentTagName(hoverInfo.tagName) || (hoverInfo.type === 'attrName' && hoverInfo.attrNames.length)) {
+                                const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+                                if (!tsFilePath) {
+                                    return;
+                                }
 
-                            const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
-                            const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
-                                port,
-                                vscodeCancelToken: token,
-                                info: { fileName: tsFilePath!, hoverInfo: hoverInfo },
-                            });
-                            return await buildDefinition(definitionInfo);
+                                if (isComponentTagName(hoverInfo.tagName)) {
+                                    const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+                                    const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
+                                        port,
+                                        vscodeCancelToken: token,
+                                        info: { fileName: tsFilePath!, hoverInfo: hoverInfo },
+                                    });
+                                    return await buildDefinition(definitionInfo);
+                                } else {
+                                    const cursorAtAttrName = hoverInfo.name;
+                                    const definitionInfo = await getDirectiveDefinitionApi({
+                                        port,
+                                        vscodeCancelToken: token,
+                                        info: { fileName: tsFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
+                                    });
+                                    return await buildDefinition(definitionInfo);
+                                }
+                            }
                         } catch (error) {
                             console.error('provideComponentNameOrAttrNameDefinition() error:', error);
                         }

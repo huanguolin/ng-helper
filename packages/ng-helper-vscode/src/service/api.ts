@@ -20,6 +20,7 @@ import {
     type NgDirectiveCompletionRequest,
     type NgDirectiveCompletionResponse,
     type NgDirectiveHoverRequest,
+    type NgDirectiveDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -45,6 +46,15 @@ export function listComponentsStringAttrs({ port, vscodeCancelToken, info }: Api
         info,
         vscodeCancelToken,
         apiName: 'listComponentsStringAttrs',
+    });
+}
+
+export function getDirectiveDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgDirectiveDefinitionRequest>) {
+    return bizRequest<NgDirectiveDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'directive', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getDirectiveDefinitionApi',
     });
 }
 
