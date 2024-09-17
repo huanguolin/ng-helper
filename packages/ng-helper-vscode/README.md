@@ -11,32 +11,18 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 ## Features
 
-- [x] HTML
-  - [x] Auto-completion for `ng-*` directives
-  - [x] Auto-completion for component tag names
-  - [x] Auto-completion for component attributes
-  - [x] Hover information for component tag names
-  - [x] Hover information for component attributes
-  - [x] Syntax highlighting
-  - [ ] For HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS
-    - [x] Auto-completion for data binding
-    - [x] Type hints on hover
-    - [x] Jump to definition of component tags or their attributes
-    - [x] Jump to TS definition of bound data
-    - [ ] Function signature help in HTML
-- [x] Component:
-  - [x] Right-click menu to create component
-  - [x] Auto-completion for data binding in HTML
-  - [x] Type hints on hover in HTML
-  - [x] Auto-completion for component tag names in HTML
-  - [x] Auto-completion for component attributes in HTML
-  - [x] Jump to definition of component tags or their attributes in HTML
-  - [x] Jump to TS definition of bound data in HTML
-  - [x] Syntax highlighting in HTML
-  - [ ] Function signature help in HTML
-- [x] Injection matching validation in TS files
-- [x] Support go to HTML file via 'templateUrl' form ts/js
-- [x] Inline HTML support in ts/js (including code highlighting, auto-completion, hover, etc.)
+- [x] `ng-*` directive auto-completion
+- [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition
+- [x] Custom component tags/attributes: auto-completion, hover hints, go to definition
+- [x] HTML syntax highlighting, supporting inline HTML (including syntax highlighting, auto-completion, hover hints, Go to definition)
+- [x] Jump from 'templateUrl' to the corresponding HTML
+- [x] Right-click menu to create components
+- [x] Dependency injection matching validation
+  - [x] `TypeScript` code
+  - [ ] `JavaScript` code
+
+> The following features require `TypeScript` support:
+- [x] Data binding: auto-completion, hover type hints, go to definition
 
 
 ## Requirements

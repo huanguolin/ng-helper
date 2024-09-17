@@ -8,32 +8,19 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 
 ## Features
 
-- [x] html
-  - [x] `ng-*` 指令自动补全
-  - [x] component 标签名字自动补全
-  - [x] component 属性自动补全
-  - [x] component 标签名字 hover 信息提示
-  - [x] component 属性 hover 信息提示
-  - [x] 语法高亮
-  - [ ] 使用 `ng-controller="XController as ctrl"` 的 html, 且 `XController` 使用 ts 实现
-    - [x] 数据绑定自动补全
-    - [x] hover 类型提示
-    - [x] component 标签或者其属性跳转到定义位置
-    - [x] 绑定的数据跳转到 ts 定义位置
-    - [ ] html 中显示函数签名帮助
-- [x] Component:
-  - [x] 创建 component 的右键菜单
-  - [x] html 数据绑定自动补全
-  - [x] html hover 类型提示
-  - [x] html 中 component 标签名字自动补全
-  - [x] html 中 component 属性自动补全
-  - [x] component 标签或者其属性跳转到定义位置
-  - [x] html 中绑定的数据跳转到 ts 定义位置
-  - [x] html 中语法高亮
-  - [ ] html 中显示函数签名帮助
-- [x] ts 文件注入匹配校验
-- [x] 从 ts/js 中的 'templateUrl' 跳转到对应的 HTML
-- [x] 支持内联 HTML 于 ts/js 中 (包含代码高亮、自动补全、hover等)
+- [x] `ng-*` 指令自动补全
+- [x] 自定义 directive 标签/属性: 自动补全, hover 提示, go to definition
+- [x] 自定义 component 标签/属性: 自动补全, hover 信息提示, go to definition
+- [x] html 语法高亮，且支持 inline-html(包含语法高亮、自动补全、hover提示, go to definition)
+- [x] 从 'templateUrl' 跳转到对应的 HTML
+- [x] 右键菜单创建 component
+- [ ] 依赖注入匹配校验
+  - [x] `TypeScript` 代码
+  - [ ] `JavaScript` 代码
+
+> 下面的功能需要使用 `TypeScript` 才能支持
+
+- [x] 数据绑定: 自动补全, hover 类型提示, go to definition
 
 
 ## Requirements

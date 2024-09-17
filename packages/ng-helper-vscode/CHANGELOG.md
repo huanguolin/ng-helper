@@ -4,13 +4,23 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.5.0](https://github.com/huanguolin/ng-helper/compare/v0.4.0...v0.5.0) (2024-09-17)
+
+### Feature
+- Custom directive tags/attributes now support auto-completion, hover hints, go to definition.
+
+### Fixed
+- HTML syntax highlight not working on the directive attribute (#17).
+- In non-html areas of js/ts pages with inline html, typing a space also prompts for component completion (#18).
+
+
 ## [v0.4.0](https://github.com/huanguolin/ng-helper/compare/v0.3.0...v0.4.0) (2024-09-08)
 
 ### Feature
 - Syntax highlight for js in HTML.
 - Syntax highlight for HTML in js/ts.
 - Completion, hover hint, go to definition for HTML in js/ts.
-- Improve go to HTML file via 'templateUrl' form ts/js
+- Improve go to HTML file via 'templateUrl' form ts/js.
 
 ### Fixed
 - Hovering does not work on ng directive attrs (#15).
@@ -19,8 +29,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [v0.3.0](https://github.com/huanguolin/ng-helper/compare/v0.2.0...v0.3.0) (2024-08-28)
 
 ### Feature
-- Support go to HTML file via 'templateUrl' form ts/js
-- Support hover hint for ng-*
+- Support go to HTML file via 'templateUrl' form ts/js.
+- Support hover hint for `ng-*`.
 
 
 ## [v0.2.0](https://github.com/huanguolin/ng-helper/compare/v0.1.5...v0.2.0) (2024-08-24)
@@ -57,41 +67,41 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [v0.1.2](https://github.com/huanguolin/ng-helper/compare/v0.1.1...v0.1.2) (2024-08-19)
 
 ### Fixed
-- Do not auto-complete component name with self-closing (#9)
+- Do not auto-complete component name with self-closing (#9).
 
 
 ## [v0.1.1](https://github.com/huanguolin/ng-helper/compare/v0.1.0...v0.1.1) (2024-08-06)
 
 ### Fixed
-- Hover hint for component name & attr name not working on component html (#7)
+- Hover hint for component name & attr name not working on component html (#7).
 
 
 ## [v0.1.0](https://github.com/huanguolin/ng-helper/compare/v0.0.8...v0.1.0) (2024-08-05)
 
 ### Feature
-- HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS
-  - Auto-completion for data binding
-  - Type hints on hover
-- Hover information for component tag names in HTML
-- Hover information for component attributes in HTML
+- HTML using `ng-controller="XController as ctrl"` with `XController` implemented in TS:
+  - Auto-completion for data binding.
+  - Type hints on hover.
+- Hover information for component tag names in HTML.
+- Hover information for component attributes in HTML.
 
 ### Fixed
-- Hover hint not working on `<x-label ng-if="ctrl.type === 'content'" ng-class="[ctrl.editable]" />` (#4, #5)
+- Hover hint not working on `<x-label ng-if="ctrl.type === 'content'" ng-class="[ctrl.editable]" />` (#4, #5).
 
 
 ## [v0.0.8](https://github.com/huanguolin/ng-helper/compare/v0.0.7...v0.0.8) (2024-07-28)
 
 ### Feature
-- Support for multiple projects
-- Auto-completion for component names in HTML
-- Auto-completion for component property names in HTML
+- Support for multiple projects.
+- Auto-completion for component names in HTML.
+- Auto-completion for component property names in HTML.
 
 ### Improvement
-- Function completion split into two stages
-- Component hover support for cases without a class controller
+- Function completion split into two stages.
+- Component hover support for cases without a class controller.
 
 ### Fixed
-- Incorrect suggestions for ng-* auto-completion in templates {{}} (#3)
+- Incorrect suggestions for ng-* auto-completion in templates {{}} (#3).
 
 
 ## [v0.0.7](https://github.com/huanguolin/ng-helper/compare/v0.0.6...v0.0.7) (2024-07-19)
