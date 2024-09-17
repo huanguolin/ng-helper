@@ -10,6 +10,8 @@ import {
     canCompletionComponentName,
     Cursor,
     HtmlTag,
+    getAttrValueStart,
+    type Location,
 } from '../lib/html';
 
 describe('isContainsNgFilter()', () => {
@@ -264,6 +266,20 @@ describe('getHtmlTagAt()', () => {
         const tag = getHtmlTagAt(htmlText, { at: 7, isHover: true });
         expect(tag?.tagName).toEqual('h1');
         expect(tag?.attrs.length).toEqual(0);
+    });
+});
+
+describe('getAttrValueStart()', () => {
+    it.each([
+        [{ name: 'class', value: 'container' }, { startOffset: 0, endOffset: 16 }, 'class="container"', 7],
+        [{ name: 'id', value: 'myDiv' }, { startOffset: 0, endOffset: 11 }, 'id="myDiv"', 4],
+        [{ name: 'disabled', value: '' }, { startOffset: 0, endOffset: 8 }, 'disabled', undefined],
+        [{ name: 'data-test', value: 'value' }, { startOffset: 0, endOffset: 18 }, 'data-test="value"', 11],
+        [{ name: 'style', value: 'color: red' }, { startOffset: 0, endOffset: 19 }, 'style="color: red"', 7],
+        [{ name: 'ng-click', value: 'doSomething()' }, { startOffset: 0, endOffset: 25 }, `ng-click='doSomething()'`, 10],
+    ])('given attr: %p, location: %p, htmlText: %p, should return %p', (attr, location, htmlText, expectedOutput) => {
+        const result = getAttrValueStart(attr, location as Location, htmlText);
+        expect(result).toBe(expectedOutput);
     });
 });
 
