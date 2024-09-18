@@ -405,8 +405,7 @@ export function isAttributeDirective(directiveNameInfo: NgDirectiveNameInfo): bo
 }
 
 export function isComponentOrDirectiveFile(fileName: string): boolean {
-    // Note: Not support '.component.js' file.
-    return isComponentTsFile(fileName) || isDirectiveFile(fileName);
+    return isComponentTsFile(fileName) || isComponentJsFile(fileName) || isDirectiveFile(fileName);
 }
 
 export function isDirectiveFile(fileName: string): boolean {
@@ -416,6 +415,9 @@ export function isDirectiveFile(fileName: string): boolean {
         fileName.endsWith('.directive.js') ||
         fileName.endsWith('.directives.js')
     );
+}
+export function isComponentJsFile(fileName: string): boolean {
+    return fileName.endsWith('.component.js');
 }
 
 export function isComponentTsFile(fileName: string): boolean {
