@@ -5,11 +5,26 @@ import { NgComponentTypeInfo, PluginContext, type CorePluginContext } from '../t
 
 import { isTypeOfType } from './common';
 
+export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    if (
+        ctx.ts.isCallExpression(node) &&
+        ctx.ts.isPropertyAccessExpression(node.expression) &&
+        ctx.ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === 'angular' &&
+        ctx.ts.isIdentifier(node.expression.name) &&
+        node.expression.name.text === 'module' &&
+        node.arguments.length === 1 &&
+        ctx.ts.isStringLiteral(node.arguments[0])
+    ) {
+        return true;
+    }
+    return false;
+}
+
 export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
-        ctx.ts.isCallExpression(node.expression.expression) &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'component' &&
         node.arguments.length === 2 &&
@@ -25,7 +40,6 @@ export function isAngularDirectiveRegisterNode(ctx: PluginContext, node: ts.Node
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
-        ctx.ts.isCallExpression(node.expression.expression) &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'directive' &&
         node.arguments.length === 2 &&
@@ -41,7 +55,6 @@ export function isAngularControllerRegisterNode(ctx: PluginContext, node: ts.Nod
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
-        ctx.ts.isCallExpression(node.expression.expression) &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'controller' &&
         node.arguments.length === 2 &&
@@ -406,6 +419,18 @@ export function isAttributeDirective(directiveNameInfo: NgDirectiveNameInfo): bo
 
 export function isComponentOrDirectiveFile(fileName: string): boolean {
     return isComponentTsFile(fileName) || isComponentJsFile(fileName) || isDirectiveFile(fileName);
+}
+
+export function isTsFile(fileName: string): boolean {
+    return fileName.endsWith('.ts');
+}
+
+export function isDtsFile(fileName: string): boolean {
+    return fileName.endsWith('.d.ts');
+}
+
+export function isJsFile(fileName: string): boolean {
+    return fileName.endsWith('.js');
 }
 
 export function isDirectiveFile(fileName: string): boolean {

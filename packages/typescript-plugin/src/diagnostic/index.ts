@@ -4,7 +4,7 @@ import type tsserver from 'typescript/lib/tsserverlibrary';
 import { ngHelperServer } from '../ngHelperServer';
 import { PluginContext } from '../type';
 import { findClassDeclaration } from '../utils/common';
-import { isComponentTsFile, isControllerTsFile, isServiceTsFile } from '../utils/ng';
+import { isDtsFile } from '../utils/ng';
 
 import { getConstructor, getStaticPublicInjectionField } from './utils';
 
@@ -15,7 +15,7 @@ export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserve
             return prior;
         }
 
-        if (!isComponentTsFile(fileName) && !isControllerTsFile(fileName) && !isServiceTsFile(fileName)) {
+        if (isDtsFile(fileName)) {
             return prior;
         }
 
