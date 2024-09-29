@@ -7,6 +7,8 @@ import { isTypeOfType } from './common';
 import { getObjLiteral } from './common';
 
 export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // 检查 angular.module('moduleName') 的调用，注意 module 函数还有两个可选参数：
+    // module(name: string, requires?: string[], configFn?: Injectable<Function>): IModule;
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
@@ -14,7 +16,7 @@ export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is 
         node.expression.expression.text === 'angular' &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'module' &&
-        node.arguments.length === 1 &&
+        node.arguments.length >= 1 &&
         ctx.ts.isStringLiteral(node.arguments[0])
     ) {
         return true;
@@ -23,47 +25,109 @@ export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is 
 }
 
 export function isAngularComponentRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
-    if (
-        ctx.ts.isCallExpression(node) &&
-        ctx.ts.isPropertyAccessExpression(node.expression) &&
-        ctx.ts.isIdentifier(node.expression.name) &&
-        node.expression.name.text === 'component' &&
-        node.arguments.length === 2 &&
-        ctx.ts.isStringLiteral(node.arguments[0]) &&
-        ctx.ts.isObjectLiteralExpression(node.arguments[1])
-    ) {
-        return true;
-    }
-    return false;
+    // only support: component(name: string, options: IComponentOptions): IModule;
+    // not support: component(object: {[componentName: string]: IComponentOptions}): IModule;
+    return isAngularRegisterNode(ctx, node, 'component', 'object');
 }
 
 export function isAngularDirectiveRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: directive<...>(name: string, directiveFactory: Injectable<IDirectiveFactory<...>>): IModule;
+    // not support: directive<...>(object: {[directiveName: string]: Injectable<IDirectiveFactory<...>>}): IModule;
+    return isAngularRegisterNode(ctx, node, 'directive', 'arrayOrFunction');
+}
+
+export function isAngularControllerRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: controller(name: string, controllerConstructor: Injectable<IControllerConstructor>): IModule;
+    // not support: controller(object: {[name: string]: Injectable<IControllerConstructor>}): IModule;
+    return isAngularRegisterNode(ctx, node, 'controller', 'arrayOrFunction');
+}
+
+export function isAngularServiceRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: service(name: string, serviceConstructor: Injectable<Function>): IModule;
+    // not support: service(object: {[name: string]: Injectable<Function>}): IModule;
+    return isAngularRegisterNode(ctx, node, 'service', 'arrayOrFunction');
+}
+
+export function isAngularFilterRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: filter(name: string, filterFactoryFunction: Injectable<FilterFactory>): IModule;
+    // not support: filter(object: {[name: string]: Injectable<FilterFactory>}): IModule;
+    return isAngularRegisterNode(ctx, node, 'filter', 'arrayOrFunction');
+}
+
+export function isAngularFactoryRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: factory(name: string, $getFn: Injectable<Function>): IModule;
+    // not support: factory(object: {[name: string]: Injectable<Function>}): IModule;
+    return isAngularRegisterNode(ctx, node, 'factory', 'arrayOrFunction');
+}
+
+export function isAngularProviderRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: provider(name: string, inlineAnnotatedConstructor: any[]): IModule;
+    // not support:
+    // provider(name: string, serviceProviderFactory: IServiceProviderFactory): IModule;
+    // provider(name: string, serviceProviderConstructor: IServiceProviderClass): IModule;
+    // provider(name: string, providerObject: IServiceProvider): IModule;
+    // provider(object: Object): IModule;
+    return isAngularRegisterNode(ctx, node, 'provider', 'arrayOrFunction');
+}
+
+function isAngularRegisterNode(
+    ctx: PluginContext,
+    node: ts.Node,
+    registerName: string,
+    configType: 'arrayOrFunction' | 'object',
+): node is ts.CallExpression {
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
         ctx.ts.isIdentifier(node.expression.name) &&
-        node.expression.name.text === 'directive' &&
+        node.expression.name.text === registerName &&
         node.arguments.length === 2 &&
-        ctx.ts.isStringLiteral(node.arguments[0]) &&
-        (ctx.ts.isArrayLiteralExpression(node.arguments[1]) || ctx.ts.isFunctionExpression(node.arguments[1]))
+        ctx.ts.isStringLiteral(node.arguments[0])
+    ) {
+        if (configType === 'arrayOrFunction') {
+            return isInjectableNode(ctx, node.arguments[1]);
+        } else if (configType === 'object') {
+            return ctx.ts.isObjectLiteralExpression(node.arguments[1]);
+        }
+    }
+    return false;
+}
+
+export function isAngularRunNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // run(initializationFunction: Injectable<Function>): IModule;
+    if (
+        ctx.ts.isCallExpression(node) &&
+        ctx.ts.isPropertyAccessExpression(node.expression) &&
+        ctx.ts.isIdentifier(node.expression.name) &&
+        node.expression.name.text === 'run' &&
+        node.arguments.length === 1 &&
+        isInjectableNode(ctx, node.arguments[0])
     ) {
         return true;
     }
     return false;
 }
 
-export function isAngularControllerRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+export function isAngularConfigNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: config(inlineAnnotatedFunction: any[]): IModule;
+    // not support: config(configFn: Function): IModule;
+    // not support: config(object: Object): IModule;
     if (
         ctx.ts.isCallExpression(node) &&
         ctx.ts.isPropertyAccessExpression(node.expression) &&
         ctx.ts.isIdentifier(node.expression.name) &&
-        node.expression.name.text === 'controller' &&
-        node.arguments.length === 2 &&
-        ctx.ts.isStringLiteral(node.arguments[0])
+        node.expression.name.text === 'config' &&
+        node.arguments.length === 1 &&
+        isInjectableNode(ctx, node.arguments[0])
     ) {
         return true;
     }
     return false;
+}
+
+function isInjectableNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // 只考虑常见情况，其他情况不考虑
+    return ctx.ts.isArrayLiteralExpression(node) || ctx.ts.isFunctionExpression(node) || ctx.ts.isClassExpression(node) || ctx.ts.isIdentifier(node);
 }
 
 export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): NgComponentTypeInfo {
