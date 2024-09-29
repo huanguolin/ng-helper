@@ -14,14 +14,12 @@ import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, type PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { typeToString } from '../utils/common';
+import { getProp, getPropByName, getPropValueByName } from '../utils/common';
 import {
     getComponentDeclareLiteralNode,
     getComponentTypeInfo,
     getControllerType,
     getDirectiveConfigNode,
-    getProp,
-    getPropByName,
-    getPropValueByName,
     isAngularComponentRegisterNode,
     isAngularDirectiveRegisterNode,
 } from '../utils/ng';

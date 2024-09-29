@@ -17,6 +17,7 @@ import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
+import { getPropValueByName, getObjLiteral } from '../utils/common';
 import {
     getComponentTypeInfo,
     getComponentDeclareLiteralNode,
@@ -24,8 +25,6 @@ import {
     getControllerType,
     removeBindingControlChars,
     getDirectiveConfigNode,
-    getPropValueByName,
-    getObjLiteral,
     getTypeInfoOfDirectiveScope,
 } from '../utils/ng';
 

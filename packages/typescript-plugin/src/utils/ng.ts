@@ -1,9 +1,10 @@
 import { NgComponentNameInfo, NgTypeInfo, type NgComponentDirectiveNamesInfo, type NgDirectiveNameInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { NgComponentTypeInfo, PluginContext, type CorePluginContext } from '../type';
+import { NgComponentTypeInfo, PluginContext } from '../type';
 
 import { isTypeOfType } from './common';
+import { getObjLiteral } from './common';
 
 export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     if (
@@ -368,37 +369,6 @@ export function getPublicMembersTypeInfoOfBindings(
 
         return result;
     }
-}
-
-export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression): Record<string, string> {
-    const obj: Record<string, string> = {};
-    for (const p of objLiteral.properties) {
-        if (coreCtx.ts.isPropertyAssignment(p) && coreCtx.ts.isIdentifier(p.name) && coreCtx.ts.isStringLiteralLike(p.initializer)) {
-            obj[p.name.text] = p.initializer.text;
-        }
-    }
-    return obj;
-}
-
-export function getPropValueByName(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression, propName: string): ts.Expression | undefined {
-    const prop = getPropByName(coreCtx, objLiteral, propName);
-    return prop?.initializer;
-}
-
-export function getPropByName(
-    coreCtx: CorePluginContext,
-    objLiteral: ts.ObjectLiteralExpression,
-    propName: string,
-): ts.PropertyAssignment | undefined {
-    return getProp(coreCtx, objLiteral, (p) => p.name && coreCtx.ts.isIdentifier(p.name) && p.name.text === propName);
-}
-
-export function getProp(
-    coreCtx: CorePluginContext,
-    objLiteral: ts.ObjectLiteralExpression,
-    predicate: (p: ts.PropertyAssignment) => boolean,
-): ts.PropertyAssignment | undefined {
-    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
 }
 
 export function isStringBinding(bindingName: string): boolean {

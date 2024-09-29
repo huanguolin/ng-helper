@@ -3,7 +3,8 @@ import type { NgComponentDirectiveNamesInfo, NgDirectiveNameInfo, NgTypeInfo } f
 import { getCtxOfCoreCtx } from '../ngHelperServer';
 import type { CorePluginContext } from '../type';
 
-import { getDirectiveConfigNode, getObjLiteral, getPropValueByName, getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
+import { getObjLiteral, getPropValueByName } from './common';
+import { getDirectiveConfigNode, getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
 
 export interface DirectiveFileInfo {
     filePath: string;

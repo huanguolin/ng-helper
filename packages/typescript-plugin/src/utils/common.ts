@@ -1,7 +1,7 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { PluginContext, FileVersion } from '../type';
+import { PluginContext, FileVersion, type CorePluginContext } from '../type';
 
 export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp', setParentNodes?: boolean): ts.SourceFile {
     return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, setParentNodes, ctx.ts.ScriptKind.JS);
@@ -202,4 +202,35 @@ export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is t
 
 export function getSourceFileVersion(sourceFile: ts.SourceFile): string {
     return (sourceFile as unknown as FileVersion).version;
+}
+
+export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression): Record<string, string> {
+    const obj: Record<string, string> = {};
+    for (const p of objLiteral.properties) {
+        if (coreCtx.ts.isPropertyAssignment(p) && coreCtx.ts.isIdentifier(p.name) && coreCtx.ts.isStringLiteralLike(p.initializer)) {
+            obj[p.name.text] = p.initializer.text;
+        }
+    }
+    return obj;
+}
+
+export function getPropValueByName(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression, propName: string): ts.Expression | undefined {
+    const prop = getPropByName(coreCtx, objLiteral, propName);
+    return prop?.initializer;
+}
+
+export function getPropByName(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    propName: string,
+): ts.PropertyAssignment | undefined {
+    return getProp(coreCtx, objLiteral, (p) => p.name && coreCtx.ts.isIdentifier(p.name) && p.name.text === propName);
+}
+
+export function getProp(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    predicate: (p: ts.PropertyAssignment) => boolean,
+): ts.PropertyAssignment | undefined {
+    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
 }
