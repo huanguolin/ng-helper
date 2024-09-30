@@ -24,7 +24,8 @@ import { getConstructor, getStaticPublicInjectionField, isAngularFile } from './
 export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserver.LanguageService; info: tsserver.server.PluginCreateInfo }) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
-        if (!ngHelperServer.isExtensionActivated()) {
+        const checkMode = ngHelperServer.getConfig()?.injectionCheckMode;
+        if (!ngHelperServer.isExtensionActivated() || !isValidCheckMode(checkMode)) {
             return prior;
         }
 
@@ -38,7 +39,7 @@ export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserve
         }
 
         try {
-            const diagnostics = diagnoseInjection(ctx, 'strict_equal');
+            const diagnostics = diagnoseInjection(ctx, checkMode);
             ctx.logger.info('getSemanticDiagnostics():', diagnostics);
             if (diagnostics.length > 0) {
                 prior.push(...diagnostics);
@@ -49,6 +50,10 @@ export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserve
 
         return prior;
     };
+}
+
+function isValidCheckMode(checkMode: InjectionCheckMode | undefined): checkMode is InjectionCheckMode {
+    return !!checkMode && ['strict_equal', 'count_match', 'ignore_case_word_match'].includes(checkMode);
 }
 
 function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): ts.Diagnostic[] {
@@ -96,7 +101,7 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
             const declaration = resolveIdentifier(node);
             if (declaration) {
                 if (ctx.ts.isFunctionDeclaration(declaration)) {
-                    checkFunction(declaration, node);
+                    checkFunction(declaration);
                 } else if (ctx.ts.isClassDeclaration(declaration)) {
                     checkClass(declaration);
                 }
@@ -106,41 +111,116 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
         }
     }
 
-    function checkArray(node: ts.ArrayLiteralExpression) {
+    function checkArray(arrNode: ts.ArrayLiteralExpression) {
         logger.info('enter checkArray().');
 
-        const fnNode = node.elements[node.elements.length - 1];
+        const funcNode = arrNode.elements[arrNode.elements.length - 1];
         let fnDeclaration: ts.FunctionLikeDeclarationBase | undefined;
-        if (ctx.ts.isIdentifier(fnNode)) {
-            const declaration = resolveIdentifier(fnNode);
+        if (ctx.ts.isIdentifier(funcNode)) {
+            const declaration = resolveIdentifier(funcNode);
             if (declaration && ctx.ts.isFunctionDeclaration(declaration)) {
                 fnDeclaration = declaration;
             }
-        } else if (ctx.ts.isFunctionExpression(fnNode)) {
-            fnDeclaration = fnNode;
+        } else if (ctx.ts.isFunctionExpression(funcNode)) {
+            fnDeclaration = funcNode;
         }
 
         if (!fnDeclaration) {
             return;
         }
 
-        const injectionArr = node.elements.slice(0, -1);
+        const injectionArr = arrNode.elements.slice(0, -1);
         const paramArr = fnDeclaration.parameters;
+        checkMatch(injectionArr, paramArr);
+    }
+
+    function checkClass(classNode: ts.ClassLikeDeclarationBase) {
+        logger.info('enter checkClass().');
+
+        const staticInjectField = getStaticPublicInjectionField(ctx, classNode);
+        if (!staticInjectField || !staticInjectField.initializer || !ctx.ts.isArrayLiteralExpression(staticInjectField.initializer)) {
+            return;
+        }
+
+        const constructor = getConstructor(ctx, classNode);
+        if (!constructor) {
+            return;
+        }
+
+        checkMatch(staticInjectField.initializer.elements, constructor.parameters);
+    }
+
+    function checkFunction(funcNode: ts.FunctionDeclaration) {
+        logger.info('enter checkFunction().');
+
+        if (!funcNode.name) {
+            return;
+        }
+
+        const funcNameSymbol = ctx.typeChecker.getSymbolAtLocation(funcNode.name);
+        if (!funcNameSymbol) {
+            return;
+        }
+
+        const injection = findInjection(funcNameSymbol);
+        if (!injection) {
+            return;
+        }
+
+        checkMatch(injection.elements, funcNode.parameters);
+
+        function findInjection(funcSymbol: ts.Symbol): ts.ArrayLiteralExpression | undefined {
+            // XController.$inject = ['a', 'b'];
+            // function XController(a, b) { }
+            let result: ts.ArrayLiteralExpression | undefined;
+            visit(ctx.sourceFile);
+            return result;
+
+            function visit(node: ts.Node) {
+                if (
+                    ctx.ts.isBinaryExpression(node) &&
+                    ctx.ts.isPropertyAccessExpression(node.left) &&
+                    ctx.ts.isIdentifier(node.left.name) &&
+                    node.left.name.text === '$inject' &&
+                    ctx.ts.isArrayLiteralExpression(node.right) &&
+                    ctx.ts.isIdentifier(node.left.expression)
+                ) {
+                    const symbol = ctx.typeChecker.getSymbolAtLocation(node.left.expression);
+                    if (symbol === funcSymbol) {
+                        result = node.right;
+                    }
+                }
+
+                if (!result) {
+                    ctx.ts.forEachChild(node, visit);
+                }
+            }
+        }
+    }
+
+    function checkMatch(
+        injectionArr: ts.Expression[] | ts.NodeArray<ts.Expression>,
+        paramArr: ts.ParameterDeclaration[] | ts.NodeArray<ts.ParameterDeclaration>,
+    ) {
+        logger.info('enter checkMatch(), injectionArr.length:', injectionArr.length, 'paramArr.length:', paramArr.length);
+
         if (injectionArr.length === 0 && paramArr.length === 0) {
             return;
         }
 
-        logger.info('checkArray() before real check.');
         if (checkMode === 'count_match') {
-            if (injectionArr.length !== paramArr.length) {
-                return diagnostics.push(
-                    buildDiagnostic({
-                        start: fnNode.getStart(ctx.sourceFile),
-                        length: fnNode.getWidth(ctx.sourceFile),
-                        messageText: getNotMatchMsg(true),
-                    }),
-                );
+            if (injectionArr.length === paramArr.length) {
+                return;
             }
+            const isInjectionSide = injectionArr.length > paramArr.length;
+            const theIndex = Math.min(injectionArr.length, paramArr.length);
+            const theNode = isInjectionSide ? injectionArr[theIndex] : paramArr[theIndex];
+            return diagnostics.push(
+                buildDiagnostic({
+                    start: theNode.getStart(ctx.sourceFile),
+                    length: theNode.getWidth(ctx.sourceFile),
+                }),
+            );
         } else {
             const maxLength = Math.max(injectionArr.length, paramArr.length);
             for (let i = 0; i < maxLength; i++) {
@@ -153,7 +233,6 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
                         buildDiagnostic({
                             start: existOne.getStart(ctx.sourceFile),
                             length: existOne.getWidth(ctx.sourceFile),
-                            messageText: getNotMatchMsg(!!param),
                         }),
                     );
                 }
@@ -162,13 +241,12 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
                     return buildDiagnostic({
                         start: injectEle.getStart(ctx.sourceFile),
                         length: injectEle.getWidth(ctx.sourceFile),
-                        messageText: '$inject element must be literal string.',
+                        messageText: 'Injection element must be literal string.',
                     });
                 }
 
                 let leftText = injectEle.text;
                 let rightText = param.name.getText(ctx.sourceFile);
-
                 if (checkMode === 'ignore_case_word_match') {
                     leftText = leftText.toLowerCase();
                     rightText = rightText.toLowerCase();
@@ -181,7 +259,6 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
                         buildDiagnostic({
                             start: wrongSide.getStart(ctx.sourceFile),
                             length: wrongSide.getWidth(ctx.sourceFile),
-                            messageText: getNotMatchMsg(isConstructorSide),
                         }),
                     );
                 }
@@ -189,109 +266,14 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
         }
     }
 
-    function checkFunction(node: ts.FunctionLikeDeclarationBase, identifier: ts.Identifier) {
-        logger.info('enter checkFunction().');
-
-        const symbol = ctx.typeChecker.getSymbolAtLocation(identifier)!;
-        const injectionProperty = symbol.members?.get(ctx.ts.escapeLeadingUnderscores('$inject'));
-        if (!injectionProperty) {
-            return;
-        }
-
-        const declaration = injectionProperty.valueDeclaration;
-        if (!declaration || !ctx.ts.isBinaryExpression(declaration) || !ctx.ts.isArrayLiteralExpression(declaration.right)) {
-            return;
-        }
-
-        const injectionArr = declaration.right;
-
-        // TODO: 检查函数参数
-    }
-
-    function checkClass(node: ts.ClassLikeDeclarationBase) {
-        logger.info('enter checkClass().');
-        const staticInjectField = getStaticPublicInjectionField(ctx, node);
-        if (!staticInjectField || !staticInjectField.initializer || !ctx.ts.isArrayLiteralExpression(staticInjectField.initializer)) {
-            return;
-        }
-
-        const constructor = getConstructor(ctx, node);
-        if (!constructor) {
-            return;
-        }
-
-        const injectionArray = staticInjectField.initializer.elements;
-        const constructorParams = constructor.parameters;
-        if (injectionArray.length === 0 && constructorParams.length === 0) {
-            return;
-        }
-
-        logger.info('checkClass() before real check.');
-        if (checkMode === 'count_match') {
-            if (injectionArray.length !== constructorParams.length) {
-                const { left, right } = getConstructorParenPosition(ctx, constructor);
-                return diagnostics.push(
-                    buildDiagnostic({
-                        start: left,
-                        length: right - left + 1,
-                        messageText: getNotMatchMsg(true),
-                    }),
-                );
-            }
-        } else {
-            const maxLength = Math.max(injectionArray.length, constructorParams.length);
-            for (let i = 0; i < maxLength; i++) {
-                const injectEle = injectionArray[i];
-                const param = constructorParams[i];
-
-                if (!injectEle || !param) {
-                    const existOne = injectEle || param;
-                    return diagnostics.push(
-                        buildDiagnostic({
-                            start: existOne.getStart(ctx.sourceFile),
-                            length: existOne.getWidth(ctx.sourceFile),
-                            messageText: getNotMatchMsg(!!param),
-                        }),
-                    );
-                }
-
-                if (!ctx.ts.isStringLiteral(injectEle)) {
-                    return buildDiagnostic({
-                        start: injectEle.getStart(ctx.sourceFile),
-                        length: injectEle.getWidth(ctx.sourceFile),
-                        messageText: '$inject element must be literal string.',
-                    });
-                }
-
-                let leftText = injectEle.text;
-                let rightText = param.name.getText(ctx.sourceFile);
-                if (checkMode === 'ignore_case_word_match') {
-                    leftText = leftText.toLowerCase();
-                    rightText = rightText.toLowerCase();
-                }
-
-                if (leftText !== rightText) {
-                    const isConstructorSide = injectionArray.length <= constructorParams.length;
-                    const wrongSide = isConstructorSide ? param : injectEle;
-                    return diagnostics.push(
-                        buildDiagnostic({
-                            start: wrongSide.getStart(ctx.sourceFile),
-                            length: wrongSide.getWidth(ctx.sourceFile),
-                            messageText: getNotMatchMsg(isConstructorSide),
-                        }),
-                    );
-                }
-            }
-        }
-    }
-
-    function buildDiagnostic(input: Omit<ts.Diagnostic, 'category' | 'code' | 'file'>): ts.Diagnostic {
+    function buildDiagnostic(input: Omit<ts.Diagnostic, 'category' | 'code' | 'file' | 'messageText'> & { messageText?: string }): ts.Diagnostic {
+        const messageText = input.messageText || `Injection element mismatch (mode: '${checkMode}').`;
         return {
             ...input,
             category: ctx.ts.DiagnosticCategory.Error,
             code: 0,
             file: ctx.sourceFile,
-            messageText: `[ng-helper] ${input.messageText as string}`,
+            messageText: `[ng-helper] ${messageText}`,
         };
     }
 
@@ -304,18 +286,4 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
             }
         }
     }
-}
-
-function getNotMatchMsg(isConstructorSide: boolean): string {
-    return isConstructorSide ? 'Constructor parameter not match $inject element.' : '$inject element not match constructor parameter.';
-}
-
-function getConstructorParenPosition(ctx: PluginContext, constructor: ts.ConstructorDeclaration): { left: number; right: number } {
-    const constructorStartAt = constructor.getStart(ctx.sourceFile);
-    const constructorText = constructor.getText(ctx.sourceFile);
-    // 获取左括号的位置
-    const left = constructorStartAt + constructorText.indexOf('(');
-    // 获取右括号的位置
-    const right = constructorStartAt + constructorText.indexOf(')');
-    return { left, right };
 }

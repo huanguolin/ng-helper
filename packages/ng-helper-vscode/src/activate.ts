@@ -1,3 +1,4 @@
+import type { InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
 import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
@@ -12,7 +13,7 @@ export async function activateExt(): Promise<NgHelperConfigWithPort | undefined>
 
     const config = await readConfig();
 
-    const port = await configTsPluginConfiguration(defaultPort);
+    const port = await configTsPluginConfiguration(defaultPort, config);
     if (!port) {
         return;
     }
@@ -49,12 +50,14 @@ export async function readConfig(): Promise<NgHelperConfig> {
 function getDefaultConfig(): NgHelperConfig {
     return {
         componentCssFileExt: 'css',
+        injectionCheckMode: 'count_match',
     };
 }
 
 function normalizeConfig(config: NgHelperConfig): NgHelperConfig {
     return {
         componentCssFileExt: normalizeFileExt(config.componentCssFileExt),
+        injectionCheckMode: config.injectionCheckMode,
     };
 }
 
@@ -71,6 +74,7 @@ export interface NgHelperConfig {
      * like 'less', 'scss', 'css' etc, default is 'css';
      */
     componentCssFileExt: string;
+    injectionCheckMode: InjectionCheckMode;
 }
 
 export interface NgHelperConfigWithPort extends NgHelperConfig {

@@ -53,6 +53,7 @@ export type GetContextFnViaFilePath = (filePath: string) => PluginContext | unde
 
 export type NgHelperServer = {
     updateConfig: (cfg: NgPluginConfiguration) => void;
+    getConfig: () => Partial<NgPluginConfiguration> | undefined;
     addProject: (projectInfo: ProjectInfo) => () => void;
     getContext: GetContextFnViaFilePath;
     getCoreContext: GetCoreContextFnViaFilePath;

@@ -75,6 +75,7 @@ function createNgHelperServer(): NgHelperServer {
 
     return {
         isExtensionActivated,
+        getConfig,
         updateConfig,
         addProject,
         getContext,
@@ -85,6 +86,10 @@ function createNgHelperServer(): NgHelperServer {
 
     function isExtensionActivated() {
         return !!_config?.port;
+    }
+
+    function getConfig() {
+        return _config;
     }
 
     function updateConfig(cfg: Partial<NgPluginConfiguration>) {
