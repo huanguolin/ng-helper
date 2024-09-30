@@ -40,12 +40,12 @@ export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserve
 
         try {
             const diagnostics = diagnoseInjection(ctx, checkMode);
-            ctx.logger.info('getSemanticDiagnostics():', diagnostics);
+            ctx.logger.info('diagnoseInjection():', diagnostics);
             if (diagnostics.length > 0) {
                 prior.push(...diagnostics);
             }
         } catch (error) {
-            ctx.logger.error('getSemanticDiagnostics():', (error as Error).message, (error as Error).stack);
+            ctx.logger.error('diagnoseInjection():', (error as Error).message, (error as Error).stack);
         }
 
         return prior;
