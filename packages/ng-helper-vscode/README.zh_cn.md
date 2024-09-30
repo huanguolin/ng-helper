@@ -11,6 +11,7 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 - [x] `ng-*` 指令自动补全
 - [x] 自定义 directive 标签/属性: 自动补全, hover 提示, go to definition
 - [x] 自定义 component 标签/属性: 自动补全, hover 信息提示, go to definition
+- [ ] 自定义 filter: 自动补全, hover 信息提示, go to definition
 - [x] html 语法高亮，且支持 inline-html(包含语法高亮、自动补全、hover提示, go to definition)
 - [x] 从 'templateUrl' 跳转到对应的 HTML
 - [x] 右键菜单创建 component
