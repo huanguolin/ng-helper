@@ -14,8 +14,11 @@ export interface NgTypeInfo {
     paramNames?: string[];
 }
 
+export type InjectionCheckMode = 'strict_equal' | 'ignore_case_word_match' | 'count_match' | 'off';
+
 export interface NgPluginConfiguration {
     port: number;
+    injectionCheckMode: InjectionCheckMode;
 }
 
 export interface NgRequest {

@@ -14,9 +14,9 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 - [x] html 语法高亮，且支持 inline-html(包含语法高亮、自动补全、hover提示, go to definition)
 - [x] 从 'templateUrl' 跳转到对应的 HTML
 - [x] 右键菜单创建 component
-- [ ] 依赖注入匹配校验
+- [x] 依赖注入匹配校验
   - [x] `TypeScript` 代码
-  - [ ] `JavaScript` 代码
+  - [x] `JavaScript` 代码
 
 > 下面的功能需要使用 `TypeScript` 才能支持
 
@@ -40,6 +40,7 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 在 workspace 下的 .vscode 目录中，创建一个 ng-helper.json 空文件, 里面支持如下配置:
 
 * `componentCssFileExt`: 创建 component 时，css 文件的后缀，如 `less`, `sass` 等，默认为 `css`。
+* `injectionCheckMode`: 依赖注入检查的等级，值有 `strict_equal`, `ignore_case_word_match`, `count_match`, `off`, 约束从强到无，默认值是 `count_match`。
 
 ## Known Issues
 

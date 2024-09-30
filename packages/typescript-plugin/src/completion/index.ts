@@ -14,11 +14,10 @@ import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
 import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
+import { getObjLiteral, getPropValueByName } from '../utils/common';
 import {
     getControllerType,
     getDirectiveConfigNode,
-    getObjLiteral,
-    getPropValueByName,
     getPublicMembersTypeInfoOfBindings,
     getTypeInfoOfDirectiveScope,
     isElementDirective,
