@@ -22,7 +22,7 @@ export async function activate(context: ExtensionContext) {
     console.log('======= "ng-helper" is now active ========');
 
     // command
-    context.subscriptions.push(createComponentCommand(config.componentCssFileExt));
+    context.subscriptions.push(createComponentCommand(config.componentStyleFileExt, config.componentScriptFileExt));
 
     // completion
     registerCompletion(context, config.port);

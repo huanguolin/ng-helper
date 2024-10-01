@@ -41,7 +41,8 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 Create an empty `ng-helper.json` file in the `.vscode` directory of your workspace. It supports the following configuration:
 
-* `componentCssFileExt`: The suffix for the CSS file when creating a component, such as `less`, `sass`, etc. The default is `css`.
+* `componentStyleFileExt`: The suffix for the style file when creating a component, such as `less`, `sass`, etc. The default value is `css`.
+* `componentScriptFileExt`: `js` or `ts`. The default value is `js`.
 * `injectionCheckMode`: The modes for dependency injection check include `strict_equal`, `ignore_case_word_match`, `count_match`, and `off`, with constraints ranging from strict to none. The default value is `count_match`.
 
 ## Known Issues

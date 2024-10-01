@@ -49,14 +49,16 @@ export async function readConfig(): Promise<NgHelperConfig> {
 
 function getDefaultConfig(): NgHelperConfig {
     return {
-        componentCssFileExt: 'css',
+        componentStyleFileExt: 'css',
+        componentScriptFileExt: 'js',
         injectionCheckMode: 'count_match',
     };
 }
 
 function normalizeConfig(config: NgHelperConfig): NgHelperConfig {
     return {
-        componentCssFileExt: normalizeFileExt(config.componentCssFileExt),
+        componentStyleFileExt: normalizeFileExt(config.componentStyleFileExt),
+        componentScriptFileExt: normalizeFileExt(config.componentScriptFileExt),
         injectionCheckMode: config.injectionCheckMode,
     };
 }
@@ -73,7 +75,11 @@ export interface NgHelperConfig {
     /**
      * like 'less', 'scss', 'css' etc, default is 'css';
      */
-    componentCssFileExt: string;
+    componentStyleFileExt: string;
+    /**
+     * 'js' or 'ts', default is 'js';
+     */
+    componentScriptFileExt: string;
     injectionCheckMode: InjectionCheckMode;
 }
 

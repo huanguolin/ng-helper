@@ -40,8 +40,9 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 
 在 workspace 下的 .vscode 目录中，创建一个 ng-helper.json 空文件, 里面支持如下配置:
 
-* `componentCssFileExt`: 创建 component 时，css 文件的后缀，如 `less`, `sass` 等，默认为 `css`。
-* `injectionCheckMode`: 依赖注入检查的等级，值有 `strict_equal`, `ignore_case_word_match`, `count_match`, `off`, 约束从强到无，默认值是 `count_match`。
+* `componentStyleFileExt`: 创建 component 时，样式文件的后缀，如 `less`, `sass` 等，默认为 `css`。
+* `componentScriptFileExt`: `js` 或者 `ts`. 默认值是 `js`.
+* `injectionCheckMode`: 依赖注入检查的模式，值有 `strict_equal`, `ignore_case_word_match`, `count_match`, `off`, 约束从强到无，默认值是 `count_match`。
 
 ## Known Issues
 
