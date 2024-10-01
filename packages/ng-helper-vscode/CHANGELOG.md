@@ -4,6 +4,21 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.6.0](https://github.com/huanguolin/ng-helper/compare/v0.5.0...v0.6.0) (2024-10-01)
+
+### Feature
+- Dependency injection validation support for `js` files.
+- Dependency injection validation now supports more types: `controller`, `component`, `directive`, `filter`, `service`, `provider`, `config`, `factory`, `run`.(previously only `controller`, `component`, `service`).
+- The dependency injection check supports mode configuration to control the stringency of the check. See `injectionCheckMode` in the `Extension Settings` section of the README for details.
+- Create a component supports configuring the script file to have a `js` (default) or `ts` suffix (see `componentScriptFileExt` in the `Extension Settings`).
+
+### Break Change
+- Change the name of `componentCssFileExt` to `componentStyleFileExt` in the `Extension settings`.
+
+### Fixed
+- Fix the problem of not reading out multiple directives or components in the same file.
+
+
 ## [v0.5.0](https://github.com/huanguolin/ng-helper/compare/v0.4.0...v0.5.0) (2024-09-17)
 
 ### Feature
