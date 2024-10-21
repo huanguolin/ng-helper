@@ -1,6 +1,6 @@
 import type { NgComponentDirectiveNamesInfo, NgDirectiveNameInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 
-import { getCtxOfCoreCtx } from '../ngHelperServer';
+import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import type { CorePluginContext } from '../type';
 
 import { getObjLiteral, getPropValueByName } from './common';

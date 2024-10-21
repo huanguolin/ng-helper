@@ -13,7 +13,8 @@ import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
-import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
+import { ngHelperServer } from '../ngHelperServer';
+import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';

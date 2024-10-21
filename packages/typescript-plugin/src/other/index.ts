@@ -1,6 +1,7 @@
 import type { NgComponentsStringAttrsResponse, NgListComponentsStringAttrsRequest } from '@ng-helper/shared/lib/plugin';
 
-import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
+import { ngHelperServer } from '../ngHelperServer';
+import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import type { CorePluginContext } from '../type';
 import { getComponentDeclareLiteralNode, getComponentTypeInfo, isStringBinding, removeBindingControlChars } from '../utils/ng';
 

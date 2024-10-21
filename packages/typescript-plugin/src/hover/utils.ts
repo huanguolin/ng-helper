@@ -1,7 +1,7 @@
 import { NgHoverInfo, type NgComponentNameInfo, type NgDirectiveNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { getCtxOfCoreCtx } from '../ngHelperServer';
+import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { PluginContext, SyntaxNodeInfoEx, type CorePluginContext, type NgComponentDirectiveFileInfo } from '../type';
 import type { DirectiveFileInfo } from '../utils/biz';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
