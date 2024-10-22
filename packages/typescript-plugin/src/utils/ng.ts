@@ -221,7 +221,7 @@ export function getDirectiveConfigNode(ctx: PluginContext, directiveName: string
     function visit(node: ts.Node) {
         if (isAngularDirectiveRegisterNode(ctx, node) && ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === directiveName) {
             // 第二个参数是数组字面量或者函数表达式
-            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
+            const directiveFuncExpr = getAngularDefineFunctionExpression(ctx, node.arguments[1]);
             // 获取函数的返回值
             if (directiveFuncExpr) {
                 const returnStatement = directiveFuncExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
@@ -295,7 +295,7 @@ export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDi
             };
 
             // 第二个参数是数组字面量或者函数表达式
-            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
+            const directiveFuncExpr = getAngularDefineFunctionExpression(ctx, node.arguments[1]);
 
             // 获取函数的返回值
             if (directiveFuncExpr) {
@@ -332,14 +332,18 @@ export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDi
     }
 }
 
-function getDirectiveFunctionExpression(ctx: PluginContext, configNode: ts.Expression) {
-    let directiveFuncExpr: ts.FunctionExpression | undefined;
-    if (ctx.ts.isFunctionExpression(configNode)) {
-        directiveFuncExpr = configNode;
-    } else if (ctx.ts.isArrayLiteralExpression(configNode) && ctx.ts.isFunctionExpression(configNode.elements[configNode.elements.length - 1])) {
-        directiveFuncExpr = configNode.elements[configNode.elements.length - 1] as ts.FunctionExpression;
+export function getAngularDefineFunctionExpression(ctx: PluginContext, defineNode: ts.Expression): ts.FunctionExpression | undefined {
+    let funcExpr: ts.FunctionExpression | undefined;
+    if (ctx.ts.isFunctionExpression(defineNode)) {
+        funcExpr = defineNode;
+    } else if (ctx.ts.isArrayLiteralExpression(defineNode) && ctx.ts.isFunctionExpression(defineNode.elements[defineNode.elements.length - 1])) {
+        funcExpr = defineNode.elements[defineNode.elements.length - 1] as ts.FunctionExpression;
     }
-    return directiveFuncExpr;
+    return funcExpr;
+}
+
+export function getAngularDefineFunctionReturnStatement(ctx: PluginContext, funcExpr: ts.FunctionExpression): ts.ReturnStatement | undefined {
+    return funcExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
 }
 
 export function getControllerNameInfo(ctx: PluginContext): string | undefined {
