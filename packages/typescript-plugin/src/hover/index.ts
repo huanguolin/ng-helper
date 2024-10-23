@@ -49,6 +49,7 @@ export function getComponentNameOrAttrNameHoverInfo(
     const { componentInfo, directiveInfo, transcludeConfig } = findComponentOrDirectiveInfo(cache, hoverInfo);
 
     if (!componentInfo && !directiveInfo) {
+        logger.info(`componentInfo and directiveInfo not found!`);
         return;
     }
 
@@ -178,7 +179,7 @@ function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
     function getOtherProps(propNames: (keyof DirectiveInfo)[]): string[] {
         return propNames.map((p) => {
             const v = directiveInfo[p] as string;
-            return v ? `${p}: ${v}` : '';
+            return v ? `${p}: "${v}"` : '';
         });
     }
 }

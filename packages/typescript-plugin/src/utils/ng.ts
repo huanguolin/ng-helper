@@ -18,8 +18,7 @@ export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is 
         node.expression.expression.text === 'angular' &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'module' &&
-        node.arguments.length >= 1 &&
-        ctx.ts.isStringLiteral(node.arguments[0])
+        node.arguments.length >= 1
     ) {
         return true;
     }

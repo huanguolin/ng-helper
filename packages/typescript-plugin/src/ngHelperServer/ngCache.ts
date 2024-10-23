@@ -146,15 +146,15 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         logger.info(
             'sourceFiles count:',
             sourceFiles.length,
-            'old cache files count:',
+            ', old cache files count:',
             fileCacheMap.size,
-            'old component count:',
+            ', old component count:',
             componentMap.size,
-            'old directive count:',
+            ', old directive count:',
             directiveMap.size,
-            'old controller count:',
+            ', old controller count:',
             controllerMap.size,
-            'old filter count:',
+            ', old filter count:',
             filterMap.size,
         );
         for (const sourceFile of sourceFiles) {
@@ -185,21 +185,23 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         logger.info(
             'new cache files count:',
             fileCacheMap.size,
-            'new component count:',
+            ', new component count:',
             componentMap.size,
-            'new directive count:',
+            ', new directive count:',
             directiveMap.size,
-            'new controller count:',
+            ', new controller count:',
             controllerMap.size,
-            'new filter count:',
+            ', new filter count:',
             filterMap.size,
-            'cost:',
+            ', cost:',
             `${end - start}ms`,
         );
         logger.endGroup();
     }
 
     function scanFile(ctx: PluginContext, scannedTs: number, fileCacheInfo?: FileCacheInfo) {
+        const logger = ctx.logger.prefix('scanFile()');
+
         if (fileCacheInfo) {
             removeItemsFromAllMaps(fileCacheInfo, ctx.sourceFile.fileName);
         }
@@ -211,6 +213,17 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         const filters: FilterInfo[] = [];
         visitNode(ctx.sourceFile);
         if (!isNgModule) {
+            if (components.length > 0 || directives.length > 0 || controllers.length > 0 || filters.length > 0) {
+                logger.info(
+                    'not ng module but got:',
+                    components.length > 0 ? `components: ${components.map((c) => c.name).join(',')}` : '',
+                    directives.length > 0 ? `directives: ${directives.map((d) => d.name).join(',')}` : '',
+                    controllers.length > 0 ? `controllers: ${controllers.map((c) => c.name).join(',')}` : '',
+                    filters.length > 0 ? `filters: ${filters.map((f) => f.name).join(',')}` : '',
+                    ', filePath:',
+                    ctx.sourceFile.fileName,
+                );
+            }
             return;
         }
 
@@ -354,47 +367,54 @@ function getDirectiveInfo(ctx: PluginContext, node: ts.CallExpression): Directiv
                 start: nameNode.getStart(ctx.sourceFile),
                 end: nameNode.getEnd(),
             },
-            restrict: 'E',
+            restrict: 'EA', // 默认值
             scope: [],
         };
 
-        // 第二个参数是对象字面量
-        const configNode = node.arguments[1];
-        if (ctx.ts.isObjectLiteralExpression(configNode)) {
-            // restrict
-            const restrictVal = getPropValueByName(ctx, configNode, 'restrict');
-            if (restrictVal && ctx.ts.isStringLiteralLike(restrictVal)) {
-                info.restrict = restrictVal.text;
-            }
+        // 第二个参数是数组字面量或者函数表达式
+        const directiveFuncExpr = getAngularDefineFunctionExpression(ctx, node.arguments[1]);
 
-            // scope
-            const bindingsObj = getPropByName(ctx, configNode, 'scope');
-            if (bindingsObj && ctx.ts.isObjectLiteralExpression(bindingsObj.initializer)) {
-                info.scope = getPropertiesOfObjLiteral(ctx, bindingsObj.initializer);
-            }
+        // 获取函数的返回值
+        if (directiveFuncExpr) {
+            const returnStatement = getAngularDefineFunctionReturnStatement(ctx, directiveFuncExpr);
+            if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
+                const configNode = returnStatement.expression;
 
-            // transclude
-            const transcludeObj = getPropByName(ctx, configNode, 'transclude');
-            if (transcludeObj) {
-                info.transclude = getTranscludeInfo(ctx, transcludeObj);
-            }
+                // restrict
+                const restrictVal = getPropValueByName(ctx, configNode, 'restrict');
+                if (restrictVal && ctx.ts.isStringLiteralLike(restrictVal)) {
+                    info.restrict = restrictVal.text;
+                }
 
-            // require
-            const requireVal = getPropValueByName(ctx, configNode, 'require');
-            if (requireVal && ctx.ts.isStringLiteralLike(requireVal)) {
-                info.require = requireVal.text;
-            }
+                // scope
+                const bindingsObj = getPropByName(ctx, configNode, 'scope');
+                if (bindingsObj && ctx.ts.isObjectLiteralExpression(bindingsObj.initializer)) {
+                    info.scope = getPropertiesOfObjLiteral(ctx, bindingsObj.initializer);
+                }
 
-            // priority
-            const priorityVal = getPropValueByName(ctx, configNode, 'priority');
-            if (priorityVal && ctx.ts.isNumericLiteral(priorityVal)) {
-                info.priority = priorityVal.text;
-            }
+                // transclude
+                const transcludeObj = getPropByName(ctx, configNode, 'transclude');
+                if (transcludeObj) {
+                    info.transclude = getTranscludeInfo(ctx, transcludeObj);
+                }
 
-            // terminal
-            const terminalVal = getPropValueByName(ctx, configNode, 'terminal');
-            if (terminalVal) {
-                info.terminal = terminalVal.getText(ctx.sourceFile);
+                // require
+                const requireVal = getPropValueByName(ctx, configNode, 'require');
+                if (requireVal && ctx.ts.isStringLiteralLike(requireVal)) {
+                    info.require = requireVal.text;
+                }
+
+                // priority
+                const priorityVal = getPropValueByName(ctx, configNode, 'priority');
+                if (priorityVal && ctx.ts.isNumericLiteral(priorityVal)) {
+                    info.priority = priorityVal.text;
+                }
+
+                // terminal
+                const terminalVal = getPropValueByName(ctx, configNode, 'terminal');
+                if (terminalVal) {
+                    info.terminal = terminalVal.getText(ctx.sourceFile);
+                }
             }
         }
     }
