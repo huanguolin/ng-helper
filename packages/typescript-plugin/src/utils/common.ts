@@ -18,32 +18,6 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
     // }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getPropertyTypeViaSymbol(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
-    const symbol = type.getSymbol();
-    if (!symbol) {
-        return;
-    }
-
-    const members = symbol.members;
-    if (!members) {
-        return;
-    }
-
-    const targetMemberSymbol = Array.from(members.values()).find((x) => x.getName() === propertyName);
-    if (!targetMemberSymbol || !targetMemberSymbol.valueDeclaration) {
-        return;
-    }
-
-    // 排除非公开的
-    const modifiers = ctx.ts.getCombinedModifierFlags(targetMemberSymbol.valueDeclaration);
-    if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) {
-        return;
-    }
-
-    return ctx.typeChecker.getTypeOfSymbolAtLocation(targetMemberSymbol, targetMemberSymbol.valueDeclaration);
-}
-
 function getPropertyTypeViaType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
     const symbol = type.getProperty(propertyName);
     if (!symbol || !symbol.valueDeclaration) {
@@ -80,24 +54,6 @@ export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string
 
 export function getPublicMembersTypeInfoOfType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
     return getPublicMembersTypeInfoViaType(ctx, type);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getPublicMembersTypeInfoViaSymbol(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
-    const symbol = type.getSymbol();
-    if (!symbol) {
-        return;
-    }
-
-    const members = symbol.members;
-    if (!members) {
-        return;
-    }
-
-    const result = Array.from(members.values())
-        .map((x) => buildTypeInfo(ctx, x))
-        .filter((x) => !!x) as NgTypeInfo[];
-    return result;
 }
 
 function getPublicMembersTypeInfoViaType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {

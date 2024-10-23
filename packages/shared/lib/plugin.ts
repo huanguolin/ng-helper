@@ -114,23 +114,6 @@ export interface NgComponentNameInfo {
     transclude?: boolean | Record<string, string>;
 }
 
-export interface NgDirectiveNameInfo {
-    directiveName: string;
-    /**
-     * E - Element name (default): <my-directive></my-directive>
-     * A - Attribute (default): <div my-directive="exp"></div>
-     * C - Class: <div class="my-directive: exp;"></div>
-     * M - Comment: <!-- directive: my-directive exp -->
-     */
-    restrict: string;
-    transclude?: boolean | Record<string, string>;
-}
-
-export interface NgComponentDirectiveNamesInfo {
-    components: NgComponentNameInfo[];
-    directives: NgDirectiveNameInfo[];
-}
-
 export interface NgDefinitionInfo {
     filePath: string;
     start: number;

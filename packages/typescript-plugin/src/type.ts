@@ -1,4 +1,4 @@
-import { NgPluginConfiguration, type NgComponentDirectiveNamesInfo } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { type NgCache } from './ngHelperServer/ngCache';
@@ -37,8 +37,9 @@ export type SyntaxNodeInfoEx = SyntaxNodeInfo & {
 };
 
 export type NgComponentTypeInfo = {
-    controllerAs: string;
     controllerType?: ts.Type;
+    // TODO: 下面两个都不需要了
+    controllerAs: string;
     bindings: Map<string, string>;
 };
 
@@ -65,10 +66,4 @@ export type NgHelperServer = {
 
 export interface FileVersion {
     version: string;
-}
-
-export interface NgComponentDirectiveFileInfo extends NgComponentDirectiveNamesInfo, FileVersion {}
-
-export interface NgTsCtrlFileInfo extends FileVersion {
-    controllerName: string;
 }

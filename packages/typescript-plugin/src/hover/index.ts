@@ -1,12 +1,9 @@
-import { SPACE } from '@ng-helper/shared/lib/html';
 import {
     NgComponentNameOrAttrNameHoverRequest,
     NgCtrlHoverRequest,
     NgHoverRequest,
     NgHoverResponse,
     NgTypeInfo,
-    type NgComponentNameInfo,
-    type NgDirectiveNameInfo,
     NgDirectiveHoverRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
@@ -14,35 +11,44 @@ import type ts from 'typescript';
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
 import { ngHelperServer } from '../ngHelperServer';
+import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getPropValueByName, getObjLiteral } from '../utils/common';
 import {
     getComponentTypeInfo,
     getComponentDeclareLiteralNode,
     getPublicMembersTypeInfoOfBindings,
     getControllerType,
     removeBindingControlChars,
-    getDirectiveConfigNode,
-    getTypeInfoOfDirectiveScope,
+    getBindingType,
+    INDENT,
 } from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getDirectiveContext, getMinSyntaxNodeForHover } from './utils';
+import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
 
+/**
+ * 获取组件(包含指令用作元素时)或属性名称悬停信息
+ * @param coreCtx 核心上下文
+ * @param hoverInfo 元素悬停信息
+ * @returns 组件或指令名称或属性名称悬停信息
+ */
 export function getComponentNameOrAttrNameHoverInfo(
     coreCtx: CorePluginContext,
     { fileName, hoverInfo }: NgComponentNameOrAttrNameHoverRequest,
 ): NgHoverResponse {
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
-    if (!componentDirectiveMap) {
+    const logger = coreCtx.logger.prefix('getComponentNameOrAttrNameHoverInfo()');
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
         return;
     }
 
-    const { filePath, componentInfo: componentNameInfo, directiveNameInfo, transcludeConfig } = findComponentOrDirectiveInfo(componentDirectiveMap, hoverInfo);
+    const { componentInfo, directiveInfo, transcludeConfig } = findComponentOrDirectiveInfo(cache, hoverInfo);
 
-    if (!filePath || (!componentNameInfo && !directiveNameInfo)) {
+    if (!componentInfo && !directiveInfo) {
         return;
     }
 
@@ -50,114 +56,17 @@ export function getComponentNameOrAttrNameHoverInfo(
         return getTranscludeHoverInfo();
     }
 
-    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
-    if (!ctx) {
-        return;
-    }
-
-    if (componentNameInfo) {
-        return getComponentHoverInfo(ctx, componentNameInfo);
-    } else if (directiveNameInfo) {
-        return getDirectiveHoverInfo(ctx, directiveNameInfo);
-    }
-
-    function getDirectiveHoverInfo(ctx: PluginContext, directiveNameInfo: NgDirectiveNameInfo): NgHoverResponse {
-        const directiveConfigNode = getDirectiveConfigNode(ctx, directiveNameInfo.directiveName);
-        if (!directiveConfigNode) {
-            return;
-        }
-
-        const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
-
+    if (componentInfo) {
         if (hoverInfo.type === 'tagName') {
-            return getDirectiveNameHoverInfo({ ctx, tagName: hoverInfo.tagName, directiveNameInfo, directiveConfigNode, scopeMap, attrsFromScope });
+            return getComponentNameHoverInfo(coreCtx, componentInfo);
         } else {
-            return getDirectiveAttrHoverInfo({ attrName: hoverInfo.name, scopeMap, attrsFromScope });
+            return getComponentAttrHoverInfo(coreCtx, hoverInfo.name, componentInfo);
         }
-    }
-
-    function getComponentHoverInfo(ctx: PluginContext, componentNameInfo: NgComponentNameInfo): NgHoverResponse {
-        const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentNameInfo.componentName);
-        if (!componentLiteralNode) {
-            return;
-        }
-
-        const info = getComponentTypeInfo(ctx, componentLiteralNode);
-        const attrsFromBindings = getPublicMembersTypeInfoOfBindings(ctx, info.bindings, false) ?? [];
-
-        let attrsFromType: NgTypeInfo[] = [];
-        if (info.controllerType) {
-            attrsFromType = getPublicMembersTypeInfoOfType(ctx, info.controllerType) ?? [];
-        }
-
-        const attrTypeMap = new Map<string, NgTypeInfo>(attrsFromType.map((x) => [x.name, x]));
+    } else if (directiveInfo) {
         if (hoverInfo.type === 'tagName') {
-            return getComponentNameHoverInfo();
+            return getDirectiveNameHoverInfo(directiveInfo);
         } else {
-            return getComponentAttrHoverInfo();
-        }
-
-        function getComponentNameHoverInfo() {
-            const component = `(component) ${hoverInfo.tagName}`;
-
-            const indent = SPACE.repeat(4);
-            let bindings = '';
-            if (attrsFromBindings.length === 0) {
-                bindings = `bindings: { }`;
-            } else {
-                bindings = attrsFromBindings
-                    .map(
-                        (x) =>
-                            `${indent}${x.name}: "${info.bindings.get(x.name)}"; ${attrTypeMap.has(x.name) ? '// ' + attrTypeMap.get(x.name)!.typeString : ''}`,
-                    )
-                    .join('\n');
-                bindings = `bindings: {\n${bindings}\n}`;
-            }
-
-            let transclude = '';
-            if (componentNameInfo?.transclude) {
-                if (typeof componentNameInfo.transclude === 'boolean') {
-                    transclude = `transclude: true`;
-                } else {
-                    transclude = Object.entries(componentNameInfo.transclude)
-                        .map(([k, v]) => `${indent}${k}: "${v}"`)
-                        .join('\n');
-                    transclude = `transclude: {\n${transclude}\n}`;
-                }
-            }
-
-            return {
-                formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
-                document: '',
-            };
-        }
-
-        function getComponentAttrHoverInfo() {
-            const attrBindingsMap = new Map<string, NgTypeInfo>(attrsFromBindings.map((x) => [x.name, x]));
-            const result = {
-                formattedTypeString: `(property) ${hoverInfo.name}: any`,
-                document: '',
-            };
-
-            // 从 bindings 中获取在 class 上对应属性的名字
-            const toPropsNameMap = getToPropsNameMap(info.bindings);
-            const propName = toPropsNameMap.get(hoverInfo.name)!;
-
-            if (attrBindingsMap.has(propName)) {
-                result.document += '\n' + attrBindingsMap.get(propName)!.document;
-            }
-
-            if (attrTypeMap.has(propName)) {
-                const typeInfo = attrTypeMap.get(propName)!;
-                result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(typeInfo.typeString)}`;
-                if (typeInfo.document) {
-                    result.document += `\n${typeInfo.document}`;
-                }
-            } else if (attrBindingsMap.has(hoverInfo.name)) {
-                result.formattedTypeString = `(property) ${hoverInfo.name}: ${beautifyTypeString(attrBindingsMap.get(hoverInfo.name)!.typeString)}`;
-            }
-
-            return result;
+            return getDirectiveAttrHoverInfo(hoverInfo.name, directiveInfo, false);
         }
     }
 
@@ -165,7 +74,7 @@ export function getComponentNameOrAttrNameHoverInfo(
         const arr = [
             `(transclude) ${hoverInfo.tagName}`,
             `config: "${transcludeConfig}"`,
-            `${componentNameInfo ? 'component' : 'directive'}: "${hoverInfo.parentTagName}"`,
+            `${componentInfo ? 'component' : 'directive'}: "${hoverInfo.tagName}"`,
         ];
         return {
             formattedTypeString: arr.join('\n'),
@@ -174,40 +83,79 @@ export function getComponentNameOrAttrNameHoverInfo(
     }
 }
 
-function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
-    const result = new Map<string, string>();
-    for (const [k, v] of bindingsMap) {
-        const inputName = removeBindingControlChars(v).trim();
-        result.set(inputName || k, k);
+function getComponentNameHoverInfo(coreCtx: CorePluginContext, componentInfo: ComponentInfo) {
+    const component = `(component) ${componentInfo.name}`;
+
+    const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
+    const bindings = formatLiteralObj('bindings', componentInfo.bindings, (x) => bindingTypeMap.get(x.name)?.typeString ?? '');
+    const transclude = formatTransclude(componentInfo.transclude);
+
+    return {
+        formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
+        document: '',
+    };
+}
+
+function getComponentAttrHoverInfo(coreCtx: CorePluginContext, attrName: string, componentInfo: ComponentInfo) {
+    const binding = componentInfo.bindings.find((x) => removeBindingControlChars(x.value) === attrName || x.name === attrName);
+    if (!binding) {
+        return;
     }
+
+    const result = {
+        formattedTypeString: `(property) ${attrName}: ${getBindingType(binding.value)}`,
+        document: '',
+    };
+
+    const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
+    if (bindingTypeMap.has(binding.name)) {
+        const typeInfo = bindingTypeMap.get(binding.name)!;
+        result.formattedTypeString = `(property) ${attrName}: ${beautifyTypeString(typeInfo.typeString)}`;
+        if (typeInfo.document) {
+            result.document += `\n${typeInfo.document}`;
+        }
+    }
+
     return result;
 }
 
-function getDirectiveAttrHoverInfo({
-    attrName,
-    scopeMap,
-    attrsFromScope,
-    isDirectiveStyle,
-    directiveName,
-}: {
-    attrName: string;
-    scopeMap: Map<string, string>;
-    attrsFromScope: NgTypeInfo[];
-    isDirectiveStyle?: boolean;
-    directiveName?: string;
-}) {
-    // 从 bindings 中获取在 class 上对应属性的名字
-    const toPropsNameMap = getToPropsNameMap(scopeMap);
-    const propName = toPropsNameMap.get(attrName)!;
+function getComponentBindingTypeMap(coreCtx: CorePluginContext, componentInfo: ComponentInfo) {
+    if (componentInfo.bindings.length === 0) {
+        return;
+    }
 
-    const attr = attrsFromScope.find((x) => x.name === propName);
+    const ctx = getCtxOfCoreCtx(coreCtx, componentInfo.filePath);
+    if (!ctx) {
+        return;
+    }
+
+    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentInfo.name);
+    if (!componentLiteralNode) {
+        return;
+    }
+
+    const info = getComponentTypeInfo(ctx, componentLiteralNode);
+    if (!info.controllerType) {
+        return;
+    }
+
+    const types = getPublicMembersTypeInfoOfType(ctx, info.controllerType);
+    if (!types) {
+        return;
+    }
+
+    return new Map(types.map((x) => [x.name, x]));
+}
+
+function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInfo, isAttrDirectiveStyle: boolean) {
+    const attr = directiveInfo.scope.find((x) => removeBindingControlChars(x.value) === attrName || x.name === attrName);
     if (!attr) {
         return;
     }
 
-    const prefix = isDirectiveStyle ? `attribute of [${directiveName}]` : 'property';
-    const attrInfo = `(${prefix}) ${attr.name}: ${attr.typeString}`;
-    const scopeInfo = `scope configs: "${scopeMap.get(attr.name)}"`;
+    const prefix = isAttrDirectiveStyle ? `attribute of [${directiveInfo.name}]` : 'property';
+    const attrInfo = `(${prefix}) ${attr.name}: ${getBindingType(attr.value)}`;
+    const scopeInfo = `scope configs: "${attr.value}"`;
 
     return {
         formattedTypeString: [attrInfo, scopeInfo].filter((x) => !!x).join('\n'),
@@ -215,62 +163,45 @@ function getDirectiveAttrHoverInfo({
     };
 }
 
-function getDirectiveNameHoverInfo({
-    ctx,
-    tagName,
-    directiveNameInfo,
-    directiveConfigNode,
-    scopeMap,
-    attrsFromScope,
-}: {
-    ctx: PluginContext;
-    tagName: string;
-    directiveNameInfo: NgDirectiveNameInfo;
-    directiveConfigNode: ts.ObjectLiteralExpression;
-    scopeMap: Map<string, string>;
-    attrsFromScope: NgTypeInfo[];
-}) {
-    const indent = SPACE.repeat(4);
-    const directive = `(directive) ${tagName}`;
+function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
+    const directive = `(directive) ${directiveInfo.name}`;
     const others = getOtherProps(['restrict', 'require', 'priority', 'terminal']);
+    const formattedTypeString = [directive, ...others, formatLiteralObj('scope', directiveInfo.scope), formatTransclude(directiveInfo.transclude)]
+        .filter((x) => !!x)
+        .join('\n');
 
     return {
-        formattedTypeString: [directive, ...others, getScope(), getTransclude()].filter((x) => !!x).join('\n'),
+        formattedTypeString,
         document: '',
     };
 
-    function getOtherProps(propNames: string[]): string[] {
+    function getOtherProps(propNames: (keyof DirectiveInfo)[]): string[] {
         return propNames.map((p) => {
-            const v = getPropValueByName(ctx, directiveConfigNode, p);
-            return v ? `${p}: ${v.getText(ctx.sourceFile)}` : '';
+            const v = directiveInfo[p] as string;
+            return v ? `${p}: ${v}` : '';
         });
     }
+}
 
-    function getTransclude() {
-        let transclude = '';
-        if (directiveNameInfo?.transclude) {
-            if (typeof directiveNameInfo.transclude === 'boolean') {
-                transclude = `transclude: true`;
-            } else {
-                transclude = Object.entries(directiveNameInfo.transclude)
-                    .map(([k, v]) => `${indent}${k}: "${v}"`)
-                    .join('\n');
-                transclude = `transclude: {\n${transclude}\n}`;
-            }
-        }
-        return transclude;
+function formatLiteralObj(objName: string, objProps: Property[], getComment?: (prop: Property) => string) {
+    if (objProps.length === 0) {
+        return `${objName}: { }`;
     }
+    return `${objName}: {\n${formatLiteralObjProps(objProps, getComment)}\n}`;
+}
 
-    function getScope() {
-        let scope = '';
-        if (attrsFromScope.length === 0) {
-            scope = `scope: { }`;
-        } else {
-            scope = attrsFromScope.map((x) => `${indent}${x.name}: "${scopeMap.get(x.name)}"; // ${x.typeString}`).join('\n');
-            scope = `scope: {\n${scope}\n}`;
-        }
-        return scope;
+function formatLiteralObjProps(objProps: Property[], getComment?: (prop: Property) => string) {
+    return objProps.map((p) => `${INDENT}${p.name}: "${p.value}"${getComment ? ` // ${getComment(p)}` : ''}`).join('\n');
+}
+
+function formatTransclude(transclude: DirectiveInfo['transclude']) {
+    let transcludeString = '';
+    if (Array.isArray(transclude)) {
+        transcludeString = `transclude: {\n${formatLiteralObjProps(transclude)}\n}`;
+    } else if (transclude) {
+        transcludeString = `transclude: true`;
     }
+    return transcludeString;
 }
 
 export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
@@ -440,74 +371,45 @@ function getHoverInfoOfBindings(ctx: PluginContext, info: NgComponentTypeInfo, t
     }
 }
 
+/**
+ * 获取指令(仅作为属性使用时)悬停信息
+ * @param coreCtx 核心上下文
+ * @param hoverInfo 指令悬停信息
+ * @returns 指令悬停信息
+ */
 export function getDirectiveHoverInfo(
     coreCtx: CorePluginContext,
     { fileName, attrNames, cursorAtAttrName }: NgDirectiveHoverRequest,
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getDirectiveHoverInfo()');
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
-    if (!componentDirectiveMap) {
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
         return;
     }
 
-    const matchedDirectives = findMatchedDirectives(componentDirectiveMap, attrNames);
+    const matchedDirectives = findMatchedDirectives(cache, attrNames);
     logger.info(
         'Matched directives:',
-        matchedDirectives.map((d) => d.directiveInfo.directiveName),
+        matchedDirectives.map((d) => d.name),
     );
     if (!matchedDirectives.length) {
         return;
     }
 
-    const hoverDirective = matchedDirectives.find((x) => x.directiveInfo.directiveName === cursorAtAttrName);
+    const hoverDirective = matchedDirectives.find((x) => x.name === cursorAtAttrName);
     if (hoverDirective) {
-        const directiveContext = getDirectiveContext(coreCtx, hoverDirective);
-        if (!directiveContext) {
-            return;
-        }
-
-        const { ctx, directiveConfigNode } = directiveContext;
-        const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
-
-        return getDirectiveNameHoverInfo({
-            ctx,
-            tagName: cursorAtAttrName,
-            directiveNameInfo: hoverDirective.directiveInfo,
-            directiveConfigNode,
-            scopeMap,
-            attrsFromScope,
-        });
+        // 说明光标所在的属性名即指令名
+        return getDirectiveNameHoverInfo(hoverDirective);
     } else {
+        // 说明光标所在的属性名是指令的属性名
+        // 需要遍历所有匹配的指令，找到对应的属性值
         for (const directive of matchedDirectives) {
-            const directiveContext = getDirectiveContext(coreCtx, directive);
-            if (!directiveContext) {
-                continue;
-            }
-
-            const { ctx, directiveConfigNode } = directiveContext;
-            const { attrsFromScope, scopeMap } = getDirectiveScopeInfo(ctx, directiveConfigNode);
-            const attrHoverInfo = getDirectiveAttrHoverInfo({
-                attrName: cursorAtAttrName,
-                scopeMap,
-                attrsFromScope,
-                isDirectiveStyle: true,
-                directiveName: directive.directiveInfo.directiveName,
-            });
-            // 如果找到了，则立即返回
-            if (attrHoverInfo) {
-                return attrHoverInfo;
+            const attr = directive.scope.find((s) => s.name === cursorAtAttrName);
+            if (attr) {
+                return getDirectiveAttrHoverInfo(cursorAtAttrName, directive, true);
             }
         }
     }
-}
-
-function getDirectiveScopeInfo(ctx: PluginContext, directiveConfigNode: ts.ObjectLiteralExpression) {
-    const scopePropValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-    let attrsFromScope: NgTypeInfo[] = [];
-    let scopeMap = new Map<string, string>();
-    if (scopePropValue && ctx.ts.isObjectLiteralExpression(scopePropValue)) {
-        scopeMap = new Map<string, string>(Object.entries(getObjLiteral(ctx, scopePropValue)));
-        attrsFromScope = getTypeInfoOfDirectiveScope(ctx, scopeMap, false) ?? [];
-    }
-    return { attrsFromScope, scopeMap };
 }

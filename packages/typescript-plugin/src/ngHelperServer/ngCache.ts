@@ -60,6 +60,17 @@ export interface DirectiveInfo {
     restrict: string;
     scope: Property[];
     transclude?: boolean | Property[];
+    require?: string;
+    /**
+     * 优先级
+     * 原本是数字类型, 但使用 string 类型更方便
+     */
+    priority?: string;
+    /**
+     * 是否终止
+     * 原本是 boolean 类型, 但使用 string 类型更方便
+     */
+    terminal?: string;
 }
 
 export interface ControllerInfo {
@@ -366,6 +377,24 @@ function getDirectiveInfo(ctx: PluginContext, node: ts.CallExpression): Directiv
             const transcludeObj = getPropByName(ctx, configNode, 'transclude');
             if (transcludeObj) {
                 info.transclude = getTranscludeInfo(ctx, transcludeObj);
+            }
+
+            // require
+            const requireVal = getPropValueByName(ctx, configNode, 'require');
+            if (requireVal && ctx.ts.isStringLiteralLike(requireVal)) {
+                info.require = requireVal.text;
+            }
+
+            // priority
+            const priorityVal = getPropValueByName(ctx, configNode, 'priority');
+            if (priorityVal && ctx.ts.isNumericLiteral(priorityVal)) {
+                info.priority = priorityVal.text;
+            }
+
+            // terminal
+            const terminalVal = getPropValueByName(ctx, configNode, 'terminal');
+            if (terminalVal) {
+                info.terminal = terminalVal.getText(ctx.sourceFile);
             }
         }
     }

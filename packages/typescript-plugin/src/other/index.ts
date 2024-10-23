@@ -4,6 +4,7 @@ import { ngHelperServer } from '../ngHelperServer';
 import type { CorePluginContext } from '../type';
 import { removeBindingControlChars } from '../utils/ng';
 
+// 用于 html 中组件的语义颜色高亮
 export function getComponentsStringAttrsInfo(
     coreCtx: CorePluginContext,
     { fileName, componentNames }: NgListComponentsStringAttrsRequest,
