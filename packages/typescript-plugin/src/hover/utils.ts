@@ -1,9 +1,9 @@
-import { NgHoverInfo, type NgComponentNameInfo, type NgDirectiveNameInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
+import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
+import type { NgCache, DirectiveInfo, ComponentInfo } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
-import { PluginContext, SyntaxNodeInfoEx, type CorePluginContext, type NgComponentDirectiveFileInfo } from '../type';
-import type { DirectiveFileInfo } from '../utils/biz';
+import { PluginContext, SyntaxNodeInfoEx, type CorePluginContext } from '../type';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
 import { getDirectiveConfigNode, isElementDirective } from '../utils/ng';
 
@@ -116,89 +116,68 @@ export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: stri
     }
 }
 
+/**
+ * 查找组件或指令（用作元素使用时）信息
+ * @param cache 缓存
+ * @param hoverInfo 元素悬停信息
+ * @returns 组件或指令信息
+ */
 export function findComponentOrDirectiveInfo(
-    componentDirectiveMap: Map<string, NgComponentDirectiveFileInfo>,
+    cache: NgCache,
     hoverInfo: NgElementHoverInfo,
 ): {
-    filePath?: string;
-    componentNameInfo?: NgComponentNameInfo;
-    directiveNameInfo?: NgDirectiveNameInfo;
+    componentInfo?: ComponentInfo;
+    directiveInfo?: DirectiveInfo;
     transcludeConfig?: string;
 } {
-    for (const [key, value] of componentDirectiveMap.entries()) {
-        const componentInfo = findFromComponents(value.components);
-        if (componentInfo) {
-            return { filePath: key, ...componentInfo };
-        }
-        const directiveInfo = findFromDirectives(value.directives);
-        if (directiveInfo) {
-            return { filePath: key, ...directiveInfo };
+    const componentMap = cache.getComponentMap();
+    if (componentMap.has(hoverInfo.tagName)) {
+        return { componentInfo: componentMap.get(hoverInfo.tagName) };
+    }
+
+    const directiveMap = cache.getDirectiveMap();
+    if (directiveMap.has(hoverInfo.tagName)) {
+        const directiveInfo = directiveMap.get(hoverInfo.tagName)!;
+        if (isElementDirective(directiveInfo)) {
+            return { directiveInfo };
         }
     }
+
+    if (hoverInfo.parentTagName) {
+        if (directiveMap.has(hoverInfo.parentTagName)) {
+            const directiveInfo = directiveMap.get(hoverInfo.parentTagName)!;
+            if (isElementDirective(directiveInfo) && Array.isArray(directiveInfo.transclude) && directiveInfo.transclude.length > 0) {
+                for (const item of directiveInfo.transclude) {
+                    const transcludeElementName = item.value.replace('?', '').trim();
+                    if (transcludeElementName === hoverInfo.tagName) {
+                        return { directiveInfo, transcludeConfig: item.value };
+                    }
+                }
+            }
+        }
+        if (componentMap.has(hoverInfo.parentTagName)) {
+            const componentInfo = componentMap.get(hoverInfo.parentTagName)!;
+            if (Array.isArray(componentInfo.transclude) && componentInfo.transclude.length > 0) {
+                for (const item of componentInfo.transclude) {
+                    const transcludeElementName = item.value.replace('?', '').trim();
+                    if (transcludeElementName === hoverInfo.tagName) {
+                        return { componentInfo, transcludeConfig: item.value };
+                    }
+                }
+            }
+        }
+    }
+
     return {};
-
-    function findFromDirectives(directives: NgDirectiveNameInfo[]):
-        | {
-              directiveNameInfo: NgDirectiveNameInfo;
-              transcludeConfig?: string;
-          }
-        | undefined {
-        for (const directive of directives) {
-            if (!isElementDirective(directive)) {
-                continue;
-            }
-
-            if (directive.directiveName === hoverInfo.tagName) {
-                return { directiveNameInfo: directive };
-            } else if (
-                hoverInfo.parentTagName &&
-                hoverInfo.parentTagName === directive.directiveName &&
-                !!directive.transclude &&
-                typeof directive.transclude === 'object'
-            ) {
-                for (const [, v] of Object.entries(directive.transclude)) {
-                    const transcludeElementName = v.replace('?', '').trim();
-                    if (transcludeElementName === hoverInfo.tagName) {
-                        return { directiveNameInfo: directive, transcludeConfig: v };
-                    }
-                }
-            }
-        }
-    }
-
-    function findFromComponents(components: NgComponentNameInfo[]):
-        | {
-              componentNameInfo: NgComponentNameInfo;
-              transcludeConfig?: string;
-          }
-        | undefined {
-        for (const component of components) {
-            if (component.componentName === hoverInfo.tagName) {
-                return { componentNameInfo: component };
-            } else if (
-                hoverInfo.parentTagName &&
-                hoverInfo.parentTagName === component.componentName &&
-                !!component.transclude &&
-                typeof component.transclude === 'object'
-            ) {
-                for (const [, v] of Object.entries(component.transclude)) {
-                    const transcludeElementName = v.replace('?', '').trim();
-                    if (transcludeElementName === hoverInfo.tagName) {
-                        return { componentNameInfo: component, transcludeConfig: v };
-                    }
-                }
-            }
-        }
-    }
 }
 
-export function getDirectiveContext(coreCtx: CorePluginContext, directive: DirectiveFileInfo) {
+export function getDirectiveContext(coreCtx: CorePluginContext, directive: DirectiveInfo) {
     const ctx = getCtxOfCoreCtx(coreCtx, directive.filePath);
     if (!ctx) {
         return null;
     }
 
-    const directiveConfigNode = getDirectiveConfigNode(ctx, directive.directiveInfo.directiveName);
+    const directiveConfigNode = getDirectiveConfigNode(ctx, directive.name);
     if (!directiveConfigNode) {
         return null;
     }

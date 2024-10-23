@@ -1,19 +1,18 @@
 import {
     NgTypeCompletionResponse,
-    NgComponentNameInfo,
     NgTypeInfo,
     NgComponentNameCompletionResponse,
     NgCtrlTypeCompletionRequest,
-    type NgDirectiveNameInfo,
     type NgComponentAttrCompletionResponse,
     type NgDirectiveCompletionResponse,
     type NgDirectiveCompletionRequest,
 } from '@ng-helper/shared/lib/plugin';
 
 import { ngHelperServer } from '../ngHelperServer';
+import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
-import { CorePluginContext, NgTsCtrlFileInfo, PluginContext } from '../type';
-import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope, type DirectiveFileInfo } from '../utils/biz';
+import { CorePluginContext, PluginContext } from '../type';
+import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import { getObjLiteral, getPropValueByName } from '../utils/common';
 import {
@@ -30,13 +29,28 @@ import { getComponentDeclareLiteralNode } from '../utils/ng';
 import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    if (!componentLiteralNode) {
+    const logger = ctx.logger.prefix('getComponentControllerAs()');
+    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${ctx.sourceFile.fileName})!`);
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    return info.controllerAs;
+    const components = cache.getFileCacheMap().get(ctx.sourceFile.fileName)?.components;
+    if (!components || !components.length) {
+        logger.info(`file(${ctx.sourceFile.fileName}) has no components!`);
+        return;
+    }
+
+    // 这里不考虑有多个组件（一般不会出现）的情况
+    const componentName = components[0];
+    const component = cache.getComponentMap().get(componentName);
+    if (!component) {
+        logger.info(`component(${componentName}) not found!`);
+        return;
+    }
+
+    return component.controllerAs;
 }
 
 export function getComponentTypeCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
@@ -121,44 +135,57 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
 }
 
 export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
-    if (!componentDirectiveMap) {
+    const logger = coreCtx.logger.prefix('getComponentNameCompletions()');
+
+    const cache = ngHelperServer.getCache(filePath);
+    if (!cache) {
+        logger.info(`cache not found for file(${filePath})!`);
         return;
     }
 
-    const result: NgComponentNameInfo[] = [];
-    for (const item of componentDirectiveMap.values()) {
-        if (item.components.length) {
-            result.push(...item.components);
-        }
-        if (item.directives.length) {
-            const asComponents = item.directives
-                .filter((x) => isElementDirective(x))
-                .map((x) => ({
-                    componentName: x.directiveName,
-                    transclude: x.transclude,
-                }));
-            result.push(...asComponents);
-        }
-    }
-    return result;
+    const componentMap = cache.getComponentMap();
+    const directiveMap = cache.getDirectiveMap();
+
+    const mapToComponentInfo = (x: ComponentInfo | DirectiveInfo) => ({
+        componentName: x.name,
+        transclude: Array.isArray(x.transclude)
+            ? x.transclude.reduce(
+                  (acc, curr) => {
+                      acc[curr.name] = curr.value;
+                      return acc;
+                  },
+                  {} as Record<string, string>,
+              )
+            : x.transclude,
+    });
+
+    const components = Array.from(componentMap.values()).map(mapToComponentInfo);
+    const directiveAsElements = Array.from(directiveMap.values()).filter(isElementDirective).map(mapToComponentInfo);
+
+    return components.concat(directiveAsElements);
 }
 
 export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgComponentAttrCompletionResponse {
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(filePath);
-    if (!componentDirectiveMap) {
+    const logger = coreCtx.logger.prefix('getComponentAttrCompletions()');
+
+    const cache = ngHelperServer.getCache(filePath);
+    if (!cache) {
+        logger.info(`cache not found for file(${filePath})!`);
         return;
     }
 
-    for (const [key, value] of componentDirectiveMap.entries()) {
-        const component = value.components.find((x) => x.componentName === componentName);
-        if (component) {
-            return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, key, component);
-        }
+    const componentMap = cache.getComponentMap();
+    if (componentMap.has(componentName)) {
+        // TODO：这里应该可以优化
+        return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, filePath, componentMap.get(componentName)!);
+    }
 
-        const directive = value.directives.find((x) => isElementDirective(x) && x.directiveName === componentName);
-        if (directive) {
-            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, key, directive);
+    const directiveMap = cache.getDirectiveMap();
+    if (directiveMap.has(componentName)) {
+        const directive = directiveMap.get(componentName)!;
+        if (isElementDirective(directive)) {
+            // TODO：这里应该可以优化
+            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, filePath, directive);
         }
     }
 }
@@ -166,9 +193,9 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
 function getComponentAttrCompletionsViaDirectiveFileInfo(
     coreCtx: CorePluginContext,
     filePath: string,
-    directiveNameInfo: NgDirectiveNameInfo,
+    directiveInfo: DirectiveInfo,
 ): NgTypeInfo[] | undefined {
-    if (!filePath || !directiveNameInfo) {
+    if (!filePath || !directiveInfo) {
         return;
     }
 
@@ -177,7 +204,7 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
         return;
     }
 
-    const directiveConfigNode = getDirectiveConfigNode(ctx, directiveNameInfo.directiveName);
+    const directiveConfigNode = getDirectiveConfigNode(ctx, directiveInfo.name);
     if (!directiveConfigNode) {
         return;
     }
@@ -195,11 +222,11 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
 function getComponentAttrCompletionsViaComponentFileInfo(
     coreCtx: CorePluginContext,
     filePath: string,
-    componentNameInfo: NgComponentNameInfo,
+    componentInfo: ComponentInfo,
 ): NgTypeInfo[] | undefined {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletionsViaComponentFileInfo()');
 
-    if (!filePath || !componentNameInfo) {
+    if (!filePath || !componentInfo) {
         return;
     }
 
@@ -208,7 +235,7 @@ function getComponentAttrCompletionsViaComponentFileInfo(
         return;
     }
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentNameInfo.componentName);
+    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentInfo.name);
     if (!componentLiteralNode) {
         return;
     }
@@ -258,57 +285,53 @@ function getComponentAttrCompletionsViaComponentFileInfo(
 export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, controllerName: string): PluginContext | undefined {
     const logger = coreCtx.logger.prefix('resolveCtrlCtx()');
 
-    const map = ngHelperServer.getTsCtrlMap(fileName);
-    if (!map) {
-        logger.info('tsCtrlMap not found!');
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${fileName})!`);
         return;
     }
 
-    const tsCtrlFilePath = getTsCtrlFilePath(map);
-    if (!tsCtrlFilePath) {
-        logger.info('tsCtrlFilePath not found!');
+    const controllerInfo = cache.getControllerMap().get(controllerName);
+    if (!controllerInfo) {
+        logger.info(`controllerInfo not found for file(${fileName})!`);
         return;
     }
-    logger.info('tsCtrlFilePath:', tsCtrlFilePath);
 
-    const ctx = getCtxOfCoreCtx(coreCtx, tsCtrlFilePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, controllerInfo.filePath);
     if (!ctx) {
         logger.info('ctx not found!');
         return;
     }
 
     return ctx;
-
-    function getTsCtrlFilePath(map: Map<string, NgTsCtrlFileInfo>) {
-        let tsCtrlFilePath: string | undefined;
-        for (const [k, v] of map.entries()) {
-            if (v.controllerName === controllerName) {
-                tsCtrlFilePath = k;
-                break;
-            }
-        }
-        return tsCtrlFilePath;
-    }
 }
 
+/**
+ * 获取指令(作为属性使用时)补全
+ * @param coreCtx
+ * @param info
+ * @returns
+ */
 export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDirectiveCompletionRequest): NgDirectiveCompletionResponse {
     const logger = coreCtx.logger.prefix('getDirectiveCompletions()');
 
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(info.fileName);
-    if (!componentDirectiveMap) {
+    const cache = ngHelperServer.getCache(info.fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${info.fileName})!`);
         return;
     }
 
-    const matchedDirectives = findMatchedDirectives(componentDirectiveMap, info.attrNames);
+    // TODO: 这里及后面应该可以优化
+    const matchedDirectives = findMatchedDirectives(cache, info.attrNames);
     logger.info(
         'Matched directives:',
-        matchedDirectives.map((d) => d.directiveInfo.directiveName),
+        matchedDirectives.map((d) => d.name),
     );
 
     if (info.queryType === 'directiveAttr' && matchedDirectives.length) {
         const closestDirective = findClosestMatchedDirective(matchedDirectives, info.attrNames, info.afterCursorAttrName);
 
-        logger.info('Closest directive:', closestDirective ? closestDirective.directiveInfo.directiveName : 'None');
+        logger.info('Closest directive:', closestDirective ? closestDirective.name : 'None');
 
         if (closestDirective) {
             const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, closestDirective);
@@ -318,14 +341,14 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
     }
 
     if (info.queryType === 'directive') {
-        let attributeDirectives = getDirectivesUsableAsAttributes(componentDirectiveMap);
+        let attributeDirectives = getDirectivesUsableAsAttributes(cache);
         if (matchedDirectives.length) {
-            const matchedDirectiveNames = new Set(matchedDirectives.map((d) => d.directiveInfo.directiveName));
-            attributeDirectives = attributeDirectives.filter((d) => !matchedDirectiveNames.has(d.directiveInfo.directiveName));
+            const matchedDirectiveNames = new Set(matchedDirectives.map((d) => d.name));
+            attributeDirectives = attributeDirectives.filter((d) => !matchedDirectiveNames.has(d.name));
         }
         return attributeDirectives.map((directive) => ({
             kind: 'property',
-            name: directive.directiveInfo.directiveName,
+            name: directive.name,
             typeString: '',
             document: '',
             isFunction: false,
@@ -334,13 +357,13 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
 }
 
 function findClosestMatchedDirective(
-    matchedDirectives: DirectiveFileInfo[],
+    matchedDirectives: DirectiveInfo[],
     attrNames: string[],
     afterCursorAttrName: string,
-): DirectiveFileInfo | undefined {
+): DirectiveInfo | undefined {
     const cursorIndex = afterCursorAttrName ? attrNames.indexOf(afterCursorAttrName) : attrNames.length;
     for (let i = cursorIndex - 1; i >= 0; i--) {
-        const directive = matchedDirectives.find((d) => d.directiveInfo.directiveName === attrNames[i]);
+        const directive = matchedDirectives.find((d) => d.name === attrNames[i]);
         if (directive) {
             return directive;
         }

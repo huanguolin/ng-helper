@@ -75,16 +75,17 @@ export interface FilterInfo {
     parameters: Parameter[];
 }
 
-export interface Cache {
+export interface NgCache {
     getComponentMap: () => Map<string, ComponentInfo>;
     getDirectiveMap: () => Map<string, DirectiveInfo>;
     getControllerMap: () => Map<string, ControllerInfo>;
     getFilterMap: () => Map<string, FilterInfo>;
+    getFileCacheMap: () => Map<string, FileCacheInfo>;
 }
 
 const REFRESH_THRESHOLDS = 1000; // 1s
 
-export function buildCache(getCoreContext: GetCoreContextFn): Cache {
+export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
     let lastRefreshed = 0;
     const fileCacheMap = new Map<string, FileCacheInfo>();
     const componentMap = new Map<string, ComponentInfo>();
@@ -108,6 +109,10 @@ export function buildCache(getCoreContext: GetCoreContextFn): Cache {
         getFilterMap: () => {
             refreshInternalMaps();
             return filterMap;
+        },
+        getFileCacheMap: () => {
+            refreshInternalMaps();
+            return fileCacheMap;
         },
     };
 
@@ -296,7 +301,7 @@ function getComponentInfo(ctx: PluginContext, node: ts.CallExpression): Componen
                 end: nameNode.getEnd(),
             },
             bindings: [],
-            controllerAs: '$ctrl',
+            controllerAs: '$ctrl', // 默认值
         };
 
         // 第二个参数是对象字面量
@@ -306,6 +311,12 @@ function getComponentInfo(ctx: PluginContext, node: ts.CallExpression): Componen
             const bindingsObj = getPropByName(ctx, configNode, 'bindings');
             if (bindingsObj && ctx.ts.isObjectLiteralExpression(bindingsObj.initializer)) {
                 info.bindings = getPropertiesOfObjLiteral(ctx, bindingsObj.initializer);
+            }
+
+            // controllerAs
+            const controllerAsVal = getPropValueByName(ctx, configNode, 'controllerAs');
+            if (controllerAsVal && ctx.ts.isStringLiteralLike(controllerAsVal)) {
+                info.controllerAs = controllerAsVal.text;
             }
 
             // transclude

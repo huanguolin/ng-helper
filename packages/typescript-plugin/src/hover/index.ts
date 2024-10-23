@@ -40,7 +40,7 @@ export function getComponentNameOrAttrNameHoverInfo(
         return;
     }
 
-    const { filePath, componentNameInfo, directiveNameInfo, transcludeConfig } = findComponentOrDirectiveInfo(componentDirectiveMap, hoverInfo);
+    const { filePath, componentInfo: componentNameInfo, directiveNameInfo, transcludeConfig } = findComponentOrDirectiveInfo(componentDirectiveMap, hoverInfo);
 
     if (!filePath || (!componentNameInfo && !directiveNameInfo)) {
         return;

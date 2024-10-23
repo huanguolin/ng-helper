@@ -1,6 +1,8 @@
 import { NgPluginConfiguration, type NgComponentDirectiveNamesInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
+import { type NgCache } from './ngHelperServer/ngCache';
+
 export interface PluginCoreLogger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     info: (msg: string, ...args: any[]) => void;
@@ -58,8 +60,7 @@ export type NgHelperServer = {
     getContext: GetContextFnViaFilePath;
     getCoreContext: GetCoreContextFnViaFilePath;
     isExtensionActivated: () => boolean;
-    getComponentDirectiveMap: (filePath: string) => Map<string, NgComponentDirectiveFileInfo> | undefined;
-    getTsCtrlMap: (filePath: string) => Map<string, NgTsCtrlFileInfo> | undefined;
+    getCache: (filePath: string) => NgCache | undefined;
 };
 
 export interface FileVersion {

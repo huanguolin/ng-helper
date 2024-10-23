@@ -1,6 +1,7 @@
 import { NgComponentNameInfo, NgTypeInfo, type NgComponentDirectiveNamesInfo, type NgDirectiveNameInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
+import type { DirectiveInfo } from '../ngHelperServer/ngCache';
 import { NgComponentTypeInfo, PluginContext } from '../type';
 
 import { isTypeOfType } from './common';
@@ -447,12 +448,12 @@ export function removeBindingControlChars(bindingName: string): string {
     return bindingName.replace(/[@=<?&]/g, '');
 }
 
-export function isElementDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
-    return directiveNameInfo.restrict.includes('E');
+export function isElementDirective(directiveInfo: DirectiveInfo): boolean {
+    return directiveInfo.restrict.includes('E');
 }
 
-export function isAttributeDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
-    return directiveNameInfo.restrict.includes('A');
+export function isAttributeDirective(directiveInfo: DirectiveInfo): boolean {
+    return directiveInfo.restrict.includes('A');
 }
 
 export function isComponentOrDirectiveFile(fileName: string): boolean {
