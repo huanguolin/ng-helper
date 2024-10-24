@@ -424,7 +424,7 @@ export function getDirectiveHoverInfo(
         // 说明光标所在的属性名是指令的属性名
         // 需要遍历所有匹配的指令，找到对应的属性值
         for (const directive of matchedDirectives) {
-            const attr = directive.scope.find((s) => s.name === cursorAtAttrName);
+            const attr = directive.scope.find((s) => getBindingName(s) === cursorAtAttrName);
             if (attr) {
                 return getDirectiveAttrHoverInfo(cursorAtAttrName, directive, true);
             }
