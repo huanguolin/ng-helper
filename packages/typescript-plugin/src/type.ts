@@ -36,13 +36,6 @@ export type SyntaxNodeInfoEx = SyntaxNodeInfo & {
     targetNode: ts.Node;
 };
 
-export type NgComponentTypeInfo = {
-    controllerType?: ts.Type;
-    // TODO: 下面两个都不需要了
-    controllerAs: string;
-    bindings: Map<string, string>;
-};
-
 export type ProjectInfo = {
     info: ts.server.PluginCreateInfo;
     modules: {

@@ -4,8 +4,7 @@ import type { DirectiveInfo, NgCache } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import type { CorePluginContext } from '../type';
 
-import { getObjLiteral, getPropValueByName } from './common';
-import { getDirectiveConfigNode, getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
+import { getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
 
 /**
  * 查找匹配的指令（属性形式）
@@ -41,25 +40,10 @@ export function getDirectivesUsableAsAttributes(cache: NgCache): DirectiveInfo[]
     return directives;
 }
 
-// TODO: 理论上可以废弃
 export function getTypeInfosFromDirectiveScope(coreCtx: CorePluginContext, directiveInfo: DirectiveInfo): NgTypeInfo[] | undefined {
-    const { filePath, name } = directiveInfo;
-    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, directiveInfo.filePath);
     if (!ctx) {
         return;
     }
-
-    const directiveConfigNode = getDirectiveConfigNode(ctx, name);
-    if (!directiveConfigNode) {
-        return;
-    }
-
-    const scopePropertyValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-    if (!scopePropertyValue || !ctx.ts.isObjectLiteralExpression(scopePropertyValue)) {
-        return;
-    }
-
-    const obj = getObjLiteral(ctx, scopePropertyValue);
-    const map = new Map<string, string>(Object.entries(obj));
-    return getTypeInfoOfDirectiveScope(ctx, map);
+    return getTypeInfoOfDirectiveScope(ctx, directiveInfo.scope);
 }

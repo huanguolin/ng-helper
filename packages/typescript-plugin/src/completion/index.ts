@@ -9,22 +9,18 @@ import {
 } from '@ng-helper/shared/lib/plugin';
 
 import { ngHelperServer } from '../ngHelperServer';
-import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
+import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getObjLiteral, getPropValueByName } from '../utils/common';
 import {
+    getComponentControllerType,
     getControllerType,
-    getDirectiveConfigNode,
     getPublicMembersTypeInfoOfBindings,
-    getTypeInfoOfDirectiveScope,
     isElementDirective,
     removeBindingControlChars,
 } from '../utils/ng';
-import { getComponentTypeInfo } from '../utils/ng';
-import { getComponentDeclareLiteralNode } from '../utils/ng';
 
 import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
 
@@ -50,17 +46,11 @@ export function getComponentControllerAs(ctx: PluginContext): string | undefined
         return;
     }
 
-    return component.controllerAs;
+    return component.controllerAs.value;
 }
 
 export function getComponentTypeCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
     const logger = ctx.logger.prefix('getComponentCompletions()');
-
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    if (!componentLiteralNode) {
-        logger.info('componentLiteralNode not found!');
-        return;
-    }
 
     const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefix);
     const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
@@ -69,21 +59,44 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
-    if (!minPrefix.startsWith(info.controllerAs)) {
+    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
+        return;
+    }
+
+    const componentName = cache.getFileCacheMap().get(ctx.sourceFile.fileName)?.components[0];
+    logger.info('componentName:', componentName);
+    if (!componentName) {
+        return;
+    }
+
+    const componentInfo = cache.getComponentMap().get(componentName)!;
+    if (!minPrefix.startsWith(componentInfo.controllerAs.value)) {
+        return;
+    }
+
+    const controllerType = getComponentControllerType(ctx, componentName);
+    logger.info('controllerType:', typeToString(ctx, controllerType));
+
+    if (!componentInfo.bindings.length && !controllerType) {
+        logger.info('no bindings and controllerType not found!');
         return;
     }
 
     // ctrl. 的情况
-    if (minPrefix === info.controllerAs + '.') {
-        return info.controllerType
-            ? getPublicMembersTypeInfoOfType(ctx, info.controllerType)
-            : getPublicMembersTypeInfoOfBindings(ctx, info.bindings);
+    if (minPrefix === componentInfo.controllerAs.value + '.') {
+        if (controllerType) {
+            const completionItems = getPublicMembersTypeInfoOfType(ctx, controllerType);
+            if (completionItems) {
+                return completionItems;
+            }
+        }
+        return getPublicMembersTypeInfoOfBindings(ctx, componentInfo.bindings);
     }
 
-    if (info.controllerType) {
-        const targetType = getNodeType(ctx, info.controllerType, minSyntaxNode);
+    if (controllerType) {
+        const targetType = getNodeType(ctx, controllerType, minSyntaxNode);
         logger.info('targetType:', typeToString(ctx, targetType));
         if (!targetType) {
             return;
@@ -178,36 +191,13 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
     const directiveMap = cache.getDirectiveMap();
 
     if (componentMap.has(componentName)) {
-        // TODO：这里应该可以优化
         return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, componentMap.get(componentName)!);
     } else if (directiveMap.has(componentName)) {
         const directive = directiveMap.get(componentName)!;
         if (isElementDirective(directive)) {
-            // TODO：这里应该可以优化
-            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, directive);
+            return getTypeInfosFromDirectiveScope(coreCtx, directive);
         }
     }
-}
-
-function getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx: CorePluginContext, directiveInfo: DirectiveInfo): NgTypeInfo[] | undefined {
-    const ctx = getCtxOfCoreCtx(coreCtx, directiveInfo.filePath);
-    if (!ctx) {
-        return;
-    }
-
-    const directiveConfigNode = getDirectiveConfigNode(ctx, directiveInfo.name);
-    if (!directiveConfigNode) {
-        return;
-    }
-
-    const scopePropertyValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-    if (!scopePropertyValue || !ctx.ts.isObjectLiteralExpression(scopePropertyValue)) {
-        return;
-    }
-
-    const obj = getObjLiteral(ctx, scopePropertyValue);
-    const map = new Map<string, string>(Object.entries(obj));
-    return getTypeInfoOfDirectiveScope(ctx, map);
 }
 
 function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginContext, componentInfo: ComponentInfo): NgTypeInfo[] | undefined {
@@ -218,24 +208,20 @@ function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginCont
         return;
     }
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentInfo.name);
-    if (!componentLiteralNode) {
-        return;
-    }
+    const controllerType = getComponentControllerType(ctx, componentInfo.name);
+    logger.info('controllerType:', typeToString(ctx, controllerType));
 
-    const componentTypeInfo = getComponentTypeInfo(ctx, componentLiteralNode);
-    logger.info('componentTypeInfo.bindings.keys:', Array.from(componentTypeInfo.bindings.keys()));
-    const typeFromBindings = getPublicMembersTypeInfoOfBindings(ctx, componentTypeInfo.bindings, true);
-    if (!typeFromBindings || !componentTypeInfo.controllerType) {
+    const typeFromBindings = getPublicMembersTypeInfoOfBindings(ctx, componentInfo.bindings, true);
+    if (!typeFromBindings || !controllerType) {
         return typeFromBindings;
     }
 
-    const typeFromProps = getPublicMembersTypeInfoOfType(ctx, componentTypeInfo.controllerType);
+    const typeFromProps = getPublicMembersTypeInfoOfType(ctx, controllerType);
     if (!typeFromProps) {
         return typeFromBindings;
     }
 
-    return mergeTypeInfo(typeFromBindings, typeFromProps, getToPropsNameMap(componentTypeInfo.bindings));
+    return mergeTypeInfo(typeFromBindings, typeFromProps, getToPropsNameMap(componentInfo.bindings));
 
     function mergeTypeInfo(
         typeFromBindings: NgTypeInfo[],
@@ -255,11 +241,11 @@ function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginCont
         return typeFromBindings;
     }
 
-    function getToPropsNameMap(bindingsMap: Map<string, string>): Map<string, string> {
+    function getToPropsNameMap(bindings: Property[]): Map<string, string> {
         const result = new Map<string, string>();
-        for (const [k, v] of bindingsMap) {
-            const inputName = removeBindingControlChars(v).trim();
-            result.set(inputName || k, k);
+        for (const binding of bindings) {
+            const inputName = removeBindingControlChars(binding.value).trim();
+            result.set(inputName || binding.name, binding.name);
         }
         return result;
     }
@@ -304,7 +290,6 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
         return;
     }
 
-    // TODO: 这里及后面应该可以优化
     const matchedDirectives = findMatchedDirectives(cache, info.attrNames);
     logger.info(
         'Matched directives:',
@@ -313,17 +298,12 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
 
     if (info.queryType === 'directiveAttr' && matchedDirectives.length) {
         const closestDirective = findClosestMatchedDirective(matchedDirectives, info.attrNames, info.afterCursorAttrName);
-
         logger.info('Closest directive:', closestDirective ? closestDirective.name : 'None');
-
         if (closestDirective) {
             const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, closestDirective);
             return typeInfos?.filter((typeInfo) => !info.attrNames.includes(typeInfo.name)) || [];
         }
-        return [];
-    }
-
-    if (info.queryType === 'directive') {
+    } else if (info.queryType === 'directive') {
         let attributeDirectives = getDirectivesUsableAsAttributes(cache);
         if (matchedDirectives.length) {
             const matchedDirectiveNames = new Set(matchedDirectives.map((d) => d.name));

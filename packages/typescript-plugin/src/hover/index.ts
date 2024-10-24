@@ -13,18 +13,10 @@ import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils'
 import { ngHelperServer } from '../ngHelperServer';
 import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
-import { CorePluginContext, NgComponentTypeInfo, PluginContext } from '../type';
+import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import {
-    getComponentTypeInfo,
-    getComponentDeclareLiteralNode,
-    getPublicMembersTypeInfoOfBindings,
-    getControllerType,
-    removeBindingControlChars,
-    getBindingType,
-    INDENT,
-} from '../utils/ng';
+import { getControllerType, removeBindingControlChars, getBindingType, INDENT, getComponentControllerType, getBindingTypeInfo } from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
 
@@ -104,7 +96,7 @@ function getComponentAttrHoverInfo(coreCtx: CorePluginContext, attrName: string,
     }
 
     const result = {
-        formattedTypeString: `(property) ${attrName}: ${getBindingType(binding.value)}`,
+        formattedTypeString: `(property) ${attrName}: ${getBindingType(binding.value, true)}`,
         document: '',
     };
 
@@ -130,17 +122,12 @@ function getComponentBindingTypeMap(coreCtx: CorePluginContext, componentInfo: C
         return;
     }
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentInfo.name);
-    if (!componentLiteralNode) {
+    const controllerType = getComponentControllerType(ctx, componentInfo.name);
+    if (!controllerType) {
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    if (!info.controllerType) {
-        return;
-    }
-
-    const types = getPublicMembersTypeInfoOfType(ctx, info.controllerType);
+    const types = getPublicMembersTypeInfoOfType(ctx, controllerType);
     if (!types) {
         return;
     }
@@ -155,7 +142,7 @@ function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInf
     }
 
     const prefix = isAttrDirectiveStyle ? `attribute of [${directiveInfo.name}]` : 'property';
-    const attrInfo = `(${prefix}) ${attr.name}: ${getBindingType(attr.value)}`;
+    const attrInfo = `(${prefix}) ${attr.name}: ${getBindingType(attr.value, true)}`;
     const scopeInfo = `scope configs: "${attr.value}"`;
 
     return {
@@ -226,15 +213,25 @@ function formatTransclude(transclude: DirectiveInfo['transclude']) {
 export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    if (!componentLiteralNode) {
-        logger.info('componentLiteralNode not found!');
+    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
-    if (!info.controllerType && !info.bindings.size) {
+    const componentName = cache.getFileCacheMap().get(ctx.sourceFile.fileName)?.components[0];
+    logger.info('componentName:', componentName);
+    if (!componentName) {
+        return;
+    }
+
+    const componentInfo = cache.getComponentMap().get(componentName)!;
+
+    const controllerType = getComponentControllerType(ctx, componentName);
+    logger.info('controllerType:', typeToString(ctx, controllerType));
+
+    if (!componentInfo.bindings.length && !controllerType) {
+        logger.info('no bindings and controllerType not found!');
         return;
     }
 
@@ -247,23 +244,26 @@ export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, c
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
-    if (!minPrefix.startsWith(info.controllerAs) || !ctx.ts.isIdentifier(targetNode)) {
+    if (!minPrefix.startsWith(componentInfo.controllerAs.value) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
-    if (info.controllerType) {
-        return getHoverInfoOfType({
+    if (controllerType) {
+        const hoverInfo = getHoverInfoOfType({
             ctx,
-            controllerType: info.controllerType,
-            controllerAs: info.controllerAs,
+            controllerType,
+            controllerAs: componentInfo.controllerAs.value,
             contextString,
             targetNode,
             minSyntaxSourceFile: sourceFile,
         });
+        if (hoverInfo) {
+            return hoverInfo;
+        }
     }
 
-    if (info.bindings.size > 0) {
-        return getHoverInfoOfBindings(ctx, info, targetNode.text);
+    if (componentInfo.bindings.length > 0) {
+        return getHoverInfoOfBindings(componentInfo, targetNode.text);
     }
 }
 
@@ -358,33 +358,32 @@ function getHoverInfoOfType({
     return buildHoverInfo({ ctx, targetType, parentType, name: targetNode.text });
 }
 
-function getHoverInfoOfBindings(ctx: PluginContext, info: NgComponentTypeInfo, targetPropName: string): NgHoverResponse {
-    const bindingTypes = getPublicMembersTypeInfoOfBindings(ctx, info.bindings)!;
-
+function getHoverInfoOfBindings(componentInfo: ComponentInfo, hoverPropName: string): NgHoverResponse {
     // hover 在根节点上
-    if (targetPropName === info.controllerAs) {
+    if (hoverPropName === componentInfo.controllerAs.value) {
         const typeString =
-            '{ ' +
-            bindingTypes.reduce((acc, cur) => {
-                const s = `${cur.name}: ${cur.typeString};`;
+            '{' +
+            componentInfo.bindings.reduce((acc, cur) => {
+                const s = `${cur.name}: ${getBindingType(cur.value, false)};`;
                 return acc ? `${acc} ${s}` : s;
             }, '') +
-            ' }';
+            '}';
         return {
-            formattedTypeString: `(object) ${targetPropName}: ${beautifyTypeString(typeString)}`,
+            formattedTypeString: `(object) ${hoverPropName}: ${beautifyTypeString(typeString)}`,
             document: '',
         };
     }
 
-    const targetType = bindingTypes.find((t) => t.name === targetPropName);
-    if (targetType) {
+    const binding = componentInfo.bindings.find((t) => t.name === hoverPropName);
+    if (binding) {
+        const typeInfo = getBindingTypeInfo(binding, false);
         return {
-            formattedTypeString: `(property) ${targetPropName}: ${beautifyTypeString(targetType.typeString)}`,
-            document: targetType.document,
+            formattedTypeString: `(property) ${hoverPropName}: ${typeInfo.typeString}`,
+            document: typeInfo.document,
         };
     } else {
         return {
-            formattedTypeString: `(property) ${targetPropName}: any`,
+            formattedTypeString: `(property) ${hoverPropName}: any`,
             document: '',
         };
     }

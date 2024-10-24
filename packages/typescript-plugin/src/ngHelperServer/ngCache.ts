@@ -44,7 +44,10 @@ export interface ComponentInfo {
     filePath: string;
     location: Location;
     bindings: Property[];
-    controllerAs: string;
+    controllerAs: {
+        value: string;
+        location?: Location;
+    };
     transclude?: boolean | Property[];
 }
 
@@ -344,7 +347,9 @@ function getComponentInfo(ctx: PluginContext, node: ts.CallExpression): Componen
                 end: nameNode.getEnd(),
             },
             bindings: [],
-            controllerAs: '$ctrl', // 默认值
+            controllerAs: {
+                value: '$ctrl', // 默认值
+            },
         };
 
         // 第二个参数是对象字面量
@@ -359,7 +364,11 @@ function getComponentInfo(ctx: PluginContext, node: ts.CallExpression): Componen
             // controllerAs
             const controllerAsVal = getPropValueByName(ctx, configNode, 'controllerAs');
             if (controllerAsVal && ctx.ts.isStringLiteralLike(controllerAsVal)) {
-                info.controllerAs = controllerAsVal.text;
+                info.controllerAs.value = controllerAsVal.text;
+                info.controllerAs.location = {
+                    start: controllerAsVal.getStart(ctx.sourceFile),
+                    end: controllerAsVal.getEnd(),
+                };
             }
 
             // transclude

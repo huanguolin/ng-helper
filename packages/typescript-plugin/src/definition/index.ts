@@ -14,8 +14,7 @@ import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
 import { CorePluginContext, type PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { typeToString } from '../utils/common';
-import { getPropByName } from '../utils/common';
-import { getComponentDeclareLiteralNode, getComponentTypeInfo, getControllerType } from '../utils/ng';
+import { getComponentControllerType, getControllerType } from '../utils/ng';
 
 /**
  * 获取指令(作为属性使用时)定义信息
@@ -129,15 +128,25 @@ export function getComponentNameOrAttrNameDefinitionInfo(
 export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextString, cursorAt }: NgTypeDefinitionRequest): NgDefinitionResponse {
     const logger = ctx.logger.prefix('getComponentTypeDefinitionInfo()');
 
-    const componentLiteralNode = getComponentDeclareLiteralNode(ctx);
-    if (!componentLiteralNode) {
-        logger.info('componentLiteralNode not found!');
+    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
         return;
     }
 
-    const info = getComponentTypeInfo(ctx, componentLiteralNode);
-    logger.info('controllerType:', typeToString(ctx, info.controllerType), 'controllerAs:', info.controllerAs);
-    if (!info.controllerType && !info.bindings.size) {
+    const componentName = cache.getFileCacheMap().get(ctx.sourceFile.fileName)?.components[0];
+    logger.info('componentName:', componentName);
+    if (!componentName) {
+        return;
+    }
+
+    const componentInfo = cache.getComponentMap().get(componentName)!;
+
+    const controllerType = getComponentControllerType(ctx, componentName);
+    logger.info('controllerType:', typeToString(ctx, controllerType));
+
+    if (!componentInfo.bindings.length && !controllerType) {
+        logger.info('no bindings and controllerType not found!');
         return;
     }
 
@@ -150,7 +159,7 @@ export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextStri
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
-    if (!minPrefix.startsWith(info.controllerAs) || !ctx.ts.isIdentifier(targetNode)) {
+    if (!minPrefix.startsWith(componentInfo.controllerAs.value) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
@@ -161,47 +170,39 @@ export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextStri
         return;
     }
 
-    if (info.controllerType) {
-        return getTypeDefinitionInfo({
+    if (controllerType) {
+        const hoverInfo = getTypeDefinitionInfo({
             ctx,
-            controllerType: info.controllerType,
-            controllerAs: info.controllerAs,
+            controllerType,
+            controllerAs: componentInfo.controllerAs.value,
             targetNode,
             propDeep,
         });
+        if (hoverInfo) {
+            return hoverInfo;
+        }
     }
 
     // hover 在根节点上
-    if (propDeep === 1 && targetNode.text === info.controllerAs) {
-        const controllerAs = getPropByName(ctx, componentLiteralNode, 'controllerAs');
-        if (controllerAs) {
+    if (propDeep === 1 && targetNode.text === componentInfo.controllerAs.value) {
+        if (componentInfo.controllerAs.location) {
             return {
                 filePath: ctx.sourceFile.fileName,
-                start: controllerAs.getStart(ctx.sourceFile),
-                end: controllerAs.getEnd(),
+                ...componentInfo.controllerAs.location,
             };
         } else {
             return {
                 filePath: ctx.sourceFile.fileName,
-                start: componentLiteralNode.getStart(ctx.sourceFile),
-                end: componentLiteralNode.getEnd(),
+                ...componentInfo.location,
             };
         }
-    } else if (info.bindings.get(targetNode.text)) {
-        const bindings = getPropByName(ctx, componentLiteralNode, 'bindings');
-        if (!bindings || !ctx.ts.isObjectLiteralExpression(bindings.initializer)) {
-            return;
-        }
+    }
 
-        const prop = getPropByName(ctx, bindings.initializer, targetNode.text);
-        if (!prop) {
-            return;
-        }
-
+    const binding = componentInfo.bindings.find((t) => t.name === targetNode.text);
+    if (binding) {
         return {
             filePath: ctx.sourceFile.fileName,
-            start: prop.getStart(ctx.sourceFile),
-            end: prop.getEnd(),
+            ...binding.location,
         };
     }
 }

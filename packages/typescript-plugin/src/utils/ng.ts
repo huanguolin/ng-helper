@@ -2,11 +2,10 @@ import { SPACE } from '@ng-helper/shared/lib/html';
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import type { DirectiveInfo } from '../ngHelperServer/ngCache';
-import { NgComponentTypeInfo, PluginContext } from '../type';
+import type { DirectiveInfo, Property } from '../ngHelperServer/ngCache';
+import { PluginContext } from '../type';
 
-import { isTypeOfType } from './common';
-import { getObjLiteral } from './common';
+import { getPropValueByName, isTypeOfType } from './common';
 
 export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     // 检查 angular.module('moduleName') 的调用，注意 module 函数还有两个可选参数：
@@ -131,32 +130,31 @@ function isInjectableNode(ctx: PluginContext, node: ts.Node): node is ts.CallExp
     return ctx.ts.isArrayLiteralExpression(node) || ctx.ts.isFunctionExpression(node) || ctx.ts.isClassExpression(node) || ctx.ts.isIdentifier(node);
 }
 
-export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): NgComponentTypeInfo {
-    // TODO：只返回 controllerType
-    const result: NgComponentTypeInfo = {
-        controllerAs: '$ctrl',
-        bindings: new Map(),
-    };
-    for (const prop of componentLiteralNode.properties) {
-        if (ctx.ts.isPropertyAssignment(prop) && ctx.ts.isIdentifier(prop.name)) {
-            if (prop.name.text === 'controller' && ctx.ts.isIdentifier(prop.initializer)) {
-                let controllerType = ctx.typeChecker.getTypeAtLocation(prop.initializer);
-                if (isTypeOfType(ctx, controllerType)) {
-                    const targetSymbol = controllerType.symbol;
-                    if (targetSymbol) {
-                        controllerType = ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
-                    }
-                }
-                result.controllerType = controllerType;
-            } else if (prop.name.text === 'controllerAs' && ctx.ts.isStringLiteral(prop.initializer)) {
-                result.controllerAs = prop.initializer.text;
-            } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
-                const bindingsObj = getObjLiteral(ctx, prop.initializer);
-                result.bindings = new Map(Object.entries(bindingsObj));
-            }
+export function getComponentControllerType(ctx: PluginContext, componentName: string): ts.Type | undefined {
+    const logger = ctx.logger.prefix('getComponentControllerType()');
+
+    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentName);
+    if (!componentLiteralNode) {
+        logger.info(`componentLiteralNode not found! componentName: ${componentName}`);
+        return;
+    }
+
+    const controllerPropValue = getPropValueByName(ctx, componentLiteralNode, 'controller');
+    // 暂不考虑 controller 是 inline class 的情况
+    if (!controllerPropValue || !ctx.ts.isIdentifier(controllerPropValue)) {
+        logger.info(`controllerPropValue not found, or it's not an identifier! componentName: ${componentName}`);
+        return;
+    }
+
+    let controllerType = ctx.typeChecker.getTypeAtLocation(controllerPropValue);
+    if (isTypeOfType(ctx, controllerType)) {
+        const targetSymbol = controllerType.symbol;
+        if (targetSymbol) {
+            controllerType = ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
         }
     }
-    return result;
+
+    return controllerType;
 }
 
 export function getControllerType(ctx: PluginContext): ts.Type | undefined {
@@ -254,75 +252,67 @@ export function getAngularDefineFunctionReturnStatement(ctx: PluginContext, func
 
 export function getTypeInfoOfDirectiveScope(
     ctx: PluginContext,
-    scopeMap: Map<string, string>,
+    scope: Property[],
     /**
-     * 站在使用组件的视角。
+     * 是否站在使用组件的视角。
      */
     perspectivesOnUsing = true,
 ): NgTypeInfo[] | undefined {
-    return getPublicMembersTypeInfoOfBindings(ctx, scopeMap, perspectivesOnUsing);
+    return getPublicMembersTypeInfoOfBindings(ctx, scope, perspectivesOnUsing);
 }
 
 export function getPublicMembersTypeInfoOfBindings(
     ctx: PluginContext,
-    bindingsMap: Map<string, string>,
+    bindings: Property[],
     /**
-     * 站在使用组件的视角。
+     * 是否站在使用组件的视角。
      */
     perspectivesOnUsing = false,
-): NgTypeInfo[] | undefined {
-    if (!bindingsMap.size) {
-        return;
+): NgTypeInfo[] {
+    return bindings.map((binding) => getBindingTypeInfo(binding, perspectivesOnUsing));
+}
+
+export function getBindingTypeInfo(
+    binding: Property,
+    /**
+     * 是否站在使用组件的视角。
+     * 有两种视角（举例：input: '<inputValue'）：
+     * 1. 使用组件时，给组件属性传递值(此时属性的名字是 inputValue)。
+     * 2. 编写组件时，使用外部传入的值(此时属性的名字是 input)。
+     */
+    perspectivesOnUsing: boolean,
+): NgTypeInfo {
+    const item: NgTypeInfo = {
+        kind: 'property',
+        name: perspectivesOnUsing ? removeBindingControlChars(binding.value) || binding.name : binding.name,
+        typeString: getBindingType(binding.value, perspectivesOnUsing),
+        document: `bindings config: "${binding.name}"`,
+        optional: isOptionalBinding(binding.value),
+        isFunction: false,
+    };
+    if (isEventBinding(binding.value)) {
+        item.isFunction = true;
+        item.paramNames = [];
     }
+    return item;
+}
 
-    const result: NgTypeInfo[] = [];
-    for (const [k, v] of bindingsMap) {
-        const typeInfo = getBindType(v);
-        const item: NgTypeInfo = {
-            kind: 'property',
-            name: perspectivesOnUsing ? typeInfo.inputName || k : k,
-            typeString: typeInfo.typeString,
-            document: `bindings config: "${v}"`,
-            optional: typeInfo.optional,
-            isFunction: false,
-        };
-        if (typeInfo.type === 'function') {
-            result.push({
-                ...item,
-                kind: 'method',
-                isFunction: true,
-                paramNames: [],
-            });
-        } else {
-            result.push(item);
-        }
+export function getBindingType(
+    bindingConfig: string,
+    /**
+     * 是否站在使用组件的视角。
+     * 有两种视角：
+     * 1. 使用组件时，给组件属性传递值；举例：对于 &, 接受表达式。
+     * 2. 编写组件时，使用外部传入的值；举例：对于 &, 其类型类似方法，可以按照方法调用。
+     */
+    perspectivesOnUsing: boolean,
+): string {
+    if (isEventBinding(bindingConfig)) {
+        return perspectivesOnUsing ? '<expression>' : '(...args: any[]) => any';
+    } else if (isStringBinding(bindingConfig)) {
+        return 'string';
     }
-    return result;
-
-    function getBindType(s: string) {
-        const inputName = removeBindingControlChars(s).trim();
-        const result: {
-            type: 'any' | 'string' | 'function';
-            optional: boolean;
-            typeString: string;
-            inputName?: string;
-        } = {
-            type: 'any',
-            optional: s.includes('?'),
-            typeString: 'any',
-            inputName: inputName ? inputName : undefined,
-        };
-
-        if (s.includes('@')) {
-            result.type = 'string';
-            result.typeString = 'string';
-        } else if (s.includes('&')) {
-            result.type = 'function';
-            result.typeString = perspectivesOnUsing ? 'expression' : '(...args: any[]) => any';
-        }
-
-        return result;
-    }
+    return 'any';
 }
 
 export function isStringBinding(bindingConfig: string): boolean {
@@ -333,13 +323,8 @@ export function isEventBinding(bindingConfig: string): boolean {
     return bindingConfig.includes('&');
 }
 
-export function getBindingType(bindingConfig: string): string {
-    if (isEventBinding(bindingConfig)) {
-        return '<expression>';
-    } else if (isStringBinding(bindingConfig)) {
-        return 'string';
-    }
-    return 'any';
+export function isOptionalBinding(bindingConfig: string): boolean {
+    return bindingConfig.includes('?');
 }
 
 export function removeBindingControlChars(bindingConfig: string): string {
