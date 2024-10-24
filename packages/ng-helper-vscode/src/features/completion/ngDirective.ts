@@ -16,16 +16,11 @@ export function ngDirective(_port: number) {
     return languages.registerCompletionItemProvider('html', {
         provideCompletionItems(document: TextDocument, position: Position, _, context) {
             return timeCost('provideNgDirectiveCompletion', () => {
-                try {
-                    // 避免在 inline template 中扰乱 component attr 的 completion
-                    if (context.triggerCharacter) {
-                        return;
-                    }
-                    return provideNgDirectiveCompletion({ document, position });
-                } catch (error) {
-                    console.error('provideNgDirectiveCompletion() error:', error);
-                    return undefined;
+                // 避免在 inline template 中扰乱 component attr 的 completion
+                if (context.triggerCharacter) {
+                    return;
                 }
+                return provideNgDirectiveCompletion({ document, position });
             });
         },
     });

@@ -38,24 +38,14 @@ class TypeCompletionProvider implements CompletionItemProvider {
     ): Promise<CompletionList<CompletionItem> | undefined> {
         if (isComponentHtml(document)) {
             return timeCost('provideComponentTypeCompletion', async () => {
-                try {
-                    return await this.provideComponentTypeCompletion({ document, position, token });
-                } catch (error) {
-                    console.error('provideComponentTypeCompletion() error:', error);
-                    return undefined;
-                }
+                return await this.provideComponentTypeCompletion({ document, position, token });
             });
         }
 
         const ctrlInfo = getControllerNameInfoFromHtml(document);
         if (ctrlInfo && ctrlInfo.controllerAs) {
             return timeCost('provideControllerTypeCompletion', async () => {
-                try {
-                    return await this.provideControllerTypeCompletion({ document, position, ctrlInfo, token });
-                } catch (error) {
-                    console.error('provideControllerTypeCompletion() error:', error);
-                    return undefined;
-                }
+                return await this.provideControllerTypeCompletion({ document, position, ctrlInfo, token });
             });
         }
     }

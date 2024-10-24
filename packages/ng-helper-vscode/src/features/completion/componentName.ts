@@ -14,23 +14,18 @@ export function componentName(port: number) {
         {
             async provideCompletionItems(document, position, token, context) {
                 return timeCost('provideComponentNameCompletion', async () => {
-                    try {
-                        // Avoid 'space' key trigger this in inline html.
-                        if (context.triggerCharacter && !context.triggerCharacter.trim()) {
-                            return;
-                        }
-
-                        return await provideComponentNameCompletion({
-                            document,
-                            position,
-                            triggerString: context.triggerCharacter,
-                            port,
-                            vscodeCancelToken: token,
-                        });
-                    } catch (error) {
-                        console.error('provideComponentNameCompletion() error:', error);
-                        return undefined;
+                    // Avoid 'space' key trigger this in inline html.
+                    if (context.triggerCharacter && !context.triggerCharacter.trim()) {
+                        return;
                     }
+
+                    return await provideComponentNameCompletion({
+                        document,
+                        position,
+                        triggerString: context.triggerCharacter,
+                        port,
+                        vscodeCancelToken: token,
+                    });
                 });
             },
         },

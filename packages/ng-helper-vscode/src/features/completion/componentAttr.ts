@@ -13,17 +13,12 @@ export function componentAttr(port: number) {
         {
             async provideCompletionItems(document, position, token) {
                 return timeCost('provideComponentAttrCompletion', async () => {
-                    try {
-                        return await provideComponentAttrCompletion({
-                            document,
-                            position,
-                            port,
-                            vscodeCancelToken: token,
-                        });
-                    } catch (error) {
-                        console.error('provideComponentAttrCompletion() error:', error);
-                        return undefined;
-                    }
+                    return await provideComponentAttrCompletion({
+                        document,
+                        position,
+                        port,
+                        vscodeCancelToken: token,
+                    });
                 });
             },
         },

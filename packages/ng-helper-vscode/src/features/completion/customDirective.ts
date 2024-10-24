@@ -32,18 +32,13 @@ export function customDirective(port: number) {
                         (queryType === 'directive' && typeof context.triggerCharacter === 'undefined') ||
                         (queryType === 'directiveAttr' && context.triggerCharacter === SPACE)
                     ) {
-                        try {
-                            return await provideCustomDirectiveCompletion({
-                                document,
-                                position,
-                                queryType,
-                                port,
-                                vscodeCancelToken: token,
-                            });
-                        } catch (error) {
-                            console.error('provideCustomDirectiveCompletion() error:', error);
-                            return undefined;
-                        }
+                        return await provideCustomDirectiveCompletion({
+                            document,
+                            position,
+                            queryType,
+                            port,
+                            vscodeCancelToken: token,
+                        });
                     }
                 });
             },

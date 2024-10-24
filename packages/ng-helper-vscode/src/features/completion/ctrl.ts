@@ -23,12 +23,7 @@ export function ctrl(port: number) {
 
             if (isComponentHtml(document)) {
                 return timeCost('provideComponentCtrlCompletion', async () => {
-                    try {
-                        return await provideComponentCtrlCompletion({ document, position, port, vscodeCancelToken: token });
-                    } catch (error) {
-                        console.error('provideComponentCtrlCompletion() error:', error);
-                        return undefined;
-                    }
+                    return await provideComponentCtrlCompletion({ document, position, port, vscodeCancelToken: token });
                 });
             }
 
