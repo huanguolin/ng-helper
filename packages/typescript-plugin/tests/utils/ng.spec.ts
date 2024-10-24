@@ -24,6 +24,7 @@ import {
     isAngularProviderRegisterNode,
     isAngularRunNode,
     isAngularConfigNode,
+    getAngularDefineFunctionExpression,
 } from '../../src/utils/ng';
 import { prepareTestContext } from '../helper';
 
@@ -443,6 +444,48 @@ describe('isAngularConfigNode()', () => {
     ])('should return %s for %s', (expression, expected) => {
         const node = findNode(ctx, expression);
         expect(isAngularConfigNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('getAngularDefineFunctionExpression()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').directive('myDirective', function() { return {}; });
+        angular.module('myModule').directive('myDirective', ['dep1', 'dep2', function(dep1, dep2) { return {}; }]);
+        angular.module('myModule').directive('myDirective', () => { return {}; });
+        angular.module('myModule').directive('myDirective', ['dep1', 'dep2', (dep1, dep2) => { return {}; }]);
+        angular.module('myModule').directive('myDirective', {});
+    `);
+
+    it('should return function expression for simple function', () => {
+        const node = findNode(ctx, 'function() { return {}; }');
+        const result = getAngularDefineFunctionExpression(ctx, node as ts.Expression);
+        expect(result).toBeDefined();
+        expect(ctx.ts.isFunctionExpression(result!)).toBe(true);
+    });
+
+    it('should return function expression for array notation', () => {
+        const node = findNode(ctx, "['dep1', 'dep2', function(dep1, dep2) { return {}; }]");
+        const result = getAngularDefineFunctionExpression(ctx, node as ts.Expression);
+        expect(result).toBeDefined();
+        expect(ctx.ts.isFunctionExpression(result!)).toBe(true);
+    });
+
+    it('should return undefined for arrow function', () => {
+        const node = findNode(ctx, '() => { return {}; }');
+        const result = getAngularDefineFunctionExpression(ctx, node as ts.Expression);
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for array notation with arrow function', () => {
+        const node = findNode(ctx, "['dep1', 'dep2', (dep1, dep2) => { return {}; }]");
+        const result = getAngularDefineFunctionExpression(ctx, node as ts.Expression);
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for object literal', () => {
+        const node = findNode(ctx, '{}');
+        const result = getAngularDefineFunctionExpression(ctx, node as ts.Expression);
+        expect(result).toBeUndefined();
     });
 });
 
