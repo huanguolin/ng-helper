@@ -335,7 +335,7 @@ export function isEventBinding(bindingConfig: string): boolean {
 
 export function getBindingType(bindingConfig: string): string {
     if (isEventBinding(bindingConfig)) {
-        return 'expression';
+        return '<expression>';
     } else if (isStringBinding(bindingConfig)) {
         return 'string';
     }
