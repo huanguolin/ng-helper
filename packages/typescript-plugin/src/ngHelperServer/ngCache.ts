@@ -62,16 +62,9 @@ export interface DirectiveInfo {
     scope: Property[];
     transclude?: boolean | Property[];
     require?: string;
-    /**
-     * 优先级
-     * 原本是数字类型, 但使用 string 类型更方便
-     */
-    priority?: string;
-    /**
-     * 是否终止
-     * 原本是 boolean 类型, 但使用 string 类型更方便
-     */
-    terminal?: string;
+    replace?: boolean;
+    priority?: number;
+    terminal?: boolean;
 }
 
 export interface ControllerInfo {
@@ -424,6 +417,12 @@ function getDirectiveInfo(ctx: PluginContext, node: ts.CallExpression): Directiv
                     info.transclude = getTranscludeInfo(ctx, transcludeObj);
                 }
 
+                // replace
+                const replaceVal = getPropValueByName(ctx, configNode, 'replace');
+                if (replaceVal && replaceVal.kind === ctx.ts.SyntaxKind.TrueKeyword) {
+                    info.replace = true;
+                }
+
                 // require
                 const requireVal = getPropValueByName(ctx, configNode, 'require');
                 if (requireVal && ctx.ts.isStringLiteralLike(requireVal)) {
@@ -433,13 +432,13 @@ function getDirectiveInfo(ctx: PluginContext, node: ts.CallExpression): Directiv
                 // priority
                 const priorityVal = getPropValueByName(ctx, configNode, 'priority');
                 if (priorityVal && ctx.ts.isNumericLiteral(priorityVal)) {
-                    info.priority = priorityVal.text;
+                    info.priority = Number(priorityVal.text);
                 }
 
                 // terminal
                 const terminalVal = getPropValueByName(ctx, configNode, 'terminal');
-                if (terminalVal) {
-                    info.terminal = terminalVal.getText(ctx.sourceFile);
+                if (terminalVal && terminalVal.kind === ctx.ts.SyntaxKind.TrueKeyword) {
+                    info.terminal = true;
                 }
             }
         }

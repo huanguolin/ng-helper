@@ -166,7 +166,7 @@ function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInf
 
 function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
     const directive = `(directive) ${directiveInfo.name}`;
-    const others = getOtherProps(['restrict', 'require', 'priority', 'terminal']);
+    const others = getOtherProps(['restrict', 'replace', 'require', 'priority', 'terminal']);
     const formattedTypeString = [directive, ...others, formatLiteralObj('scope', directiveInfo.scope), formatTransclude(directiveInfo.transclude)]
         .filter((x) => !!x)
         .join('\n');
@@ -178,8 +178,14 @@ function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
 
     function getOtherProps(propNames: (keyof DirectiveInfo)[]): string[] {
         return propNames.map((p) => {
-            const v = directiveInfo[p] as string;
-            return v ? `${p}: "${v}"` : '';
+            const v = directiveInfo[p] as string | boolean | number;
+            if (!v) {
+                return '';
+            } else if (typeof v === 'string') {
+                return `${p}: "${v}"`;
+            } else {
+                return `${p}: ${v}`;
+            }
         });
     }
 }
