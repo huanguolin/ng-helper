@@ -14,6 +14,7 @@ import {
 } from '../utils/ng';
 
 export interface FileCacheInfo extends FileVersion {
+    isNgModule: boolean;
     components: string[];
     directives: string[];
     controllers: string[];
@@ -213,7 +214,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
     function scanFile(ctx: PluginContext, scannedTs: number, fileCacheInfo?: FileCacheInfo) {
         const logger = ctx.logger.prefix('scanFile()');
 
-        if (fileCacheInfo) {
+        if (fileCacheInfo && fileCacheInfo.isNgModule) {
             removeItemsFromAllMaps(fileCacheInfo, ctx.sourceFile.fileName);
         }
 
@@ -222,8 +223,19 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         const directives: DirectiveInfo[] = [];
         const controllers: ControllerInfo[] = [];
         const filters: FilterInfo[] = [];
-        visitNode(ctx.sourceFile);
+        scanNode(ctx.sourceFile);
         if (!isNgModule) {
+            // 设置为空值，避免反复扫描这些文件。
+            fileCacheMap.set(ctx.sourceFile.fileName, {
+                isNgModule: false,
+                version: getSourceFileVersion(ctx.sourceFile),
+                components: [],
+                directives: [],
+                controllers: [],
+                filters: [],
+                lastScanned: scannedTs,
+            });
+
             if (components.length > 0 || directives.length > 0 || controllers.length > 0 || filters.length > 0) {
                 logger.info(
                     'not ng module but got:',
@@ -239,6 +251,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         }
 
         fileCacheMap.set(ctx.sourceFile.fileName, {
+            isNgModule: true,
             version: getSourceFileVersion(ctx.sourceFile),
             components: components.map((c) => c.name),
             directives: directives.map((d) => d.name),
@@ -260,7 +273,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
             }
         }
 
-        function visitNode(node: ts.Node) {
+        function scanNode(node: ts.Node) {
             if (isAngularModuleNode(ctx, node)) {
                 isNgModule = true;
             } else if (isAngularComponentRegisterNode(ctx, node)) {
@@ -285,7 +298,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
                 }
             }
 
-            ctx.ts.forEachChild(node, visitNode);
+            ctx.ts.forEachChild(node, scanNode);
         }
     }
 
