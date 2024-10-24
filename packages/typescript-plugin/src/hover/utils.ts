@@ -143,17 +143,6 @@ export function findComponentOrDirectiveInfo(
     }
 
     if (hoverInfo.parentTagName) {
-        if (directiveMap.has(hoverInfo.parentTagName)) {
-            const directiveInfo = directiveMap.get(hoverInfo.parentTagName)!;
-            if (isElementDirective(directiveInfo) && Array.isArray(directiveInfo.transclude) && directiveInfo.transclude.length > 0) {
-                for (const item of directiveInfo.transclude) {
-                    const transcludeElementName = item.value.replace('?', '').trim();
-                    if (transcludeElementName === hoverInfo.tagName) {
-                        return { directiveInfo, transcludeConfig: item.value };
-                    }
-                }
-            }
-        }
         if (componentMap.has(hoverInfo.parentTagName)) {
             const componentInfo = componentMap.get(hoverInfo.parentTagName)!;
             if (Array.isArray(componentInfo.transclude) && componentInfo.transclude.length > 0) {
@@ -161,6 +150,16 @@ export function findComponentOrDirectiveInfo(
                     const transcludeElementName = item.value.replace('?', '').trim();
                     if (transcludeElementName === hoverInfo.tagName) {
                         return { componentInfo, transcludeConfig: item.value };
+                    }
+                }
+            }
+        } else if (directiveMap.has(hoverInfo.parentTagName)) {
+            const directiveInfo = directiveMap.get(hoverInfo.parentTagName)!;
+            if (isElementDirective(directiveInfo) && Array.isArray(directiveInfo.transclude) && directiveInfo.transclude.length > 0) {
+                for (const item of directiveInfo.transclude) {
+                    const transcludeElementName = item.value.replace('?', '').trim();
+                    if (transcludeElementName === hoverInfo.tagName) {
+                        return { directiveInfo, transcludeConfig: item.value };
                     }
                 }
             }
