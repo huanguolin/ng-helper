@@ -14,7 +14,7 @@ import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
 import { CorePluginContext, type PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { typeToString } from '../utils/common';
-import { getComponentControllerType, getControllerType } from '../utils/ng';
+import { getBindingName, getComponentControllerType, getControllerType } from '../utils/ng';
 
 /**
  * 获取指令(作为属性使用时)定义信息
@@ -100,7 +100,7 @@ export function getComponentNameOrAttrNameDefinitionInfo(
 
         if (hoverInfo.type === 'attrName') {
             const attrList = 'scope' in info ? info.scope : info.bindings;
-            const attr = attrList.find((s) => s.name === hoverInfo.name);
+            const attr = attrList.find((s) => getBindingName(s) === hoverInfo.name);
             if (attr) {
                 return {
                     filePath: info.filePath,

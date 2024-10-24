@@ -14,13 +14,7 @@ import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import {
-    getComponentControllerType,
-    getControllerType,
-    getPublicMembersTypeInfoOfBindings,
-    isElementDirective,
-    removeBindingControlChars,
-} from '../utils/ng';
+import { getBindingName, getComponentControllerType, getControllerType, getPublicMembersTypeInfoOfBindings, isElementDirective } from '../utils/ng';
 
 import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
 
@@ -244,8 +238,7 @@ function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginCont
     function getToPropsNameMap(bindings: Property[]): Map<string, string> {
         const result = new Map<string, string>();
         for (const binding of bindings) {
-            const inputName = removeBindingControlChars(binding.value).trim();
-            result.set(inputName || binding.name, binding.name);
+            result.set(getBindingName(binding), binding.name);
         }
         return result;
     }

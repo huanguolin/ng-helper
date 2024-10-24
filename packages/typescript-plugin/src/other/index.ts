@@ -2,7 +2,7 @@ import type { NgComponentsStringAttrsResponse, NgListComponentsStringAttrsReques
 
 import { ngHelperServer } from '../ngHelperServer';
 import type { CorePluginContext } from '../type';
-import { isStringBinding, removeBindingControlChars } from '../utils/ng';
+import { getBindingName, isStringBinding } from '../utils/ng';
 
 // 用于 html 中组件的语义颜色高亮
 export function getComponentsStringAttrsInfo(
@@ -24,17 +24,13 @@ export function getComponentsStringAttrsInfo(
     for (const componentName of componentNames) {
         if (componentMap.has(componentName)) {
             const componentInfo = componentMap.get(componentName)!;
-            const bindingNames = componentInfo.bindings
-                .filter((x) => isStringBinding(x.value))
-                .map((x) => removeBindingControlChars(x.value).trim() || x.name);
+            const bindingNames = componentInfo.bindings.filter((x) => isStringBinding(x.value)).map((x) => getBindingName(x));
             if (bindingNames.length > 0) {
                 result[componentName] = bindingNames;
             }
         } else if (directiveMap.has(componentName)) {
             const directiveInfo = directiveMap.get(componentName)!;
-            const bindingNames = directiveInfo.scope
-                .filter((x) => isStringBinding(x.value))
-                .map((x) => removeBindingControlChars(x.value).trim() || x.name);
+            const bindingNames = directiveInfo.scope.filter((x) => isStringBinding(x.value)).map((x) => getBindingName(x));
             if (bindingNames.length > 0) {
                 result[componentName] = bindingNames;
             }

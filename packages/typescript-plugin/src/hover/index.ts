@@ -16,7 +16,7 @@ import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getControllerType, removeBindingControlChars, getBindingType, INDENT, getComponentControllerType, getBindingTypeInfo } from '../utils/ng';
+import { getControllerType, getBindingType, INDENT, getComponentControllerType, getBindingTypeInfo, getBindingName } from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
 
@@ -90,7 +90,7 @@ function getComponentNameHoverInfo(coreCtx: CorePluginContext, componentInfo: Co
 }
 
 function getComponentAttrHoverInfo(coreCtx: CorePluginContext, attrName: string, componentInfo: ComponentInfo) {
-    const binding = componentInfo.bindings.find((x) => removeBindingControlChars(x.value) === attrName || x.name === attrName);
+    const binding = componentInfo.bindings.find((x) => getBindingName(x) === attrName);
     if (!binding) {
         return;
     }
@@ -136,7 +136,7 @@ function getComponentBindingTypeMap(coreCtx: CorePluginContext, componentInfo: C
 }
 
 function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInfo, isAttrDirectiveStyle: boolean) {
-    const attr = directiveInfo.scope.find((x) => removeBindingControlChars(x.value) === attrName || x.name === attrName);
+    const attr = directiveInfo.scope.find((x) => getBindingName(x) === attrName);
     if (!attr) {
         return;
     }

@@ -284,7 +284,7 @@ export function getBindingTypeInfo(
 ): NgTypeInfo {
     const item: NgTypeInfo = {
         kind: 'property',
-        name: perspectivesOnUsing ? removeBindingControlChars(binding.value) || binding.name : binding.name,
+        name: perspectivesOnUsing ? getBindingName(binding) : binding.name,
         typeString: getBindingType(binding.value, perspectivesOnUsing),
         document: `bindings config: "${binding.name}"`,
         optional: isOptionalBinding(binding.value),
@@ -325,6 +325,10 @@ export function isEventBinding(bindingConfig: string): boolean {
 
 export function isOptionalBinding(bindingConfig: string): boolean {
     return bindingConfig.includes('?');
+}
+
+export function getBindingName(binding: Property): string {
+    return removeBindingControlChars(binding.value).trim() || binding.name;
 }
 
 export function removeBindingControlChars(bindingConfig: string): string {
