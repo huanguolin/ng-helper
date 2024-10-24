@@ -175,31 +175,22 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
     }
 
     const componentMap = cache.getComponentMap();
+    const directiveMap = cache.getDirectiveMap();
+
     if (componentMap.has(componentName)) {
         // TODO：这里应该可以优化
-        return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, filePath, componentMap.get(componentName)!);
-    }
-
-    const directiveMap = cache.getDirectiveMap();
-    if (directiveMap.has(componentName)) {
+        return getComponentAttrCompletionsViaComponentFileInfo(coreCtx, componentMap.get(componentName)!);
+    } else if (directiveMap.has(componentName)) {
         const directive = directiveMap.get(componentName)!;
         if (isElementDirective(directive)) {
             // TODO：这里应该可以优化
-            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, filePath, directive);
+            return getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx, directive);
         }
     }
 }
 
-function getComponentAttrCompletionsViaDirectiveFileInfo(
-    coreCtx: CorePluginContext,
-    filePath: string,
-    directiveInfo: DirectiveInfo,
-): NgTypeInfo[] | undefined {
-    if (!filePath || !directiveInfo) {
-        return;
-    }
-
-    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
+function getComponentAttrCompletionsViaDirectiveFileInfo(coreCtx: CorePluginContext, directiveInfo: DirectiveInfo): NgTypeInfo[] | undefined {
+    const ctx = getCtxOfCoreCtx(coreCtx, directiveInfo.filePath);
     if (!ctx) {
         return;
     }
@@ -219,18 +210,10 @@ function getComponentAttrCompletionsViaDirectiveFileInfo(
     return getTypeInfoOfDirectiveScope(ctx, map);
 }
 
-function getComponentAttrCompletionsViaComponentFileInfo(
-    coreCtx: CorePluginContext,
-    filePath: string,
-    componentInfo: ComponentInfo,
-): NgTypeInfo[] | undefined {
+function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginContext, componentInfo: ComponentInfo): NgTypeInfo[] | undefined {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletionsViaComponentFileInfo()');
 
-    if (!filePath || !componentInfo) {
-        return;
-    }
-
-    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
+    const ctx = getCtxOfCoreCtx(coreCtx, componentInfo.filePath);
     if (!ctx) {
         return;
     }
