@@ -139,6 +139,9 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
 
         const start = lastRefreshed;
         const scannedTs = lastRefreshed;
+        let addedFilesCount = 0;
+        let modifiedFilesCount = 0;
+        let deletedFilesCount = 0;
         const logger = coreCtx.logger.prefix('refreshInternalMaps()');
         logger.startGroup();
 
@@ -168,6 +171,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
             if (!fileCacheInfo) {
                 // File add
                 scanFile(ctx, scannedTs);
+                addedFilesCount++;
             } else {
                 fileCacheInfo.lastScanned = scannedTs;
                 const version = getSourceFileVersion(sourceFile);
@@ -176,14 +180,21 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
                 }
                 // File modify
                 scanFile(ctx, scannedTs, fileCacheInfo);
+                modifiedFilesCount++;
             }
         }
 
-        removeDeletedFiles(scannedTs);
+        deletedFilesCount = removeDeletedFiles(scannedTs);
 
         const end = Date.now();
         logger.info(
-            'new cache files count:',
+            'added files count:',
+            addedFilesCount,
+            ', modified files count:',
+            modifiedFilesCount,
+            ', deleted files count:',
+            deletedFilesCount,
+            ', new cache files count:',
             fileCacheMap.size,
             ', new component count:',
             componentMap.size,
@@ -279,6 +290,7 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
     }
 
     function removeDeletedFiles(scannedTs: number) {
+        let count = 0;
         const entries = fileCacheMap.entries();
         for (const [filePath, fileCacheInfo] of entries) {
             if (fileCacheInfo.lastScanned === scannedTs) {
@@ -286,9 +298,10 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
             }
 
             removeItemsFromAllMaps(fileCacheInfo, filePath);
-
             fileCacheMap.delete(filePath);
+            count++;
         }
+        return count;
     }
 
     function removeItemsFromAllMaps(fileCacheInfo: FileCacheInfo, filePath: string) {
