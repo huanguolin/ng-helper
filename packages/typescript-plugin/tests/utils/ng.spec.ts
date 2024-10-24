@@ -1,6 +1,8 @@
 import type { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import type ts from 'typescript';
 
 import { DirectiveInfo, type Property } from '../../src/ngHelperServer/ngCache';
+import { PluginContext } from '../../src/type';
 import {
     isAttributeDirective,
     isDtsFile,
@@ -12,7 +14,18 @@ import {
     isStringBinding,
     getBindingType,
     getBindingTypeInfo,
+    isAngularModuleNode,
+    isAngularComponentRegisterNode,
+    isAngularDirectiveRegisterNode,
+    isAngularControllerRegisterNode,
+    isAngularServiceRegisterNode,
+    isAngularFilterRegisterNode,
+    isAngularFactoryRegisterNode,
+    isAngularProviderRegisterNode,
+    isAngularRunNode,
+    isAngularConfigNode,
 } from '../../src/utils/ng';
+import { prepareTestContext } from '../helper';
 
 describe('isAttributeDirective()', () => {
     it.each([
@@ -216,6 +229,223 @@ describe('getBindingTypeInfo()', () => {
     );
 });
 
+describe('isAngularModuleNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module("myModule");
+        angular.module("myModule", ["dep1", "dep2"]);
+        angular.module("myModule", ["dep1", "dep2"], function() {});
+        angular.service("myService", function() {});
+        angular.module("myModule", ["xyz"]).service("myService", function() {});
+        someOtherFunction("myModule");
+        let x = "abc";
+        angular.module(x);
+    `);
+
+    it.each([
+        ['angular.module("myModule")', true],
+        ['angular.module("myModule", ["dep1", "dep2"])', true],
+        ['angular.module("myModule", ["dep1", "dep2"], function() {})', true],
+        ['angular.service("myService", function() {})', false],
+        ['angular.module("myModule", ["xyz"])', true],
+        ['someOtherFunction("myModule")', false],
+        ['angular.module(x)', true],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularModuleNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularComponentRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        let config = {};
+        let config2 = {};
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').component('a', {}).component('b', {});
+        angular.module('myModule').directive('myDirective', function() {});
+        angular.module('myModule').factory('myFactory', function() {});
+        angular.module('myModule').component({ myComponent: { template: '<div>Hello</div>' } });
+    `);
+
+    it.each([
+        ["angular.module('myModule').component('myComponent', {})", true],
+        ["angular.module('myModule').component('a', {}).component('b', {})", true],
+        ["angular.module('myModule').directive('myDirective', function() {})", false],
+        ["angular.module('myModule').factory('myFactory', function() {})", false],
+        ["angular.module('myModule').component({ myComponent: { template: '<div>Hello</div>' } })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularComponentRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularDirectiveRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').directive('myDirective', function() {});
+        angular.module('myModule').directive('myDirective', ['dep1', 'dep2', function(dep1, dep2) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').factory('myFactory', function() {});
+        angular.module('myModule').directive({ myDirective: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').directive('myDirective', function() {})", true],
+        ["angular.module('myModule').directive('myDirective', ['dep1', 'dep2', function(dep1, dep2) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').factory('myFactory', function() {})", false],
+        ["angular.module('myModule').directive({ myDirective: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularDirectiveRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularControllerRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').controller('MyController', function() {});
+        angular.module('myModule').controller('MyController', ['$scope', function($scope) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').service('myService', function() {});
+        angular.module('myModule').controller({ MyController: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').controller('MyController', function() {})", true],
+        ["angular.module('myModule').controller('MyController', ['$scope', function($scope) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').service('myService', function() {})", false],
+        ["angular.module('myModule').controller({ MyController: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularControllerRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularServiceRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').service('MyService', function() {});
+        angular.module('myModule').service('MyService', ['dep1', function(dep1) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').factory('myFactory', function() {});
+        angular.module('myModule').service({ MyService: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').service('MyService', function() {})", true],
+        ["angular.module('myModule').service('MyService', ['dep1', function(dep1) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').factory('myFactory', function() {})", false],
+        ["angular.module('myModule').service({ MyService: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularServiceRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularFilterRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').filter('myFilter', function() {});
+        angular.module('myModule').filter('myFilter', ['dep1', function(dep1) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').service('myService', function() {});
+        angular.module('myModule').filter({ myFilter: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').filter('myFilter', function() {})", true],
+        ["angular.module('myModule').filter('myFilter', ['dep1', function(dep1) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').service('myService', function() {})", false],
+        ["angular.module('myModule').filter({ myFilter: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularFilterRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularFactoryRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').factory('myFactory', function() {});
+        angular.module('myModule').factory('myFactory', ['dep1', function(dep1) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').service('myService', function() {});
+        angular.module('myModule').factory({ myFactory: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').factory('myFactory', function() {})", true],
+        ["angular.module('myModule').factory('myFactory', ['dep1', function(dep1) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').service('myService', function() {})", false],
+        ["angular.module('myModule').factory({ myFactory: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularFactoryRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularProviderRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').provider('myProvider', function() {});
+        angular.module('myModule').provider('myProvider', ['dep1', function(dep1) {}]);
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').service('myService', function() {});
+        angular.module('myModule').provider({ myProvider: function() {} });
+    `);
+
+    it.each([
+        ["angular.module('myModule').provider('myProvider', function() {})", true],
+        ["angular.module('myModule').provider('myProvider', ['dep1', function(dep1) {}])", true],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').service('myService', function() {})", false],
+        ["angular.module('myModule').provider({ myProvider: function() {} })", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularProviderRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularRunNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').run(function() {});
+        angular.module('myModule').run(['dep1', 'dep2', function(dep1, dep2) {}]);
+        angular.module('myModule').config(function() {});
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').run({});
+    `);
+
+    it.each([
+        ["angular.module('myModule').run(function() {})", true],
+        ["angular.module('myModule').run(['dep1', 'dep2', function(dep1, dep2) {}])", true],
+        ["angular.module('myModule').config(function() {})", false],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').run({})", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularRunNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularConfigNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').config(function() {});
+        angular.module('myModule').config(['dep1', 'dep2', function(dep1, dep2) {}]);
+        angular.module('myModule').run(function() {});
+        angular.module('myModule').component('myComponent', {});
+        angular.module('myModule').config({});
+    `);
+
+    it.each([
+        ["angular.module('myModule').config(function() {})", true],
+        ["angular.module('myModule').config(['dep1', 'dep2', function(dep1, dep2) {}])", true],
+        ["angular.module('myModule').run(function() {})", false],
+        ["angular.module('myModule').component('myComponent', {})", false],
+        ["angular.module('myModule').config({})", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularConfigNode(ctx, node)).toBe(expected);
+    });
+});
+
 function createProperty(name: string, value: string): Property {
     return {
         name,
@@ -232,4 +462,24 @@ function buildDirectiveInfo(restrict: string): DirectiveInfo {
         location: { start: 0, end: 0 },
         scope: [],
     };
+}
+
+function findNode(ctx: PluginContext, text: string): ts.Node {
+    let foundNode: ts.Node | undefined;
+
+    function visit(node: ts.Node) {
+        if (node.getText() === text) {
+            foundNode = node;
+            return;
+        }
+        ctx.ts.forEachChild(node, visit);
+    }
+
+    ctx.ts.forEachChild(ctx.sourceFile, visit);
+
+    if (!foundNode) {
+        throw new Error(`Node with text "${text}" not found`);
+    }
+
+    return foundNode;
 }
