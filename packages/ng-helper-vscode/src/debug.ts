@@ -1,14 +1,16 @@
 const countMap = new Map<string, number>();
 
-export function timeCost<T>(label: string, cb: () => T, threshold: number = 20): T {
-    const cnt = storeAndGetCount(label);
+export function timeCost<T>(fnName: string, cb: () => T, threshold: number = 20): T | undefined {
+    const cnt = storeAndGetCount(fnName);
     const start = Date.now();
     try {
         return cb();
+    } catch (error) {
+        console.error(`${fnName}()#${cnt} error:`, error);
     } finally {
         const cost = Date.now() - start;
         if (cost >= threshold) {
-            console.log(`${label}#${cnt} cost ${cost}ms`);
+            console.warn(`${fnName}()#${cnt} cost ${cost}ms`);
         }
     }
 }

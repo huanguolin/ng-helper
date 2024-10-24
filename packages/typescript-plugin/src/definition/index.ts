@@ -259,8 +259,22 @@ export function getControllerTypeDefinitionInfo(
     const logger = coreCtx.logger.prefix('getControllerTypeDefinitionInfo()');
 
     if (!controllerAs) {
-        logger.info('controllerAs not found!');
-        return;
+        const cache = ngHelperServer.getCache(fileName);
+        if (!cache) {
+            logger.info(`cache not found for file(${fileName})!`);
+            return;
+        }
+
+        const controllerInfo = cache.getControllerMap().get(controllerName);
+        if (!controllerInfo) {
+            logger.info(`controllerInfo not found for controllerName(${controllerName})!`);
+            return;
+        }
+
+        return {
+            filePath: controllerInfo.filePath,
+            ...controllerInfo.location,
+        };
     }
 
     const ctx = resolveCtrlCtx(coreCtx, fileName, controllerName);
