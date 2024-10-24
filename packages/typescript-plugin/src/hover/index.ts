@@ -192,7 +192,19 @@ function formatLiteralObj(objName: string, objProps: Property[], getComment?: (p
 }
 
 function formatLiteralObjProps(objProps: Property[], getComment?: (prop: Property) => string) {
-    return objProps.map((p) => `${INDENT}${p.name}: "${p.value}"${getComment ? ` // ${getComment(p)}` : ''}`).join('\n');
+    return objProps
+        .map((p) => {
+            const basicPart = `${INDENT}${p.name}: "${p.value}"`;
+            let comment = '';
+            if (getComment) {
+                const c = getComment(p).trim();
+                if (c) {
+                    comment = ` // ${c}`;
+                }
+            }
+            return basicPart + comment;
+        })
+        .join('\n');
 }
 
 function formatTransclude(transclude: DirectiveInfo['transclude']) {
