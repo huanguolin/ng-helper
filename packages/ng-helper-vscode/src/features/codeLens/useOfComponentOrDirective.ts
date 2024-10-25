@@ -13,6 +13,8 @@ export function searchUseOfComponentOrDirective(_: number) {
             const text = document.getText();
             let match: RegExpExecArray | null;
 
+            MATCH_DIRECTIVE.lastIndex = 0;
+            MATCH_COMPONENT.lastIndex = 0;
             while ((match = MATCH_DIRECTIVE.exec(text)) !== null || (match = MATCH_COMPONENT.exec(text)) !== null) {
                 const matchStr = match[0];
                 const type = matchStr.startsWith('.directive') ? 'directive' : 'component';
