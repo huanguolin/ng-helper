@@ -22,7 +22,7 @@ import {
 import { timeCost } from '../../debug';
 import { getComponentTypeCompletionApi, getControllerTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgDirectiveAttr } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
 
 export function type(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
@@ -77,7 +77,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const tag = getHtmlTagAt(docText, cursor);
         if (tag) {
             const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-            if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+            if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgBuiltinDirective(attr.name.text))) {
                 let prefix = attr.value.text.slice(0, cursor.at - attr.value.start);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     prefix = processPrefix(attr.name.text, prefix);
@@ -114,7 +114,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
         const tag = getHtmlTagAt(docText, cursor);
         if (tag) {
             const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-            if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text))) {
+            if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgBuiltinDirective(attr.name.text))) {
                 let prefix = attr.value.text.slice(0, cursor.at - attr.value.start);
                 if (prefix && !isContainsNgFilter(prefix)) {
                     prefix = processPrefix(attr.name.text, prefix);

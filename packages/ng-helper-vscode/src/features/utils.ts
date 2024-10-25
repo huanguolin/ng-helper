@@ -148,7 +148,7 @@ export function getComponentName(document: TextDocument): string | undefined {
     return kebabName ? camelCase(kebabName) : undefined;
 }
 
-export function isNgDirectiveAttr(attrName: string): boolean {
+export function isNgBuiltinDirective(attrName: string): boolean {
     return attrName.startsWith('ng-');
 }
 
