@@ -30,9 +30,9 @@ export function searchUseOfComponentOrDirective(_: number) {
                                 // 这里简单处理，不去考虑指令只能作为组件使用的情况，也减少用户困惑
                                 query: type === 'component' ? `<${kebabName}` : kebabName,
                                 isRegex: false,
-                                isCaseSensitive: false,
+                                isCaseSensitive: true,
                                 matchWholeWord: true,
-                                filesToInclude: '*.html',
+                                filesToInclude: '*.html,*.js,*.ts', // js/ts 中有可能有 template 字符串也需要搜索
                                 useExcludeSettingsAndIgnoreFiles: true,
                             },
                         ],
