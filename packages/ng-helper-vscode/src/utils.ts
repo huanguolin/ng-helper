@@ -200,3 +200,7 @@ export function normalizePath(filePath: string): string {
 export function uniq<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
 }
+
+export function intersect<T>(arr1: T[], arr2: T[]): T[] {
+    return arr1.filter((x) => arr2.includes(x));
+}

@@ -9,7 +9,7 @@ import {
 } from '@ng-helper/shared/lib/html';
 import type { TextDocument, Position } from 'vscode';
 
-import { isValidIdentifier, isComponentTagName, isNgBuiltinDirective, checkServiceAndGetTsFilePath, isNgCustomAttr } from '../utils';
+import { isValidIdentifier, isComponentTagName, isNgBuiltinDirective, checkServiceAndGetTsFilePath, isNgUserCustomAttr } from '../utils';
 
 export async function provideTypeHoverInfo<T>({
     document,
@@ -44,7 +44,7 @@ export async function provideTypeHoverInfo<T>({
     const tag = getHtmlTagAt(docText, cursor);
     if (tag) {
         const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-        if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgBuiltinDirective(attr.name.text) || isNgCustomAttr(attr.name.text))) {
+        if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgBuiltinDirective(attr.name.text) || isNgUserCustomAttr(attr.name.text))) {
             let cursorAt = cursor.at - attr.value.start;
             let contextString = trimFilters(attr.value.text, cursorAt);
             // handle ng-class/ng-style map value

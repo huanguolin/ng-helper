@@ -152,8 +152,8 @@ export function isNgBuiltinDirective(attrName: string): boolean {
     return attrName.startsWith('ng-');
 }
 
-export function isNgCustomAttr(attrName: string): boolean {
-    return attrName.includes('-') && !attrName.startsWith('data-') && attrName !== 'accept-charset';
+export function isNgUserCustomAttr(attrName: string): boolean {
+    return !isNgBuiltinDirective(attrName) && attrName.includes('-') && !attrName.startsWith('data-') && attrName !== 'accept-charset';
 }
 
 export function isValidIdentifier(text: string): boolean {

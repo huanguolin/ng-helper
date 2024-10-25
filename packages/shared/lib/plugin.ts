@@ -104,6 +104,10 @@ export interface NgListComponentsStringAttrsRequest extends NgRequest {
     componentNames: string[];
 }
 
+export interface NgListDirectivesStringAttrsRequest extends NgRequest {
+    maybeDirectiveNames: string[];
+}
+
 export interface NgControllerNameDefinitionRequest extends NgRequest {
     controllerName: string;
 }
@@ -131,3 +135,4 @@ export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefine
 export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
 export type NgDirectiveCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentsStringAttrsResponse = Record<string, string[]> | undefined;
+export type NgDirectivesStringAttrsResponse = NgComponentsStringAttrsResponse;

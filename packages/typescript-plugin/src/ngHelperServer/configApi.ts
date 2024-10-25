@@ -22,6 +22,8 @@ import type {
     NgDirectiveDefinitionRequest,
     NgControllerNameDefinitionRequest,
     NgResponse,
+    NgListDirectivesStringAttrsRequest,
+    NgDirectivesStringAttrsResponse,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 
@@ -41,7 +43,7 @@ import {
     getDirectiveDefinitionInfo,
 } from '../definition';
 import { getComponentTypeHoverInfo, getComponentNameOrAttrNameHoverInfo, getControllerTypeHoverInfo, getDirectiveHoverInfo } from '../hover';
-import { getComponentsStringAttrsInfo } from '../other';
+import { getComponentsStringAttrsInfo, getDirectivesStringAttrsInfo } from '../other';
 import type { PluginContext, CorePluginContext } from '../type';
 
 import { ngHelperServer } from '.';
@@ -52,6 +54,14 @@ export function configApi(app: express.Application) {
     configHoverApi(app);
 
     configDefinitionApi(app);
+
+    app.post('/ng-helper/directives/string/attrs', (req, res) => {
+        handleRequestWithCoreCtx<NgListDirectivesStringAttrsRequest, NgDirectivesStringAttrsResponse>({
+            req,
+            res,
+            action: (ctx, body) => getDirectivesStringAttrsInfo(ctx, body),
+        });
+    });
 
     app.post('/ng-helper/components/string/attrs', (req, res) => {
         handleRequestWithCoreCtx<NgListComponentsStringAttrsRequest, NgComponentsStringAttrsResponse>({

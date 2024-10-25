@@ -1,4 +1,4 @@
-import { getAttrValueStart, parseFragment, type DocumentFragment, type Element } from '@ng-helper/shared/lib/html';
+import { getAttrValueStart, parseFragment, type Location, type Attribute, type DocumentFragment, type Element } from '@ng-helper/shared/lib/html';
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
@@ -11,9 +11,10 @@ import {
     type CancellationToken,
 } from 'vscode';
 
-import { listComponentsStringAttrs } from '../../service/api';
-import { uniq } from '../../utils';
-import { checkServiceAndGetTsFilePath, getCorrespondingTsFileName, isComponentTagName } from '../utils';
+import { timeCost } from '../../debug';
+import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
+import { intersect, uniq } from '../../utils';
+import { checkServiceAndGetTsFilePath, getCorrespondingTsFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
@@ -22,8 +23,8 @@ export function registerSemantic(context: ExtensionContext, port: number) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
-            async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens> {
-                return await htmlSemanticProvider({ document, port, token });
+            async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
+                return timeCost('htmlSemanticProvider', () => htmlSemanticProvider({ document, port, token }));
             },
         },
         legend,
@@ -46,36 +47,67 @@ export async function htmlSemanticProvider({
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
     const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
-    const componentNodes = getComponentNodes(htmlAst);
-    const componentNames = uniq(componentNodes.map((node) => camelCase(node.tagName)));
+    const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
+    if (!componentNodes.length && !maybeDirectiveNodes.length) {
+        console.warn('componentNodes and maybeDirectiveNodes not found!');
+        return;
+    }
+
+    const tsFilePath = noServiceRunningCheck ? (await getCorrespondingTsFileName(document))! : await checkServiceAndGetTsFilePath(document, port);
+    if (!tsFilePath) {
+        console.warn('tsFilePath not found!');
+        return;
+    }
+
+    const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName)));
     if (componentNames.length) {
-        const tsFilePath = noServiceRunningCheck ? (await getCorrespondingTsFileName(document))! : await checkServiceAndGetTsFilePath(document, port);
-        if (tsFilePath) {
-            const componentsStringAttrs = await listComponentsStringAttrs({
-                port,
-                vscodeCancelToken: token,
-                info: { componentNames, fileName: tsFilePath },
-            });
-            if (componentsStringAttrs) {
-                fillSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
-            }
+        const componentsStringAttrs = await listComponentsStringAttrs({
+            port,
+            vscodeCancelToken: token,
+            info: { componentNames, fileName: tsFilePath },
+        });
+        if (componentsStringAttrs) {
+            fillComponentSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
+        }
+    }
+
+    const maybeDirectiveNames = uniq(
+        maybeDirectiveNodes.map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name))).flat(),
+    );
+    if (maybeDirectiveNames.length) {
+        const directivesStringAttrs = await listDirectivesStringAttrs({
+            port,
+            vscodeCancelToken: token,
+            info: { maybeDirectiveNames, fileName: tsFilePath },
+        });
+        if (directivesStringAttrs) {
+            fillDirectiveSemanticTokens({ htmlDocument: document, tokensBuilder, directivesStringAttrs, maybeDirectiveNodes });
         }
     }
 
     return tokensBuilder.build();
 }
 
-function getComponentNodes(htmlAst: DocumentFragment): Element[] {
+function getComponentNodesAndDirectiveNodes(htmlAst: DocumentFragment): { componentNodes: Element[]; maybeDirectiveNodes: Element[] } {
     const componentNodes: Element[] = [];
+    const maybeDirectiveNodes: Element[] = [];
     iter(htmlAst.childNodes);
-    return componentNodes;
+    return { componentNodes, maybeDirectiveNodes };
 
     function iter(nodes: DocumentFragment['childNodes']) {
         for (const node of nodes) {
             const e = node as Element;
-            if (e.attrs?.length && isComponentTagName(e.tagName)) {
-                componentNodes.push(e);
+            if (e.attrs?.length) {
+                if (isComponentTagName(e.tagName)) {
+                    componentNodes.push(e);
+                } else {
+                    const maybeDirectiveNames = e.attrs.filter((x) => isNgUserCustomAttr(x.name)).map((x) => x.name);
+                    if (maybeDirectiveNames.length) {
+                        maybeDirectiveNodes.push(e);
+                    }
+                }
             }
+
             if (e.childNodes?.length) {
                 iter(e.childNodes);
             }
@@ -83,7 +115,7 @@ function getComponentNodes(htmlAst: DocumentFragment): Element[] {
     }
 }
 
-function fillSemanticTokens({
+function fillComponentSemanticTokens({
     htmlDocument,
     tokensBuilder,
     componentsStringAttrs,
@@ -94,26 +126,76 @@ function fillSemanticTokens({
     componentsStringAttrs: Record<string, string[]>;
     componentNodes: Element[];
 }): void {
-    const htmlText = htmlDocument.getText();
-
     for (const node of componentNodes) {
         const attrNames = componentsStringAttrs[camelCase(node.tagName)];
         if (attrNames) {
             const attrsLocation = node.sourceCodeLocation!.attrs!;
             for (const attr of node.attrs) {
                 if (attr.value && attrNames.includes(camelCase(attr.name))) {
-                    const attrLocation = attrsLocation[attr.name];
-                    let attrValueStart = getAttrValueStart(attr, attrLocation, htmlText);
-                    if (typeof attrValueStart === 'undefined') {
-                        continue;
-                    }
-
-                    attrValueStart += attrLocation.startOffset;
-                    const start = htmlDocument.positionAt(attrValueStart);
-                    const end = htmlDocument.positionAt(attrValueStart + attr.value.length);
-                    tokensBuilder.push(new Range(start, end), 'string');
+                    fillStringSemanticToken({
+                        htmlDocument,
+                        tokensBuilder,
+                        attrsLocation,
+                        attr,
+                    });
                 }
             }
         }
     }
+}
+
+function fillDirectiveSemanticTokens({
+    htmlDocument,
+    tokensBuilder,
+    directivesStringAttrs,
+    maybeDirectiveNodes,
+}: {
+    htmlDocument: TextDocument;
+    tokensBuilder: SemanticTokensBuilder;
+    directivesStringAttrs: Record<string, string[]>;
+    maybeDirectiveNodes: Element[];
+}): void {
+    const directiveNames = Object.keys(directivesStringAttrs);
+    for (const node of maybeDirectiveNodes) {
+        const containsDirectiveNames = intersect(
+            node.attrs.map((x) => camelCase(x.name)),
+            directiveNames,
+        );
+        const directiveStrAttrSet = new Set(containsDirectiveNames.map((x) => directivesStringAttrs[x]).flat());
+
+        const attrsLocation = node.sourceCodeLocation!.attrs!;
+        for (const attr of node.attrs) {
+            if (directiveStrAttrSet.has(camelCase(attr.name))) {
+                fillStringSemanticToken({
+                    htmlDocument,
+                    tokensBuilder,
+                    attrsLocation,
+                    attr,
+                });
+            }
+        }
+    }
+}
+
+function fillStringSemanticToken({
+    htmlDocument,
+    tokensBuilder,
+    attrsLocation,
+    attr,
+}: {
+    htmlDocument: TextDocument;
+    tokensBuilder: SemanticTokensBuilder;
+    attrsLocation: Record<string, Location>;
+    attr: Attribute;
+}): void {
+    const attrLocation = attrsLocation[attr.name];
+    let attrValueStart = getAttrValueStart(attr, attrLocation, htmlDocument.getText());
+    if (typeof attrValueStart === 'undefined') {
+        return;
+    }
+
+    attrValueStart += attrLocation.startOffset;
+    const start = htmlDocument.positionAt(attrValueStart);
+    const end = htmlDocument.positionAt(attrValueStart + attr.value.length);
+    tokensBuilder.push(new Range(start, end), 'string');
 }
