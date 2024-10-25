@@ -1,6 +1,7 @@
 import { ExtensionContext } from 'vscode';
 
 import { activateExt } from './activate';
+import { registerCodeLens } from './features/codeLens';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
@@ -35,6 +36,9 @@ export async function activate(context: ExtensionContext) {
 
     // semantic
     registerSemantic(context, config.port);
+
+    // code lens
+    registerCodeLens(context, config.port);
 
     // goto html
     supportGotoHtml(context);
