@@ -104,6 +104,10 @@ export interface NgListComponentsStringAttrsRequest extends NgRequest {
     componentNames: string[];
 }
 
+export interface NgControllerNameDefinitionRequest extends NgRequest {
+    controllerName: string;
+}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;

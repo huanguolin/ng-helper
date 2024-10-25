@@ -1,5 +1,6 @@
 import {
     type NgComponentNameOrAttrNameDefinitionRequest,
+    type NgControllerNameDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
     type NgDefinitionResponse,
     type NgDirectiveDefinitionRequest,
@@ -259,22 +260,7 @@ export function getControllerTypeDefinitionInfo(
     const logger = coreCtx.logger.prefix('getControllerTypeDefinitionInfo()');
 
     if (!controllerAs) {
-        const cache = ngHelperServer.getCache(fileName);
-        if (!cache) {
-            logger.info(`cache not found for file(${fileName})!`);
-            return;
-        }
-
-        const controllerInfo = cache.getControllerMap().get(controllerName);
-        if (!controllerInfo) {
-            logger.info(`controllerInfo not found for controllerName(${controllerName})!`);
-            return;
-        }
-
-        return {
-            filePath: controllerInfo.filePath,
-            ...controllerInfo.location,
-        };
+        return;
     }
 
     const ctx = resolveCtrlCtx(coreCtx, fileName, controllerName);
@@ -320,4 +306,28 @@ export function getControllerTypeDefinitionInfo(
         targetNode,
         propDeep,
     });
+}
+
+export function getControllerNameDefinitionInfo(
+    ctx: PluginContext,
+    { fileName, controllerName }: NgControllerNameDefinitionRequest,
+): NgDefinitionResponse | undefined {
+    const logger = ctx.logger.prefix('getControllerNameDefinitionInfo()');
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${fileName})!`);
+        return;
+    }
+
+    const controllerInfo = cache.getControllerMap().get(controllerName);
+    if (!controllerInfo) {
+        logger.info(`controllerInfo not found for controllerName(${controllerName})!`);
+        return;
+    }
+
+    return {
+        filePath: controllerInfo.filePath,
+        ...controllerInfo.location,
+    };
 }

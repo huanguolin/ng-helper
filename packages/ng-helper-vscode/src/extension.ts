@@ -5,9 +5,9 @@ import { registerCodeLens } from './features/codeLens';
 import { createComponentCommand } from './features/command/createComponent';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
-import { supportGotoHtml } from './features/gotoHtml';
 import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
+import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
 
 // This method is called when your extension is activated
@@ -40,8 +40,8 @@ export async function activate(context: ExtensionContext) {
     // code lens
     registerCodeLens(context, config.port);
 
-    // goto html
-    supportGotoHtml(context);
+    // link
+    registerLink(context, config.port);
 
     // inline html
     supportInlineHtml(context, config.port);

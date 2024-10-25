@@ -21,6 +21,7 @@ import {
     type NgDirectiveCompletionResponse,
     type NgDirectiveHoverRequest,
     type NgDirectiveDefinitionRequest,
+    type NgControllerNameDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -38,6 +39,15 @@ interface BizRequestInput<T> {
     info: T;
     apiName: string;
     vscodeCancelToken: CancellationToken;
+}
+
+export function getControllerNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgControllerNameDefinitionRequest>) {
+    return bizRequest<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'controller', 'name', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getControllerNameDefinitionApi',
+    });
 }
 
 export function listComponentsStringAttrs({ port, vscodeCancelToken, info }: ApiInput<NgListComponentsStringAttrsRequest>) {

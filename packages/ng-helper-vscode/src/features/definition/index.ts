@@ -16,6 +16,7 @@ import { timeCost } from '../../debug';
 import {
     getComponentNameOrAttrNameDefinitionApi,
     getComponentTypeDefinitionApi,
+    getControllerNameDefinitionApi,
     getControllerTypeDefinitionApi,
     getDirectiveDefinitionApi,
 } from '../../service/api';
@@ -116,11 +117,17 @@ async function handleControllerType(
             position,
             port,
             api: (tsFilePath, contextString, cursorAt) =>
-                getControllerTypeDefinitionApi({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
-                }),
+                ctrlInfo.controllerAs
+                    ? getControllerTypeDefinitionApi({
+                          port,
+                          vscodeCancelToken: token,
+                          info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
+                      })
+                    : getControllerNameDefinitionApi({
+                          port,
+                          vscodeCancelToken: token,
+                          info: { fileName: tsFilePath, controllerName: ctrlInfo.controllerName },
+                      }),
         });
         return await buildDefinition(definitionInfo);
     });

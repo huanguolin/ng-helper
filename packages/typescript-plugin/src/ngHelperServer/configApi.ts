@@ -20,6 +20,7 @@ import type {
     NgTypeDefinitionRequest,
     NgCtrlTypeDefinitionRequest,
     NgDirectiveDefinitionRequest,
+    NgControllerNameDefinitionRequest,
     NgResponse,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
@@ -35,6 +36,7 @@ import {
 import {
     getComponentNameOrAttrNameDefinitionInfo,
     getComponentTypeDefinitionInfo,
+    getControllerNameDefinitionInfo,
     getControllerTypeDefinitionInfo,
     getDirectiveDefinitionInfo,
 } from '../definition';
@@ -67,6 +69,14 @@ export function configApi(app: express.Application) {
 }
 
 function configDefinitionApi(app: express.Application) {
+    app.post('/ng-helper/controller/name/definition', (req, res) => {
+        handleRequestWithCtx<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
+            req,
+            res,
+            action: (ctx, body) => getControllerNameDefinitionInfo(ctx, body),
+        });
+    });
+
     app.post('/ng-helper/component/name/definition', (req, res) => {
         handleRequestWithCoreCtx<NgComponentNameOrAttrNameDefinitionRequest, NgDefinitionResponse>({
             req,
