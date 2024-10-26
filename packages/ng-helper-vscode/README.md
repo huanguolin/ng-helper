@@ -47,4 +47,4 @@ Create an empty `ng-helper.json` file in the `.vscode` directory of your workspa
 
 ## Known Issues
 
-When using data binding auto-completion in the component template, it may not work if no ts file has been opened for preview after the project is opened. This can cause the TypeScript language service to not start, resulting in no auto-completion. In this case, an error message will pop up in the lower right corner. Click OK, and a ts file will automatically open. After that, return to the HTML file, and the auto-completion should work normally.
+When using feature like auto-completion in the html template, it may not work if no ts/js file has been opened for preview after the project is opened. This can cause the TypeScript language service to not start, resulting in no auto-completion. In this case, an warning message will pop up in the lower right corner. Click OK, and a ts/js file will automatically open. After that, return to the HTML file, and the auto-completion should work normally.

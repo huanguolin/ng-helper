@@ -36,7 +36,7 @@ export async function triggerTsServerByProject(filePath: string) {
         tsFilePath = path;
     }
 
-    const selection = await window.showErrorMessage(
+    const selection = await window.showWarningMessage(
         "To access features like auto-completion, you need to open a TypeScript/JavaScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
         'OK',
     );
