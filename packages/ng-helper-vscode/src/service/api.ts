@@ -206,6 +206,7 @@ export async function checkNgHelperServerRunningApi(port: number): Promise<boole
 }
 
 async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
+    console.group(`[api] ${apiName}()`);
     try {
         info.fileName = normalizePath(info.fileName);
         console.debug(`${apiName}() request: `, info);
@@ -224,6 +225,8 @@ async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken
         } else {
             console.error(`${apiName}() failed: `, error);
         }
+    } finally {
+        console.groupEnd();
     }
 }
 

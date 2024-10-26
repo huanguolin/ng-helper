@@ -1,10 +1,11 @@
 const countMap = new Map<string, number>();
 
-export function timeCost<T>(fnName: string, cb: () => T, threshold: number = 20): T | undefined {
+export async function timeCost<T>(fnName: string, cb: () => T | Promise<T>, threshold: number = 80): Promise<T | undefined> {
     const cnt = storeAndGetCount(fnName);
     const start = Date.now();
+    console.group(`[timeCost] ${fnName}()#${cnt}`);
     try {
-        return cb();
+        return await cb();
     } catch (error) {
         console.error(`${fnName}()#${cnt} error:`, error);
     } finally {
@@ -12,6 +13,7 @@ export function timeCost<T>(fnName: string, cb: () => T, threshold: number = 20)
         if (cost >= threshold) {
             console.warn(`${fnName}()#${cnt} cost ${cost}ms`);
         }
+        console.groupEnd();
     }
 }
 
