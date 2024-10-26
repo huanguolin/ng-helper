@@ -24,12 +24,12 @@ export async function checkNgHelperServerRunning(filePath: string, port: number)
 export async function triggerTsServerByProject(filePath: string) {
     let tsFilePath = filePath;
 
-    if (!tsFilePath.endsWith('.ts')) {
-        tsFilePath = (await getOneTsFile(filePath)) ?? '';
+    if (!tsFilePath.endsWith('.ts') && !tsFilePath.endsWith('.js')) {
+        tsFilePath = (await getOneScriptFile(filePath)) ?? '';
     }
 
     if (!(await isFileExistsOnWorkspace(Uri.file(tsFilePath)))) {
-        const path = await getOneTsFile(filePath);
+        const path = await getOneScriptFile(filePath);
         if (!path) {
             return;
         }
@@ -37,7 +37,7 @@ export async function triggerTsServerByProject(filePath: string) {
     }
 
     const selection = await window.showErrorMessage(
-        "To access features like auto-completion, you need to open a TypeScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
+        "To access features like auto-completion, you need to open a TypeScript/JavaScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
         'OK',
     );
     if (selection === 'OK') {
@@ -46,8 +46,8 @@ export async function triggerTsServerByProject(filePath: string) {
         await window.showTextDocument(document);
     }
 
-    async function getOneTsFile(filePath: string): Promise<string | undefined> {
-        const files = await getTsFiles(filePath, { limit: 1 });
+    async function getOneScriptFile(filePath: string): Promise<string | undefined> {
+        const files = await getScriptFiles(filePath, { limit: 1 });
         return files[0];
     }
 }
@@ -63,20 +63,20 @@ export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
     }
 }
 
-export async function getTsFiles(
+export async function getScriptFiles(
     filePath: string,
     options?: {
         fallbackCnt?: number;
         limit?: number;
     },
 ): Promise<string[]> {
-    return getFiles(filePath, { suffix: '.ts', ...options });
+    return getFiles(filePath, { suffix: ['.ts', '.js'], ...options });
 }
 
 export async function getFiles(
     filePath: string,
     options?: {
-        suffix?: string;
+        suffix?: string[];
         predicate?: (filePath: string) => boolean;
         excludePaths?: string[];
         fallbackCnt?: number;
@@ -107,7 +107,7 @@ export async function getFiles(
 export async function listFiles(
     dirPath: string,
     options: {
-        suffix?: string;
+        suffix?: string[];
         predicate?: (filePath: string) => boolean;
         excludePaths?: string[];
         limit?: number;
@@ -137,7 +137,7 @@ export async function listFiles(
         }
 
         if (fileType === FileType.File) {
-            if (options.suffix && !name.endsWith(options.suffix)) {
+            if (options.suffix && !options.suffix.some((suffix) => name.endsWith(suffix))) {
                 continue;
             }
 

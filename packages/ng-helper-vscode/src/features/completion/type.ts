@@ -22,7 +22,7 @@ import {
 import { timeCost } from '../../debug';
 import { getComponentTypeCompletionApi, getControllerTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
 
 export function type(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
@@ -136,13 +136,17 @@ class TypeCompletionProvider implements CompletionItemProvider {
         ctrlInfo: NgCtrlInfo;
         vscodeCancelToken: CancellationToken;
     }): Promise<CompletionList<CompletionItem> | undefined> {
-        const tsFilePath = (await getCorrespondingTsFileName(document, ctrlInfo.controllerName))!;
+        const scriptFilePath = (await getCorrespondingScriptFileName(document, ctrlInfo.controllerName))!;
 
-        if (!(await checkNgHelperServerRunning(tsFilePath, this.port))) {
+        if (!(await checkNgHelperServerRunning(scriptFilePath, this.port))) {
             return;
         }
 
-        const res = await getControllerTypeCompletionApi({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix, ...ctrlInfo } });
+        const res = await getControllerTypeCompletionApi({
+            port: this.port,
+            vscodeCancelToken,
+            info: { fileName: scriptFilePath, prefix, ...ctrlInfo },
+        });
         if (res) {
             return this.buildCompletionList(res);
         }
@@ -153,13 +157,13 @@ class TypeCompletionProvider implements CompletionItemProvider {
         prefix: string,
         vscodeCancelToken: CancellationToken,
     ): Promise<CompletionList<CompletionItem> | undefined> {
-        const tsFilePath = (await getCorrespondingTsFileName(document))!;
+        const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
-        if (!(await checkNgHelperServerRunning(tsFilePath, this.port))) {
+        if (!(await checkNgHelperServerRunning(scriptFilePath, this.port))) {
             return;
         }
 
-        const res = await getComponentTypeCompletionApi({ port: this.port, vscodeCancelToken, info: { fileName: tsFilePath, prefix } });
+        const res = await getComponentTypeCompletionApi({ port: this.port, vscodeCancelToken, info: { fileName: scriptFilePath, prefix } });
         if (res) {
             return this.buildCompletionList(res);
         }

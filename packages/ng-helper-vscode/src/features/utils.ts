@@ -4,9 +4,9 @@ import { getHtmlTagAt, isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
-import { TextDocument } from 'vscode';
+import { TextDocument, Uri } from 'vscode';
 
-import { checkNgHelperServerRunning, getTsFiles, normalizePath } from '../utils';
+import { checkNgHelperServerRunning, getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
 export function isInlinedHtml(document: TextDocument): boolean {
     const fileName = document.fileName;
@@ -99,7 +99,7 @@ export function getOriginalFileName(fileName: string): string {
     return originalPath;
 }
 
-export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
+export async function getCorrespondingScriptFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
     if (isInlinedHtml(document)) {
         const originalPath = getOriginalFileName(document.fileName);
         let path = originalPath;
@@ -115,10 +115,18 @@ export async function getCorrespondingTsFileName(document: TextDocument, searchK
     if (isComponentHtml(document)) {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
-        return tsFilePath;
+        if (await isFileExistsOnWorkspace(Uri.file(tsFilePath))) {
+            return tsFilePath;
+        }
+
+        // remove .html add .js
+        const jsFilePath = document.fileName.slice(0, -5) + '.js';
+        if (await isFileExistsOnWorkspace(Uri.file(jsFilePath))) {
+            return jsFilePath;
+        }
     }
 
-    const tsFiles = await getTsFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
+    const tsFiles = await getScriptFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
     if (searchKey) {
         const result = fuzzysort.go(searchKey, tsFiles, { limit: 1 });
         if (result.length) {
@@ -164,12 +172,12 @@ export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
 }
 
-export async function checkServiceAndGetTsFilePath(document: TextDocument, port: number): Promise<string | undefined> {
-    const tsFilePath = (await getCorrespondingTsFileName(document))!;
+export async function checkServiceAndGetScriptFilePath(document: TextDocument, port: number): Promise<string | undefined> {
+    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
-    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
+    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return;
     }
 
-    return tsFilePath;
+    return scriptFilePath;
 }

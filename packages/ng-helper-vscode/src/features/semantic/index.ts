@@ -14,7 +14,7 @@ import {
 import { timeCost } from '../../debug';
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
 import { intersect, uniq } from '../../utils';
-import { checkServiceAndGetTsFilePath, getCorrespondingTsFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
+import { checkServiceAndGetScriptFilePath, getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
@@ -53,9 +53,11 @@ export async function htmlSemanticProvider({
         return;
     }
 
-    const tsFilePath = noServiceRunningCheck ? (await getCorrespondingTsFileName(document))! : await checkServiceAndGetTsFilePath(document, port);
-    if (!tsFilePath) {
-        console.warn('tsFilePath not found!');
+    const scriptFilePath = noServiceRunningCheck
+        ? (await getCorrespondingScriptFileName(document))!
+        : await checkServiceAndGetScriptFilePath(document, port);
+    if (!scriptFilePath) {
+        console.warn('scriptFilePath not found or tsserver not running!');
         return;
     }
 
@@ -64,7 +66,7 @@ export async function htmlSemanticProvider({
         const componentsStringAttrs = await listComponentsStringAttrs({
             port,
             vscodeCancelToken: token,
-            info: { componentNames, fileName: tsFilePath },
+            info: { componentNames, fileName: scriptFilePath },
         });
         if (componentsStringAttrs) {
             fillComponentSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
@@ -78,7 +80,7 @@ export async function htmlSemanticProvider({
         const directivesStringAttrs = await listDirectivesStringAttrs({
             port,
             vscodeCancelToken: token,
-            info: { maybeDirectiveNames, fileName: tsFilePath },
+            info: { maybeDirectiveNames, fileName: scriptFilePath },
         });
         if (directivesStringAttrs) {
             fillDirectiveSemanticTokens({ htmlDocument: document, tokensBuilder, directivesStringAttrs, maybeDirectiveNodes });

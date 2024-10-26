@@ -3,7 +3,13 @@ import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Posit
 
 import { timeCost } from '../../debug';
 import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi, getDirectiveHoverApi } from '../../service/api';
-import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
+import {
+    checkServiceAndGetScriptFilePath,
+    getControllerNameInfoFromHtml,
+    getHoveredTagNameOrAttr,
+    isComponentHtml,
+    isComponentTagName,
+} from '../utils';
 
 import { provideTypeHoverInfo } from './utils';
 
@@ -44,15 +50,15 @@ async function handleTagOrAttr(
         }
 
         if (isComponentTagName(hoverInfo.tagName) || (hoverInfo.type === 'attrName' && hoverInfo.attrNames.length)) {
-            const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
-            if (!tsFilePath) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            if (!scriptFilePath) {
                 return;
             }
 
             if (isComponentTagName(hoverInfo.tagName)) {
-                return await getComponentHover(tsFilePath, hoverInfo, port, token);
+                return await getComponentHover(scriptFilePath, hoverInfo, port, token);
             } else {
-                return await getDirectiveHover(tsFilePath, hoverInfo, port, token);
+                return await getDirectiveHover(scriptFilePath, hoverInfo, port, token);
             }
         }
     });

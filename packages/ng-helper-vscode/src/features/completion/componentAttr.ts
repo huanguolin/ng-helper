@@ -5,7 +5,7 @@ import { languages, TextDocument, Position, CompletionList, CancellationToken, C
 import { timeCost } from '../../debug';
 import { getComponentAttrCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentTagName } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 export function componentAttr(port: number) {
     return languages.registerCompletionItemProvider(
@@ -49,14 +49,15 @@ async function provideComponentAttrCompletion({
         return;
     }
 
-    const relatedTsFile = (await getCorrespondingTsFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
-    if (!(await checkNgHelperServerRunning(relatedTsFile, port))) {
+    const relatedScriptFile =
+        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
+    if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
         return;
     }
 
     let list = await getComponentAttrCompletionApi({
         port,
-        info: { fileName: relatedTsFile, componentName: camelCase(tag.tagName) },
+        info: { fileName: relatedScriptFile, componentName: camelCase(tag.tagName) },
         vscodeCancelToken,
     });
     if (!list || !list.length) {

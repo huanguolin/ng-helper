@@ -11,7 +11,7 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentControllerAsApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingTsFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
+import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
 
 export function ctrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
@@ -69,13 +69,13 @@ async function provideComponentCtrlCompletion({
 }
 
 async function getComponentControllerAsCompletion(document: TextDocument, port: number, vscodeCancelToken: CancellationToken) {
-    const tsFilePath = (await getCorrespondingTsFileName(document))!;
+    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
-    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
+    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return;
     }
 
-    const res = await getComponentControllerAsApi({ port, info: { fileName: tsFilePath }, vscodeCancelToken });
+    const res = await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
     if (res) {
         return new CompletionList([new CompletionItem(res)], false);
     }

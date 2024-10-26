@@ -21,7 +21,13 @@ import {
     getDirectiveDefinitionApi,
 } from '../../service/api';
 import { provideTypeHoverInfo } from '../hover/utils';
-import { checkServiceAndGetTsFilePath, getControllerNameInfoFromHtml, getHoveredTagNameOrAttr, isComponentHtml, isComponentTagName } from '../utils';
+import {
+    checkServiceAndGetScriptFilePath,
+    getControllerNameInfoFromHtml,
+    getHoveredTagNameOrAttr,
+    isComponentHtml,
+    isComponentTagName,
+} from '../utils';
 
 export function registerDefinition(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
@@ -57,8 +63,8 @@ async function handleTagOrAttr(
         }
 
         if (isComponentTagName(hoverInfo.tagName) || (hoverInfo.type === 'attrName' && hoverInfo.attrNames.length)) {
-            const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
-            if (!tsFilePath) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            if (!scriptFilePath) {
                 return;
             }
 
@@ -66,7 +72,7 @@ async function handleTagOrAttr(
                 const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
                     port,
                     vscodeCancelToken: token,
-                    info: { fileName: tsFilePath, hoverInfo: hoverInfo },
+                    info: { fileName: scriptFilePath, hoverInfo: hoverInfo },
                 });
                 return await buildDefinition(definitionInfo);
             } else {
@@ -74,7 +80,7 @@ async function handleTagOrAttr(
                 const definitionInfo = await getDirectiveDefinitionApi({
                     port,
                     vscodeCancelToken: token,
-                    info: { fileName: tsFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
+                    info: { fileName: scriptFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
                 });
                 return await buildDefinition(definitionInfo);
             }

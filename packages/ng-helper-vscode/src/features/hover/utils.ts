@@ -9,7 +9,7 @@ import {
 } from '@ng-helper/shared/lib/html';
 import type { TextDocument, Position } from 'vscode';
 
-import { isValidIdentifier, isComponentTagName, isNgBuiltinDirective, checkServiceAndGetTsFilePath, isNgUserCustomAttr } from '../utils';
+import { isValidIdentifier, isComponentTagName, isNgBuiltinDirective, checkServiceAndGetScriptFilePath, isNgUserCustomAttr } from '../utils';
 
 export async function provideTypeHoverInfo<T>({
     document,
@@ -54,13 +54,13 @@ export async function provideTypeHoverInfo<T>({
     }
 
     async function callApi(contextString: string, cursorAt: number) {
-        const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
+        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
 
-        if (!tsFilePath) {
+        if (!scriptFilePath) {
             return;
         }
 
-        return await api(tsFilePath, contextString, cursorAt);
+        return await api(scriptFilePath, contextString, cursorAt);
     }
 }
 

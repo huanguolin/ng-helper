@@ -15,7 +15,7 @@ import {
 import { timeCost } from '../../debug';
 import { getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getCorrespondingTsFileName, getControllerNameInfoFromHtml, isComponentTagName } from '../utils';
+import { getCorrespondingScriptFileName, getControllerNameInfoFromHtml, isComponentTagName } from '../utils';
 
 export function customDirective(port: number) {
     // 这里拆成两个是为了兼容 html 和 inline html. (componentName 和 componentAttr 也有这样的处理)
@@ -72,8 +72,9 @@ async function provideCustomDirectiveCompletion({
         return;
     }
 
-    const relatedTsFile = (await getCorrespondingTsFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
-    if (!(await checkNgHelperServerRunning(relatedTsFile, port))) {
+    const relatedScriptFile =
+        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
+    if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
         return;
     }
 
@@ -83,7 +84,7 @@ async function provideCustomDirectiveCompletion({
 
     const list = await getDirectiveCompletionApi({
         port,
-        info: { fileName: relatedTsFile, attrNames, queryType, afterCursorAttrName },
+        info: { fileName: relatedScriptFile, attrNames, queryType, afterCursorAttrName },
         vscodeCancelToken,
     });
     if (!list || !list.length) {
