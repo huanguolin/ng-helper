@@ -168,6 +168,10 @@ export function isValidIdentifier(text: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z\d_$]*$/.test(text);
 }
 
+export function isValidIdentifierChar(char: string): boolean {
+    return /^[a-zA-Z\d_$]*$/.test(char);
+}
+
 export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
 }

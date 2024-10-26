@@ -9,7 +9,7 @@ import {
 } from '@ng-helper/shared/lib/html';
 import type { TextDocument, Position } from 'vscode';
 
-import { isValidIdentifier, isComponentTagName, isNgBuiltinDirective, checkServiceAndGetScriptFilePath, isNgUserCustomAttr } from '../utils';
+import { isComponentTagName, isNgBuiltinDirective, checkServiceAndGetScriptFilePath, isNgUserCustomAttr, isValidIdentifierChar } from '../utils';
 
 export async function provideTypeHoverInfo<T>({
     document,
@@ -26,7 +26,7 @@ export async function provideTypeHoverInfo<T>({
     const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
 
     const theChar = docText[cursor.at];
-    if (!isValidIdentifier(theChar)) {
+    if (!isValidIdentifierChar(theChar)) {
         return;
     }
 
