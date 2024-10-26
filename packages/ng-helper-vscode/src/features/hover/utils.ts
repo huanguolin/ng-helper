@@ -20,7 +20,7 @@ export async function provideTypeHoverInfo<T>({
     document: TextDocument;
     position: Position;
     port: number;
-    api: (tsFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
+    api: (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
 }): Promise<T | undefined> {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: true };

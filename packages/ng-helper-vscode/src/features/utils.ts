@@ -126,17 +126,17 @@ export async function getCorrespondingScriptFileName(document: TextDocument, sea
         }
     }
 
-    const tsFiles = await getScriptFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
+    const scriptFiles = await getScriptFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
     if (searchKey) {
-        const result = fuzzysort.go(searchKey, tsFiles, { limit: 1 });
+        const result = fuzzysort.go(searchKey, scriptFiles, { limit: 1 });
         if (result.length) {
-            const tsFilePath = result[0].target;
-            console.log('getCorrespondingTsFileName() fuzzy search result:', tsFilePath);
-            return tsFilePath;
+            const scriptFilePath = result[0].target;
+            console.log('getCorrespondingTsFileName() fuzzy search result:', scriptFilePath);
+            return scriptFilePath;
         }
     }
 
-    return tsFiles[0];
+    return scriptFiles[0];
 }
 
 /**

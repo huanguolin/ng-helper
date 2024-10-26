@@ -65,7 +65,7 @@ async function handleTagOrAttr(
 }
 
 async function getComponentHover(
-    tsFilePath: string,
+    scriptFilePath: string,
     hoverInfo: NgElementHoverInfo,
     port: number,
     token: CancellationToken,
@@ -74,13 +74,13 @@ async function getComponentHover(
     const res = await getComponentNameOrAttrNameHoverApi({
         port,
         vscodeCancelToken: token,
-        info: { fileName: tsFilePath, hoverInfo: hoverInfo },
+        info: { fileName: scriptFilePath, hoverInfo: hoverInfo },
     });
     return buildHoverResult(res);
 }
 
 async function getDirectiveHover(
-    tsFilePath: string,
+    scriptFilePath: string,
     hoverInfo: NgElementHoverInfo,
     port: number,
     token: CancellationToken,
@@ -89,7 +89,7 @@ async function getDirectiveHover(
     const res = await getDirectiveHoverApi({
         port,
         vscodeCancelToken: token,
-        info: { fileName: tsFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
+        info: { fileName: scriptFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
     });
     return buildHoverResult(res);
 }
@@ -100,8 +100,8 @@ async function handleComponentType(document: TextDocument, position: Position, p
             document,
             position,
             port,
-            api: (tsFilePath, contextString, cursorAt) =>
-                getComponentTypeHoverApi({ port, vscodeCancelToken: token, info: { fileName: tsFilePath, contextString, cursorAt } }),
+            api: (scriptFilePath, contextString, cursorAt) =>
+                getComponentTypeHoverApi({ port, vscodeCancelToken: token, info: { fileName: scriptFilePath, contextString, cursorAt } }),
         });
         return buildHoverResult(info);
     });
@@ -119,11 +119,11 @@ async function handleControllerType(
             document,
             position,
             port,
-            api: (tsFilePath, contextString, cursorAt) =>
+            api: (scriptFilePath, contextString, cursorAt) =>
                 getControllerTypeHoverApi({
                     port,
                     vscodeCancelToken: token,
-                    info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
+                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
                 }),
         });
         return buildHoverResult(info);

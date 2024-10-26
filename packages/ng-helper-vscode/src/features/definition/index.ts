@@ -99,11 +99,11 @@ async function handleComponentType(
             document,
             position,
             port,
-            api: (tsFilePath, contextString, cursorAt) =>
+            api: (scriptFilePath, contextString, cursorAt) =>
                 getComponentTypeDefinitionApi({
                     port,
                     vscodeCancelToken: token,
-                    info: { fileName: tsFilePath, contextString, cursorAt },
+                    info: { fileName: scriptFilePath, contextString, cursorAt },
                 }),
         });
         return await buildDefinition(definitionInfo);
@@ -122,17 +122,17 @@ async function handleControllerType(
             document,
             position,
             port,
-            api: (tsFilePath, contextString, cursorAt) =>
+            api: (scriptFilePath, contextString, cursorAt) =>
                 ctrlInfo.controllerAs
                     ? getControllerTypeDefinitionApi({
                           port,
                           vscodeCancelToken: token,
-                          info: { fileName: tsFilePath, contextString, cursorAt, ...ctrlInfo },
+                          info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
                       })
                     : getControllerNameDefinitionApi({
                           port,
                           vscodeCancelToken: token,
-                          info: { fileName: tsFilePath, controllerName: ctrlInfo.controllerName },
+                          info: { fileName: scriptFilePath, controllerName: ctrlInfo.controllerName },
                       }),
         });
         return await buildDefinition(definitionInfo);

@@ -22,18 +22,18 @@ export async function checkNgHelperServerRunning(filePath: string, port: number)
 }
 
 export async function triggerTsServerByProject(filePath: string) {
-    let tsFilePath = filePath;
+    let scriptFilePath = filePath;
 
-    if (!tsFilePath.endsWith('.ts') && !tsFilePath.endsWith('.js')) {
-        tsFilePath = (await getOneScriptFile(filePath)) ?? '';
+    if (!scriptFilePath.endsWith('.ts') && !scriptFilePath.endsWith('.js')) {
+        scriptFilePath = (await getOneScriptFile(filePath)) ?? '';
     }
 
-    if (!(await isFileExistsOnWorkspace(Uri.file(tsFilePath)))) {
+    if (!(await isFileExistsOnWorkspace(Uri.file(scriptFilePath)))) {
         const path = await getOneScriptFile(filePath);
         if (!path) {
             return;
         }
-        tsFilePath = path;
+        scriptFilePath = path;
     }
 
     const selection = await window.showWarningMessage(
@@ -41,8 +41,8 @@ export async function triggerTsServerByProject(filePath: string) {
         'OK',
     );
     if (selection === 'OK') {
-        // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
-        const document = await workspace.openTextDocument(Uri.file(tsFilePath));
+        // 目前只能通过打开 ts/js 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
+        const document = await workspace.openTextDocument(Uri.file(scriptFilePath));
         await window.showTextDocument(document);
     }
 
