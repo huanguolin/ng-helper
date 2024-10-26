@@ -255,10 +255,10 @@ function handleRequest<TCtx extends CorePluginContext, TBody extends NgRequest, 
 
     ctx.logger.startGroup();
     try {
-        ctx.logger.info('request:', body);
+        ctx.logger.info('[api] ->', body);
         const data = action(ctx, body);
         res.send({ data });
-        ctx.logger.info('response:', data);
+        ctx.logger.info('[api] <-', data);
     } catch (error) {
         ctx.logger.error(req.url, (error as Error).message, (error as Error).stack);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any

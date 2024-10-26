@@ -131,6 +131,11 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
             return;
         }
         lastRefreshed = Date.now();
+        const oldCacheFilesCount = fileCacheMap.size;
+        const oldCompCnt = componentMap.size;
+        const oldDirtCnt = directiveMap.size;
+        const oldCtrlCnt = controllerMap.size;
+        const oldFltrCnt = filterMap.size;
 
         const coreCtx = getCoreContext()!;
 
@@ -139,23 +144,23 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         let addedFilesCount = 0;
         let modifiedFilesCount = 0;
         let deletedFilesCount = 0;
-        const logger = coreCtx.logger.prefix('refreshInternalMaps()');
+        const logger = coreCtx.logger.prefix(`[${scannedTs.toString(36)}] refreshInternalMaps()`);
         logger.startGroup();
 
         const sourceFiles = coreCtx.program.getSourceFiles();
         logger.info(
-            'sourceFiles count:',
+            '>> srcFilesCnt:',
             sourceFiles.length,
-            ', old cache files count:',
-            fileCacheMap.size,
-            ', old component count:',
-            componentMap.size,
-            ', old directive count:',
-            directiveMap.size,
-            ', old controller count:',
-            controllerMap.size,
-            ', old filter count:',
-            filterMap.size,
+            ', cacheFilesCnt:',
+            oldCacheFilesCount,
+            ', compCnt:',
+            oldCompCnt,
+            ', dirtCnt:',
+            oldDirtCnt,
+            ', ctrlCnt:',
+            oldCtrlCnt,
+            ', fltrCnt:',
+            oldFltrCnt,
         );
         for (const sourceFile of sourceFiles) {
             const filePath = sourceFile.fileName;
@@ -184,23 +189,26 @@ export function buildCache(getCoreContext: GetCoreContextFn): NgCache {
         deletedFilesCount = removeDeletedFiles(scannedTs);
 
         const end = Date.now();
+        const cacheFilesDiff = fileCacheMap.size - oldCacheFilesCount;
+        const compDiff = componentMap.size - oldCompCnt;
+        const dirtDiff = directiveMap.size - oldDirtCnt;
+        const ctrlDiff = controllerMap.size - oldCtrlCnt;
+        const fltrDiff = filterMap.size - oldFltrCnt;
+
+        const formatDiff = (diff: number) => `${diff >= 0 ? '+' : ''}${diff}`;
+
         logger.info(
-            'added files count:',
-            addedFilesCount,
-            ', modified files count:',
-            modifiedFilesCount,
-            ', deleted files count:',
-            deletedFilesCount,
-            ', new cache files count:',
-            fileCacheMap.size,
-            ', new component count:',
-            componentMap.size,
-            ', new directive count:',
-            directiveMap.size,
-            ', new controller count:',
-            controllerMap.size,
-            ', new filter count:',
-            filterMap.size,
+            '<< diff: cacheFilesCnt:',
+            formatDiff(cacheFilesDiff),
+            `(A:${addedFilesCount}, M:${modifiedFilesCount}, D:${deletedFilesCount})`,
+            ', compCnt:',
+            formatDiff(compDiff),
+            ', dirtCnt:',
+            formatDiff(dirtDiff),
+            ', ctrlCnt:',
+            formatDiff(ctrlDiff),
+            ', fltrCnt:',
+            formatDiff(fltrDiff),
             ', cost:',
             `${end - start}ms`,
         );
