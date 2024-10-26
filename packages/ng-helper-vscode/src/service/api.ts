@@ -200,7 +200,7 @@ export async function checkNgHelperServerRunningApi(port: number): Promise<boole
         await axios.get(buildUrl(port, 'hc'));
         return true;
     } catch (_) {
-        console.log('checkNgHelperServerRunningApi() failed.');
+        console.warn('checkNgHelperServerRunningApi() failed.');
         return false;
     }
 }
@@ -208,11 +208,11 @@ export async function checkNgHelperServerRunningApi(port: number): Promise<boole
 async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
     try {
         info.fileName = normalizePath(info.fileName);
-        console.log(`${apiName}() request: `, info);
+        console.debug(`${apiName}() request: `, info);
         const result = await axios.post<NgResponse<TOutput>>(url, info, {
             cancelToken: getAxiosCancelToken(vscodeCancelToken),
         });
-        console.log(`${apiName}() result: `, result.data);
+        console.debug(`${apiName}() result: `, result.data);
         if (result.data.errKey === 'NO_CONTEXT') {
             await triggerTsServerByProject(info.fileName);
             return;
@@ -222,7 +222,7 @@ async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken
         if (axios.isCancel(error)) {
             console.log(`${apiName}() cancelled by vscode.`);
         } else {
-            console.log(`${apiName}() failed: `, error);
+            console.error(`${apiName}() failed: `, error);
         }
     }
 }
