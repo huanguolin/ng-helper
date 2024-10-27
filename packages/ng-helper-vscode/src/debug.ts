@@ -1,6 +1,7 @@
 const countMap = new Map<string, number>();
 
-export async function timeCost<T>(fnName: string, cb: () => T | Promise<T>, threshold: number = 80): Promise<T | undefined> {
+// threshold default is 50ms, see https://github.com/microsoft/tolerant-php-parser/tree/main?tab=readme-ov-file#:~:text=%3C%20100%20ms%20UI%20response%20time%2C%20so%20each%20language%20server%20operation%20should%20be%20%3C%2050%20ms%20to%20leave%20room%20for%20all%20the%20other%20stuff%20going%20on%20in%20parallel.
+export async function timeCost<T>(fnName: string, cb: () => T | Promise<T>, threshold: number = 50): Promise<T | undefined> {
     const cnt = storeAndGetCount(fnName);
     const start = Date.now();
     console.group(`[timeCost] ${fnName}()#${cnt}`);
