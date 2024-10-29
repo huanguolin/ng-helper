@@ -3,8 +3,19 @@ import type ts from 'typescript';
 
 import { PluginContext, FileVersion, type CorePluginContext } from '../type';
 
-export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp', setParentNodes?: boolean): ts.SourceFile {
-    return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, setParentNodes, ctx.ts.ScriptKind.JS);
+export function createTmpSourceFile(
+    ctx: PluginContext,
+    codeText: string,
+    name: string = 'tmp',
+    setParentNodes?: boolean,
+): ts.SourceFile {
+    return ctx.ts.createSourceFile(
+        `ng-helper///${name}.ts`,
+        codeText,
+        ctx.ts.ScriptTarget.ES5,
+        setParentNodes,
+        ctx.ts.ScriptKind.JS,
+    );
 }
 
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
@@ -128,7 +139,11 @@ export function findClassDeclaration(ctx: PluginContext, node: ts.Node): ts.Clas
     return node.forEachChild((child: ts.Node) => findClassDeclaration(ctx, child));
 }
 
-export function getNodeAtPosition(ctx: PluginContext, position: number, sourceFile?: ts.SourceFile): ts.Node | undefined {
+export function getNodeAtPosition(
+    ctx: PluginContext,
+    position: number,
+    sourceFile?: ts.SourceFile,
+): ts.Node | undefined {
     sourceFile ??= ctx.sourceFile;
 
     let foundNode: ts.Node | undefined;
@@ -153,24 +168,38 @@ export function getLeftmostAccessExpression(ctx: PluginContext, expr: ts.Express
 }
 
 export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is ts.AccessExpression {
-    return node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression || node.kind === ctx.ts.SyntaxKind.ElementAccessExpression;
+    return (
+        node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression ||
+        node.kind === ctx.ts.SyntaxKind.ElementAccessExpression
+    );
 }
 
 export function getSourceFileVersion(sourceFile: ts.SourceFile): string {
     return (sourceFile as unknown as FileVersion).version;
 }
 
-export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression): Record<string, string> {
+export function getObjLiteral(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+): Record<string, string> {
     const obj: Record<string, string> = {};
     for (const p of objLiteral.properties) {
-        if (coreCtx.ts.isPropertyAssignment(p) && coreCtx.ts.isIdentifier(p.name) && coreCtx.ts.isStringLiteralLike(p.initializer)) {
+        if (
+            coreCtx.ts.isPropertyAssignment(p) &&
+            coreCtx.ts.isIdentifier(p.name) &&
+            coreCtx.ts.isStringLiteralLike(p.initializer)
+        ) {
             obj[p.name.text] = p.initializer.text;
         }
     }
     return obj;
 }
 
-export function getPropValueByName(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression, propName: string): ts.Expression | undefined {
+export function getPropValueByName(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    propName: string,
+): ts.Expression | undefined {
     const prop = getPropByName(coreCtx, objLiteral, propName);
     return prop?.initializer;
 }
@@ -188,5 +217,7 @@ export function getProp(
     objLiteral: ts.ObjectLiteralExpression,
     predicate: (p: ts.PropertyAssignment) => boolean,
 ): ts.PropertyAssignment | undefined {
-    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
+    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as
+        | ts.PropertyAssignment
+        | undefined;
 }

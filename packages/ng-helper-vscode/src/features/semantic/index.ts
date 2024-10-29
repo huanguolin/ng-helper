@@ -1,4 +1,11 @@
-import { getAttrValueStart, parseFragment, type Location, type Attribute, type DocumentFragment, type Element } from '@ng-helper/shared/lib/html';
+import {
+    getAttrValueStart,
+    parseFragment,
+    type Location,
+    type Attribute,
+    type DocumentFragment,
+    type Element,
+} from '@ng-helper/shared/lib/html';
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
@@ -14,7 +21,12 @@ import {
 import { timeCost } from '../../debug';
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
 import { intersect, uniq } from '../../utils';
-import { checkServiceAndGetScriptFilePath, getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
+import {
+    checkServiceAndGetScriptFilePath,
+    getCorrespondingScriptFileName,
+    isComponentTagName,
+    isNgUserCustomAttr,
+} from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
@@ -69,12 +81,19 @@ export async function htmlSemanticProvider({
             info: { componentNames, fileName: scriptFilePath },
         });
         if (componentsStringAttrs) {
-            fillComponentSemanticTokens({ htmlDocument: document, tokensBuilder, componentsStringAttrs, componentNodes });
+            fillComponentSemanticTokens({
+                htmlDocument: document,
+                tokensBuilder,
+                componentsStringAttrs,
+                componentNodes,
+            });
         }
     }
 
     const maybeDirectiveNames = uniq(
-        maybeDirectiveNodes.map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name))).flat(),
+        maybeDirectiveNodes
+            .map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name)))
+            .flat(),
     );
     if (maybeDirectiveNames.length) {
         const directivesStringAttrs = await listDirectivesStringAttrs({
@@ -83,14 +102,22 @@ export async function htmlSemanticProvider({
             info: { maybeDirectiveNames, fileName: scriptFilePath },
         });
         if (directivesStringAttrs) {
-            fillDirectiveSemanticTokens({ htmlDocument: document, tokensBuilder, directivesStringAttrs, maybeDirectiveNodes });
+            fillDirectiveSemanticTokens({
+                htmlDocument: document,
+                tokensBuilder,
+                directivesStringAttrs,
+                maybeDirectiveNodes,
+            });
         }
     }
 
     return tokensBuilder.build();
 }
 
-function getComponentNodesAndDirectiveNodes(htmlAst: DocumentFragment): { componentNodes: Element[]; maybeDirectiveNodes: Element[] } {
+function getComponentNodesAndDirectiveNodes(htmlAst: DocumentFragment): {
+    componentNodes: Element[];
+    maybeDirectiveNodes: Element[];
+} {
     const componentNodes: Element[] = [];
     const maybeDirectiveNodes: Element[] = [];
     iter(htmlAst.childNodes);

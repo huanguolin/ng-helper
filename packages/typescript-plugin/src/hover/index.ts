@@ -16,7 +16,14 @@ import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getControllerType, getBindingType, INDENT, getComponentControllerType, getBindingTypeInfo, getBindingName } from '../utils/ng';
+import {
+    getControllerType,
+    getBindingType,
+    INDENT,
+    getComponentControllerType,
+    getBindingTypeInfo,
+    getBindingName,
+} from '../utils/ng';
 
 import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
 
@@ -80,7 +87,11 @@ function getComponentNameHoverInfo(coreCtx: CorePluginContext, componentInfo: Co
     const component = `(component) ${componentInfo.name}`;
 
     const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
-    const bindings = formatLiteralObj('bindings', componentInfo.bindings, (x) => bindingTypeMap.get(x.name)?.typeString ?? '');
+    const bindings = formatLiteralObj(
+        'bindings',
+        componentInfo.bindings,
+        (x) => bindingTypeMap.get(x.name)?.typeString ?? '',
+    );
     const transclude = formatTransclude(componentInfo.transclude);
 
     return {
@@ -154,7 +165,12 @@ function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInf
 function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
     const directive = `(directive) ${directiveInfo.name}`;
     const others = getOtherProps(['restrict', 'replace', 'require', 'priority', 'terminal']);
-    const formattedTypeString = [directive, ...others, formatLiteralObj('scope', directiveInfo.scope), formatTransclude(directiveInfo.transclude)]
+    const formattedTypeString = [
+        directive,
+        ...others,
+        formatLiteralObj('scope', directiveInfo.scope),
+        formatTransclude(directiveInfo.transclude),
+    ]
         .filter((x) => !!x)
         .join('\n');
 
@@ -210,7 +226,10 @@ function formatTransclude(transclude: DirectiveInfo['transclude']) {
     return transcludeString;
 }
 
-export function getComponentTypeHoverInfo(ctx: PluginContext, { contextString, cursorAt }: NgHoverRequest): NgHoverResponse {
+export function getComponentTypeHoverInfo(
+    ctx: PluginContext,
+    { contextString, cursorAt }: NgHoverRequest,
+): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
 
     const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);

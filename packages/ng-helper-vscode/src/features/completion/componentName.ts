@@ -1,12 +1,25 @@
 import { Cursor, SPACE, canCompletionComponentName } from '@ng-helper/shared/lib/html';
 import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
-import { languages, TextDocument, Position, CompletionItem, CompletionList, CancellationToken, SnippetString } from 'vscode';
+import {
+    languages,
+    TextDocument,
+    Position,
+    CompletionItem,
+    CompletionList,
+    CancellationToken,
+    SnippetString,
+} from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getComponentName, getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
+import {
+    getComponentName,
+    getControllerNameInfoFromHtml,
+    getCorrespondingScriptFileName,
+    isComponentTagName,
+} from '../utils';
 
 export function componentName(port: number) {
     return languages.registerCompletionItemProvider(
@@ -59,7 +72,8 @@ async function provideComponentNameCompletion({
     }
 
     const relatedScriptFile =
-        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
+        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ??
+        document.fileName;
     if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
         return;
     }
@@ -94,7 +108,9 @@ async function provideComponentNameCompletion({
         // 移除已经存在的兄弟节点
         const sibling = currentTag!.children;
         if (sibling && sibling.length) {
-            transcludeItems = transcludeItems.filter((componentName) => !sibling.some((s) => camelCase(s.tagName) === componentName));
+            transcludeItems = transcludeItems.filter(
+                (componentName) => !sibling.some((s) => camelCase(s.tagName) === componentName),
+            );
         }
 
         // 构建补全项目，并排在最前面

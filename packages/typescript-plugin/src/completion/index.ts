@@ -14,7 +14,13 @@ import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
 import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
-import { getBindingName, getComponentControllerType, getControllerType, getPublicMembersTypeInfoOfBindings, isElementDirective } from '../utils/ng';
+import {
+    getBindingName,
+    getComponentControllerType,
+    getControllerType,
+    getPublicMembersTypeInfoOfBindings,
+    isElementDirective,
+} from '../utils/ng';
 
 import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
 
@@ -100,7 +106,10 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
     }
 }
 
-export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: NgCtrlTypeCompletionRequest): NgTypeCompletionResponse {
+export function getControllerTypeCompletions(
+    coreCtx: CorePluginContext,
+    info: NgCtrlTypeCompletionRequest,
+): NgTypeCompletionResponse {
     const logger = coreCtx.logger.prefix('getControllerTypeCompletions()');
 
     if (!info.controllerAs) {
@@ -141,7 +150,10 @@ export function getControllerTypeCompletions(coreCtx: CorePluginContext, info: N
     return getPublicMembersTypeInfoOfType(ctx, targetType);
 }
 
-export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath: string): NgComponentNameCompletionResponse {
+export function getComponentNameCompletions(
+    coreCtx: CorePluginContext,
+    filePath: string,
+): NgComponentNameCompletionResponse {
     const logger = coreCtx.logger.prefix('getComponentNameCompletions()');
 
     const cache = ngHelperServer.getCache(filePath);
@@ -172,7 +184,11 @@ export function getComponentNameCompletions(coreCtx: CorePluginContext, filePath
     return components.concat(directiveAsElements);
 }
 
-export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath: string, componentName: string): NgComponentAttrCompletionResponse {
+export function getComponentAttrCompletions(
+    coreCtx: CorePluginContext,
+    filePath: string,
+    componentName: string,
+): NgComponentAttrCompletionResponse {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletions()');
 
     const cache = ngHelperServer.getCache(filePath);
@@ -194,7 +210,10 @@ export function getComponentAttrCompletions(coreCtx: CorePluginContext, filePath
     }
 }
 
-function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginContext, componentInfo: ComponentInfo): NgTypeInfo[] | undefined {
+function getComponentAttrCompletionsViaComponentFileInfo(
+    coreCtx: CorePluginContext,
+    componentInfo: ComponentInfo,
+): NgTypeInfo[] | undefined {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletionsViaComponentFileInfo()');
 
     const ctx = getCtxOfCoreCtx(coreCtx, componentInfo.filePath);
@@ -244,7 +263,11 @@ function getComponentAttrCompletionsViaComponentFileInfo(coreCtx: CorePluginCont
     }
 }
 
-export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, controllerName: string): PluginContext | undefined {
+export function resolveCtrlCtx(
+    coreCtx: CorePluginContext,
+    fileName: string,
+    controllerName: string,
+): PluginContext | undefined {
     const logger = coreCtx.logger.prefix('resolveCtrlCtx()');
 
     const cache = ngHelperServer.getCache(fileName);
@@ -274,7 +297,10 @@ export function resolveCtrlCtx(coreCtx: CorePluginContext, fileName: string, con
  * @param info
  * @returns
  */
-export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDirectiveCompletionRequest): NgDirectiveCompletionResponse {
+export function getDirectiveCompletions(
+    coreCtx: CorePluginContext,
+    info: NgDirectiveCompletionRequest,
+): NgDirectiveCompletionResponse {
     const logger = coreCtx.logger.prefix('getDirectiveCompletions()');
 
     const cache = ngHelperServer.getCache(info.fileName);
@@ -290,7 +316,11 @@ export function getDirectiveCompletions(coreCtx: CorePluginContext, info: NgDire
     );
 
     if (info.queryType === 'directiveAttr' && matchedDirectives.length) {
-        const closestDirective = findClosestMatchedDirective(matchedDirectives, info.attrNames, info.afterCursorAttrName);
+        const closestDirective = findClosestMatchedDirective(
+            matchedDirectives,
+            info.attrNames,
+            info.afterCursorAttrName,
+        );
         logger.info('Closest directive:', closestDirective ? closestDirective.name : 'None');
         if (closestDirective) {
             const typeInfos = getTypeInfosFromDirectiveScope(coreCtx, closestDirective);

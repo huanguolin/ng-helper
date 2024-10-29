@@ -43,7 +43,11 @@ interface BizRequestInput<T> {
     vscodeCancelToken: CancellationToken;
 }
 
-export function getControllerNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgControllerNameDefinitionRequest>) {
+export function getControllerNameDefinitionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgControllerNameDefinitionRequest>) {
     return bizRequest<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
         url: buildUrl(port, 'controller', 'name', 'definition'),
         info,
@@ -51,7 +55,11 @@ export function getControllerNameDefinitionApi({ port, vscodeCancelToken, info }
         apiName: 'getControllerNameDefinitionApi',
     });
 }
-export function listDirectivesStringAttrs({ port, vscodeCancelToken, info }: ApiInput<NgListDirectivesStringAttrsRequest>) {
+export function listDirectivesStringAttrs({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgListDirectivesStringAttrsRequest>) {
     return bizRequest<NgListDirectivesStringAttrsRequest, NgDirectivesStringAttrsResponse>({
         url: buildUrl(port, 'directives', 'string', 'attrs'),
         info,
@@ -60,7 +68,11 @@ export function listDirectivesStringAttrs({ port, vscodeCancelToken, info }: Api
     });
 }
 
-export function listComponentsStringAttrs({ port, vscodeCancelToken, info }: ApiInput<NgListComponentsStringAttrsRequest>) {
+export function listComponentsStringAttrs({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgListComponentsStringAttrsRequest>) {
     return bizRequest<NgListComponentsStringAttrsRequest, NgComponentsStringAttrsResponse>({
         url: buildUrl(port, 'components', 'string', 'attrs'),
         info,
@@ -78,7 +90,11 @@ export function getDirectiveDefinitionApi({ port, vscodeCancelToken, info }: Api
     });
 }
 
-export function getControllerTypeDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlTypeDefinitionRequest>) {
+export function getControllerTypeDefinitionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgCtrlTypeDefinitionRequest>) {
     return bizRequest<NgCtrlTypeDefinitionRequest, NgDefinitionResponse>({
         url: buildUrl(port, 'controller', 'type', 'definition'),
         info,
@@ -96,7 +112,11 @@ export function getComponentTypeDefinitionApi({ port, vscodeCancelToken, info }:
     });
 }
 
-export function getComponentNameOrAttrNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentNameOrAttrNameDefinitionRequest>) {
+export function getComponentNameOrAttrNameDefinitionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgComponentNameOrAttrNameDefinitionRequest>) {
     return bizRequest<NgComponentNameOrAttrNameDefinitionRequest, NgDefinitionResponse>({
         url: buildUrl(port, 'component', info.hoverInfo.type === 'attrName' ? 'attr' : 'name', 'definition'),
         info,
@@ -123,7 +143,11 @@ export function getComponentTypeHoverApi({ port, vscodeCancelToken, info }: ApiI
     });
 }
 
-export function getComponentNameOrAttrNameHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentNameOrAttrNameHoverRequest>) {
+export function getComponentNameOrAttrNameHoverApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgComponentNameOrAttrNameHoverRequest>) {
     return bizRequest<NgComponentNameOrAttrNameHoverRequest, NgHoverResponse>({
         url: buildUrl(port, 'component', info.hoverInfo.type === 'attrName' ? 'attr' : 'name', 'hover'),
         info,
@@ -141,7 +165,11 @@ export function getDirectiveHoverApi({ port, vscodeCancelToken, info }: ApiInput
     });
 }
 
-export function getControllerTypeCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgCtrlTypeCompletionRequest>) {
+export function getControllerTypeCompletionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgCtrlTypeCompletionRequest>) {
     return bizRequest<NgCtrlTypeCompletionRequest, NgTypeCompletionResponse>({
         url: buildUrl(port, 'controller', 'type', 'completion'),
         info,
@@ -177,7 +205,11 @@ export function getComponentNameCompletionApi({ port, vscodeCancelToken, info }:
     });
 }
 
-export function getComponentAttrCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgComponentAttrCompletionRequest>) {
+export function getComponentAttrCompletionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgComponentAttrCompletionRequest>) {
     return bizRequest<NgComponentAttrCompletionRequest, NgComponentAttrCompletionResponse>({
         url: buildUrl(port, 'component', 'attr', 'completion'),
         info,
@@ -205,7 +237,12 @@ export async function checkNgHelperServerRunningApi(port: number): Promise<boole
     }
 }
 
-async function bizRequest<TInput extends NgRequest, TOutput>({ vscodeCancelToken, info, url, apiName }: BizRequestInput<TInput>) {
+async function bizRequest<TInput extends NgRequest, TOutput>({
+    vscodeCancelToken,
+    info,
+    url,
+    apiName,
+}: BizRequestInput<TInput>) {
     console.group(`[api] ${apiName}()`);
     try {
         info.fileName = normalizePath(info.fileName);

@@ -22,7 +22,13 @@ import {
 import { timeCost } from '../../debug';
 import { getComponentTypeCompletionApi, getControllerTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
+import {
+    getControllerNameInfoFromHtml,
+    getCorrespondingScriptFileName,
+    isComponentHtml,
+    isComponentTagName,
+    isNgBuiltinDirective,
+} from '../utils';
 
 export function type(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
@@ -69,7 +75,12 @@ class TypeCompletionProvider implements CompletionItemProvider {
         if (tplText) {
             const prefix = getBeforeCursorText(tplText);
             if (prefix && !isContainsNgFilter(prefix)) {
-                return await this.getControllerTypeCompletionItems({ document, prefix, ctrlInfo, vscodeCancelToken: token });
+                return await this.getControllerTypeCompletionItems({
+                    document,
+                    prefix,
+                    ctrlInfo,
+                    vscodeCancelToken: token,
+                });
             }
         }
 
@@ -82,7 +93,12 @@ class TypeCompletionProvider implements CompletionItemProvider {
                 if (prefix && !isContainsNgFilter(prefix)) {
                     prefix = processPrefix(attr.name.text, prefix);
                     if (prefix) {
-                        return await this.getControllerTypeCompletionItems({ document, prefix, ctrlInfo, vscodeCancelToken: token });
+                        return await this.getControllerTypeCompletionItems({
+                            document,
+                            prefix,
+                            ctrlInfo,
+                            vscodeCancelToken: token,
+                        });
                     }
                 }
             }
@@ -163,7 +179,11 @@ class TypeCompletionProvider implements CompletionItemProvider {
             return;
         }
 
-        const res = await getComponentTypeCompletionApi({ port: this.port, vscodeCancelToken, info: { fileName: scriptFilePath, prefix } });
+        const res = await getComponentTypeCompletionApi({
+            port: this.port,
+            vscodeCancelToken,
+            info: { fileName: scriptFilePath, prefix },
+        });
         if (res) {
             return this.buildCompletionList(res);
         }
@@ -171,7 +191,10 @@ class TypeCompletionProvider implements CompletionItemProvider {
 
     private buildCompletionList(res: NgTypeInfo[]) {
         const items = res.map((x, i) => {
-            const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
+            const item = new CompletionItem(
+                x.name,
+                x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field,
+            );
             if (x.isFunction) {
                 // 分两段补全，第一段是函数名，第二段是参数
                 let snippet = `${x.name}$1(`;

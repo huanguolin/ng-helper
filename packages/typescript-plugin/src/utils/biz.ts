@@ -40,7 +40,10 @@ export function getDirectivesUsableAsAttributes(cache: NgCache): DirectiveInfo[]
     return directives;
 }
 
-export function getTypeInfosFromDirectiveScope(coreCtx: CorePluginContext, directiveInfo: DirectiveInfo): NgTypeInfo[] | undefined {
+export function getTypeInfosFromDirectiveScope(
+    coreCtx: CorePluginContext,
+    directiveInfo: DirectiveInfo,
+): NgTypeInfo[] | undefined {
     const ctx = getCtxOfCoreCtx(coreCtx, directiveInfo.filePath);
     if (!ctx) {
         return;

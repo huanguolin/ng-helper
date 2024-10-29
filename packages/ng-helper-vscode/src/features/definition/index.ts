@@ -32,7 +32,11 @@ import {
 export function registerDefinition(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
-            async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Definition | undefined> {
+            async provideDefinition(
+                document: TextDocument,
+                position: Position,
+                token: CancellationToken,
+            ): Promise<Definition | undefined> {
                 const tagOrAttrHoverInfo = getHoveredTagNameOrAttr(document, document.offsetAt(position));
                 if (tagOrAttrHoverInfo) {
                     return handleTagOrAttr(tagOrAttrHoverInfo, document, port, token);

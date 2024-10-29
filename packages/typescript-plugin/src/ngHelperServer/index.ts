@@ -49,7 +49,10 @@ function createNgHelperServer(): NgHelperServer {
 
         // log record
         if (_getContextMap.size > 0) {
-            const { value: getCoreContext } = _getContextMap.values().next() as { value: GetCoreContextFn; done: boolean };
+            const { value: getCoreContext } = _getContextMap.values().next() as {
+                value: GetCoreContextFn;
+                done: boolean;
+            };
             getCoreContext()?.logger.info('updateConfig(): config:', cfg);
         }
     }

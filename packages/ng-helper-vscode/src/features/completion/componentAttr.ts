@@ -1,6 +1,15 @@
 import { Cursor, canCompletionHtmlAttr, getHtmlTagAt } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
-import { languages, TextDocument, Position, CompletionList, CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
+import {
+    languages,
+    TextDocument,
+    Position,
+    CompletionList,
+    CancellationToken,
+    CompletionItem,
+    SnippetString,
+    CompletionItemKind,
+} from 'vscode';
 
 import { timeCost } from '../../debug';
 import { getComponentAttrCompletionApi } from '../../service/api';
@@ -40,7 +49,11 @@ async function provideComponentAttrCompletion({
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
     const tag = getHtmlTagAt(docText, cursor);
-    if (!tag || !isComponentTagName(tag.tagName) || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
+    if (
+        !tag ||
+        !isComponentTagName(tag.tagName) ||
+        (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)
+    ) {
         return;
     }
 
@@ -50,7 +63,8 @@ async function provideComponentAttrCompletion({
     }
 
     const relatedScriptFile =
-        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
+        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ??
+        document.fileName;
     if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
         return;
     }

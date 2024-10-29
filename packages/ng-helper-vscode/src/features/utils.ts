@@ -44,7 +44,9 @@ export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number
         };
     }
 
-    const attr = tag.attrs.find((attr) => cursorAt >= attr.name.start && cursorAt < attr.name.start + attr.name.text.length);
+    const attr = tag.attrs.find(
+        (attr) => cursorAt >= attr.name.start && cursorAt < attr.name.start + attr.name.text.length,
+    );
     if (attr) {
         return {
             type: 'attrName',
@@ -99,7 +101,10 @@ export function getOriginalFileName(fileName: string): string {
     return originalPath;
 }
 
-export async function getCorrespondingScriptFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
+export async function getCorrespondingScriptFileName(
+    document: TextDocument,
+    searchKey?: string,
+): Promise<string | undefined> {
     if (isInlinedHtml(document)) {
         const originalPath = getOriginalFileName(document.fileName);
         let path = originalPath;
@@ -161,7 +166,12 @@ export function isNgBuiltinDirective(attrName: string): boolean {
 }
 
 export function isNgUserCustomAttr(attrName: string): boolean {
-    return !isNgBuiltinDirective(attrName) && attrName.includes('-') && !attrName.startsWith('data-') && attrName !== 'accept-charset';
+    return (
+        !isNgBuiltinDirective(attrName) &&
+        attrName.includes('-') &&
+        !attrName.startsWith('data-') &&
+        attrName !== 'accept-charset'
+    );
 }
 
 export function isValidIdentifier(text: string): boolean {
@@ -176,7 +186,10 @@ export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
 }
 
-export async function checkServiceAndGetScriptFilePath(document: TextDocument, port: number): Promise<string | undefined> {
+export async function checkServiceAndGetScriptFilePath(
+    document: TextDocument,
+    port: number,
+): Promise<string | undefined> {
     const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {

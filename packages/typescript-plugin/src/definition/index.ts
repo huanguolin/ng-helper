@@ -85,7 +85,14 @@ export function getComponentNameOrAttrNameDefinitionInfo(
     }
 
     const { componentInfo, directiveInfo, transcludeConfig } = findComponentOrDirectiveInfo(cache, hoverInfo);
-    logger.info('componentInfo:', componentInfo, 'directiveInfo:', directiveInfo, 'transcludeConfig:', transcludeConfig);
+    logger.info(
+        'componentInfo:',
+        componentInfo,
+        'directiveInfo:',
+        directiveInfo,
+        'transcludeConfig:',
+        transcludeConfig,
+    );
 
     if (componentInfo || directiveInfo) {
         return getDefinitionInfo((componentInfo || directiveInfo)!);
@@ -126,7 +133,10 @@ export function getComponentNameOrAttrNameDefinitionInfo(
  * @param request 请求
  * @returns 组件类型定义信息
  */
-export function getComponentTypeDefinitionInfo(ctx: PluginContext, { contextString, cursorAt }: NgTypeDefinitionRequest): NgDefinitionResponse {
+export function getComponentTypeDefinitionInfo(
+    ctx: PluginContext,
+    { contextString, cursorAt }: NgTypeDefinitionRequest,
+): NgDefinitionResponse {
     const logger = ctx.logger.prefix('getComponentTypeDefinitionInfo()');
 
     const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
@@ -235,7 +245,9 @@ function getTypeDefinitionInfo({
 
     if (propDeep === 2) {
         const prop = classDeclaration.members.find(
-            (m) => (ctx.ts.isPropertyDeclaration(m) || ctx.ts.isMethodDeclaration(m)) && m.name.getText() === targetNode.text,
+            (m) =>
+                (ctx.ts.isPropertyDeclaration(m) || ctx.ts.isMethodDeclaration(m)) &&
+                m.name.getText() === targetNode.text,
         );
         if (prop) {
             return {

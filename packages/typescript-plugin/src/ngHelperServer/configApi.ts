@@ -42,7 +42,12 @@ import {
     getControllerTypeDefinitionInfo,
     getDirectiveDefinitionInfo,
 } from '../definition';
-import { getComponentTypeHoverInfo, getComponentNameOrAttrNameHoverInfo, getControllerTypeHoverInfo, getDirectiveHoverInfo } from '../hover';
+import {
+    getComponentTypeHoverInfo,
+    getComponentNameOrAttrNameHoverInfo,
+    getControllerTypeHoverInfo,
+    getDirectiveHoverInfo,
+} from '../hover';
 import { getComponentsStringAttrsInfo, getDirectivesStringAttrsInfo } from '../other';
 import type { PluginContext, CorePluginContext } from '../type';
 
@@ -72,7 +77,11 @@ export function configApi(app: express.Application) {
     });
 
     app.post('/ng-helper/component/controller-as', (req, res) => {
-        handleRequestWithCtx<NgRequest, string | undefined>({ req, res, action: (ctx) => getComponentControllerAs(ctx) });
+        handleRequestWithCtx<NgRequest, string | undefined>({
+            req,
+            res,
+            action: (ctx) => getComponentControllerAs(ctx),
+        });
     });
 
     app.get('/ng-helper/hc', (_, res) => res.send('ok'));

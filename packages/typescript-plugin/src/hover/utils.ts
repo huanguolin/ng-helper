@@ -100,7 +100,11 @@ export function beautifyTypeString(typeString: string): string {
     }
 }
 
-export function getMinSyntaxNodeForHover(ctx: PluginContext, contextString: string, cursorAt: number): SyntaxNodeInfoEx | undefined {
+export function getMinSyntaxNodeForHover(
+    ctx: PluginContext,
+    contextString: string,
+    cursorAt: number,
+): SyntaxNodeInfoEx | undefined {
     const sourceFile = createTmpSourceFile(ctx, contextString, 'tmp', /* setParentNodes */ true);
     const node = getNodeAtPosition(ctx, cursorAt, sourceFile);
 
@@ -155,7 +159,11 @@ export function findComponentOrDirectiveInfo(
             }
         } else if (directiveMap.has(hoverInfo.parentTagName)) {
             const directiveInfo = directiveMap.get(hoverInfo.parentTagName)!;
-            if (isElementDirective(directiveInfo) && Array.isArray(directiveInfo.transclude) && directiveInfo.transclude.length > 0) {
+            if (
+                isElementDirective(directiveInfo) &&
+                Array.isArray(directiveInfo.transclude) &&
+                directiveInfo.transclude.length > 0
+            ) {
                 for (const item of directiveInfo.transclude) {
                     const transcludeElementName = item.value.replace('?', '').trim();
                     if (transcludeElementName === hoverInfo.tagName) {

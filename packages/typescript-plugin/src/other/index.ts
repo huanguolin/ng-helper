@@ -29,13 +29,17 @@ export function getComponentsStringAttrsInfo(
     for (const componentName of componentNames) {
         if (componentMap.has(componentName)) {
             const componentInfo = componentMap.get(componentName)!;
-            const bindingNames = componentInfo.bindings.filter((x) => isStringBinding(x.value)).map((x) => getBindingName(x));
+            const bindingNames = componentInfo.bindings
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
             if (bindingNames.length > 0) {
                 result[componentName] = bindingNames;
             }
         } else if (directiveMap.has(componentName)) {
             const directiveInfo = directiveMap.get(componentName)!;
-            const bindingNames = directiveInfo.scope.filter((x) => isStringBinding(x.value)).map((x) => getBindingName(x));
+            const bindingNames = directiveInfo.scope
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
             if (bindingNames.length > 0) {
                 result[componentName] = bindingNames;
             }
@@ -64,7 +68,9 @@ export function getDirectivesStringAttrsInfo(
     for (const maybeDirectiveName of maybeDirectiveNames) {
         const directiveInfo = directiveMap.get(maybeDirectiveName)!;
         if (directiveInfo && isAttributeDirective(directiveInfo)) {
-            const bindingNames = directiveInfo.scope.filter((x) => isStringBinding(x.value)).map((x) => getBindingName(x));
+            const bindingNames = directiveInfo.scope
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
             if (bindingNames.length > 0) {
                 result[maybeDirectiveName] = bindingNames;
             }

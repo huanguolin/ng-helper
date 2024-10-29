@@ -21,7 +21,13 @@ export function findTemplateUrlLink(text: string, document: TextDocument): MyLin
             const startPos = document.positionAt(match.index + matchStr.indexOf(url));
             const endPos = document.positionAt(match.index + matchStr.length - 1);
             const range = new Range(startPos, endPos);
-            links.push({ type: 'templateUrl', fileName: document.fileName, url: url, range, tooltip: 'Go to HTML file' });
+            links.push({
+                type: 'templateUrl',
+                fileName: document.fileName,
+                url: url,
+                range,
+                tooltip: 'Go to HTML file',
+            });
         }
     }
     return links;

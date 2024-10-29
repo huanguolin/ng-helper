@@ -2,7 +2,12 @@ import { NgHoverInfo, type NgCtrlInfo, type NgElementHoverInfo } from '@ng-helpe
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
 import { timeCost } from '../../debug';
-import { getComponentNameOrAttrNameHoverApi, getComponentTypeHoverApi, getControllerTypeHoverApi, getDirectiveHoverApi } from '../../service/api';
+import {
+    getComponentNameOrAttrNameHoverApi,
+    getComponentTypeHoverApi,
+    getControllerTypeHoverApi,
+    getDirectiveHoverApi,
+} from '../../service/api';
 import {
     checkServiceAndGetScriptFilePath,
     getControllerNameInfoFromHtml,
@@ -94,14 +99,23 @@ async function getDirectiveHover(
     return buildHoverResult(res);
 }
 
-async function handleComponentType(document: TextDocument, position: Position, port: number, token: CancellationToken): Promise<Hover | undefined> {
+async function handleComponentType(
+    document: TextDocument,
+    position: Position,
+    port: number,
+    token: CancellationToken,
+): Promise<Hover | undefined> {
     return timeCost('provideComponentTypeHover', async () => {
         const info = await provideTypeHoverInfo({
             document,
             position,
             port,
             api: (scriptFilePath, contextString, cursorAt) =>
-                getComponentTypeHoverApi({ port, vscodeCancelToken: token, info: { fileName: scriptFilePath, contextString, cursorAt } }),
+                getComponentTypeHoverApi({
+                    port,
+                    vscodeCancelToken: token,
+                    info: { fileName: scriptFilePath, contextString, cursorAt },
+                }),
         });
         return buildHoverResult(info);
     });

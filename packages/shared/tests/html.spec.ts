@@ -235,10 +235,13 @@ describe('getHtmlTagAt()', () => {
         expect(tag?.attrs[0].value).toBeUndefined();
     });
 
-    it.each([[{ at: 4, isHover: true }], [{ at: 4, isHover: false }]])('should throw error when cursor invalid: %s', (cursor) => {
-        const htmlText = '123';
-        expect(() => getHtmlTagAt(htmlText, cursor)).toThrow();
-    });
+    it.each([[{ at: 4, isHover: true }], [{ at: 4, isHover: false }]])(
+        'should throw error when cursor invalid: %s',
+        (cursor) => {
+            const htmlText = '123';
+            expect(() => getHtmlTagAt(htmlText, cursor)).toThrow();
+        },
+    );
 
     it(`test: 'ctrl' auto completion not working on <div ng-class="c">, see https://github.com/huanguolin/ng-helper/issues/2`, () => {
         const htmlText = '<h1 ng-class="c">Title</h1>';
@@ -276,7 +279,12 @@ describe('getAttrValueStart()', () => {
         [{ name: 'disabled', value: '' }, { startOffset: 0, endOffset: 8 }, 'disabled', undefined],
         [{ name: 'data-test', value: 'value' }, { startOffset: 0, endOffset: 18 }, 'data-test="value"', 11],
         [{ name: 'style', value: 'color: red' }, { startOffset: 0, endOffset: 19 }, 'style="color: red"', 7],
-        [{ name: 'ng-click', value: 'doSomething()' }, { startOffset: 0, endOffset: 25 }, `ng-click='doSomething()'`, 10],
+        [
+            { name: 'ng-click', value: 'doSomething()' },
+            { startOffset: 0, endOffset: 25 },
+            `ng-click='doSomething()'`,
+            10,
+        ],
     ])('given attr: %p, location: %p, htmlText: %p, should return %p', (attr, location, htmlText, expectedOutput) => {
         const result = getAttrValueStart(attr, location as Location, htmlText);
         expect(result).toBe(expectedOutput);
@@ -299,7 +307,11 @@ describe('getTheAttrWhileCursorAtValue()', () => {
 
     it.each([
         [divTag, { at: 4, isHover: false }, undefined],
-        [divTag, { at: 16, isHover: true }, { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } }],
+        [
+            divTag,
+            { at: 16, isHover: true },
+            { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } },
+        ],
         [divTag, { at: 16, isHover: false }, undefined],
         [divTag, { at: 37, isHover: false }, undefined],
     ])('given tag: %p and cursor: %p, should return %p', (tag, cursor, expectedOutput) => {
@@ -327,9 +339,12 @@ describe('canCompletionComponentName()', () => {
         ['{{}}', { at: 2, isHover: true }, false, undefined],
         ['<span>{{}}</span>', { at: 8, isHover: true }, false, undefined],
         ['<span>{{}}</span>', { at: 6, isHover: true }, true, 'span'],
-    ])('input: %s, cursor: %p => canComplete: %p, tagName: %p', (input: string, cursor: Cursor, canComplete: boolean, tagName?: string) => {
-        const v = canCompletionComponentName(input, cursor);
-        expect(v.canComplete).toBe(canComplete);
-        expect(v.tag?.tagName).toBe(tagName);
-    });
+    ])(
+        'input: %s, cursor: %p => canComplete: %p, tagName: %p',
+        (input: string, cursor: Cursor, canComplete: boolean, tagName?: string) => {
+            const v = canCompletionComponentName(input, cursor);
+            expect(v.canComplete).toBe(canComplete);
+            expect(v.tag?.tagName).toBe(tagName);
+        },
+    );
 });

@@ -118,7 +118,9 @@ export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): Html
         return;
     }
 
-    return tag.attrs.find((attr) => attr.value && attr.value.start <= pos && pos < attr.value.start + attr.value.text.length);
+    return tag.attrs.find(
+        (attr) => attr.value && attr.value.start <= pos && pos < attr.value.start + attr.value.text.length,
+    );
 }
 
 /**
@@ -292,7 +294,12 @@ export function getTextInTemplate(htmlText: string, cursor: Cursor): CursorTextS
  * @returns The text span between the left and right markers, along with the updated cursor position.
  *          Returns undefined if the markers are not found or if the text span contains the markers.
  */
-export function getTextInside(htmlText: string, cursor: Cursor, leftMarker: string, rightMarker: string): CursorTextSpan | undefined {
+export function getTextInside(
+    htmlText: string,
+    cursor: Cursor,
+    leftMarker: string,
+    rightMarker: string,
+): CursorTextSpan | undefined {
     ensureInputValid(htmlText, cursor);
 
     // 注意：这里是要取 Inside 的文本，不含左右标记。所以不是 hover 时，at 要减 1。

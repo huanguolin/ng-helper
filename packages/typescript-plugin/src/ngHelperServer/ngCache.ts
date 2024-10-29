@@ -413,7 +413,11 @@ function getDirectiveInfo(ctx: PluginContext, node: ts.CallExpression): Directiv
         // 获取函数的返回值
         if (directiveFuncExpr) {
             const returnStatement = getAngularDefineFunctionReturnStatement(ctx, directiveFuncExpr);
-            if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
+            if (
+                returnStatement &&
+                returnStatement.expression &&
+                ctx.ts.isObjectLiteralExpression(returnStatement.expression)
+            ) {
                 const configNode = returnStatement.expression;
 
                 // restrict
@@ -519,7 +523,10 @@ function getFilterInfo(ctx: PluginContext, node: ts.CallExpression): FilterInfo 
     };
 }
 
-function getTranscludeInfo(ctx: PluginContext, transclude: ts.ObjectLiteralElementLike): boolean | Property[] | undefined {
+function getTranscludeInfo(
+    ctx: PluginContext,
+    transclude: ts.ObjectLiteralElementLike,
+): boolean | Property[] | undefined {
     if (ctx.ts.isPropertyAssignment(transclude)) {
         if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
             return true;
@@ -532,7 +539,11 @@ function getTranscludeInfo(ctx: PluginContext, transclude: ts.ObjectLiteralEleme
 function getPropertiesOfObjLiteral(ctx: PluginContext, objLiteral: ts.ObjectLiteralExpression): Property[] {
     const props: Property[] = [];
     for (const p of objLiteral.properties) {
-        if (ctx.ts.isPropertyAssignment(p) && ctx.ts.isIdentifier(p.name) && ctx.ts.isStringLiteralLike(p.initializer)) {
+        if (
+            ctx.ts.isPropertyAssignment(p) &&
+            ctx.ts.isIdentifier(p.name) &&
+            ctx.ts.isStringLiteralLike(p.initializer)
+        ) {
             props.push({
                 name: p.name.text,
                 value: p.initializer.text,

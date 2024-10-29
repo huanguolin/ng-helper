@@ -41,7 +41,9 @@ function provideNgDirectiveCompletion({ document, position }: { document: TextDo
 
     return getNgDirectiveConfigList()
         .map(([name, configs]) =>
-            configs.length > 0 ? configs.map((c) => configToCompletionItem(name, c)) : [configToCompletionItem(name, defaultNgConfigExpr)],
+            configs.length > 0
+                ? configs.map((c) => configToCompletionItem(name, c))
+                : [configToCompletionItem(name, defaultNgConfigExpr)],
         )
         .flat()
         .map((item, index) => {

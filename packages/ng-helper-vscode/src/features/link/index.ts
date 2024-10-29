@@ -21,7 +21,10 @@ export function registerLink(context: ExtensionContext, port: number) {
                     const text = document.getText();
                     return [...findControllerNameLink(text, document), ...findTemplateUrlLink(text, document)];
                 },
-                resolveDocumentLink: async function (link: MyLink, token: CancellationToken): Promise<MyLink | undefined> {
+                resolveDocumentLink: async function (
+                    link: MyLink,
+                    token: CancellationToken,
+                ): Promise<MyLink | undefined> {
                     switch (link.type) {
                         case 'templateUrl':
                             return resolveTemplateUrlLink(link);

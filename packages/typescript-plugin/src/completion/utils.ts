@@ -66,7 +66,12 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
             } else if (indexType.flags & ctx.ts.TypeFlags.StringLike) {
                 return getStringAccessType(nodeType, indexType);
             } else {
-                logger.info('[ElementAccess] nodeType:', typeToString(ctx, nodeType), ', indexType:', typeToString(ctx, indexType));
+                logger.info(
+                    '[ElementAccess] nodeType:',
+                    typeToString(ctx, nodeType),
+                    ', indexType:',
+                    typeToString(ctx, indexType),
+                );
             }
         } else {
             logger.info('======<can not be here>=====');

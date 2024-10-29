@@ -11,7 +11,13 @@ import { languages, TextDocument, Position, CompletionItem, CompletionList, Canc
 import { timeCost } from '../../debug';
 import { getComponentControllerAsApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentHtml, isComponentTagName, isNgBuiltinDirective } from '../utils';
+import {
+    getControllerNameInfoFromHtml,
+    getCorrespondingScriptFileName,
+    isComponentHtml,
+    isComponentTagName,
+    isNgBuiltinDirective,
+} from '../utils';
 
 export function ctrl(port: number) {
     return languages.registerCompletionItemProvider('html', {
@@ -68,7 +74,11 @@ async function provideComponentCtrlCompletion({
     }
 }
 
-async function getComponentControllerAsCompletion(document: TextDocument, port: number, vscodeCancelToken: CancellationToken) {
+async function getComponentControllerAsCompletion(
+    document: TextDocument,
+    port: number,
+    vscodeCancelToken: CancellationToken,
+) {
     const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {

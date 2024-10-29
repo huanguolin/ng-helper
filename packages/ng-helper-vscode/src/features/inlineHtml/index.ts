@@ -72,7 +72,11 @@ function requestForwardHover(context: ExtensionContext) {
                     }
 
                     const vDocUri = prepareVirtualDocument(document, vDocText);
-                    const info = await commands.executeCommand<Hover[]>('vscode.executeHoverProvider', vDocUri, position);
+                    const info = await commands.executeCommand<Hover[]>(
+                        'vscode.executeHoverProvider',
+                        vDocUri,
+                        position,
+                    );
                     if (info && info.length) {
                         return info[0];
                     }
@@ -97,7 +101,11 @@ function requestForwardDefinition(context: ExtensionContext) {
                     }
 
                     const vDocUri = prepareVirtualDocument(document, vDocText);
-                    const info = await commands.executeCommand<Definition | undefined>('vscode.executeDefinitionProvider', vDocUri, position);
+                    const info = await commands.executeCommand<Definition | undefined>(
+                        'vscode.executeDefinitionProvider',
+                        vDocUri,
+                        position,
+                    );
                     return info;
                 },
             },

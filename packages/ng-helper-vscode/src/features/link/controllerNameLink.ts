@@ -20,12 +20,22 @@ export function findControllerNameLink(text: string, document: TextDocument): My
         const startPos = document.positionAt(match.index + matchStr.indexOf(controllerName));
         const endPos = document.positionAt(match.index + matchStr.length - 1);
         const range = new Range(startPos, endPos);
-        links.push({ type: 'controllerName', fileName: document.fileName, url: controllerName, range, tooltip: 'Go to controller file' });
+        links.push({
+            type: 'controllerName',
+            fileName: document.fileName,
+            url: controllerName,
+            range,
+            tooltip: 'Go to controller file',
+        });
     }
     return links;
 }
 
-export async function resolveControllerNameLink(link: MyLink, token: CancellationToken, port: number): Promise<MyLink | undefined> {
+export async function resolveControllerNameLink(
+    link: MyLink,
+    token: CancellationToken,
+    port: number,
+): Promise<MyLink | undefined> {
     const result = await getControllerNameDefinitionApi({
         port,
         vscodeCancelToken: token,

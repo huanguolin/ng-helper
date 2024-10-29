@@ -139,9 +139,12 @@ describe('getBindingType()', () => {
         ['=value', false, 'any'],
         ['<value', true, 'any'],
         ['<value', false, 'any'],
-    ])('should return "%s" for input "%s" when perspectivesOnUsing is %s', (bindingConfig, perspectivesOnUsing, expected) => {
-        expect(getBindingType(bindingConfig, perspectivesOnUsing)).toBe(expected);
-    });
+    ])(
+        'should return "%s" for input "%s" when perspectivesOnUsing is %s',
+        (bindingConfig, perspectivesOnUsing, expected) => {
+            expect(getBindingType(bindingConfig, perspectivesOnUsing)).toBe(expected);
+        },
+    );
 });
 
 describe('getBindingTypeInfo()', () => {

@@ -63,7 +63,11 @@ async function provideCustomDirectiveCompletion({
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
     const tag = getHtmlTagAt(docText, cursor);
-    if (!tag || isComponentTagName(tag.tagName) || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
+    if (
+        !tag ||
+        isComponentTagName(tag.tagName) ||
+        (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)
+    ) {
         return;
     }
 
@@ -73,7 +77,8 @@ async function provideCustomDirectiveCompletion({
     }
 
     const relatedScriptFile =
-        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ?? document.fileName;
+        (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ??
+        document.fileName;
     if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
         return;
     }
@@ -95,9 +100,16 @@ async function provideCustomDirectiveCompletion({
     return new CompletionList(
         list.map((x, i) => {
             const directiveName = kebabCase(x.name);
-            const item = new CompletionItem(directiveName, isDirectiveAttr ? CompletionItemKind.Field : CompletionItemKind.Property);
+            const item = new CompletionItem(
+                directiveName,
+                isDirectiveAttr ? CompletionItemKind.Field : CompletionItemKind.Property,
+            );
             item.insertText = new SnippetString(isDirectiveAttr ? `${directiveName}="$1"$0` : `${directiveName}$0`);
-            item.documentation = [isDirectiveAttr ? '(attribute of directive)' : '(directive)', x.typeString && `type: ${x.typeString}`, x.document]
+            item.documentation = [
+                isDirectiveAttr ? '(attribute of directive)' : '(directive)',
+                x.typeString && `type: ${x.typeString}`,
+                x.document,
+            ]
                 .filter(Boolean)
                 .join('\n');
             item.detail = '[ng-helper]';
