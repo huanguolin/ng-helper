@@ -5,6 +5,12 @@ import { isFileExistsOnWorkspace } from '../../utils';
 
 import type { MyLink } from '.';
 
+/**
+ * 匹配单双引号字符串。
+ * (\\.|(?!\\1).) 分为两个部分：
+ * 1. \\. 匹配被转义的任意字符。
+ * 2. (?!\\1). 匹配一个非引号字符，用于确保匹配的字符串不包含引号。
+ */
 const URL_REGEX_STR = `(['"])(\\.|(?!\\1).)*?\\1`;
 const CONTROLLER_NAME_REGEX_STR = `controller\\s*:\\s*${URL_REGEX_STR}`;
 const MATCH_URL = new RegExp(URL_REGEX_STR);
