@@ -1,3 +1,5 @@
+/* eslint-disable no-case-declarations, no-constant-condition */
+
 import { TokenKind, type ScanErrorHandler } from '../types';
 import { noop } from '../utils';
 
@@ -132,7 +134,6 @@ export class Scanner {
 
     private scanNumberFragment(): string {
         const start = this.pos;
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             const c = this.at(this.pos);
             if (this.isDigit(c)) {
@@ -165,7 +166,6 @@ export class Scanner {
 
         let result = '';
         let start = this.pos;
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.isEnd()) {
                 result += this.source.slice(start, this.pos);
@@ -201,12 +201,40 @@ export class Scanner {
 
         const ch = this.at(this.pos);
         this.pos++;
+        // see https://github.com/angular/angular.js/blob/master/src/ng/parse.js#L230
         switch (ch) {
+            case 'b':
+                return '\b';
+            case 't':
+                return '\t';
+            case 'n':
+                return '\n';
+            case 'v':
+                return '\v';
+            case 'f':
+                return '\f';
+            case 'r':
+                return '\r';
+            case "'":
+                return "'";
+            case '"':
+                return '"';
             case 'u':
-                // TODO: support unicode escape sequence
-                return ch;
+                // '\uDDDD'
+                for (; this.pos < start + 6; this.pos++) {
+                    if (this.isEnd() || !this.isHexDigit(this.at(this.pos))) {
+                        this.reportError('Hexadecimal digit expected');
+                        return this.source.substring(start, this.pos);
+                    }
+                }
+                const escapedValue = parseInt(this.source.substring(start + 2, this.pos), 16);
+                return String.fromCharCode(escapedValue);
         }
-        return '';
+        return ch;
+    }
+
+    private isHexDigit(ch: string): boolean {
+        return this.isDigit(ch) || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
     }
 
     private at(n: number): string {
