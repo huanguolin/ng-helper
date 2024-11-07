@@ -70,7 +70,18 @@ export class Scanner {
     }
 
     private readIdentifier(): Token {
-        // TODO
+        const start = this.pos;
+        while (this.isIdentifierContinue(this.at(this.pos))) {
+            this.pos++;
+        }
+        return this.createToken({
+            kind: TokenKind.Identifier,
+            value: this.source.slice(start, this.pos),
+        });
+    }
+
+    private isIdentifierContinue(ch: string): boolean {
+        return this.isIdentifierStart(ch) || this.isDigit(ch);
     }
 
     private isIdentifierStart(ch: string): boolean {
