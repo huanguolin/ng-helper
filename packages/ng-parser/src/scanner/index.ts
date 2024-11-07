@@ -109,7 +109,7 @@ export class Scanner {
             }
             const number = this.scanNumberFragment();
             if (!number) {
-                this.reportError('Digit expected.');
+                this.reportError('Digit expected');
             } else {
                 scientificFragment = sign + number;
             }
@@ -158,7 +158,55 @@ export class Scanner {
     }
 
     private readString(): Token {
-        // TODO
+        const stringStart = this.pos;
+
+        const quote = this.at(this.pos);
+        this.pos++;
+
+        let result = '';
+        let start = this.pos;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            if (this.isEnd()) {
+                result += this.source.slice(start, this.pos);
+                this.reportError('Unterminated string');
+                break;
+            }
+
+            const ch = this.at(this.pos);
+            if (ch === quote) {
+                result += this.source.slice(start, this.pos);
+                this.pos++;
+                break;
+            }
+            if (ch === '\\') {
+                result += this.source.substring(start, this.pos);
+                result += this.scanEscapeSequence();
+                start = this.pos;
+                continue;
+            }
+            this.pos++;
+        }
+        return this.createToken({ kind: TokenKind.String, value: result, start: stringStart });
+    }
+
+    private scanEscapeSequence(): string {
+        const start = this.pos;
+        this.pos++;
+
+        if (this.isEnd()) {
+            this.reportError('Unexpected end of text');
+            return '';
+        }
+
+        const ch = this.at(this.pos);
+        this.pos++;
+        switch (ch) {
+            case 'u':
+                // TODO: support unicode escape sequence
+                return ch;
+        }
+        return '';
     }
 
     private at(n: number): string {
