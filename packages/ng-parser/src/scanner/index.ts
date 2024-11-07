@@ -6,9 +6,16 @@ import { noop } from '../utils';
 import { kindToSignMap, Token } from './token';
 
 const signToKindMap = Object.entries(kindToSignMap).reduce(
-    (s, [k, v]) => Object.assign(s, { [v]: k }),
+    (s, [k, v]) => Object.assign(s, { [v]: Number(k) }),
     {} as Record<string, TokenKind>,
 );
+
+const keywordMap = {
+    ['false']: TokenKind.False,
+    ['true']: TokenKind.True,
+    ['undefined']: TokenKind.Undefined,
+    ['null']: TokenKind.Null,
+} as Record<string, TokenKind>;
 
 export class Scanner {
     private source = '';
@@ -76,10 +83,15 @@ export class Scanner {
         while (this.isIdentifierContinue(this.at(this.pos))) {
             this.pos++;
         }
+        const value = this.source.substring(start, this.pos);
         return this.createToken({
-            kind: TokenKind.Identifier,
-            value: this.source.slice(start, this.pos),
+            kind: this.getKeyword(value) ?? TokenKind.Identifier,
+            value,
         });
+    }
+
+    private getKeyword(value: string): TokenKind | undefined {
+        return keywordMap[value];
     }
 
     private isIdentifierContinue(ch: string): boolean {
@@ -102,18 +114,18 @@ export class Scanner {
 
         // 科学计数法
         let scientificFragment: string | undefined;
+        const end = this.pos;
         if (this.at(this.pos).toLowerCase() === 'e') {
             this.pos++;
-            let sign = '';
             if (this.at(this.pos) === '-' || this.at(this.pos) === '+') {
-                sign = this.at(this.pos);
                 this.pos++;
             }
+            const preNumericPart = this.pos;
             const number = this.scanNumberFragment();
             if (!number) {
                 this.reportError('Digit expected');
             } else {
-                scientificFragment = sign + number;
+                scientificFragment = this.source.substring(end, preNumericPart) + number;
             }
         }
 
@@ -142,7 +154,7 @@ export class Scanner {
                 break;
             }
         }
-        return this.source.slice(start, this.pos);
+        return this.source.substring(start, this.pos);
     }
 
     private isNumberStart(ch: string): boolean {
@@ -168,14 +180,14 @@ export class Scanner {
         let start = this.pos;
         while (true) {
             if (this.isEnd()) {
-                result += this.source.slice(start, this.pos);
+                result += this.source.substring(start, this.pos);
                 this.reportError('Unterminated string');
                 break;
             }
 
             const ch = this.at(this.pos);
             if (ch === quote) {
-                result += this.source.slice(start, this.pos);
+                result += this.source.substring(start, this.pos);
                 this.pos++;
                 break;
             }
