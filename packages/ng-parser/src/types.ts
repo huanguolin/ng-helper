@@ -3,11 +3,6 @@ export interface Location {
     end: number;
 }
 
-export interface LocationWithTrivia extends Location {
-    trivia?: string;
-    getFullStart(): number;
-}
-
 export enum TokenKind {
     /**
      * '+'

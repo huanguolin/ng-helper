@@ -10,56 +10,51 @@ const signToKindMap = Object.entries(kindToSignMap).reduce(
 
 export class Scanner {
     private source = '';
-    private lastEnd = 0;
     private pos = 0;
     private onError: ScanErrorHandler = noop;
-    private inError = false;
 
     initialize(source: string, onError?: ScanErrorHandler) {
         this.source = source;
-        this.lastEnd = 0;
         this.pos = 0;
         if (onError) {
             this.onError = onError;
         }
-        this.inError = false;
     }
 
     scan(): Token {
-        if (this.isEnd()) {
-            return this.createEOFToken();
-        }
-
-        const ch = this.advanceAndSkipSpace();
-        // 跳过所有的空白符后，有可能到达末尾，从而返回了空字符串
-        if (!ch) {
-            return this.createEOFToken();
-        } else if (this.isStringStart(ch)) {
-            return this.readString();
-        } else if (this.isNumberStart(ch)) {
-            return this.readNumber();
-        } else if (this.isIdentifierStart(ch)) {
-            return this.readIdentifier();
-        } else {
-            const ch2 = ch + this.peek();
-            const ch3 = ch2 + this.peek(1);
-            const sign1 = signToKindMap[ch];
-            const sign2 = signToKindMap[ch2];
-            const sign3 = signToKindMap[ch3];
-            const sign = sign3 ?? sign2 ?? sign1;
-            if (isNumberType(sign)) {
-                return this.createToken({
-                    kind: sign,
-                    value: isNumberType(sign3) ? ch3 : isNumberType(ch2) ? ch2 : ch,
-                });
+        while (!this.isEnd()) {
+            const ch = this.at(this.pos);
+            if (this.isWhitespace(ch)) {
+                this.pos++;
+                continue;
+            } else if (this.isStringStart(ch)) {
+                return this.readString();
+            } else if (this.isNumberStart(ch)) {
+                return this.readNumber();
+            } else if (this.isIdentifierStart(ch)) {
+                return this.readIdentifier();
             } else {
-                if (!this.inError) {
-                    this.inError = true;
+                const ch2 = ch + this.at(this.pos + 1);
+                const ch3 = ch2 + this.at(this.pos + 2);
+                const sign1 = signToKindMap[ch];
+                const sign2 = signToKindMap[ch2];
+                const sign3 = signToKindMap[ch3];
+                const sign = sign3 ?? sign2 ?? sign1;
+                if (isNumberType(sign)) {
+                    const value = isNumberType(sign3) ? ch3 : isNumberType(ch2) ? ch2 : ch;
+                    this.pos += value.length;
+                    return this.createToken({
+                        kind: sign,
+                        value,
+                    });
+                } else {
                     this.reportError(`Unexpected character: ${ch}`);
+                    this.pos++;
+                    return this.scan();
                 }
-                return this.scan();
             }
         }
+        return this.createEOFToken();
     }
 
     private createEOFToken(): Token {
@@ -83,16 +78,68 @@ export class Scanner {
     }
 
     private readNumber(): Token {
-        // TODO
+        const mainFragment = this.scanNumberFragment();
+
+        // 小数
+        let decimalFragment: string | undefined;
+        if (this.at(this.pos) === '.') {
+            this.pos++;
+            decimalFragment = this.scanNumberFragment();
+        }
+
+        // 科学计数法
+        let scientificFragment: string | undefined;
+        if (this.at(this.pos).toLowerCase() === 'e') {
+            this.pos++;
+            let sign = '';
+            if (this.at(this.pos) === '-' || this.at(this.pos) === '+') {
+                sign = this.at(this.pos);
+                this.pos++;
+            }
+            const number = this.scanNumberFragment();
+            if (!number) {
+                this.reportError('Digit expected.');
+            } else {
+                scientificFragment = sign + number;
+            }
+        }
+
+        // 组合最终结果
+        let result = mainFragment;
+        if (decimalFragment) {
+            result += '.' + decimalFragment;
+        }
+        if (scientificFragment) {
+            result += scientificFragment;
+        }
+
+        return this.createToken({
+            kind: TokenKind.Number,
+            value: result,
+        });
+    }
+
+    private scanNumberFragment(): string {
+        const start = this.pos;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const c = this.at(this.pos);
+            if (this.isDigit(c)) {
+                this.pos++;
+            } else {
+                break;
+            }
+        }
+        return this.source.slice(start, this.pos);
     }
 
     private isNumberStart(ch: string): boolean {
         // support number like .3
-        return this.isNumber(ch) || (ch === '.' && this.isNumber(this.peek()));
+        return this.isDigit(ch) || (ch === '.' && this.isDigit(this.at(this.pos + 1)));
     }
 
-    private isNumber(ch: string): boolean {
-        return typeof ch === 'string' && '0' <= ch && ch <= '9';
+    private isDigit(ch: string): boolean {
+        return '0' <= ch && ch <= '9';
     }
 
     private isStringStart(ch: string): boolean {
@@ -103,18 +150,8 @@ export class Scanner {
         // TODO
     }
 
-    private advanceAndSkipSpace(): string {
-        while (!this.isEnd()) {
-            const c = this.source.charAt(this.pos++);
-            if (!this.isWhitespace(c)) {
-                return c;
-            }
-        }
-        return '';
-    }
-
-    private peek(n = 0): string {
-        return this.source.charAt(this.pos + n);
+    private at(n: number): string {
+        return this.source.charAt(n);
     }
 
     private isEnd(): boolean {
@@ -126,15 +163,12 @@ export class Scanner {
         return ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n' || ch === '\v' || ch === '\u00A0';
     }
 
-    private createToken(tokenInfo: { kind: TokenKind; value: string }): Token {
+    private createToken(tokenInfo: { kind: TokenKind; value: string; start?: number }): Token {
         const t = new Token({
             ...tokenInfo,
-            start: this.pos - tokenInfo.value.length,
+            start: tokenInfo.start ?? this.pos - tokenInfo.value.length,
             end: this.pos,
-            trivia: this.lastEnd < this.pos ? this.source.slice(this.lastEnd, this.pos) : undefined,
         });
-        this.inError = false;
-        this.lastEnd = t.start;
         return t;
     }
 }
