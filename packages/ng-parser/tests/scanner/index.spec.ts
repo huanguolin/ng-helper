@@ -152,6 +152,20 @@ describe('Scanner', () => {
             });
 
             it.each([
+                ['abc𠮷', 'abc'],
+                ['𠮷abc', 'abc'],
+            ])('should scan identifier with multi-byte characters: %s => %s', (input, output) => {
+                const errors: ScanError[] = [];
+                scanner.initialize(input, (error) => errors.push(error));
+                const token = scanAll(scanner)[0];
+
+                expect(errors.length).toBe(1);
+                expect(errors[0].message).toBe('Unexpected character: 𠮷');
+                expect(token.kind).toBe(TokenKind.Identifier);
+                expect(token.value).toBe(output);
+            });
+
+            it.each([
                 ['undefined', TokenKind.Undefined],
                 ['null', TokenKind.Null],
                 ['true', TokenKind.True],
