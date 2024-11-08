@@ -1,4 +1,3 @@
-/* eslint-disable no-empty */
 /* eslint-disable no-case-declarations, no-constant-condition */
 
 import { TokenKind, type ScanErrorHandler } from '../types';
