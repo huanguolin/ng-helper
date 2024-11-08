@@ -9,10 +9,12 @@
     "tsc:extension": "cd packages/ng-helper-vscode && yarn run tsc",
     "tsc:plugin": "cd packages/typescript-plugin && yarn run tsc",
     "tsc:shared": "cd packages/shared && yarn run tsc",
+    "tsc:ng-parser": "cd packages/ng-parser && yarn run tsc",
     "lint": "eslint . --ext .ts",
     "test": "npm-run-all -p test:*",
-    "test:plugin": "cd packages/typescript-plugin && npm t",
-    "test:shared": "cd packages/shared && npm t"
+    "test:plugin": "cd packages/typescript-plugin && yarn test",
+    "test:shared": "cd packages/shared && yarn test",
+    "test:ng-parser": "cd packages/ng-parser && yarn test"
   },
   "devDependencies": {
     "@types/node": "18.x",

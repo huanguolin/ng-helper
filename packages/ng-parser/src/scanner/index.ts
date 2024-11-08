@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 /* eslint-disable no-case-declarations, no-constant-condition */
 
 import { TokenKind, type ScanErrorHandler } from '../types';
@@ -40,7 +41,7 @@ export class Scanner {
                 return this.readString();
             } else if (this.isNumberStart(ch)) {
                 return this.readNumber();
-            } else if (this.isIdentifierStart(ch)) {
+            } else if (this.isIdentifierStart(this.pickMultiByteChar(this.pos))) {
                 return this.readIdentifier();
             } else {
                 const ch1 = ch;
@@ -58,8 +59,9 @@ export class Scanner {
                         value,
                     });
                 } else {
-                    this.reportError(`Unexpected character: ${ch}`);
-                    this.pos++;
+                    const c = this.pickMultiByteChar(this.pos);
+                    this.reportError(`Unexpected character: ${c}`);
+                    this.pos += c.length;
                     return this.scan();
                 }
             }
@@ -81,8 +83,10 @@ export class Scanner {
 
     private readIdentifier(): Token {
         const start = this.pos;
-        while (this.isIdentifierContinue(this.at(this.pos))) {
-            this.pos++;
+        let ch = this.pickMultiByteChar(this.pos);
+        while (this.isIdentifierContinue(ch)) {
+            this.pos += ch.length;
+            ch = this.pickMultiByteChar(this.pos);
         }
         const value = this.source.substring(start, this.pos);
         return this.createToken({
@@ -252,6 +256,22 @@ export class Scanner {
 
     private at(n: number): string {
         return this.source.charAt(n);
+    }
+
+    private pickMultiByteChar(n: number): string {
+        // see https://github.com/angular/angular.js/blob/master/src/ng/parse.js#L153
+        const ch1 = this.at(n);
+        const ch2 = this.at(n + 1);
+        if (!ch2) {
+            return ch1;
+        }
+
+        const cp1 = ch1.charCodeAt(0);
+        const cp2 = ch2.charCodeAt(0);
+        if (cp1 >= 0xd800 && cp1 <= 0xdbff && cp2 >= 0xdc00 && cp2 <= 0xdfff) {
+            return ch1 + ch2;
+        }
+        return ch1;
     }
 
     private isEnd(): boolean {
