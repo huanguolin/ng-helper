@@ -239,6 +239,7 @@ describe('Scanner', () => {
                 ['"\\""', '"'],
                 ["'\\''", "'"],
                 ['"\\"\\b\\n\\f\\r\\t\\v\\u00A0"', '"\b\n\f\r\t\v\u00A0'],
+                ['"\\m"', 'm'],
             ])('should handle escape sequences: %s', (input, output) => {
                 const token = scanAll(scanner, input)[0];
                 expect(token.kind).toBe(TokenKind.String);
