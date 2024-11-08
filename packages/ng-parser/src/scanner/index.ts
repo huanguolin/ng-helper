@@ -59,7 +59,7 @@ export class Scanner {
                     });
                 } else {
                     const c = this.pickMultiByteChar(this.pos);
-                    this.reportError(`Unexpected character: ${c}`);
+                    this.reportError(`Unexpected character: ${c}`, c.length);
                     this.pos += c.length;
                     return this.scan();
                 }
@@ -72,10 +72,10 @@ export class Scanner {
         return this.createToken({ kind: TokenKind.EOF, value: '' });
     }
 
-    private reportError(message: string) {
+    private reportError(message: string, length = 1) {
         this.onError({
             start: this.pos,
-            end: this.pos + 1,
+            end: this.pos + length,
             message,
         });
     }
