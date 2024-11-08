@@ -43,14 +43,15 @@ export class Scanner {
             } else if (this.isIdentifierStart(ch)) {
                 return this.readIdentifier();
             } else {
-                const ch2 = ch + this.at(this.pos + 1);
+                const ch1 = ch;
+                const ch2 = ch1 + this.at(this.pos + 1);
                 const ch3 = ch2 + this.at(this.pos + 2);
-                const sign1 = signToKindMap[ch];
+                const sign1 = signToKindMap[ch1];
                 const sign2 = signToKindMap[ch2];
                 const sign3 = signToKindMap[ch3];
                 const sign = sign3 ?? sign2 ?? sign1;
                 if (isNumberType(sign)) {
-                    const value = isNumberType(sign3) ? ch3 : isNumberType(ch2) ? ch2 : ch;
+                    const value = isNumberType(sign3) ? ch3 : isNumberType(sign2) ? ch2 : ch1;
                     this.pos += value.length;
                     return this.createToken({
                         kind: sign,
