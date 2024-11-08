@@ -7,7 +7,8 @@
     "tsc": "tsc --noEmit",
     "lint": "eslint . --ext ts",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",
