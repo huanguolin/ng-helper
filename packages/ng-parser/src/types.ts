@@ -166,37 +166,46 @@ export enum TokenKind {
 }
 
 export type LiteralTokenKind =
-    | TokenKind.Number
-    | TokenKind.String
     | TokenKind.True
     | TokenKind.False
+    | TokenKind.Null
     | TokenKind.Undefined
-    | TokenKind.Null;
-
-export type MultiplicativeOperatorOrHigher = TokenKind.Multiply | TokenKind.Divide | TokenKind.Modulo;
+    | TokenKind.String
+    | TokenKind.Number;
+export type MultiplicativeOperator = TokenKind.Multiply | TokenKind.Divide | TokenKind.Modulo;
 export type AdditiveOperator = TokenKind.Plus | TokenKind.Minus;
-export type AdditiveOperatorOrHigher = MultiplicativeOperatorOrHigher | AdditiveOperator;
+export type UnaryOperator = TokenKind.Plus | TokenKind.Minus | TokenKind.Not;
 export type RelationalOperator =
     | TokenKind.LessThan
     | TokenKind.LessThanOrEqual
     | TokenKind.GreaterThan
     | TokenKind.GreaterThanOrEqual;
-export type RelationalOperatorOrHigher = AdditiveOperatorOrHigher | RelationalOperator;
 export type EqualityOperator = TokenKind.Equal | TokenKind.StrictEqual | TokenKind.NotEqual | TokenKind.StrictNotEqual;
-export type EqualityOperatorOrHigher = RelationalOperatorOrHigher | EqualityOperator;
-export type LogicalOperatorOrHigher = TokenKind.And | TokenKind.Or;
-export type AssignmentOperatorOrHigher = LogicalOperatorOrHigher | TokenKind.Assign;
-export type BinaryOperator = AssignmentOperatorOrHigher | TokenKind.Comma;
+export type LogicalOperator = TokenKind.And | TokenKind.Or;
+export type BinaryOperator =
+    | LogicalOperator
+    | EqualityOperator
+    | RelationalOperator
+    | AdditiveOperator
+    | MultiplicativeOperator;
 
 export interface PunctuationToken<TKind extends TokenKind> extends Token {
     readonly kind: TKind;
 }
 
-export type NotToken = PunctuationToken<TokenKind.Not>;
+export type IdentifierToken = PunctuationToken<TokenKind.Identifier>;
+export type DotToken = PunctuationToken<TokenKind.Dot>;
+export type PipeToken = PunctuationToken<TokenKind.Pipe>;
 export type QuestionToken = PunctuationToken<TokenKind.Question>;
 export type AssignToken = PunctuationToken<TokenKind.Assign>;
+export type LeftBracketToken = PunctuationToken<TokenKind.LeftBracket>;
+export type RightBracketToken = PunctuationToken<TokenKind.RightBracket>;
+export type LeftParenToken = PunctuationToken<TokenKind.LeftParen>;
+export type RightParenToken = PunctuationToken<TokenKind.RightParen>;
 export type ColonToken = PunctuationToken<TokenKind.Colon>;
+export type UnaryToken = PunctuationToken<UnaryOperator>;
 export type BinaryOperatorToken = PunctuationToken<BinaryOperator>;
+export type LiteralTokenToken = PunctuationToken<LiteralTokenKind>;
 
 export enum ErrorReporter {
     Scanner,
@@ -212,129 +221,27 @@ export type ErrorHandler = (error: NgParseError) => void;
 
 export enum SyntaxKind {
     Program,
-    EOFStatement,
     ExpressionStatement,
+    FilterExpression,
     AssignExpression,
     ConditionalExpression,
     BinaryExpression,
     UnaryExpression,
     ArrayLiteralExpression,
     ObjectLiteralExpression,
-    ElementAccessExpression,
-    PropertyAccessExpression,
-    CallExpression,
-    GroupExpression,
     PropertyAssignment,
+    ElementAccess,
+    PropertyAccessExpression,
+    ElementAccessExpression,
+    CallExpression,
     Identifier,
     Literal,
+    GroupExpression,
 }
 
-export interface Node extends Location {
-    readonly kind: SyntaxKind;
-}
-
-export interface Program extends Node {
-    readonly kind: SyntaxKind.Program;
-    readonly source: string;
-    readonly statements: Statement[];
-    readonly errors: NgParseError[];
-}
-
-export interface Statement extends Node {
-    _statementBrand: any;
-}
-
-export interface EOFStatement extends Statement {
-    readonly kind: SyntaxKind.EOFStatement;
-}
-
-export interface ExpressionStatement extends Statement {
-    readonly kind: SyntaxKind.ExpressionStatement;
-    readonly expression: Expression;
-}
-
-export interface Expression extends Node {
-    _expressionBrand: any;
-}
-
-export interface LeftHandSideExpression extends Expression {
-    _leftHandSideExpressionBrand: any;
-}
-
-export interface AssignExpression extends Expression {
-    readonly kind: SyntaxKind.AssignExpression;
-    readonly left: LeftHandSideExpression;
-    readonly operator: AssignToken;
-    readonly initializer: Expression;
-}
-
-export interface ConditionalExpression extends Expression {
-    readonly kind: SyntaxKind.ConditionalExpression;
-    readonly condition: Expression;
-    readonly questionToken: QuestionToken;
-    readonly whenTrue: Expression;
-    readonly colonToken: ColonToken;
-    readonly whenFalse: Expression;
-}
-
-export interface BinaryExpression extends Expression {
-    readonly kind: SyntaxKind.BinaryExpression;
-    readonly left: Expression;
-    readonly operatorToken: BinaryOperatorToken;
-    readonly right: Expression;
-}
-
-export interface UnaryExpression extends Expression {
-    readonly kind: SyntaxKind.UnaryExpression;
-    readonly operator: NotToken;
-    readonly operand: UnaryExpression;
-}
-
-export interface CallExpression extends Expression {
-    readonly kind: SyntaxKind.CallExpression;
-    readonly expression: LeftHandSideExpression;
-    readonly arguments: Expression[];
-    readonly isFilter?: boolean;
-}
-
-export interface ArrayLiteralExpression extends Expression {
-    readonly kind: SyntaxKind.ArrayLiteralExpression;
-    readonly elements: Expression[];
-}
-
-export interface PropertyAssignment extends Node {
-    readonly kind: SyntaxKind.PropertyAssignment;
-    readonly name: Identifier;
-    readonly initializer: Expression;
-}
-
-export interface ObjectLiteralExpression extends Expression {
-    readonly kind: SyntaxKind.ObjectLiteralExpression;
-    readonly properties: PropertyAssignment[];
-}
-
-export interface PropertyAccessExpression extends LeftHandSideExpression {
-    readonly kind: SyntaxKind.PropertyAccessExpression;
-    readonly parent: LeftHandSideExpression;
-    readonly name: Identifier;
-}
-
-export interface ElementAccessExpression extends LeftHandSideExpression {
-    readonly kind: SyntaxKind.ElementAccessExpression;
-    readonly expression: LeftHandSideExpression;
-    readonly argumentExpression: Expression;
-}
-
-export interface Identifier extends Node {
-    readonly kind: SyntaxKind.Identifier;
-    readonly name: string;
-}
-
-export interface Literal extends Node {
-    readonly kind: SyntaxKind.Literal;
-    readonly literalTokenKind: LiteralTokenKind;
-    /**
-     * Only number/string has this.
-     */
-    readonly value?: string;
+export enum NodeFlags {
+    None = 0,
+    Expression = 1 << 0,
+    NormalExpression = Expression | (1 << 1),
+    LeftHandExpression = NormalExpression | (1 << 2),
 }

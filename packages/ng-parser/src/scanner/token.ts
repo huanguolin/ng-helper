@@ -60,7 +60,11 @@ export class Token implements Location {
         }
     }
 
-    is(tokenKind: TokenKind): boolean {
+    static createEmpty(kind: TokenKind): Token {
+        return new Token({ kind, start: -1, end: -1 });
+    }
+
+    is<T extends Token>(tokenKind: TokenKind): this is T {
         return this.kind === tokenKind;
     }
 

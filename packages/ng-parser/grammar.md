@@ -19,7 +19,7 @@ ExpressionStatement     -> Expression ';'?
 Expression              -> FilterExpression
 FilterExpression        -> AssignExpression ('|' Identifier (':' AssignExpression)*)*
 AssignExpression        -> ConditionalExpression ('=' AssignExpression)?
-ConditionalExpression   -> LogicalOrExpression ('?' LogicalOrExpression : LogicalOrExpression)?
+ConditionalExpression   -> LogicalOrExpression ('?' AssignExpression : AssignExpression)?
 LogicalOrExpression     -> LogicalAndExpression ('||' LogicalAndExpression)*
 LogicalAndExpression    -> EqualityExpression ('&&' EqualityExpression)*
 EqualityExpression      -> RelationalExpression (('==' | '!=' | '===' | '!==') RelationalExpression)*
@@ -42,9 +42,9 @@ Constant                -> String | Number
 ArrayLiteralExpression  -> '[' ArrayElements ']'
 ArrayElements           -> (AssignExpression (',' AssignExpression)* ','?)?
 
-ObjectLiteralExpression -> '{' ObjectLiteralExpression '}'
-ObjectElements          -> (ObjectElement (',' ObjectElement)* ','?)?
-ObjectElement           -> (Constant | Identifier | '[' AssignExpression ']') ':' AssignExpression
+ObjectLiteralExpression -> '{' ObjectProperties '}'
+ObjectProperties        -> (ObjectProperty (',' ObjectProperty)* ','?)?
+ObjectProperty          -> (Constant | Identifier | '[' AssignExpression ']') ':' AssignExpression
 
 
 # ------ literal ------
