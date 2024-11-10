@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations, no-constant-condition */
 
-import { TokenKind, type ScanErrorHandler } from '../types';
+import { ErrorReporter, TokenKind, type ErrorHandler } from '../types';
 import { noop } from '../utils';
 
 import { kindToSignMap, Token } from './token';
@@ -20,9 +20,9 @@ const keywordMap = {
 export class Scanner {
     private source = '';
     private pos = 0;
-    private onError: ScanErrorHandler = noop;
+    private onError: ErrorHandler = noop;
 
-    initialize(source: string, onError?: ScanErrorHandler) {
+    initialize(source: string, onError?: ErrorHandler) {
         this.source = source;
         this.pos = 0;
         if (onError) {
@@ -74,6 +74,7 @@ export class Scanner {
 
     private reportError(message: string, length = 1) {
         this.onError({
+            reporter: ErrorReporter.Scanner,
             start: this.pos,
             end: this.pos + length,
             message,

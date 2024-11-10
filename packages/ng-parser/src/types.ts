@@ -198,14 +198,21 @@ export type AssignToken = PunctuationToken<TokenKind.Assign>;
 export type ColonToken = PunctuationToken<TokenKind.Colon>;
 export type BinaryOperatorToken = PunctuationToken<BinaryOperator>;
 
-export interface Error extends Location {
-    readonly message: string;
+export enum ErrorReporter {
+    Scanner,
+    Parser,
 }
 
-export type ScanErrorHandler = (error: Error) => void;
+export interface NgParseError extends Location {
+    readonly message: string;
+    readonly reporter: ErrorReporter;
+}
+
+export type ErrorHandler = (error: NgParseError) => void;
 
 export enum SyntaxKind {
     Program,
+    EOFStatement,
     ExpressionStatement,
     AssignExpression,
     ConditionalExpression,
@@ -229,8 +236,21 @@ export interface Node extends Location {
 export interface Program extends Node {
     readonly kind: SyntaxKind.Program;
     readonly source: string;
-    readonly statements: ExpressionStatement[];
-    readonly errors: Error[];
+    readonly statements: Statement[];
+    readonly errors: NgParseError[];
+}
+
+export interface Statement extends Node {
+    _statementBrand: any;
+}
+
+export interface EOFStatement extends Statement {
+    readonly kind: SyntaxKind.EOFStatement;
+}
+
+export interface ExpressionStatement extends Statement {
+    readonly kind: SyntaxKind.ExpressionStatement;
+    readonly expression: Expression;
 }
 
 export interface Expression extends Node {
@@ -239,11 +259,6 @@ export interface Expression extends Node {
 
 export interface LeftHandSideExpression extends Expression {
     _leftHandSideExpressionBrand: any;
-}
-
-export interface ExpressionStatement extends Node {
-    readonly kind: SyntaxKind.ExpressionStatement;
-    readonly expression: Expression;
 }
 
 export interface AssignExpression extends Expression {
@@ -279,6 +294,7 @@ export interface CallExpression extends Expression {
     readonly kind: SyntaxKind.CallExpression;
     readonly expression: LeftHandSideExpression;
     readonly arguments: Expression[];
+    readonly isFilter?: boolean;
 }
 
 export interface ArrayLiteralExpression extends Expression {

@@ -60,6 +60,10 @@ export class Token implements Location {
         }
     }
 
+    is(tokenKind: TokenKind): boolean {
+        return this.kind === tokenKind;
+    }
+
     toString(): string {
         if (this.value) {
             return this.value;

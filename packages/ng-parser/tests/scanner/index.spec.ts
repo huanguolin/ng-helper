@@ -1,5 +1,5 @@
 import { Scanner } from '../../src/scanner';
-import { TokenKind, type Error } from '../../src/types';
+import { ErrorReporter, TokenKind, type NgParseError } from '../../src/types';
 
 describe('Scanner', () => {
     const scanner = new Scanner();
@@ -94,16 +94,17 @@ describe('Scanner', () => {
 
         describe('invalid characters', () => {
             it.each(['@', '`', '~', '#', '^', '&'])('should report invalid characters: %s', (ch) => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize(ch, (error) => errors.push(error));
                 scanner.scan();
 
                 expect(errors.length).toBe(1);
                 expect(errors[0].message).toBe('Unexpected character: ' + ch);
+                expect(errors[0].reporter).toBe(ErrorReporter.Scanner);
             });
 
             it('should not report invalid characters in strings', () => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize('"@`~#^&"', (error) => errors.push(error));
                 const tokens = scanAll(scanner);
                 expect(errors.length).toBe(0);
@@ -113,7 +114,7 @@ describe('Scanner', () => {
             });
 
             it('should continue scanning after invalid characters', () => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize('123@`~||#^&"str"', (error) => errors.push(error));
                 const tokens = scanAll(scanner);
 
@@ -155,7 +156,7 @@ describe('Scanner', () => {
                 ['abc𠮷', 'abc', 3],
                 ['𠮷abc', 'abc', 0],
             ])('should scan identifier with multi-byte characters: %s => %s', (input, output, errorAt) => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize(input, (error) => errors.push(error));
                 const token = scanAll(scanner)[0];
 
@@ -227,7 +228,7 @@ describe('Scanner', () => {
                 ['10E+', 4],
                 ['10E+abc', 4],
             ])('should report digit expected: %s at %s', (input, at) => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize(input, (error) => errors.push(error));
                 scanner.scan();
 
@@ -278,7 +279,7 @@ describe('Scanner', () => {
             });
 
             it('should report unterminated string', () => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize('"unclosed', (error) => errors.push(error));
                 const token = scanner.scan();
 
@@ -291,7 +292,7 @@ describe('Scanner', () => {
             });
 
             it('should report unexpected end of text', () => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize('"invalid\\', (error) => errors.push(error));
                 const token = scanner.scan();
 
@@ -313,7 +314,7 @@ describe('Scanner', () => {
                 ['"\\uDDm"', 5],
                 ['"\\uDDDm"', 6],
             ])('should report hexadecimal digit expected: %s at %s', (input, at) => {
-                const errors: Error[] = [];
+                const errors: NgParseError[] = [];
                 scanner.initialize(input, (error) => errors.push(error));
                 const token = scanner.scan();
 
