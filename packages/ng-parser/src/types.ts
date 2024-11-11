@@ -203,7 +203,7 @@ export type RightBracketToken = PunctuationToken<TokenKind.RightBracket>;
 export type LeftParenToken = PunctuationToken<TokenKind.LeftParen>;
 export type RightParenToken = PunctuationToken<TokenKind.RightParen>;
 export type ColonToken = PunctuationToken<TokenKind.Colon>;
-export type UnaryToken = PunctuationToken<UnaryOperator>;
+export type UnaryOperatorToken = PunctuationToken<UnaryOperator>;
 export type BinaryOperatorToken = PunctuationToken<BinaryOperator>;
 export type LiteralTokenToken = PunctuationToken<LiteralTokenKind>;
 

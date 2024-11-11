@@ -28,7 +28,7 @@ import {
     type QuestionToken,
     type ColonToken,
     type BinaryOperatorToken,
-    type UnaryToken,
+    type UnaryOperatorToken,
     type DotToken,
     type RightBracketToken,
     type LeftBracketToken,
@@ -163,7 +163,7 @@ describe('BinaryExpression', () => {
 
 describe('UnaryExpression', () => {
     it('should have correct kind and store properties', () => {
-        const operator = createToken<UnaryToken>(TokenKind.Not);
+        const operator = createToken<UnaryOperatorToken>(TokenKind.Not);
         const operand = new Literal(createToken(TokenKind.True));
 
         const unary = new UnaryExpression(operator, operand);

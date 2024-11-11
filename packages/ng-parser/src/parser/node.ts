@@ -14,7 +14,7 @@ import type {
     QuestionToken,
     RightBracketToken,
     RightParenToken,
-    UnaryToken,
+    UnaryOperatorToken,
 } from '../types';
 import { SyntaxKind, NodeFlags } from '../types';
 
@@ -133,10 +133,10 @@ export class BinaryExpression extends NormalExpression {
 }
 
 export class UnaryExpression extends NormalExpression {
-    readonly operator: UnaryToken;
+    readonly operator: UnaryOperatorToken;
     readonly operand: NormalExpression;
 
-    constructor(operator: UnaryToken, operand: NormalExpression) {
+    constructor(operator: UnaryOperatorToken, operand: NormalExpression) {
         super(SyntaxKind.UnaryExpression, operator, operand);
         this.operator = operator;
         this.operand = operand;
@@ -144,9 +144,9 @@ export class UnaryExpression extends NormalExpression {
 }
 
 export class CallExpression extends NormalExpression {
-    readonly name: Identifier;
+    readonly name: LeftHandExpression;
     readonly args: Expression[];
-    constructor(name: Identifier, args: Expression[]) {
+    constructor(name: LeftHandExpression, args: Expression[]) {
         super(SyntaxKind.CallExpression, name, ...args);
         this.name = name;
         this.args = args;
