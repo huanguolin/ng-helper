@@ -47,10 +47,10 @@ export abstract class Expression extends Node {
     flags = NodeFlags.Expression;
 }
 export abstract class NormalExpression extends Expression {
-    flags = NodeFlags.NormalExpression;
+    flags = NodeFlags.Expression | NodeFlags.NormalExpression;
 }
 export abstract class LeftHandExpression extends NormalExpression {
-    flags = NodeFlags.LeftHandExpression;
+    flags = NodeFlags.Expression | NodeFlags.NormalExpression | NodeFlags.LeftHandExpression;
 }
 
 export class Program extends Node {

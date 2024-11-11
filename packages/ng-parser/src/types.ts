@@ -242,6 +242,6 @@ export enum SyntaxKind {
 export enum NodeFlags {
     None = 0,
     Expression = 1 << 0,
-    NormalExpression = Expression | (1 << 1),
-    LeftHandExpression = NormalExpression | (1 << 2),
+    NormalExpression = 1 << 1,
+    LeftHandExpression = 1 << 2,
 }
