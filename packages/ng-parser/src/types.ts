@@ -202,10 +202,12 @@ export type LeftBracketToken = PunctuationToken<TokenKind.LeftBracket>;
 export type RightBracketToken = PunctuationToken<TokenKind.RightBracket>;
 export type LeftParenToken = PunctuationToken<TokenKind.LeftParen>;
 export type RightParenToken = PunctuationToken<TokenKind.RightParen>;
+export type LeftBraceToken = PunctuationToken<TokenKind.LeftBrace>;
+export type RightBraceToken = PunctuationToken<TokenKind.RightBrace>;
 export type ColonToken = PunctuationToken<TokenKind.Colon>;
 export type UnaryOperatorToken = PunctuationToken<UnaryOperator>;
 export type BinaryOperatorToken = PunctuationToken<BinaryOperator>;
-export type LiteralTokenToken = PunctuationToken<LiteralTokenKind>;
+export type LiteralToken = PunctuationToken<LiteralTokenKind>;
 
 export enum ErrorReporter {
     Scanner,

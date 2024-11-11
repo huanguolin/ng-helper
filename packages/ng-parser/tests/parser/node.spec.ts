@@ -34,6 +34,8 @@ import {
     type LeftBracketToken,
     type LeftParenToken,
     type RightParenToken,
+    type LeftBraceToken,
+    type RightBraceToken,
 } from '../../src/types';
 
 describe('Node', () => {
@@ -86,15 +88,17 @@ describe('Program', () => {
     });
 });
 
-describe('Literal', () => {
-    it.each([
-        [TokenKind.Number, '42'],
-        [TokenKind.String, 'hello'],
-    ])('should correctly store literal value: %s, %s', (kind, value) => {
-        const literal = new Literal(createToken(kind, { value, end: value.length }));
-        expect(literal.kind).toBe(SyntaxKind.Literal);
-        expect(literal.literalTokenKind).toBe(kind);
-        expect(literal.value).toBe(value);
+describe('ExpressionStatement', () => {
+    it('should have correct kind and store expression', () => {
+        const expression = new Identifier(createToken(TokenKind.Identifier, { value: 'test' }));
+        const semicolon = createToken(TokenKind.Semicolon, { start: 4, end: 5 });
+
+        const statement = new ExpressionStatement(expression, semicolon);
+
+        expect(statement.kind).toBe(SyntaxKind.ExpressionStatement);
+        expect(statement.expression).toBe(expression);
+        expect(statement.start).toBe(0);
+        expect(statement.end).toBe(5);
     });
 });
 
@@ -177,9 +181,11 @@ describe('UnaryExpression', () => {
 describe('CallExpression', () => {
     it('should have correct kind and store properties', () => {
         const name = new Identifier(createToken(TokenKind.Identifier, { value: 'fn' }));
+        const leftParen = createToken<LeftParenToken>(TokenKind.LeftParen);
         const args: NormalExpression[] = [new Literal(createToken(TokenKind.Number, { value: '42' }))];
+        const rightParen = createToken<RightParenToken>(TokenKind.RightParen);
 
-        const call = new CallExpression(name, args);
+        const call = new CallExpression(name, leftParen, args, rightParen);
 
         expect(call.kind).toBe(SyntaxKind.CallExpression);
         expect(call.name).toBe(name);
@@ -189,12 +195,13 @@ describe('CallExpression', () => {
 
 describe('ArrayLiteralExpression', () => {
     it('should have correct kind and store properties', () => {
+        const leftBracket = createToken<LeftBracketToken>(TokenKind.LeftBracket);
         const elements = [
             new Literal(createToken(TokenKind.Number, { value: '1' })),
             new Literal(createToken(TokenKind.Number, { value: '2' })),
         ];
-
-        const array = new ArrayLiteralExpression(elements);
+        const rightBracket = createToken<RightBracketToken>(TokenKind.RightBracket);
+        const array = new ArrayLiteralExpression(leftBracket, elements, rightBracket);
 
         expect(array.kind).toBe(SyntaxKind.ArrayLiteralExpression);
         expect(array.elements).toBe(elements);
@@ -203,11 +210,13 @@ describe('ArrayLiteralExpression', () => {
 
 describe('ObjectLiteralExpression', () => {
     it('should have correct kind and store properties', () => {
+        const leftBrace = createToken<LeftBraceToken>(TokenKind.LeftBrace);
         const property = new Identifier(createToken(TokenKind.Identifier, { value: 'key' }));
         const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
         const assignment = new PropertyAssignment(property, value);
+        const rightBrace = createToken<RightBraceToken>(TokenKind.RightBrace);
 
-        const object = new ObjectLiteralExpression([assignment]);
+        const object = new ObjectLiteralExpression(leftBrace, [assignment], rightBrace);
 
         expect(object.kind).toBe(SyntaxKind.ObjectLiteralExpression);
         expect(object.properties).toHaveLength(1);
@@ -258,6 +267,80 @@ describe('GroupExpression', () => {
 
         expect(group.kind).toBe(SyntaxKind.GroupExpression);
         expect(group.expression).toBe(expression);
+    });
+});
+
+describe('PropertyAssignment', () => {
+    it('should have correct kind and store properties', () => {
+        const property = new Identifier(createToken(TokenKind.Identifier, { value: 'key' }));
+        const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
+
+        const assignment = new PropertyAssignment(property, value);
+
+        expect(assignment.kind).toBe(SyntaxKind.PropertyAssignment);
+        expect(assignment.property).toBe(property);
+        expect(assignment.initializer).toBe(value);
+    });
+
+    it('should accept string literal as property', () => {
+        const property = new Literal(createToken(TokenKind.String, { value: 'key' }));
+        const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
+
+        const assignment = new PropertyAssignment(property, value);
+        expect(assignment.property).toBe(property);
+    });
+
+    it('should accept number literal as property', () => {
+        const property = new Literal(createToken(TokenKind.Number, { value: '1' }));
+        const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
+
+        const assignment = new PropertyAssignment(property, value);
+        expect(assignment.property).toBe(property);
+    });
+
+    it('should accept element access as property', () => {
+        const expression = new Literal(createToken(TokenKind.Number, { value: '0' }));
+        const property = new ElementAccess(
+            createToken<LeftBracketToken>(TokenKind.LeftBracket),
+            expression,
+            createToken<RightBracketToken>(TokenKind.RightBracket),
+        );
+        const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
+
+        const assignment = new PropertyAssignment(property, value);
+        expect(assignment.property).toBe(property);
+    });
+
+    it('should throw error for invalid literal property types', () => {
+        const property = new Literal(createToken(TokenKind.True));
+        const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
+
+        expect(() => new PropertyAssignment(property, value)).toThrow('Expect string/number literal');
+    });
+});
+
+describe('ElementAccess', () => {
+    it('should have correct kind and store expression', () => {
+        const expression = new Literal(createToken(TokenKind.Number, { value: '0' }));
+        const leftBracket = createToken<LeftBracketToken>(TokenKind.LeftBracket);
+        const rightBracket = createToken<RightBracketToken>(TokenKind.RightBracket);
+
+        const access = new ElementAccess(leftBracket, expression, rightBracket);
+
+        expect(access.kind).toBe(SyntaxKind.ElementAccess);
+        expect(access.expression).toBe(expression);
+    });
+});
+
+describe('Literal', () => {
+    it.each([
+        [TokenKind.Number, '42'],
+        [TokenKind.String, 'hello'],
+    ])('should correctly store literal value: %s, %s', (kind, value) => {
+        const literal = new Literal(createToken(kind, { value, end: value.length }));
+        expect(literal.kind).toBe(SyntaxKind.Literal);
+        expect(literal.literalTokenKind).toBe(kind);
+        expect(literal.value).toBe(value);
     });
 });
 

@@ -11,12 +11,14 @@ import {
     type ColonToken,
     type DotToken,
     type IdentifierToken,
+    type LeftBraceToken,
     type LeftBracketToken,
     type LeftParenToken,
-    type LiteralTokenToken,
+    type LiteralToken,
     type NgParseError,
     type PipeToken,
     type QuestionToken,
+    type RightBraceToken,
     type RightBracketToken,
     type RightParenToken,
     type UnaryOperatorToken,
@@ -66,7 +68,7 @@ export class Parser {
     }
 
     private isEnd(): boolean {
-        return this.currentToken.is(TokenKind.EOF);
+        return this.token().is(TokenKind.EOF);
     }
 
     private handleError(error: NgParseError) {
@@ -75,7 +77,7 @@ export class Parser {
 
     private reportError(message: string, token?: Token) {
         if (!token) {
-            token = this.currentToken;
+            token = this.token();
         }
         this.handleError({
             reporter: ErrorReporter.Parser,
@@ -85,30 +87,32 @@ export class Parser {
         });
     }
 
-    private nextToken(): Token {
-        this.previousToken = this.currentToken;
-        this.currentToken = this.scanner.scan();
-        return this.currentToken;
+    // 使用 token() 能避免直接使用 currentToken 导致的类型流分析不正确。
+    // 比如，前一步判断了 currentToken 不是 A 类型，接着调用了 nextToken() 后，
+    // currentToken 又有可能是 A 类型了，但是直接使用 currentToken，IDE 可能提示错误。
+    private token<T extends Token = Token>(): T {
+        return this.currentToken as T;
     }
 
-    private nextTokenAnd<T>(func: () => T): T {
-        this.nextToken();
-        return func();
+    private nextToken(): Token {
+        this.previousToken = this.token();
+        this.currentToken = this.scanner.scan();
+        return this.token();
     }
 
     private consume<T extends Token>(tokenKind: TokenKind, message: string): T {
-        const token = this.currentToken;
+        const token = this.token();
         if (token.is<T>(tokenKind)) {
             this.nextToken();
             return token;
         } else {
             this.reportError(message);
-            return Token.createEmpty(tokenKind) as T;
+            return Token.createEmpty(tokenKind);
         }
     }
 
     private expect<T extends Token>(...tokenKinds: TokenKind[]): T | undefined {
-        const token = this.currentToken;
+        const token = this.token();
         if (tokenKinds.some((kind) => token.is<T>(kind))) {
             this.nextToken();
             return token as T;
@@ -135,7 +139,8 @@ export class Parser {
     }
 
     private parseFilterExpression(input: NormalExpression, pipeToken: PipeToken): Expression {
-        const name = this.parseIdentifier();
+        const token = this.consume<IdentifierToken>(TokenKind.Identifier, 'Expect an "Identifier" after "|"');
+        const name = new Identifier(token);
         const args: NormalExpression[] = [];
         while (this.expect(TokenKind.Colon)) {
             args.push(this.parseNormalExpression());
@@ -152,7 +157,7 @@ export class Parser {
         let assignToken: AssignToken | undefined;
         while ((assignToken = this.expect<AssignToken>(TokenKind.Assign))) {
             if (!left.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                this.reportError('Can not to assign a value to a non left-hand-value', this.previousToken);
+                this.reportError('Can not assign a value to a non left-hand-value', this.previousToken);
             }
             left = new AssignExpression(left, assignToken, this.parseConditionalExpression());
         }
@@ -163,9 +168,9 @@ export class Parser {
         const condition = this.parseLogicalOrExpression();
         const questionToken = this.expect<QuestionToken>(TokenKind.Question);
         if (questionToken) {
-            const whenTrue = this.parseAssignExpression();
+            const whenTrue = this.parseNormalExpression();
             const colonToken = this.consume<ColonToken>(TokenKind.Colon, 'Expect ":" for conditional expression');
-            const whenFalse = this.parseAssignExpression();
+            const whenFalse = this.parseNormalExpression();
             return new ConditionalExpression(condition, questionToken, whenTrue, colonToken, whenFalse);
         }
         return condition;
@@ -245,56 +250,40 @@ export class Parser {
         const unaryToken = this.expect<UnaryOperatorToken>(TokenKind.Not, TokenKind.Minus, TokenKind.Plus);
         if (unaryToken) {
             return new UnaryExpression(unaryToken, this.parseUnaryExpression());
-        } else {
-            const primary = this.parsePrimaryExpression();
-
-            // CallExpression
-            const callToken = this.expect<LeftParenToken>(TokenKind.LeftParen);
-            if (callToken) {
-                if (!primary.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                    this.reportError('Expect a left-hand-value for call expression', primary);
-                }
-                const args = this.parseArguments();
-                this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of arguments');
-                return new CallExpression(primary, args);
-            }
-
-            // PropertyAccessExpression
-            const dotToken = this.expect<DotToken>(TokenKind.Dot);
-            if (dotToken) {
-                if (!primary.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                    this.reportError('Expect a left-hand-value for property access expression', primary);
-                }
-                const name = this.parseIdentifier();
-                return new PropertyAccessExpression(primary, dotToken, name);
-            }
-
-            // ElementAccessExpression
-            const leftBracketToken = this.expect<LeftBracketToken>(TokenKind.LeftBracket);
-            if (leftBracketToken) {
-                if (!primary.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                    this.reportError('Expect a left-hand-value for element access expression', primary);
-                }
-                return new ElementAccessExpression(primary, this.parseElementAccess(leftBracketToken));
-            }
-
-            return primary;
         }
+        return this.parseChain();
+    }
+
+    private parseChain(): NormalExpression {
+        let primary = this.parsePrimaryExpression();
+
+        let token: Token | undefined;
+        while ((token = this.expect(TokenKind.LeftParen, TokenKind.Dot, TokenKind.LeftBracket))) {
+            if (token.is<LeftParenToken>(TokenKind.LeftParen)) {
+                const args = this.parseArguments();
+                const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of arguments');
+                primary = new CallExpression(primary, token, args, rightParen);
+            } else if (token.is<DotToken>(TokenKind.Dot)) {
+                const name = this.consume<IdentifierToken>(TokenKind.Identifier, 'Expect an identifier after "."');
+                primary = new PropertyAccessExpression(primary, token, name);
+            } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
+                primary = new ElementAccessExpression(primary, this.parseElementAccess(token));
+            } else {
+                throw new Error('Impossible here!');
+            }
+        }
+        return primary;
     }
 
     private parsePrimaryExpression(): NormalExpression {
-        let leftParenToken: LeftParenToken | undefined;
-        if ((leftParenToken = this.expect<LeftParenToken>(TokenKind.LeftParen))) {
-            const expression = this.parseExpression();
-            const rightParenToken = this.consume<RightParenToken>(
-                TokenKind.RightParen,
-                'Expect ")" end of group expression',
-            );
-            return new GroupExpression(leftParenToken, expression, rightParenToken);
+        if (this.expect(TokenKind.LeftParen)) {
+            return this.parseGroupExpression();
         } else if (this.expect(TokenKind.LeftBracket)) {
             return this.parseArrayLiteralExpression();
         } else if (this.expect(TokenKind.LeftBrace)) {
             return this.parseObjectLiteralExpression();
+        } else if (this.expect(TokenKind.Identifier)) {
+            return new Identifier(this.previousToken as IdentifierToken);
         } else if (
             this.expect(
                 TokenKind.String,
@@ -305,28 +294,43 @@ export class Parser {
                 TokenKind.Undefined,
             )
         ) {
-            return new Literal(this.previousToken as LiteralTokenToken);
+            return new Literal(this.previousToken as LiteralToken);
+        } else {
+            this.reportError('Unexpected token: ' + this.token().toString());
+            this.nextToken();
+            return this.parsePrimaryExpression();
         }
-        return this.parseIdentifier();
+    }
+
+    private parseGroupExpression() {
+        const leftParen = this.previousToken as LeftParenToken;
+        const expression = this.parseExpression();
+        const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of group expression');
+        return new GroupExpression(leftParen, expression, rightParen);
     }
 
     private parseObjectLiteralExpression(): ObjectLiteralExpression {
+        const leftBrace = this.previousToken as LeftBraceToken;
         const properties = this.parseObjectProperties();
-        this.consume(TokenKind.RightBrace, 'Expect "}" end of object literal');
-        return new ObjectLiteralExpression(properties);
+        const rightBrace = this.consume<RightBraceToken>(TokenKind.RightBrace, 'Expect "}" end of object literal');
+        return new ObjectLiteralExpression(leftBrace, properties, rightBrace);
     }
 
     private parseArrayLiteralExpression(): ArrayLiteralExpression {
+        const leftBracket = this.previousToken as LeftBracketToken;
         const elements = this.parseArrayElements();
-        this.consume<RightBracketToken>(TokenKind.RightBracket, 'Expect "]" end of array literal');
-        return new ArrayLiteralExpression(elements);
+        const rightBracket = this.consume<RightBracketToken>(TokenKind.RightBracket, 'Expect "]" end of array literal');
+        return new ArrayLiteralExpression(leftBracket, elements, rightBracket);
     }
 
     private parseObjectProperties(): PropertyAssignment[] {
         const properties: PropertyAssignment[] = [];
-        if (!this.currentToken.is(TokenKind.RightBrace)) {
-            // TODO: support trailing comma
+        if (!this.token().is(TokenKind.RightBrace)) {
             do {
+                if (this.token().is(TokenKind.RightBrace)) {
+                    // Support trailing commas per ES5.1.
+                    break;
+                }
                 properties.push(this.parseObjectProperty());
             } while (this.expect(TokenKind.Comma));
         }
@@ -334,25 +338,40 @@ export class Parser {
     }
 
     private parseObjectProperty(): PropertyAssignment {
-        const key = this.parseIdentifier();
+        const token = this.token();
+        let key: ElementAccess | Identifier | Literal;
+        if (token.is<LiteralToken>(TokenKind.String, TokenKind.Number)) {
+            key = new Literal(token);
+        } else if (token.is<IdentifierToken>(TokenKind.Identifier)) {
+            key = new Identifier(token);
+        } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
+            key = this.parseElementAccess(token);
+        } else {
+            this.reportError('Expected an object property key, but got: ' + this.token().toString());
+            key = new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
+            this.nextToken();
+        }
         this.consume<ColonToken>(TokenKind.Colon, 'Expect ":" after property key');
-        const value = this.parseAssignExpression();
+        const value = this.parseNormalExpression();
         return new PropertyAssignment(key, value);
     }
 
     private parseArrayElements(): Expression[] {
         const elements: Expression[] = [];
-        if (!this.currentToken.is(TokenKind.RightBracket)) {
-            // TODO: support trailing comma
+        if (!this.token().is(TokenKind.RightBracket)) {
             do {
-                elements.push(this.parseExpression());
+                if (this.token().is(TokenKind.RightBrace)) {
+                    // Support trailing commas per ES5.1.
+                    break;
+                }
+                elements.push(this.parseNormalExpression());
             } while (this.expect(TokenKind.Comma));
         }
         return elements;
     }
 
     private parseElementAccess(leftBracketToken: LeftBracketToken): ElementAccess {
-        const expression = this.parseAssignExpression();
+        const expression = this.parseNormalExpression();
         const rightBracketToken = this.consume<RightBracketToken>(
             TokenKind.RightBracket,
             'Expect "]" end of element access',
@@ -362,16 +381,11 @@ export class Parser {
 
     private parseArguments(): Expression[] {
         const args: Expression[] = [];
-        if (!this.currentToken.is(TokenKind.RightParen)) {
+        if (!this.token().is(TokenKind.RightParen)) {
             do {
                 args.push(this.parseExpression());
             } while (this.expect(TokenKind.Comma));
         }
         return args;
-    }
-
-    private parseIdentifier(): Identifier {
-        const token = this.consume<IdentifierToken>(TokenKind.Identifier, 'Expect an "Identifier"');
-        return new Identifier(token);
     }
 }

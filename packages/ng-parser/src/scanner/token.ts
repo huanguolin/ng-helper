@@ -60,12 +60,12 @@ export class Token implements Location {
         }
     }
 
-    static createEmpty(kind: TokenKind): Token {
-        return new Token({ kind, start: -1, end: -1 });
+    static createEmpty<T extends Token>(kind: TokenKind): T {
+        return new Token({ kind, start: -1, end: -1 }) as T;
     }
 
-    is<T extends Token>(tokenKind: TokenKind): this is T {
-        return this.kind === tokenKind;
+    is<T extends Token>(...tokenKinds: TokenKind[]): this is T {
+        return tokenKinds.some((kind) => kind === this.kind);
     }
 
     toString(): string {

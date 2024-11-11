@@ -17,34 +17,35 @@ ExpressionStatement     -> Expression ';'?
 
 # expression
 Expression              -> FilterExpression
-FilterExpression        -> AssignExpression ('|' Identifier (':' AssignExpression)*)*
-AssignExpression        -> ConditionalExpression ('=' AssignExpression)?
-ConditionalExpression   -> LogicalOrExpression ('?' AssignExpression : AssignExpression)?
+FilterExpression        -> NormalExpression ('|' Identifier (':' NormalExpression)*)*
+NormalExpression        -> AssignExpression
+AssignExpression        -> ConditionalExpression ('=' NormalExpression)?
+ConditionalExpression   -> LogicalOrExpression ('?' NormalExpression : NormalExpression)?
 LogicalOrExpression     -> LogicalAndExpression ('||' LogicalAndExpression)*
 LogicalAndExpression    -> EqualityExpression ('&&' EqualityExpression)*
 EqualityExpression      -> RelationalExpression (('==' | '!=' | '===' | '!==') RelationalExpression)*
 RelationalExpression    -> AdditiveExpression (('<' | '>' | '<=' | '>=') AdditiveExpression)*
 AdditiveExpression      -> MultiplicativeExpression (('+' | '-') MultiplicativeExpression)*
 MultiplicativeExpression-> UnaryExpression (('*' | '/' | '%') UnaryExpression)*
-UnaryExpression         -> ('+' | '-' | '!') UnaryExpression | CallExpression | MemberAccessExpression
+UnaryExpression         -> ('+' | '-' | '!') UnaryExpression | Chain
 
-CallExpression          -> PrimaryExpression ('(' Arguments? ')' | '.' Identifier)*
+Chain                   -> PrimaryExpression (Call | ElementAccess | PropertyAccess)*
+
+Call                    -> '(' Arguments? ')'
+ElementAccess           -> '[' NormalExpression ']'
+PropertyAccess          -> '.' Identifier
 Arguments               -> expression ( ',' expression )*
-
-MemberAccessExpression  -> ElementAccessExpression | PropertyAccessExpression
-ElementAccessExpression -> PrimaryExpression ('[' AssignExpression ']')?
-PropertyAccessExpression-> PrimaryExpression ('.' Identifier)?
 
 PrimaryExpression       -> Literal | Identifier | '(' Expression ')'
 Literal                 -> LiteralKeyword | Constant | ArrayLiteralExpression | ArrayLiteralExpression
 Constant                -> String | Number
 
 ArrayLiteralExpression  -> '[' ArrayElements ']'
-ArrayElements           -> (AssignExpression (',' AssignExpression)* ','?)?
+ArrayElements           -> (NormalExpression (',' NormalExpression)* ','?)?
 
 ObjectLiteralExpression -> '{' ObjectProperties '}'
 ObjectProperties        -> (ObjectProperty (',' ObjectProperty)* ','?)?
-ObjectProperty          -> (Constant | Identifier | '[' AssignExpression ']') ':' AssignExpression
+ObjectProperty          -> (Constant | Identifier | ElementAccess) ':' NormalExpression
 
 
 # ------ literal ------

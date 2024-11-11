@@ -1,22 +1,25 @@
-import type { Token } from '../scanner/token';
+import { Token } from '../scanner/token';
 import type {
     AssignToken,
     BinaryOperatorToken,
     ColonToken,
     DotToken,
+    IdentifierToken,
+    LeftBraceToken,
     LeftBracketToken,
     LeftParenToken,
     LiteralTokenKind,
-    LiteralTokenToken,
+    LiteralToken,
     Location,
     NgParseError,
     PipeToken,
     QuestionToken,
+    RightBraceToken,
     RightBracketToken,
     RightParenToken,
     UnaryOperatorToken,
 } from '../types';
-import { SyntaxKind, NodeFlags } from '../types';
+import { SyntaxKind, NodeFlags, TokenKind } from '../types';
 
 import { resolveLocation } from './utils';
 
@@ -144,10 +147,10 @@ export class UnaryExpression extends NormalExpression {
 }
 
 export class CallExpression extends NormalExpression {
-    readonly name: LeftHandExpression;
+    readonly name: NormalExpression;
     readonly args: Expression[];
-    constructor(name: LeftHandExpression, args: Expression[]) {
-        super(SyntaxKind.CallExpression, name, ...args);
+    constructor(name: NormalExpression, leftParen: LeftParenToken, args: Expression[], rightParen: RightParenToken) {
+        super(SyntaxKind.CallExpression, name, leftParen, ...args, rightParen);
         this.name = name;
         this.args = args;
     }
@@ -155,25 +158,34 @@ export class CallExpression extends NormalExpression {
 
 export class ArrayLiteralExpression extends NormalExpression {
     readonly elements: NormalExpression[];
-    constructor(elements: NormalExpression[]) {
-        super(SyntaxKind.ArrayLiteralExpression, ...elements);
+    constructor(leftBracket: LeftBracketToken, elements: NormalExpression[], rightBracket: RightBracketToken) {
+        super(SyntaxKind.ArrayLiteralExpression, leftBracket, ...elements, rightBracket);
         this.elements = elements;
     }
 }
 
 export class ObjectLiteralExpression extends NormalExpression {
     readonly properties: PropertyAssignment[];
-    constructor(properties: PropertyAssignment[]) {
-        super(SyntaxKind.ObjectLiteralExpression, ...properties);
+    constructor(leftBrace: LeftBraceToken, properties: PropertyAssignment[], rightBrace: RightBraceToken) {
+        super(SyntaxKind.ObjectLiteralExpression, leftBrace, ...properties, rightBrace);
         this.properties = properties;
     }
 }
 
 export class PropertyAssignment extends Node {
-    readonly property: ElementAccess | Identifier;
+    readonly property: ElementAccess | Identifier | Literal;
     readonly initializer: NormalExpression;
 
-    constructor(property: ElementAccess | Identifier, initializer: NormalExpression) {
+    constructor(property: ElementAccess | Identifier | Literal, initializer: NormalExpression) {
+        if (
+            property.is<Literal>(SyntaxKind.Literal) &&
+            property.literalTokenKind !== TokenKind.String &&
+            property.literalTokenKind !== TokenKind.Number
+        ) {
+            throw new Error(
+                'Expect string/number literal, but got: ' + Token.createEmpty(property.literalTokenKind).toString(),
+            );
+        }
         super(SyntaxKind.PropertyAssignment, property, initializer);
         this.property = property;
         this.initializer = initializer;
@@ -191,10 +203,13 @@ export class ElementAccess extends Node {
 export class PropertyAccessExpression extends LeftHandExpression {
     readonly parent: NormalExpression;
     readonly name: Identifier;
-    constructor(parent: NormalExpression, dot: DotToken, name: Identifier) {
+
+    constructor(parent: NormalExpression, dot: DotToken, name: Identifier);
+    constructor(parent: NormalExpression, dot: DotToken, name: IdentifierToken);
+    constructor(parent: NormalExpression, dot: DotToken, name: Identifier | IdentifierToken) {
         super(SyntaxKind.PropertyAccessExpression, parent, dot, name);
         this.parent = parent;
-        this.name = name;
+        this.name = name instanceof Identifier ? name : new Identifier(name);
     }
 }
 
@@ -222,7 +237,7 @@ export class Literal extends NormalExpression {
      * Only for number/string.
      */
     readonly value?: string;
-    constructor(literalToken: LiteralTokenToken) {
+    constructor(literalToken: LiteralToken) {
         super(SyntaxKind.Literal, literalToken);
         this.literalTokenKind = literalToken.kind;
         this.value = literalToken.value;
