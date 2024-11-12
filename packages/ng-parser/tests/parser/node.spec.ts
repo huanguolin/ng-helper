@@ -167,6 +167,13 @@ describe('ExpressionStatement', () => {
         expect(statement.end).toBe(5);
     });
 
+    it('should working without semicolon', () => {
+        const expression = new Identifier(createToken(TokenKind.Identifier, { value: 'test' }));
+        const statement = new ExpressionStatement(expression);
+        expect(statement.kind).toBe(SyntaxKind.ExpressionStatement);
+        expect(statement.expression).toBe(expression);
+    });
+
     it('should accept visitor', () => {
         const expression = new Identifier(createToken(TokenKind.Identifier, { value: 'test' }));
         const statement = new ExpressionStatement(expression, createToken(TokenKind.Semicolon));
