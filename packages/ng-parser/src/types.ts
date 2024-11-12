@@ -1,4 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+    Program,
+    ExpressionStatement,
+    FilterExpression,
+    AssignExpression,
+    ConditionalExpression,
+    BinaryExpression,
+    UnaryExpression,
+    ArrayLiteralExpression,
+    ObjectLiteralExpression,
+    PropertyAssignment,
+    ElementAccess,
+    PropertyAccessExpression,
+    ElementAccessExpression,
+    CallExpression,
+    Identifier,
+    Literal,
+    GroupExpression,
+} from './parser/node';
 import type { Token } from './scanner/token';
 
 export interface Location {
@@ -246,4 +264,24 @@ export enum NodeFlags {
     Expression = 1 << 0,
     NormalExpression = 1 << 1,
     LeftHandExpression = 1 << 2,
+}
+
+export interface INodeVisitor {
+    visitProgram: <R>(node: Program) => R;
+    visitExpressionStatement: <R>(node: ExpressionStatement) => R;
+    visitFilterExpression: <R>(node: FilterExpression) => R;
+    visitAssignExpression: <R>(node: AssignExpression) => R;
+    visitConditionalExpression: <R>(node: ConditionalExpression) => R;
+    visitBinaryExpression: <R>(node: BinaryExpression) => R;
+    visitUnaryExpression: <R>(node: UnaryExpression) => R;
+    visitArrayLiteralExpression: <R>(node: ArrayLiteralExpression) => R;
+    visitObjectLiteralExpression: <R>(node: ObjectLiteralExpression) => R;
+    visitPropertyAssignment: <R>(node: PropertyAssignment) => R;
+    visitElementAccess: <R>(node: ElementAccess) => R;
+    visitPropertyAccessExpression: <R>(node: PropertyAccessExpression) => R;
+    visitElementAccessExpression: <R>(node: ElementAccessExpression) => R;
+    visitCallExpression: <R>(node: CallExpression) => R;
+    visitIdentifier: <R>(node: Identifier) => R;
+    visitLiteral: <R>(node: Literal) => R;
+    visitGroupExpression: <R>(node: GroupExpression) => R;
 }

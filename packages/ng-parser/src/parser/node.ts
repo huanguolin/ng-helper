@@ -18,6 +18,7 @@ import type {
     RightBracketToken,
     RightParenToken,
     UnaryOperatorToken,
+    INodeVisitor,
 } from '../types';
 import { SyntaxKind, NodeFlags, TokenKind } from '../types';
 
@@ -44,6 +45,8 @@ export abstract class Node {
     checkIs<T extends Node>(flags: NodeFlags): this is T {
         return Boolean(this.flags & flags);
     }
+
+    abstract accept<R>(visitor: INodeVisitor): R;
 }
 
 export abstract class Expression extends Node {
@@ -67,6 +70,10 @@ export class Program extends Node {
         this.statements = statements;
         this.errors = errors;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitProgram(this);
+    }
 }
 
 export class ExpressionStatement extends Node {
@@ -75,6 +82,10 @@ export class ExpressionStatement extends Node {
     constructor(expression: Expression, semicolon: Token) {
         super(SyntaxKind.ExpressionStatement, expression, semicolon);
         this.expression = expression;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitExpressionStatement(this);
     }
 }
 
@@ -88,6 +99,10 @@ export class FilterExpression extends Expression {
         this.name = name;
         this.args = args;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitFilterExpression(this);
+    }
 }
 
 export class AssignExpression extends NormalExpression {
@@ -100,6 +115,10 @@ export class AssignExpression extends NormalExpression {
         this.left = left;
         this.operator = operator;
         this.initializer = initializer;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitAssignExpression(this);
     }
 }
 
@@ -120,6 +139,10 @@ export class ConditionalExpression extends NormalExpression {
         this.whenTrue = whenTrue;
         this.whenFalse = whenFalse;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitConditionalExpression(this);
+    }
 }
 
 export class BinaryExpression extends NormalExpression {
@@ -133,6 +156,10 @@ export class BinaryExpression extends NormalExpression {
         this.operator = operator;
         this.right = right;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitBinaryExpression(this);
+    }
 }
 
 export class UnaryExpression extends NormalExpression {
@@ -144,6 +171,10 @@ export class UnaryExpression extends NormalExpression {
         this.operator = operator;
         this.operand = operand;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitUnaryExpression(this);
+    }
 }
 
 export class CallExpression extends NormalExpression {
@@ -154,6 +185,10 @@ export class CallExpression extends NormalExpression {
         this.name = name;
         this.args = args;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitCallExpression(this);
+    }
 }
 
 export class ArrayLiteralExpression extends NormalExpression {
@@ -162,6 +197,10 @@ export class ArrayLiteralExpression extends NormalExpression {
         super(SyntaxKind.ArrayLiteralExpression, leftBracket, ...elements, rightBracket);
         this.elements = elements;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitArrayLiteralExpression(this);
+    }
 }
 
 export class ObjectLiteralExpression extends NormalExpression {
@@ -169,6 +208,10 @@ export class ObjectLiteralExpression extends NormalExpression {
     constructor(leftBrace: LeftBraceToken, properties: PropertyAssignment[], rightBrace: RightBraceToken) {
         super(SyntaxKind.ObjectLiteralExpression, leftBrace, ...properties, rightBrace);
         this.properties = properties;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitObjectLiteralExpression(this);
     }
 }
 
@@ -190,6 +233,10 @@ export class PropertyAssignment extends Node {
         this.property = property;
         this.initializer = initializer;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitPropertyAssignment(this);
+    }
 }
 
 export class ElementAccess extends Node {
@@ -197,6 +244,10 @@ export class ElementAccess extends Node {
     constructor(leftBracket: LeftBracketToken, expression: NormalExpression, rightBracket: RightBracketToken) {
         super(SyntaxKind.ElementAccess, leftBracket, expression, rightBracket);
         this.expression = expression;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitElementAccess(this);
     }
 }
 
@@ -211,6 +262,10 @@ export class PropertyAccessExpression extends LeftHandExpression {
         this.parent = parent;
         this.name = name instanceof Identifier ? name : new Identifier(name);
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitPropertyAccessExpression(this);
+    }
 }
 
 export class ElementAccessExpression extends LeftHandExpression {
@@ -221,6 +276,10 @@ export class ElementAccessExpression extends LeftHandExpression {
         this.parent = parent;
         this.elementExpression = elementAccess.expression;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitElementAccessExpression(this);
+    }
 }
 
 export class Identifier extends LeftHandExpression {
@@ -228,6 +287,10 @@ export class Identifier extends LeftHandExpression {
     constructor(identifierToken: Token) {
         super(SyntaxKind.Identifier, identifierToken);
         this.name = identifierToken.value!;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitIdentifier(this);
     }
 }
 
@@ -242,6 +305,10 @@ export class Literal extends NormalExpression {
         this.literalTokenKind = literalToken.kind;
         this.value = literalToken.value;
     }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitLiteral(this);
+    }
 }
 
 export class GroupExpression extends NormalExpression {
@@ -249,5 +316,9 @@ export class GroupExpression extends NormalExpression {
     constructor(leftParen: LeftParenToken, expression: NormalExpression, rightParen: RightParenToken) {
         super(SyntaxKind.GroupExpression, leftParen, expression, rightParen);
         this.expression = expression;
+    }
+
+    accept<R>(visitor: INodeVisitor): R {
+        return visitor.visitGroupExpression(this);
     }
 }
