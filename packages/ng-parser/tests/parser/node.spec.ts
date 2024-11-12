@@ -146,7 +146,9 @@ describe('Program', () => {
     });
 
     it('should accept visitor', () => {
-        const program = new Program('test', [], []);
+        const identifier = new Identifier(createToken(TokenKind.Identifier, { value: 'test', end: 4 }));
+        const statement = new ExpressionStatement(identifier, createToken(TokenKind.Semicolon, { start: 4, end: 5 }));
+        const program = new Program('test', [statement], []);
         const result = program.accept(visitor);
         expect(result).toBe(program);
     });
@@ -211,7 +213,7 @@ describe('AssignExpression', () => {
         expect(assign.kind).toBe(SyntaxKind.AssignExpression);
         expect(assign.left).toBe(left);
         expect(assign.operator).toBe(operator);
-        expect(assign.initializer).toBe(right);
+        expect(assign.right).toBe(right);
     });
 
     it('should accept visitor', () => {
@@ -311,7 +313,7 @@ describe('CallExpression', () => {
         const call = new CallExpression(name, leftParen, args, rightParen);
 
         expect(call.kind).toBe(SyntaxKind.CallExpression);
-        expect(call.name).toBe(name);
+        expect(call.callee).toBe(name);
         expect(call.args).toBe(args);
     });
 

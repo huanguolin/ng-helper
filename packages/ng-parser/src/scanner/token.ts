@@ -32,6 +32,13 @@ export const kindToSignMap = {
     [TokenKind.RightBracket]: ']',
 } as const;
 
+export const kindToKeywordMap = {
+    [TokenKind.False]: 'false',
+    [TokenKind.True]: 'true',
+    [TokenKind.Undefined]: 'undefined',
+    [TokenKind.Null]: 'null',
+} as const;
+
 export class Token implements Location {
     readonly kind: TokenKind;
     readonly start: number;
@@ -55,7 +62,7 @@ export class Token implements Location {
         this.kind = kind;
         this.start = start;
         this.end = end;
-        if (this.hasValue(kind)) {
+        if (Token.shouldHaveValue(kind)) {
             this.value = value;
         }
     }
@@ -72,11 +79,12 @@ export class Token implements Location {
         if (this.value) {
             return this.value;
         }
-        const map = kindToSignMap as Record<TokenKind, string>;
-        return map[this.kind] || ''; // EOF is ''
+        const signMap = kindToSignMap as Record<TokenKind, string>;
+        const keywordMap = kindToKeywordMap as Record<TokenKind, string>;
+        return signMap[this.kind] || keywordMap[this.kind] || ''; // EOF is ''
     }
 
-    private hasValue(kind: TokenKind) {
+    static shouldHaveValue(kind: TokenKind) {
         return kind === TokenKind.String || kind === TokenKind.Number || kind === TokenKind.Identifier;
     }
 }

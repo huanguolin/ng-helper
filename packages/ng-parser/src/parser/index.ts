@@ -21,6 +21,7 @@ import {
     type RightBraceToken,
     type RightBracketToken,
     type RightParenToken,
+    type SemicolonToken,
     type UnaryOperatorToken,
 } from '../types';
 
@@ -121,7 +122,9 @@ export class Parser {
 
     private parseExpressionStatement(): ExpressionStatement {
         const expression = this.parseExpression();
-        const semicolon = this.consume(TokenKind.Semicolon, 'Expect ";" after expression');
+        const semicolon = this.isEnd()
+            ? Token.createEmpty<SemicolonToken>(TokenKind.Semicolon)
+            : this.consume(TokenKind.Semicolon, 'Expect ";" after expression');
         return new ExpressionStatement(expression, semicolon);
     }
 
@@ -154,12 +157,12 @@ export class Parser {
 
     private parseAssignExpression(): NormalExpression {
         let left = this.parseConditionalExpression();
-        let assignToken: AssignToken | undefined;
-        while ((assignToken = this.expect<AssignToken>(TokenKind.Assign))) {
+        const assignToken = this.expect<AssignToken>(TokenKind.Assign);
+        if (assignToken) {
             if (!left.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
                 this.reportError('Can not assign a value to a non left-hand-value', this.previousToken);
             }
-            left = new AssignExpression(left, assignToken, this.parseConditionalExpression());
+            left = new AssignExpression(left, assignToken, this.parseAssignExpression());
         }
         return left;
     }
@@ -342,9 +345,12 @@ export class Parser {
         let key: ElementAccess | Identifier | Literal;
         if (token.is<LiteralToken>(TokenKind.String, TokenKind.Number)) {
             key = new Literal(token);
+            this.nextToken();
         } else if (token.is<IdentifierToken>(TokenKind.Identifier)) {
             key = new Identifier(token);
+            this.nextToken();
         } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
+            this.nextToken();
             key = this.parseElementAccess(token);
         } else {
             this.reportError('Expected an object property key, but got: ' + this.token().toString());
@@ -360,7 +366,7 @@ export class Parser {
         const elements: Expression[] = [];
         if (!this.token().is(TokenKind.RightBracket)) {
             do {
-                if (this.token().is(TokenKind.RightBrace)) {
+                if (this.token().is(TokenKind.RightBracket)) {
                     // Support trailing commas per ES5.1.
                     break;
                 }

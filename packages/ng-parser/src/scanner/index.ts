@@ -3,19 +3,17 @@
 import { ErrorReporter, TokenKind, type ErrorHandler } from '../types';
 import { noop } from '../utils';
 
-import { kindToSignMap, Token } from './token';
+import { kindToKeywordMap, kindToSignMap, Token } from './token';
 
 const signToKindMap = Object.entries(kindToSignMap).reduce(
     (s, [k, v]) => Object.assign(s, { [v]: Number(k) }),
     {} as Record<string, TokenKind>,
 );
 
-const keywordMap = {
-    ['false']: TokenKind.False,
-    ['true']: TokenKind.True,
-    ['undefined']: TokenKind.Undefined,
-    ['null']: TokenKind.Null,
-} as Record<string, TokenKind>;
+const keywordMap = Object.entries(kindToKeywordMap).reduce(
+    (s, [k, v]) => Object.assign(s, { [v]: Number(k) }),
+    {} as Record<string, TokenKind>,
+);
 
 export class Scanner {
     private source = '';

@@ -1,0 +1,480 @@
+import { Parser } from '../../src/parser';
+import type { Expression, Node } from '../../src/parser/node';
+import type {
+    ArrayLiteralExpression,
+    AssignExpression,
+    BinaryExpression,
+    CallExpression,
+    ConditionalExpression,
+    ElementAccess,
+    ElementAccessExpression,
+    ExpressionStatement,
+    FilterExpression,
+    GroupExpression,
+    Identifier,
+    Literal,
+    ObjectLiteralExpression,
+    Program,
+    PropertyAccessExpression,
+    PropertyAssignment,
+    UnaryExpression,
+} from '../../src/parser/node';
+import { resolveLocation } from '../../src/parser/utils';
+import { Token } from '../../src/scanner/token';
+import { SyntaxKind, TokenKind, type INodeVisitor, type Location } from '../../src/types';
+
+class SExpr implements INodeVisitor<string> {
+    toString(node: Expression): string {
+        return node.accept(this);
+    }
+
+    visitProgram(node: Program): string {
+        return node.statements.map((stmt) => stmt.accept(this)).join(';');
+    }
+    visitExpressionStatement(node: ExpressionStatement): string {
+        return node.expression.accept(this);
+    }
+    visitFilterExpression(node: FilterExpression): string {
+        const arr = [node.input.accept(this), ...node.args.map((arg) => arg.accept(this))];
+        return `(filter ${node.name.name}| ${arr.join(' ')})`;
+    }
+    visitBinaryExpression(node: BinaryExpression): string {
+        return `(${node.operator.toString()} ${node.left.accept(this)} ${node.right.accept(this)})`;
+    }
+    visitUnaryExpression(node: UnaryExpression): string {
+        return `(${node.operator.toString()} ${node.operand.accept(this)})`;
+    }
+    visitAssignExpression(node: AssignExpression): string {
+        return `(= ${node.left.accept(this)} ${node.right.accept(this)})`;
+    }
+    visitConditionalExpression(node: ConditionalExpression): string {
+        return `(condition? ${node.condition.accept(this)} ${node.whenTrue.accept(this)} ${node.whenFalse.accept(this)})`;
+    }
+    visitArrayLiteralExpression(node: ArrayLiteralExpression): string {
+        const arr = ['[array]', ...node.elements.map((element) => element.accept(this))];
+        return `(${arr.join(' ')})`;
+    }
+    visitObjectLiteralExpression(node: ObjectLiteralExpression): string {
+        const arr = ['{object}', ...node.properties.map((property) => property.accept(this))];
+        return `(${arr.join(' ')})`;
+    }
+    visitPropertyAssignment(node: PropertyAssignment): string {
+        return `(${node.property.accept(this)} ${node.initializer.accept(this)})`;
+    }
+    visitElementAccess(node: ElementAccess): string {
+        return `[${node.expression.accept(this)}]`;
+    }
+    visitCallExpression(node: CallExpression): string {
+        const arr = [node.callee.accept(this), ...node.args.map((arg) => arg.accept(this))];
+        return `(${arr.join(' ')})`;
+    }
+    visitPropertyAccessExpression(node: PropertyAccessExpression): string {
+        return `${node.parent.accept(this)}.${node.name.accept(this)}`;
+    }
+    visitElementAccessExpression(node: ElementAccessExpression): string {
+        return `${node.parent.accept(this)}[${node.elementExpression.accept(this)}]`;
+    }
+    visitIdentifier(node: Identifier): string {
+        return node.name;
+    }
+    visitGroupExpression(node: GroupExpression): string {
+        return node.expression.accept(this);
+    }
+    visitLiteral(node: Literal): string {
+        if (node.literalTokenKind === TokenKind.String) {
+            return `"${node.value}"`;
+        }
+        return Token.shouldHaveValue(node.literalTokenKind)
+            ? node.value ?? ''
+            : Token.createEmpty(node.literalTokenKind).toString();
+    }
+}
+
+class LocationValidator implements INodeVisitor<boolean> {
+    private strict = true;
+    validate(node: Expression, strict = true): boolean {
+        this.strict = strict;
+        return node.accept(this);
+    }
+
+    private compareToChildren(parent: Node, childNodes: Node[], childTokens: Token[] = []): boolean {
+        if (!this.checkLocations(parent, ...childTokens, ...childNodes)) {
+            return false;
+        }
+
+        const childLocations = [...(childTokens as Location[]), ...(childNodes as Location[])];
+        if (childLocations.length > 0) {
+            const { start, end } = resolveLocation(...childLocations);
+            if (start < parent.start || end > parent.end) {
+                return false;
+            }
+        }
+
+        return childNodes.every((child) => child.accept(this));
+    }
+
+    private checkLocations(...nodes: Location[]): boolean {
+        if (!this.strict) {
+            return true;
+        }
+        return nodes.every((node) => node.start >= 0 && node.end >= 0 && node.end >= node.start);
+    }
+
+    visitProgram(node: Program): boolean {
+        if (node.start < 0 || node.end > node.source.length) {
+            return false;
+        }
+        return this.compareToChildren(node, node.statements);
+    }
+    visitExpressionStatement(node: ExpressionStatement): boolean {
+        return this.compareToChildren(node, [node.expression]);
+    }
+    visitFilterExpression(node: FilterExpression): boolean {
+        return this.compareToChildren(node, [node.input, node.name, ...node.args]);
+    }
+    visitBinaryExpression(node: BinaryExpression): boolean {
+        return this.compareToChildren(node, [node.left, node.right], [node.operator]);
+    }
+    visitUnaryExpression(node: UnaryExpression): boolean {
+        return this.compareToChildren(node, [node.operand], [node.operator]);
+    }
+    visitAssignExpression(node: AssignExpression): boolean {
+        return this.compareToChildren(node, [node.left, node.right], [node.operator]);
+    }
+    visitConditionalExpression(node: ConditionalExpression): boolean {
+        return this.compareToChildren(node, [node.condition, node.whenTrue, node.whenFalse]);
+    }
+    visitArrayLiteralExpression(node: ArrayLiteralExpression): boolean {
+        return this.compareToChildren(node, node.elements);
+    }
+    visitObjectLiteralExpression(node: ObjectLiteralExpression): boolean {
+        return this.compareToChildren(node, node.properties);
+    }
+    visitPropertyAssignment(node: PropertyAssignment): boolean {
+        return this.compareToChildren(node, [node.property, node.initializer]);
+    }
+    visitElementAccess(node: ElementAccess): boolean {
+        return this.compareToChildren(node, [node.expression]);
+    }
+    visitCallExpression(node: CallExpression): boolean {
+        return this.compareToChildren(node, [node.callee, ...node.args]);
+    }
+    visitPropertyAccessExpression(node: PropertyAccessExpression): boolean {
+        return this.compareToChildren(node, [node.parent, node.name]);
+    }
+    visitElementAccessExpression(node: ElementAccessExpression): boolean {
+        return this.compareToChildren(node, [node.parent, node.elementExpression]);
+    }
+    visitIdentifier(node: Identifier): boolean {
+        return this.compareToChildren(node, []);
+    }
+    visitGroupExpression(node: GroupExpression): boolean {
+        return this.compareToChildren(node, [node.expression]);
+    }
+    visitLiteral(node: Literal): boolean {
+        return this.compareToChildren(node, []);
+    }
+}
+
+describe('Parser', () => {
+    const parser = new Parser();
+    const sExpr = new SExpr();
+    const locationValidator = new LocationValidator();
+
+    function parse(text: string) {
+        return parser.parse(text);
+    }
+
+    function noErrorAndCheckLocations(program: Program) {
+        expect(program.errors).toHaveLength(0);
+        expect(locationValidator.validate(program)).toBe(true);
+    }
+
+    describe('statement', () => {
+        it('single statement', () => {
+            const program = parse('foo;');
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe('foo');
+        });
+
+        it('multiple statements', () => {
+            const program = parse('foo; bar;');
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe('foo;bar');
+        });
+
+        it('single statement without semicolon', () => {
+            const program = parse('foo');
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe('foo');
+        });
+    });
+
+    describe('filter expression', () => {
+        it.each([
+            // normal case
+            ['"MSG" | translate', '(filter translate| "MSG")'],
+            ['date | format :"YYYY-MM-DD"', '(filter format| date "YYYY-MM-DD")'],
+            // filter chain
+            ['a | f1 | f2', '(filter f2| (filter f1| a))'],
+            ['a | f1:p1 | f2:p2', '(filter f2| (filter f1| a p1) p2)'],
+            // filter args support assign expression or higher
+            ['a | f1:b = 123', '(filter f1| a (= b 123))'],
+            ['a | f1:b(b.c, 2 + 5)', '(filter f1| a (b b.c (+ 2 5)))'],
+            // mix
+            ['a | f1:b = 123 | f2:c + 1', '(filter f2| (filter f1| a (= b 123)) (+ c 1))'],
+            [
+                'a | f1:b(b.c, 2 + 5) | f2:c + 1 :d = 456',
+                '(filter f2| (filter f1| a (b b.c (+ 2 5))) (+ c 1) (= d 456))',
+            ],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('assign expression', () => {
+        it.each([
+            ['a = b', '(= a b)'],
+            ['a = b + c', '(= a (+ b c))'],
+            ['a = b = c', '(= a (= b c))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+
+        // TODO: test assign to non-left-hand-value
+    });
+
+    describe('conditional expression', () => {
+        it.each([
+            ['a > b ? c : d', '(condition? (> a b) c d)'],
+            ['a > b ? c : d ? e : f', '(condition? (> a b) c (condition? d e f))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('binary expression', () => {
+        it.each([
+            ['a + b', '(+ a b)'],
+            ['a + b + c', '(+ (+ a b) c)'],
+            ['a - b', '(- a b)'],
+            ['a - b - c', '(- (- a b) c)'],
+            ['a * b', '(* a b)'],
+            ['a * b * c', '(* (* a b) c)'],
+            ['a / b', '(/ a b)'],
+            ['a / b / c', '(/ (/ a b) c)'],
+            ['a % b', '(% a b)'],
+            ['a % b % c', '(% (% a b) c)'],
+            ['a == b', '(== a b)'],
+            ['a == b == c', '(== (== a b) c)'],
+            ['a != b', '(!= a b)'],
+            ['a != b != c', '(!= (!= a b) c)'],
+            ['a === b', '(=== a b)'],
+            ['a === b === c', '(=== (=== a b) c)'],
+            ['a !== b', '(!== a b)'],
+            ['a !== b !== c', '(!== (!== a b) c)'],
+            ['a < b', '(< a b)'],
+            ['a < b < c', '(< (< a b) c)'],
+            ['a <= b', '(<= a b)'],
+            ['a <= b <= c', '(<= (<= a b) c)'],
+            ['a > b', '(> a b)'],
+            ['a > b > c', '(> (> a b) c)'],
+            ['a >= b', '(>= a b)'],
+            ['a >= b >= c', '(>= (>= a b) c)'],
+            ['a && b', '(&& a b)'],
+            ['a && b && c', '(&& (&& a b) c)'],
+            ['a || b', '(|| a b)'],
+            ['a || b || c', '(|| (|| a b) c)'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('unary expression', () => {
+        it.each([
+            ['!true', '(! true)'],
+            ['!!false', '(! (! false))'],
+            ['-42', '(- 42)'],
+            ['--42', '(- (- 42))'],
+            ['+42', '(+ 42)'],
+            ['++42', '(+ (+ 42))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('call expression', () => {
+        it.each([
+            ['a()', '(a)'],
+            ['a(1, "hi")', '(a 1 "hi")'],
+            // call chain
+            ['a()()', '((a))'],
+            ['a(1)(2)', '((a 1) 2)'],
+            // arg support filter expression
+            ['a(1 | f1:b = 123)', '(a (filter f1| 1 (= b 123)))'],
+            ['a(1 | f1:b = 123, 2 + 5)', '(a (filter f1| 1 (= b 123)) (+ 2 5))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('property/element access expression', () => {
+        it.each([
+            // property access
+            ['a.b', 'a.b'],
+            ['a.b.c', 'a.b.c'],
+            ['a().b', '(a).b'],
+            // element access
+            ['a[1]', 'a[1]'],
+            ['a[1][2]', 'a[1][2]'],
+            ['a[1 + 2]', 'a[(+ 1 2)]'],
+            ['a()[1]', '(a)[1]'],
+            // mix
+            ['a()[1].b["x" + i].c[3 + 4]', '(a)[1].b[(+ "x" i)].c[(+ 3 4)]'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('group expression', () => {
+        it.each([
+            ['(a)', 'a'],
+            ['(a + b)', '(+ a b)'],
+            ['(a + b) * c', '(* (+ a b) c)'],
+            // group can contain filter expression
+            ['a + (b | f1:c = 123)', '(+ a (filter f1| b (= c 123)))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('object literal expression', () => {
+        it.each([
+            ['{}', '({object})'],
+            ['{a: 1, b: 2}', '({object} (a 1) (b 2))'],
+            // tail comma
+            ['{a: 1, b: 2,}', '({object} (a 1) (b 2))'],
+            // string key
+            ['{"a": 1}', '({object} ("a" 1))'],
+            // number key
+            ['{1: 1}', '({object} (1 1))'],
+            // element access as key
+            ['{[a]: 1}', '({object} ([a] 1))'],
+            ['{[1 + a]: 1}', '({object} ([(+ 1 a)] 1))'],
+            // property initializer can be assign expression
+            ['{a: b = 123}', '({object} (a (= b 123)))'],
+            // mix
+            [
+                '{a: b = 123, [c / (3 + d)]: d + 1, "e": f + 2,}',
+                '({object} (a (= b 123)) ([(/ c (+ 3 d))] (+ d 1)) ("e" (+ f 2)))',
+            ],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('array literal expression', () => {
+        it.each([
+            ['[]', '([array])'],
+            ['[1, 2, 3]', '([array] 1 2 3)'],
+            // tail comma
+            ['[1, 2, 3,]', '([array] 1 2 3)'],
+            // element initializer can be assign expression
+            ['[a = 123, b = 456]', '([array] (= a 123) (= b 456))'],
+        ])('parse %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+
+    describe('literal', () => {
+        it.each([['42'], ['"hello"'], ['true'], ['false'], ['null'], ['undefined']])('parse %s', (input) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Literal);
+            expect(sExpr.toString(program)).toBe(input);
+        });
+
+        // TODO: test unterminated string
+    });
+
+    describe('identifier', () => {
+        it('parse identifier', () => {
+            const program = parse('foo');
+            noErrorAndCheckLocations(program);
+            expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Identifier);
+            expect(sExpr.toString(program)).toBe('foo');
+        });
+    });
+
+    describe('operator precedence', () => {
+        it.each([
+            // 一元操作符优先级高于二元操作符
+            ['!a && b', '(&& (! a) b)'],
+            ['-a + b', '(+ (- a) b)'],
+            ['+a * b', '(* (+ a) b)'],
+
+            // 乘除模优先级高于加减
+            ['a + b * c', '(+ a (* b c))'],
+            ['a * b + c', '(+ (* a b) c)'],
+            ['a - b / c', '(- a (/ b c))'],
+            ['a - b % c', '(- a (% b c))'],
+
+            // 加减优先级高于比较运算符
+            ['a + b > c', '(> (+ a b) c)'],
+            ['a < b + c', '(< a (+ b c))'],
+
+            // 比较运算符优先级高于相等运算符
+            ['a < b == c', '(== (< a b) c)'],
+            ['a === b > c', '(=== a (> b c))'],
+
+            // 相等运算符优先级高于逻辑与
+            ['a && b == c', '(&& a (== b c))'],
+            ['a && b !== c', '(&& a (!== b c))'],
+
+            // 逻辑与优先级高于逻辑或
+            ['a || b && c', '(|| a (&& b c))'],
+
+            // 逻辑或优先级高于条件运算符
+            ['a || b ? c : d', '(condition? (|| a b) c d)'],
+
+            // 条件运算符优先级高于赋值运算符
+            ['a = b ? c : d', '(= a (condition? b c d))'],
+
+            // 复杂组合测试
+            ['a = b || c && d > e + f * g', '(= a (|| b (&& c (> d (+ e (* f g))))))'],
+            ['!a && b || c ? d + e * f : g', '(condition? (|| (&& (! a) b) c) (+ d (* e f)) g)'],
+
+            // 条件运算符嵌套
+            ['a ? b ? c : d : e', '(condition? a (condition? b c d) e)'],
+            ['a ? b : c ? d : e', '(condition? a b (condition? c d e))'],
+        ])('should parse %s with correct precedence', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
+    });
+});
+
+function pickStatementExpression(program: Program, index: number = 0): Expression {
+    return program.statements[index].expression;
+}

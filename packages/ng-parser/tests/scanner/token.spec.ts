@@ -62,18 +62,43 @@ describe('Token', () => {
             expect(token.toString()).toBe('hello');
         });
 
-        it('should return operator sign for operator tokens', () => {
-            const tokens = [
-                { kind: TokenKind.Plus, expected: '+' },
-                { kind: TokenKind.Minus, expected: '-' },
-                { kind: TokenKind.StrictEqual, expected: '===' },
-                { kind: TokenKind.And, expected: '&&' },
-            ];
-
-            tokens.forEach(({ kind, expected }) => {
-                const token = new Token({ kind, start: 0, end: 1 });
-                expect(token.toString()).toBe(expected);
-            });
+        it.each([
+            { kind: TokenKind.Plus, expected: '+' },
+            { kind: TokenKind.Minus, expected: '-' },
+            { kind: TokenKind.Multiply, expected: '*' },
+            { kind: TokenKind.Divide, expected: '/' },
+            { kind: TokenKind.Modulo, expected: '%' },
+            { kind: TokenKind.And, expected: '&&' },
+            { kind: TokenKind.Or, expected: '||' },
+            { kind: TokenKind.Not, expected: '!' },
+            { kind: TokenKind.StrictEqual, expected: '===' },
+            { kind: TokenKind.Equal, expected: '==' },
+            { kind: TokenKind.StrictNotEqual, expected: '!==' },
+            { kind: TokenKind.NotEqual, expected: '!=' },
+            { kind: TokenKind.GreaterThan, expected: '>' },
+            { kind: TokenKind.GreaterThanOrEqual, expected: '>=' },
+            { kind: TokenKind.LessThan, expected: '<' },
+            { kind: TokenKind.LessThanOrEqual, expected: '<=' },
+            { kind: TokenKind.Assign, expected: '=' },
+            { kind: TokenKind.Pipe, expected: '|' },
+            { kind: TokenKind.Semicolon, expected: ';' },
+            { kind: TokenKind.Comma, expected: ',' },
+            { kind: TokenKind.Dot, expected: '.' },
+            { kind: TokenKind.Colon, expected: ':' },
+            { kind: TokenKind.Question, expected: '?' },
+            { kind: TokenKind.LeftParen, expected: '(' },
+            { kind: TokenKind.RightParen, expected: ')' },
+            { kind: TokenKind.LeftBrace, expected: '{' },
+            { kind: TokenKind.RightBrace, expected: '}' },
+            { kind: TokenKind.LeftBracket, expected: '[' },
+            { kind: TokenKind.RightBracket, expected: ']' },
+            { kind: TokenKind.True, expected: 'true' },
+            { kind: TokenKind.False, expected: 'false' },
+            { kind: TokenKind.Undefined, expected: 'undefined' },
+            { kind: TokenKind.Null, expected: 'null' },
+        ])('should return operator sign for %s', ({ kind, expected }) => {
+            const token = new Token({ kind, start: 0, end: 1 });
+            expect(token.toString()).toBe(expected);
         });
 
         it('should return empty string for EOF token', () => {
@@ -84,6 +109,12 @@ describe('Token', () => {
             });
 
             expect(token.toString()).toBe('');
+        });
+    });
+
+    describe('shouldHaveValue()', () => {
+        it.each([TokenKind.String, TokenKind.Number, TokenKind.Identifier])('should return true for %s', (kind) => {
+            expect(Token.shouldHaveValue(kind)).toBe(true);
         });
     });
 });

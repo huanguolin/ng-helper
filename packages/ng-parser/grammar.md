@@ -19,7 +19,7 @@ ExpressionStatement     -> Expression ';'?
 Expression              -> FilterExpression
 FilterExpression        -> NormalExpression ('|' Identifier (':' NormalExpression)*)*
 NormalExpression        -> AssignExpression
-AssignExpression        -> ConditionalExpression ('=' NormalExpression)?
+AssignExpression        -> ConditionalExpression ('=' AssignExpression)?
 ConditionalExpression   -> LogicalOrExpression ('?' NormalExpression : NormalExpression)?
 LogicalOrExpression     -> LogicalAndExpression ('||' LogicalAndExpression)*
 LogicalAndExpression    -> EqualityExpression ('&&' EqualityExpression)*

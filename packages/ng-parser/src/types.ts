@@ -213,6 +213,7 @@ export interface PunctuationToken<TKind extends TokenKind> extends Token {
 
 export type IdentifierToken = PunctuationToken<TokenKind.Identifier>;
 export type DotToken = PunctuationToken<TokenKind.Dot>;
+export type SemicolonToken = PunctuationToken<TokenKind.Semicolon>;
 export type PipeToken = PunctuationToken<TokenKind.Pipe>;
 export type QuestionToken = PunctuationToken<TokenKind.Question>;
 export type AssignToken = PunctuationToken<TokenKind.Assign>;

@@ -24,7 +24,7 @@ import { SyntaxKind, NodeFlags, TokenKind } from '../types';
 
 import { resolveLocation } from './utils';
 
-export abstract class Node {
+export abstract class Node implements Location {
     readonly kind: SyntaxKind;
     readonly start: number;
     readonly end: number;
@@ -79,8 +79,12 @@ export class Program extends Node {
 export class ExpressionStatement extends Node {
     readonly expression: Expression;
 
-    constructor(expression: Expression, semicolon: Token) {
-        super(SyntaxKind.ExpressionStatement, expression, semicolon);
+    constructor(expression: Expression, semicolon?: Token) {
+        if (semicolon) {
+            super(SyntaxKind.ExpressionStatement, expression, semicolon);
+        } else {
+            super(SyntaxKind.ExpressionStatement, expression);
+        }
         this.expression = expression;
     }
 
@@ -94,7 +98,7 @@ export class FilterExpression extends Expression {
     readonly name: Identifier;
     readonly args: NormalExpression[];
     constructor(input: NormalExpression, pipeToken: PipeToken, name: Identifier, args: NormalExpression[]) {
-        super(SyntaxKind.FilterExpression, pipeToken, name, ...args);
+        super(SyntaxKind.FilterExpression, input, pipeToken, name, ...args);
         this.input = input;
         this.name = name;
         this.args = args;
@@ -108,13 +112,13 @@ export class FilterExpression extends Expression {
 export class AssignExpression extends NormalExpression {
     readonly left: LeftHandExpression;
     readonly operator: AssignToken;
-    readonly initializer: NormalExpression;
+    readonly right: NormalExpression;
 
-    constructor(left: LeftHandExpression, operator: AssignToken, initializer: NormalExpression) {
-        super(SyntaxKind.AssignExpression, left, operator, initializer);
+    constructor(left: LeftHandExpression, operator: AssignToken, right: NormalExpression) {
+        super(SyntaxKind.AssignExpression, left, operator, right);
         this.left = left;
         this.operator = operator;
-        this.initializer = initializer;
+        this.right = right;
     }
 
     accept<R>(visitor: INodeVisitor<R>): R {
@@ -178,11 +182,11 @@ export class UnaryExpression extends NormalExpression {
 }
 
 export class CallExpression extends NormalExpression {
-    readonly name: NormalExpression;
+    readonly callee: NormalExpression;
     readonly args: Expression[];
-    constructor(name: NormalExpression, leftParen: LeftParenToken, args: Expression[], rightParen: RightParenToken) {
-        super(SyntaxKind.CallExpression, name, leftParen, ...args, rightParen);
-        this.name = name;
+    constructor(callee: NormalExpression, leftParen: LeftParenToken, args: Expression[], rightParen: RightParenToken) {
+        super(SyntaxKind.CallExpression, callee, leftParen, ...args, rightParen);
+        this.callee = callee;
         this.args = args;
     }
 
