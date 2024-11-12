@@ -48,7 +48,7 @@ class SExpr implements INodeVisitor<string> {
         return `(= ${node.left.accept(this)} ${node.right.accept(this)})`;
     }
     visitConditionalExpression(node: ConditionalExpression): string {
-        return `(condition? ${node.condition.accept(this)} ${node.whenTrue.accept(this)} ${node.whenFalse.accept(this)})`;
+        return `(cond? ${node.condition.accept(this)} ${node.whenTrue.accept(this)} ${node.whenFalse.accept(this)})`;
     }
     visitArrayLiteralExpression(node: ArrayLiteralExpression): string {
         const arr = ['[array]', ...node.elements.map((element) => element.accept(this))];
@@ -121,7 +121,7 @@ class LocationValidator implements INodeVisitor<boolean> {
     }
 
     visitProgram(node: Program): boolean {
-        if (node.start < 0 || node.end > node.source.length) {
+        if (node.start < 0 || (node.source.length > 0 && node.end > node.source.length)) {
             return false;
         }
         return this.compareToChildren(node, node.statements);
@@ -191,6 +191,12 @@ describe('Parser', () => {
     }
 
     describe('statement', () => {
+        it('should handle an empty list of tokens', () => {
+            const program = parse('');
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe('');
+        });
+
         it('single statement', () => {
             const program = parse('foo;');
             noErrorAndCheckLocations(program);
@@ -198,9 +204,9 @@ describe('Parser', () => {
         });
 
         it('multiple statements', () => {
-            const program = parse('foo; bar;');
+            const program = parse('foo; bar; foo = bar; man = shell');
             noErrorAndCheckLocations(program);
-            expect(sExpr.toString(program)).toBe('foo;bar');
+            expect(sExpr.toString(program)).toBe('foo;bar;(= foo bar);(= man shell)');
         });
 
         it('single statement without semicolon', () => {
@@ -208,13 +214,22 @@ describe('Parser', () => {
             noErrorAndCheckLocations(program);
             expect(sExpr.toString(program)).toBe('foo');
         });
+
+        it.each([
+            ['foo;;;;bar', 'foo;bar'],
+            [';foo', 'foo'],
+            [';;;;', ''],
+        ])('should skip empty expressions', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
     });
 
     describe('filter expression', () => {
         it.each([
-            // normal case
-            ['"MSG" | translate', '(filter translate| "MSG")'],
-            ['date | format :"YYYY-MM-DD"', '(filter format| date "YYYY-MM-DD")'],
+            ['foo | bar', '(filter bar| foo)'],
+            ['foo | bar:baz', '(filter bar| foo baz)'],
             // filter chain
             ['a | f1 | f2', '(filter f2| (filter f1| a))'],
             ['a | f1:p1 | f2:p2', '(filter f2| (filter f1| a p1) p2)'],
@@ -250,8 +265,11 @@ describe('Parser', () => {
 
     describe('conditional expression', () => {
         it.each([
-            ['a > b ? c : d', '(condition? (> a b) c d)'],
-            ['a > b ? c : d ? e : f', '(condition? (> a b) c (condition? d e f))'],
+            ['a>b?c:d', '(cond? (> a b) c d)'],
+            ['foo || bar ? man = 1 : shell = 1', '(cond? (|| foo bar) (= man 1) (= shell 1))'],
+            ['a > b ? c ? d : e : f ? g : h', '(cond? (> a b) (cond? c d e) (cond? f g h))'],
+            // should parse it same as 'a?b:(c?(d?e:f):(g?h:i))'
+            ['a?b:c?d?e:f:g?h:i', '(cond? a b (cond? c (cond? d e f) (cond? g h i)))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             noErrorAndCheckLocations(program);
@@ -311,13 +329,25 @@ describe('Parser', () => {
             noErrorAndCheckLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
+
+        it.each([
+            ['+-!foo', '(+ (- (! foo)))'],
+            ['-!+foo', '(- (! (+ foo)))'],
+            ['!+-foo', '(! (+ (- foo)))'],
+        ])('should handle all unary operators with the same precedence: %s', (input, expected) => {
+            const program = parse(input);
+            noErrorAndCheckLocations(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
     });
 
     describe('call expression', () => {
         it.each([
             ['a()', '(a)'],
+            ['foo(a = 1)', '(foo (= a 1))'],
             ['a(1, "hi")', '(a 1 "hi")'],
             // call chain
+            ['(foo)(bar, baz)', '(foo bar baz)'],
             ['a()()', '((a))'],
             ['a(1)(2)', '((a 1) 2)'],
             // arg support filter expression
@@ -336,18 +366,32 @@ describe('Parser', () => {
             ['a.b', 'a.b'],
             ['a.b.c', 'a.b.c'],
             ['a().b', '(a).b'],
+            ['(foo + bar).man', '(+ foo bar).man'],
             // element access
             ['a[1]', 'a[1]'],
             ['a[1][2]', 'a[1][2]'],
             ['a[1 + 2]', 'a[(+ 1 2)]'],
+            ['a[foo = bar]', 'a[(= foo bar)]'],
             ['a()[1]', '(a)[1]'],
             // mix
+            ['foo.bar[baz]()', '(foo.bar[baz])'],
+            ['foo[bar]().baz', '(foo[bar]).baz'],
+            ['foo().bar[baz]', '(foo).bar[baz]'],
             ['a()[1].b["x" + i].c[3 + 4]', '(a)[1].b[(+ "x" i)].c[(+ 3 4)]'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             noErrorAndCheckLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
+
+        it.each([`undefined`, `true`, `false`, `null`])(
+            'should not confuse `%s` when used as identifiers',
+            (keyword) => {
+                const program = parse('foo.' + keyword);
+                noErrorAndCheckLocations(program);
+                expect(sExpr.toString(program)).toBe('foo.' + keyword);
+            },
+        );
     });
 
     describe('group expression', () => {
@@ -367,19 +411,22 @@ describe('Parser', () => {
     describe('object literal expression', () => {
         it.each([
             ['{}', '({object})'],
+            ['{foo:bar}', '({object} (foo bar))'],
             ['{a: 1, b: 2}', '({object} (a 1) (b 2))'],
             // tail comma
             ['{a: 1, b: 2,}', '({object} (a 1) (b 2))'],
             // string key
             ['{"a": 1}', '({object} ("a" 1))'],
             // number key
-            ['{1: 1}', '({object} (1 1))'],
+            ['{1: x}', '({object} (1 x))'],
             // element access as key
             ['{[a]: 1}', '({object} ([a] 1))'],
             ['{[1 + a]: 1}', '({object} ([(+ 1 a)] 1))'],
             // property initializer can be assign expression
             ['{a: b = 123}', '({object} (a (= b 123)))'],
             // mix
+            ['{foo: bar, "man": "shell", 42: 23}', '({object} (foo bar) ("man" "shell") (42 23))'],
+            ['{foo: bar, "man": "shell", 42: 23,}', '({object} (foo bar) ("man" "shell") (42 23))'],
             [
                 '{a: b = 123, [c / (3 + d)]: d + 1, "e": f + 2,}',
                 '({object} (a (= b 123)) ([(/ c (+ 3 d))] (+ d 1)) ("e" (+ f 2)))',
@@ -394,9 +441,10 @@ describe('Parser', () => {
     describe('array literal expression', () => {
         it.each([
             ['[]', '([array])'],
-            ['[1, 2, 3]', '([array] 1 2 3)'],
+            ['[foo]', '([array] foo)'],
+            ['[1, 2, foo]', '([array] 1 2 foo)'],
             // tail comma
-            ['[1, 2, 3,]', '([array] 1 2 3)'],
+            ['[1, 2, foo,]', '([array] 1 2 foo)'],
             // element initializer can be assign expression
             ['[a = 123, b = 456]', '([array] (= a 123) (= b 456))'],
         ])('parse %s', (input, expected) => {
@@ -455,22 +503,33 @@ describe('Parser', () => {
             ['a || b && c', '(|| a (&& b c))'],
 
             // 逻辑或优先级高于条件运算符
-            ['a || b ? c : d', '(condition? (|| a b) c d)'],
+            ['a || b ? c : d', '(cond? (|| a b) c d)'],
 
             // 条件运算符优先级高于赋值运算符
-            ['a = b ? c : d', '(= a (condition? b c d))'],
+            ['a = b ? c : d', '(= a (cond? b c d))'],
 
-            // 复杂组合测试
+            // 赋值运算符优先级高于filter
+            ['foo=bar | man', '(filter man| (= foo bar))'],
+
+            // mix
             ['a = b || c && d > e + f * g', '(= a (|| b (&& c (> d (+ e (* f g))))))'],
-            ['!a && b || c ? d + e * f : g', '(condition? (|| (&& (! a) b) c) (+ d (* e f)) g)'],
-
-            // 条件运算符嵌套
-            ['a ? b ? c : d : e', '(condition? a (condition? b c d) e)'],
-            ['a ? b : c ? d : e', '(condition? a b (condition? c d e))'],
+            ['!a && b || c ? d + e * f : g', '(cond? (|| (&& (! a) b) c) (+ d (* e f)) g)'],
         ])('should parse %s with correct precedence', (input, expected) => {
             const program = parse(input);
             noErrorAndCheckLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
+        });
+
+        it('should give higher precedence to member calls than to unary expressions', () => {
+            ['+', '-', '!'].forEach((op) => {
+                ['foo()', 'foo.bar', 'foo[bar]'].forEach((memberCall) => {
+                    const input = op + memberCall;
+                    const expected = `(${op} ${memberCall === 'foo()' ? '(foo)' : memberCall})`;
+                    const program = parse(input);
+                    noErrorAndCheckLocations(program);
+                    expect(sExpr.toString(program)).toBe(expected);
+                });
+            });
         });
     });
 });

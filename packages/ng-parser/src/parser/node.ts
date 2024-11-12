@@ -4,7 +4,6 @@ import type {
     BinaryOperatorToken,
     ColonToken,
     DotToken,
-    IdentifierToken,
     LeftBraceToken,
     LeftBracketToken,
     LeftParenToken,
@@ -19,6 +18,7 @@ import type {
     RightParenToken,
     UnaryOperatorToken,
     INodeVisitor,
+    PropertyNameToken,
 } from '../types';
 import { SyntaxKind, NodeFlags, TokenKind } from '../types';
 
@@ -65,7 +65,11 @@ export class Program extends Node {
     readonly errors: NgParseError[];
 
     constructor(source: string, statements: ExpressionStatement[], errors: NgParseError[]) {
-        super(SyntaxKind.Program, ...statements);
+        if (statements.length === 0) {
+            super(SyntaxKind.Program, { start: 0, end: 1 });
+        } else {
+            super(SyntaxKind.Program, ...statements);
+        }
         this.source = source;
         this.statements = statements;
         this.errors = errors;
@@ -260,8 +264,8 @@ export class PropertyAccessExpression extends LeftHandExpression {
     readonly name: Identifier;
 
     constructor(parent: NormalExpression, dot: DotToken, name: Identifier);
-    constructor(parent: NormalExpression, dot: DotToken, name: IdentifierToken);
-    constructor(parent: NormalExpression, dot: DotToken, name: Identifier | IdentifierToken) {
+    constructor(parent: NormalExpression, dot: DotToken, name: PropertyNameToken);
+    constructor(parent: NormalExpression, dot: DotToken, name: Identifier | PropertyNameToken) {
         super(SyntaxKind.PropertyAccessExpression, parent, dot, name);
         this.parent = parent;
         this.name = name instanceof Identifier ? name : new Identifier(name);
@@ -288,9 +292,10 @@ export class ElementAccessExpression extends LeftHandExpression {
 
 export class Identifier extends LeftHandExpression {
     readonly name: string;
-    constructor(identifierToken: Token) {
-        super(SyntaxKind.Identifier, identifierToken);
-        this.name = identifierToken.value!;
+    constructor(propertyToken: PropertyNameToken) {
+        super(SyntaxKind.Identifier, propertyToken);
+        // `undefined`, `true`, `false`, `null` also can used as identifiers(like: 'foo.null')
+        this.name = propertyToken.toString();
     }
 
     accept<R>(visitor: INodeVisitor<R>): R {

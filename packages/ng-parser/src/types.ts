@@ -183,13 +183,9 @@ export enum TokenKind {
     EOF,
 }
 
-export type LiteralTokenKind =
-    | TokenKind.True
-    | TokenKind.False
-    | TokenKind.Null
-    | TokenKind.Undefined
-    | TokenKind.String
-    | TokenKind.Number;
+export type KeywordTokenKind = TokenKind.True | TokenKind.False | TokenKind.Null | TokenKind.Undefined;
+export type PropertyNameTokenKind = KeywordTokenKind | TokenKind.Identifier;
+export type LiteralTokenKind = KeywordTokenKind | TokenKind.String | TokenKind.Number;
 export type MultiplicativeOperator = TokenKind.Multiply | TokenKind.Divide | TokenKind.Modulo;
 export type AdditiveOperator = TokenKind.Plus | TokenKind.Minus;
 export type UnaryOperator = TokenKind.Plus | TokenKind.Minus | TokenKind.Not;
@@ -227,6 +223,7 @@ export type ColonToken = PunctuationToken<TokenKind.Colon>;
 export type UnaryOperatorToken = PunctuationToken<UnaryOperator>;
 export type BinaryOperatorToken = PunctuationToken<BinaryOperator>;
 export type LiteralToken = PunctuationToken<LiteralTokenKind>;
+export type PropertyNameToken = PunctuationToken<PropertyNameTokenKind>;
 
 export enum ErrorReporter {
     Scanner,

@@ -62,7 +62,18 @@ export class Parser {
 
         const statements: ExpressionStatement[] = [];
         while (!this.isEnd()) {
-            statements.push(this.parseExpressionStatement());
+            if (
+                this.token().is(TokenKind.Semicolon, TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)
+            ) {
+                if (!this.token().is(TokenKind.Semicolon)) {
+                    this.reportError('Unexpected token: ' + this.token().toString());
+                }
+                this.nextToken();
+            } else if (this.token().is(TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)) {
+                this.nextToken();
+            } else {
+                statements.push(this.parseExpressionStatement());
+            }
         }
 
         return new Program(sourceText, statements, this.errors);
@@ -101,14 +112,17 @@ export class Parser {
         return this.token();
     }
 
-    private consume<T extends Token>(tokenKind: TokenKind, message: string): T {
+    private consume<T extends Token>(tokenKind: TokenKind, message: string): T;
+    private consume<T extends Token>(tokenKinds: TokenKind[], message: string): T;
+    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string): T {
         const token = this.token();
-        if (token.is<T>(tokenKind)) {
+        const arr = Array.isArray(tokenKind) ? tokenKind : [tokenKind];
+        if (arr.some((k) => token.is<T>(k))) {
             this.nextToken();
-            return token;
+            return token as T;
         } else {
             this.reportError(message);
-            return Token.createEmpty(tokenKind);
+            return Token.createEmpty(arr[0]);
         }
     }
 
@@ -254,10 +268,10 @@ export class Parser {
         if (unaryToken) {
             return new UnaryExpression(unaryToken, this.parseUnaryExpression());
         }
-        return this.parseChain();
+        return this.parseChainableExpression();
     }
 
-    private parseChain(): NormalExpression {
+    private parseChainableExpression(): NormalExpression {
         let primary = this.parsePrimaryExpression();
 
         let token: Token | undefined;
@@ -267,7 +281,11 @@ export class Parser {
                 const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of arguments');
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
-                const name = this.consume<IdentifierToken>(TokenKind.Identifier, 'Expect an identifier after "."');
+                // `undefined`, `true`, `false`, `null` also can used as identifiers(like: 'foo.null')
+                const name = this.consume<IdentifierToken>(
+                    [TokenKind.Identifier, TokenKind.True, TokenKind.False, TokenKind.Null, TokenKind.Undefined],
+                    'Expect an identifier after "."',
+                );
                 primary = new PropertyAccessExpression(primary, token, name);
             } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
                 primary = new ElementAccessExpression(primary, this.parseElementAccess(token));
@@ -347,6 +365,9 @@ export class Parser {
             key = new Literal(token);
             this.nextToken();
         } else if (token.is<IdentifierToken>(TokenKind.Identifier)) {
+            // TODO: 要支持 es6 对象属性的变量初始化吗？
+            // 官方是支持的，代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L527
+            // 单元测试代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/test/ng/parseSpec.js#L1360
             key = new Identifier(token);
             this.nextToken();
         } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
