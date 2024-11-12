@@ -46,7 +46,7 @@ export abstract class Node {
         return Boolean(this.flags & flags);
     }
 
-    abstract accept<R>(visitor: INodeVisitor): R;
+    abstract accept<R>(visitor: INodeVisitor<R>): R;
 }
 
 export abstract class Expression extends Node {
@@ -71,7 +71,7 @@ export class Program extends Node {
         this.errors = errors;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitProgram(this);
     }
 }
@@ -84,7 +84,7 @@ export class ExpressionStatement extends Node {
         this.expression = expression;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitExpressionStatement(this);
     }
 }
@@ -100,7 +100,7 @@ export class FilterExpression extends Expression {
         this.args = args;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitFilterExpression(this);
     }
 }
@@ -117,7 +117,7 @@ export class AssignExpression extends NormalExpression {
         this.initializer = initializer;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitAssignExpression(this);
     }
 }
@@ -140,7 +140,7 @@ export class ConditionalExpression extends NormalExpression {
         this.whenFalse = whenFalse;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitConditionalExpression(this);
     }
 }
@@ -157,7 +157,7 @@ export class BinaryExpression extends NormalExpression {
         this.right = right;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitBinaryExpression(this);
     }
 }
@@ -172,7 +172,7 @@ export class UnaryExpression extends NormalExpression {
         this.operand = operand;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitUnaryExpression(this);
     }
 }
@@ -186,7 +186,7 @@ export class CallExpression extends NormalExpression {
         this.args = args;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitCallExpression(this);
     }
 }
@@ -198,7 +198,7 @@ export class ArrayLiteralExpression extends NormalExpression {
         this.elements = elements;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitArrayLiteralExpression(this);
     }
 }
@@ -210,7 +210,7 @@ export class ObjectLiteralExpression extends NormalExpression {
         this.properties = properties;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitObjectLiteralExpression(this);
     }
 }
@@ -234,7 +234,7 @@ export class PropertyAssignment extends Node {
         this.initializer = initializer;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitPropertyAssignment(this);
     }
 }
@@ -246,7 +246,7 @@ export class ElementAccess extends Node {
         this.expression = expression;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitElementAccess(this);
     }
 }
@@ -263,7 +263,7 @@ export class PropertyAccessExpression extends LeftHandExpression {
         this.name = name instanceof Identifier ? name : new Identifier(name);
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitPropertyAccessExpression(this);
     }
 }
@@ -277,7 +277,7 @@ export class ElementAccessExpression extends LeftHandExpression {
         this.elementExpression = elementAccess.expression;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitElementAccessExpression(this);
     }
 }
@@ -289,7 +289,7 @@ export class Identifier extends LeftHandExpression {
         this.name = identifierToken.value!;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitIdentifier(this);
     }
 }
@@ -306,7 +306,7 @@ export class Literal extends NormalExpression {
         this.value = literalToken.value;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitLiteral(this);
     }
 }
@@ -318,7 +318,7 @@ export class GroupExpression extends NormalExpression {
         this.expression = expression;
     }
 
-    accept<R>(visitor: INodeVisitor): R {
+    accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitGroupExpression(this);
     }
 }

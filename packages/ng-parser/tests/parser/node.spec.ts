@@ -17,6 +17,7 @@ import {
     type NormalExpression,
     PropertyAssignment,
     ElementAccess,
+    type Node,
 } from '../../src/parser/node';
 import { Token } from '../../src/scanner/token';
 import {
@@ -36,7 +37,64 @@ import {
     type RightParenToken,
     type LeftBraceToken,
     type RightBraceToken,
+    type INodeVisitor,
 } from '../../src/types';
+
+class TestVisitor implements INodeVisitor<Node> {
+    visitProgram(node: Program): Node {
+        return node;
+    }
+    visitExpressionStatement(node: ExpressionStatement): Node {
+        return node;
+    }
+    visitFilterExpression(node: FilterExpression): Node {
+        return node;
+    }
+    visitAssignExpression(node: AssignExpression): Node {
+        return node;
+    }
+    visitConditionalExpression(node: ConditionalExpression): Node {
+        return node;
+    }
+    visitBinaryExpression(node: BinaryExpression): Node {
+        return node;
+    }
+    visitUnaryExpression(node: UnaryExpression): Node {
+        return node;
+    }
+    visitCallExpression(node: CallExpression): Node {
+        return node;
+    }
+    visitArrayLiteralExpression(node: ArrayLiteralExpression): Node {
+        return node;
+    }
+    visitObjectLiteralExpression(node: ObjectLiteralExpression): Node {
+        return node;
+    }
+    visitPropertyAccessExpression(node: PropertyAccessExpression): Node {
+        return node;
+    }
+    visitElementAccessExpression(node: ElementAccessExpression): Node {
+        return node;
+    }
+    visitGroupExpression(node: GroupExpression): Node {
+        return node;
+    }
+    visitPropertyAssignment(node: PropertyAssignment): Node {
+        return node;
+    }
+    visitElementAccess(node: ElementAccess): Node {
+        return node;
+    }
+    visitIdentifier(node: Identifier): Node {
+        return node;
+    }
+    visitLiteral(node: Literal): Node {
+        return node;
+    }
+}
+
+const visitor = new TestVisitor();
 
 describe('Node', () => {
     // 由于 Node 是抽象类，我们使用 Identifier 来测试基础功能
@@ -86,6 +144,12 @@ describe('Program', () => {
         expect(program.start).toBe(0);
         expect(program.end).toBe(5);
     });
+
+    it('should accept visitor', () => {
+        const program = new Program('test', [], []);
+        const result = program.accept(visitor);
+        expect(result).toBe(program);
+    });
 });
 
 describe('ExpressionStatement', () => {
@@ -99,6 +163,13 @@ describe('ExpressionStatement', () => {
         expect(statement.expression).toBe(expression);
         expect(statement.start).toBe(0);
         expect(statement.end).toBe(5);
+    });
+
+    it('should accept visitor', () => {
+        const expression = new Identifier(createToken(TokenKind.Identifier, { value: 'test' }));
+        const statement = new ExpressionStatement(expression, createToken(TokenKind.Semicolon));
+        const result = statement.accept(visitor);
+        expect(result).toBe(statement);
     });
 });
 
@@ -116,6 +187,17 @@ describe('FilterExpression', () => {
         expect(filter.name).toBe(name);
         expect(filter.args).toBe(args);
     });
+
+    it('should accept visitor', () => {
+        const filter = new FilterExpression(
+            new Literal(createToken(TokenKind.Number, { value: '42' })),
+            createToken(TokenKind.Pipe),
+            new Identifier(createToken(TokenKind.Identifier, { value: 'filter' })),
+            [],
+        );
+        const result = filter.accept(visitor);
+        expect(result).toBe(filter);
+    });
 });
 
 describe('AssignExpression', () => {
@@ -130,6 +212,16 @@ describe('AssignExpression', () => {
         expect(assign.left).toBe(left);
         expect(assign.operator).toBe(operator);
         expect(assign.initializer).toBe(right);
+    });
+
+    it('should accept visitor', () => {
+        const assign = new AssignExpression(
+            new Identifier(createToken(TokenKind.Identifier, { value: 'x' })),
+            createToken<AssignToken>(TokenKind.Assign),
+            new Literal(createToken(TokenKind.Number, { value: '42' })),
+        );
+        const result = assign.accept(visitor);
+        expect(result).toBe(assign);
     });
 });
 
@@ -148,6 +240,18 @@ describe('ConditionalExpression', () => {
         expect(conditional.whenTrue).toBe(whenTrue);
         expect(conditional.whenFalse).toBe(whenFalse);
     });
+
+    it('should accept visitor', () => {
+        const conditional = new ConditionalExpression(
+            new Literal(createToken(TokenKind.True)),
+            createToken<QuestionToken>(TokenKind.Question),
+            new Literal(createToken(TokenKind.Number, { value: '1' })),
+            createToken<ColonToken>(TokenKind.Colon),
+            new Literal(createToken(TokenKind.Number, { value: '0' })),
+        );
+        const result = conditional.accept(visitor);
+        expect(result).toBe(conditional);
+    });
 });
 
 describe('BinaryExpression', () => {
@@ -163,6 +267,16 @@ describe('BinaryExpression', () => {
         expect(binary.operator).toBe(operator);
         expect(binary.right).toBe(right);
     });
+
+    it('should accept visitor', () => {
+        const binary = new BinaryExpression(
+            new Literal(createToken(TokenKind.Number, { value: '1' })),
+            createToken<BinaryOperatorToken>(TokenKind.Plus),
+            new Literal(createToken(TokenKind.Number, { value: '2' })),
+        );
+        const result = binary.accept(visitor);
+        expect(result).toBe(binary);
+    });
 });
 
 describe('UnaryExpression', () => {
@@ -175,6 +289,15 @@ describe('UnaryExpression', () => {
         expect(unary.kind).toBe(SyntaxKind.UnaryExpression);
         expect(unary.operator).toBe(operator);
         expect(unary.operand).toBe(operand);
+    });
+
+    it('should accept visitor', () => {
+        const unary = new UnaryExpression(
+            createToken<UnaryOperatorToken>(TokenKind.Not),
+            new Literal(createToken(TokenKind.True)),
+        );
+        const result = unary.accept(visitor);
+        expect(result).toBe(unary);
     });
 });
 
@@ -191,6 +314,17 @@ describe('CallExpression', () => {
         expect(call.name).toBe(name);
         expect(call.args).toBe(args);
     });
+
+    it('should accept visitor', () => {
+        const call = new CallExpression(
+            new Identifier(createToken(TokenKind.Identifier, { value: 'fn' })),
+            createToken<LeftParenToken>(TokenKind.LeftParen),
+            [new Literal(createToken(TokenKind.Number, { value: '42' }))],
+            createToken<RightParenToken>(TokenKind.RightParen),
+        );
+        const result = call.accept(visitor);
+        expect(result).toBe(call);
+    });
 });
 
 describe('ArrayLiteralExpression', () => {
@@ -205,6 +339,19 @@ describe('ArrayLiteralExpression', () => {
 
         expect(array.kind).toBe(SyntaxKind.ArrayLiteralExpression);
         expect(array.elements).toBe(elements);
+    });
+
+    it('should accept visitor', () => {
+        const array = new ArrayLiteralExpression(
+            createToken<LeftBracketToken>(TokenKind.LeftBracket),
+            [
+                new Literal(createToken(TokenKind.Number, { value: '1' })),
+                new Literal(createToken(TokenKind.Number, { value: '2' })),
+            ],
+            createToken<RightBracketToken>(TokenKind.RightBracket),
+        );
+        const result = array.accept(visitor);
+        expect(result).toBe(array);
     });
 });
 
@@ -222,6 +369,21 @@ describe('ObjectLiteralExpression', () => {
         expect(object.properties).toHaveLength(1);
         expect(object.properties[0]).toBe(assignment);
     });
+
+    it('should accept visitor', () => {
+        const object = new ObjectLiteralExpression(
+            createToken<LeftBraceToken>(TokenKind.LeftBrace),
+            [
+                new PropertyAssignment(
+                    new Identifier(createToken(TokenKind.Identifier, { value: 'key' })),
+                    new Literal(createToken(TokenKind.Number, { value: '42' })),
+                ),
+            ],
+            createToken<RightBraceToken>(TokenKind.RightBrace),
+        );
+        const result = object.accept(visitor);
+        expect(result).toBe(object);
+    });
 });
 
 describe('PropertyAccessExpression', () => {
@@ -235,6 +397,16 @@ describe('PropertyAccessExpression', () => {
         expect(access.kind).toBe(SyntaxKind.PropertyAccessExpression);
         expect(access.parent).toBe(parent);
         expect(access.name).toBe(name);
+    });
+
+    it('should accept visitor', () => {
+        const access = new PropertyAccessExpression(
+            new Identifier(createToken(TokenKind.Identifier, { value: 'obj' })),
+            createToken<DotToken>(TokenKind.Dot),
+            new Identifier(createToken(TokenKind.Identifier, { value: 'prop' })),
+        );
+        const result = access.accept(visitor);
+        expect(result).toBe(access);
     });
 });
 
@@ -254,6 +426,19 @@ describe('ElementAccessExpression', () => {
         expect(access.parent).toBe(parent);
         expect(access.elementExpression).toBe(expression);
     });
+
+    it('should accept visitor', () => {
+        const access = new ElementAccessExpression(
+            new Identifier(createToken(TokenKind.Identifier, { value: 'arr' })),
+            new ElementAccess(
+                createToken<LeftBracketToken>(TokenKind.LeftBracket),
+                new Literal(createToken(TokenKind.Number, { value: '0' })),
+                createToken<RightBracketToken>(TokenKind.RightBracket),
+            ),
+        );
+        const result = access.accept(visitor);
+        expect(result).toBe(access);
+    });
 });
 
 describe('GroupExpression', () => {
@@ -267,6 +452,16 @@ describe('GroupExpression', () => {
 
         expect(group.kind).toBe(SyntaxKind.GroupExpression);
         expect(group.expression).toBe(expression);
+    });
+
+    it('should accept visitor', () => {
+        const group = new GroupExpression(
+            createToken<LeftParenToken>(TokenKind.LeftParen),
+            new Literal(createToken(TokenKind.Number, { value: '42' })),
+            createToken<RightParenToken>(TokenKind.RightParen),
+        );
+        const result = group.accept(visitor);
+        expect(result).toBe(group);
     });
 });
 
@@ -317,6 +512,15 @@ describe('PropertyAssignment', () => {
 
         expect(() => new PropertyAssignment(property, value)).toThrow('Expect string/number literal');
     });
+
+    it('should accept visitor', () => {
+        const assignment = new PropertyAssignment(
+            new Identifier(createToken(TokenKind.Identifier, { value: 'key' })),
+            new Literal(createToken(TokenKind.Number, { value: '42' })),
+        );
+        const result = assignment.accept(visitor);
+        expect(result).toBe(assignment);
+    });
 });
 
 describe('ElementAccess', () => {
@@ -330,6 +534,16 @@ describe('ElementAccess', () => {
         expect(access.kind).toBe(SyntaxKind.ElementAccess);
         expect(access.expression).toBe(expression);
     });
+
+    it('should accept visitor', () => {
+        const access = new ElementAccess(
+            createToken<LeftBracketToken>(TokenKind.LeftBracket),
+            new Literal(createToken(TokenKind.Number, { value: '0' })),
+            createToken<RightBracketToken>(TokenKind.RightBracket),
+        );
+        const result = access.accept(visitor);
+        expect(result).toBe(access);
+    });
 });
 
 describe('Literal', () => {
@@ -341,6 +555,12 @@ describe('Literal', () => {
         expect(literal.kind).toBe(SyntaxKind.Literal);
         expect(literal.literalTokenKind).toBe(kind);
         expect(literal.value).toBe(value);
+    });
+
+    it('should accept visitor', () => {
+        const literal = new Literal(createToken(TokenKind.Number, { value: '42' }));
+        const result = literal.accept(visitor);
+        expect(result).toBe(literal);
     });
 });
 

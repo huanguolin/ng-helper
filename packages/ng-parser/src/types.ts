@@ -266,22 +266,22 @@ export enum NodeFlags {
     LeftHandExpression = 1 << 2,
 }
 
-export interface INodeVisitor {
-    visitProgram: <R>(node: Program) => R;
-    visitExpressionStatement: <R>(node: ExpressionStatement) => R;
-    visitFilterExpression: <R>(node: FilterExpression) => R;
-    visitAssignExpression: <R>(node: AssignExpression) => R;
-    visitConditionalExpression: <R>(node: ConditionalExpression) => R;
-    visitBinaryExpression: <R>(node: BinaryExpression) => R;
-    visitUnaryExpression: <R>(node: UnaryExpression) => R;
-    visitArrayLiteralExpression: <R>(node: ArrayLiteralExpression) => R;
-    visitObjectLiteralExpression: <R>(node: ObjectLiteralExpression) => R;
-    visitPropertyAssignment: <R>(node: PropertyAssignment) => R;
-    visitElementAccess: <R>(node: ElementAccess) => R;
-    visitPropertyAccessExpression: <R>(node: PropertyAccessExpression) => R;
-    visitElementAccessExpression: <R>(node: ElementAccessExpression) => R;
-    visitCallExpression: <R>(node: CallExpression) => R;
-    visitIdentifier: <R>(node: Identifier) => R;
-    visitLiteral: <R>(node: Literal) => R;
-    visitGroupExpression: <R>(node: GroupExpression) => R;
+export interface INodeVisitor<R> {
+    visitProgram: (node: Program) => R;
+    visitExpressionStatement: (node: ExpressionStatement) => R;
+    visitFilterExpression: (node: FilterExpression) => R;
+    visitAssignExpression: (node: AssignExpression) => R;
+    visitConditionalExpression: (node: ConditionalExpression) => R;
+    visitBinaryExpression: (node: BinaryExpression) => R;
+    visitUnaryExpression: (node: UnaryExpression) => R;
+    visitArrayLiteralExpression: (node: ArrayLiteralExpression) => R;
+    visitObjectLiteralExpression: (node: ObjectLiteralExpression) => R;
+    visitPropertyAssignment: (node: PropertyAssignment) => R;
+    visitElementAccess: (node: ElementAccess) => R;
+    visitPropertyAccessExpression: (node: PropertyAccessExpression) => R;
+    visitElementAccessExpression: (node: ElementAccessExpression) => R;
+    visitCallExpression: (node: CallExpression) => R;
+    visitIdentifier: (node: Identifier) => R;
+    visitLiteral: (node: Literal) => R;
+    visitGroupExpression: (node: GroupExpression) => R;
 }
