@@ -190,6 +190,10 @@ describe('Parser', () => {
         expect(locationValidator.validate(program)).toBe(true);
     }
 
+    function looseValidateLocation(program: Program) {
+        expect(locationValidator.validate(program, false)).toBe(true);
+    }
+
     describe('statement', () => {
         it('should handle an empty list of tokens', () => {
             const program = parse('');
@@ -392,6 +396,13 @@ describe('Parser', () => {
                 expect(sExpr.toString(program)).toBe('foo.' + keyword);
             },
         );
+
+        it.each([['a.b.', 'a.b.']])('error-tolerant %s', (input, expected) => {
+            const program = parse(input);
+            // TODO: check error
+            looseValidateLocation(program);
+            expect(sExpr.toString(program)).toBe(expected);
+        });
     });
 
     describe('group expression', () => {
