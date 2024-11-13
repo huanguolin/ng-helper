@@ -361,14 +361,24 @@ export class Parser {
     private parseObjectProperty(): PropertyAssignment {
         const token = this.token();
         let key: ElementAccess | Identifier | Literal;
+
+        if (token.is<IdentifierToken>(TokenKind.Identifier)) {
+            key = new Identifier(token);
+            this.nextToken();
+            if (this.expect(TokenKind.Colon)) {
+                const value = this.parseNormalExpression();
+                return new PropertyAssignment(key, value);
+            } else {
+                // Support ES6 object initializer
+                // 官方代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L527
+                // 官方测试: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/test/ng/parseSpec.js#L1360
+                const value = key;
+                return new PropertyAssignment(key, value);
+            }
+        }
+
         if (token.is<LiteralToken>(TokenKind.String, TokenKind.Number)) {
             key = new Literal(token);
-            this.nextToken();
-        } else if (token.is<IdentifierToken>(TokenKind.Identifier)) {
-            // TODO: 要支持 es6 对象属性的变量初始化吗？
-            // 官方是支持的，代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L527
-            // 单元测试代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/test/ng/parseSpec.js#L1360
-            key = new Identifier(token);
             this.nextToken();
         } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
             this.nextToken();

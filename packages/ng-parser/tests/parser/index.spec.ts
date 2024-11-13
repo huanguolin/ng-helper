@@ -424,6 +424,8 @@ describe('Parser', () => {
             ['{[1 + a]: 1}', '({object} ([(+ 1 a)] 1))'],
             // property initializer can be assign expression
             ['{a: b = 123}', '({object} (a (= b 123)))'],
+            // should understand ES6 object initializer
+            ['{x,y,z}', '({object} (x x) (y y) (z z))'],
             // mix
             ['{foo: bar, "man": "shell", 42: 23}', '({object} (foo bar) ("man" "shell") (42 23))'],
             ['{foo: bar, "man": "shell", 42: 23,}', '({object} (foo bar) ("man" "shell") (42 23))'],
