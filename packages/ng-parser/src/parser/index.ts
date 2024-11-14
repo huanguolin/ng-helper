@@ -71,7 +71,7 @@ export class Parser {
                 this.token().is(TokenKind.Semicolon, TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)
             ) {
                 if (!this.token().is(TokenKind.Semicolon)) {
-                    this.reportErrorAtCurrentToken('Unexpected token: ' + this.token().toString());
+                    this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
                 }
                 this.nextToken();
             } else if (this.token().is(TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)) {
@@ -335,7 +335,7 @@ export class Parser {
         ) {
             return new Literal(this.previousToken as LiteralToken);
         } else {
-            this.reportErrorAtCurrentToken('Unexpected token: ' + this.token().toString());
+            this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
             this.nextToken();
             return this.parsePrimaryExpression();
         }
@@ -402,7 +402,7 @@ export class Parser {
             this.nextToken();
             key = this.parseElementAccess(token);
         } else {
-            this.reportErrorAtCurrentToken('Expected an object property key, but got: ' + this.token().toString());
+            this.reportErrorAtCurrentToken(`Expected an object property key, but got: "${this.token().toString()}"`);
             key = new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
             this.nextToken();
         }

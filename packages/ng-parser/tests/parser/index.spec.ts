@@ -440,6 +440,25 @@ describe('Parser', () => {
                 expect(sExpr.toString(program)).toBe(expected);
             },
         );
+
+        it.each([
+            ['.a', 'a', 1, [0, 1]],
+            ['.a.b', 'a.b', 1, [0, 1]],
+            // TODO
+        ])(
+            'error-tolerant %s',
+            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+                const program = parse(input);
+                expect(program.errors).toHaveLength(1);
+                program.errors.forEach((error, index) => {
+                    expect(error.message).toBe(`Expression expected, but got: "."`);
+                    expect(error.start).toBe(errorLocations[index][0]);
+                    expect(error.end).toBe(errorLocations[index][1]);
+                });
+                looseValidateLocation(program);
+                expect(sExpr.toString(program)).toBe(expected);
+            },
+        );
     });
 
     describe('group expression', () => {
