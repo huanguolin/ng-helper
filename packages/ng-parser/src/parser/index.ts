@@ -15,6 +15,7 @@ import {
     type LeftBracketToken,
     type LeftParenToken,
     type LiteralToken,
+    type Location,
     type NgParseError,
     type PipeToken,
     type QuestionToken,
@@ -87,14 +88,14 @@ export class Parser {
         this.errors.push(error);
     }
 
-    private reportError(message: string, token?: Token) {
-        if (!token) {
-            token = this.token();
+    private reportError(message: string, errorLocation?: Location) {
+        if (!errorLocation) {
+            errorLocation = this.token();
         }
         this.handleError({
             reporter: ErrorReporter.Parser,
-            start: token.start,
-            end: token.end,
+            start: errorLocation.start,
+            end: errorLocation.end,
             message,
         });
     }
@@ -112,16 +113,16 @@ export class Parser {
         return this.token();
     }
 
-    private consume<T extends Token>(tokenKind: TokenKind, message: string): T;
-    private consume<T extends Token>(tokenKinds: TokenKind[], message: string): T;
-    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string): T {
+    private consume<T extends Token>(tokenKind: TokenKind, message: string, errorLocation?: Location): T;
+    private consume<T extends Token>(tokenKinds: TokenKind[], message: string, errorLocation?: Location): T;
+    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string, errorLocation?: Location): T {
         const token = this.token();
         const arr = Array.isArray(tokenKind) ? tokenKind : [tokenKind];
         if (arr.some((k) => token.is<T>(k))) {
             this.nextToken();
             return token as T;
         } else {
-            this.reportError(message);
+            this.reportError(message, errorLocation);
             return Token.createEmpty(arr[0]);
         }
     }
@@ -281,10 +282,11 @@ export class Parser {
                 const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of arguments');
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
-                // `undefined`, `true`, `false`, `null` also can used as identifiers(like: 'foo.null')
+                // `undefined`, `true`, `false`, `null` also can used as identifiers(e.g.: 'foo.null')
                 const name = this.consume<IdentifierToken>(
                     [TokenKind.Identifier, TokenKind.True, TokenKind.False, TokenKind.Null, TokenKind.Undefined],
                     'Expect an identifier after "."',
+                    { start: token.end, end: token.end },
                 );
                 primary = new PropertyAccessExpression(primary, token, name);
             } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
