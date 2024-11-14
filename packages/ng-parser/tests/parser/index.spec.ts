@@ -398,45 +398,48 @@ describe('Parser', () => {
         );
 
         it.each([
-            ['a.', 'a.', 1, [2]],
-            ['a.b.', 'a.b.', 1, [4]],
+            ['a.', 'a.', 1, [2, 2]],
+            ['a.b.', 'a.b.', 1, [4, 4]],
             // assign expression
-            ['a. = 123', '(= a. 123)', 1, [2]],
-            ['a. = c.', '(= a. c.)', 2, [2, 7]],
+            ['a. = 123', '(= a. 123)', 1, [3, 4]],
+            ['a. = c.', '(= a. c.)', 2, [3, 4], [7, 7]],
             // conditional expression
-            ['a. > b. ? c. : d.', '(cond? (> a. b.) c. d.)', 4, [2, 7, 12, 17]],
+            ['a. > b. ? c. : d.', '(cond? (> a. b.) c. d.)', 4, [3, 4], [8, 9], [13, 14], [17, 17]],
             // binary expression
-            ['1 + a.b.', '(+ 1 a.b.)', 1, [8]],
-            ['a.b. + 1', '(+ a.b. 1)', 1, [4]],
+            ['1 + a.b.', '(+ 1 a.b.)', 1, [8, 8]],
+            ['a.b. + 1', '(+ a.b. 1)', 1, [5, 6]],
             // unary expression
-            ['-!a.b.', '(- (! a.b.))', 1, [6]],
+            ['-!a.b.', '(- (! a.b.))', 1, [6, 6]],
             // filter expression
-            ['a.b. | f1', '(filter f1| a.b.)', 1, [4]],
-            ['a.b. | f1: c.', '(filter f1| a.b. c.)', 2, [4, 13]],
+            ['a.b. | f1', '(filter f1| a.b.)', 1, [5, 6]],
+            ['a.b. | f1: c.', '(filter f1| a.b. c.)', 2, [5, 6], [13, 13]],
             // call expression
-            ['a.b.()', '(a.b.)', 1, [4]],
-            ['a.b.(c., 3)', '(a.b. c. 3)', 2, [4, 7]],
+            ['a.b.()', '(a.b.)', 1, [4, 5]],
+            ['a.b.(c., 3)', '(a.b. c. 3)', 2, [4, 5], [7, 8]],
             // element access
-            ['a.b.[1]', 'a.b.[1]', 1, [4]],
-            ['a.b.[c.]', 'a.b.[c.]', 2, [4, 7]],
+            ['a.b.[1]', 'a.b.[1]', 1, [4, 5]],
+            ['a.b.[c.]', 'a.b.[c.]', 2, [4, 5], [7, 8]],
             // array literal
-            ['[1, b.]', '([array] 1 b.)', 1, [6]],
-            ['[1, b., 3]', '([array] 1 b. 3)', 1, [6]],
+            ['[1, b.]', '([array] 1 b.)', 1, [6, 7]],
+            ['[1, b., 3]', '([array] 1 b. 3)', 1, [6, 7]],
             // object literal
-            ['{a: b.}', '({object} (a b.))', 1, [6]],
-            ['{[a.]: b.}', '({object} ([a.] b.))', 2, [4, 9]],
-            ['{a: b., c: d.}', '({object} (a b.) (c d.))', 2, [6, 13]],
-        ])('error-tolerant %s', (input, expected, errorCount, errorLocations) => {
-            const program = parse(input);
-            expect(program.errors).toHaveLength(errorCount);
-            program.errors.forEach((error, index) => {
-                expect(error.message).toBe('Expect an identifier after "."');
-                expect(error.start).toBe(errorLocations[index]);
-                expect(error.end).toBe(error.start);
-            });
-            looseValidateLocation(program);
-            expect(sExpr.toString(program)).toBe(expected);
-        });
+            ['{a: b.}', '({object} (a b.))', 1, [6, 7]],
+            ['{[a.]: b.}', '({object} ([a.] b.))', 2, [4, 5], [9, 10]],
+            ['{a: b., c: d.}', '({object} (a b.) (c d.))', 2, [6, 7], [13, 14]],
+        ])(
+            'error-tolerant %s',
+            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+                const program = parse(input);
+                expect(program.errors).toHaveLength(errorCount);
+                program.errors.forEach((error, index) => {
+                    expect(error.message).toBe('Expect an identifier after "."');
+                    expect(error.start).toBe(errorLocations[index][0]);
+                    expect(error.end).toBe(errorLocations[index][1]);
+                });
+                looseValidateLocation(program);
+                expect(sExpr.toString(program)).toBe(expected);
+            },
+        );
     });
 
     describe('group expression', () => {

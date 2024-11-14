@@ -16,12 +16,12 @@ const keywordMap = Object.entries(kindToKeywordMap).reduce(
 );
 
 export class Scanner {
-    private source = '';
+    private sourceText = '';
     private pos = 0;
     private onError: ErrorHandler = noop;
 
-    initialize(source: string, onError?: ErrorHandler) {
-        this.source = source;
+    initialize(sourceText: string, onError?: ErrorHandler) {
+        this.sourceText = sourceText;
         this.pos = 0;
         if (onError) {
             this.onError = onError;
@@ -71,6 +71,9 @@ export class Scanner {
     }
 
     private reportError(message: string, length = 1) {
+        if (this.pos + length > this.sourceText.length) {
+            length = this.sourceText.length - this.pos;
+        }
         this.onError({
             reporter: ErrorReporter.Scanner,
             start: this.pos,
@@ -86,7 +89,7 @@ export class Scanner {
             this.pos += ch.length;
             ch = this.pickMultiByteChar(this.pos);
         }
-        const value = this.source.substring(start, this.pos);
+        const value = this.sourceText.substring(start, this.pos);
         return this.createToken({
             kind: this.getKeyword(value) ?? TokenKind.Identifier,
             value,
@@ -128,7 +131,7 @@ export class Scanner {
             if (!number) {
                 this.reportError('Digit expected');
             } else {
-                scientificFragment = this.source.substring(end, preNumericPart) + number;
+                scientificFragment = this.sourceText.substring(end, preNumericPart) + number;
             }
         }
 
@@ -157,7 +160,7 @@ export class Scanner {
                 break;
             }
         }
-        return this.source.substring(start, this.pos);
+        return this.sourceText.substring(start, this.pos);
     }
 
     private isNumberStart(ch: string): boolean {
@@ -183,19 +186,19 @@ export class Scanner {
         let start = this.pos;
         while (true) {
             if (this.isEnd()) {
-                result += this.source.substring(start, this.pos);
+                result += this.sourceText.substring(start, this.pos);
                 this.reportError('Unterminated string');
                 break;
             }
 
             const ch = this.at(this.pos);
             if (ch === quote) {
-                result += this.source.substring(start, this.pos);
+                result += this.sourceText.substring(start, this.pos);
                 this.pos++;
                 break;
             }
             if (ch === '\\') {
-                result += this.source.substring(start, this.pos);
+                result += this.sourceText.substring(start, this.pos);
                 result += this.scanEscapeSequence();
                 start = this.pos;
                 continue;
@@ -239,10 +242,10 @@ export class Scanner {
                 for (; this.pos < start + 6; this.pos++) {
                     if (this.isEnd() || !this.isHexDigit(this.at(this.pos))) {
                         this.reportError('Hexadecimal digit expected');
-                        return this.source.substring(start, this.pos);
+                        return this.sourceText.substring(start, this.pos);
                     }
                 }
-                const escapedValue = parseInt(this.source.substring(start + 2, this.pos), 16);
+                const escapedValue = parseInt(this.sourceText.substring(start + 2, this.pos), 16);
                 return String.fromCharCode(escapedValue);
         }
         return ch;
@@ -253,7 +256,7 @@ export class Scanner {
     }
 
     private at(n: number): string {
-        return this.source.charAt(n);
+        return this.sourceText.charAt(n);
     }
 
     private pickMultiByteChar(n: number): string {
@@ -273,7 +276,7 @@ export class Scanner {
     }
 
     private isEnd(): boolean {
-        return this.pos >= this.source.length;
+        return this.pos >= this.sourceText.length;
     }
 
     private isWhitespace(ch: string): boolean {

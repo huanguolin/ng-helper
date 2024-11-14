@@ -1,5 +1,6 @@
 /* eslint-disable no-constant-condition */
 
+import { Debug } from '../debug';
 import { Scanner } from '../scanner';
 import { Token } from '../scanner/token';
 import {
@@ -16,6 +17,7 @@ import {
     type LeftParenToken,
     type LiteralToken,
     type Location,
+    type Mutable,
     type NgParseError,
     type PipeToken,
     type QuestionToken,
@@ -52,12 +54,14 @@ import {
 export class Parser {
     private scanner = new Scanner();
     private errors: NgParseError[] = [];
+    private sourceText: string = '';
     private previousToken?: Token;
     private currentToken!: Token;
 
     parse(sourceText: string): Program {
         this.errors = [];
-        this.scanner.initialize(sourceText, this.handleError.bind(this));
+        this.sourceText = sourceText;
+        this.scanner.initialize(sourceText, this.reportError.bind(this));
 
         this.nextToken();
 
@@ -67,7 +71,7 @@ export class Parser {
                 this.token().is(TokenKind.Semicolon, TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)
             ) {
                 if (!this.token().is(TokenKind.Semicolon)) {
-                    this.reportError('Unexpected token: ' + this.token().toString());
+                    this.reportErrorAtCurrentToken('Unexpected token: ' + this.token().toString());
                 }
                 this.nextToken();
             } else if (this.token().is(TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)) {
@@ -84,20 +88,33 @@ export class Parser {
         return this.token().is(TokenKind.EOF);
     }
 
-    private handleError(error: NgParseError) {
+    private reportError(error: NgParseError) {
+        this.assertErrorLocation(error);
         this.errors.push(error);
     }
 
-    private reportError(message: string, errorLocation?: Location) {
-        if (!errorLocation) {
-            errorLocation = this.token();
+    private assertErrorLocation({ start, end }: Location) {
+        Debug.assert(start >= 0);
+        Debug.assert(end >= 0);
+        Debug.assert(start <= this.sourceText.length);
+        Debug.assert(end <= this.sourceText.length);
+        Debug.assert(start <= end);
+    }
+
+    private reportErrorAt(message: string, errorLocation: Location) {
+        if (errorLocation.end > this.sourceText.length) {
+            (errorLocation as Mutable<Location>).end = this.sourceText.length;
         }
-        this.handleError({
+        this.reportError({
             reporter: ErrorReporter.Parser,
             start: errorLocation.start,
             end: errorLocation.end,
             message,
         });
+    }
+
+    private reportErrorAtCurrentToken(message: string) {
+        this.reportErrorAt(message, this.token());
     }
 
     // 使用 token() 能避免直接使用 currentToken 导致的类型流分析不正确。
@@ -113,16 +130,16 @@ export class Parser {
         return this.token();
     }
 
-    private consume<T extends Token>(tokenKind: TokenKind, message: string, errorLocation?: Location): T;
-    private consume<T extends Token>(tokenKinds: TokenKind[], message: string, errorLocation?: Location): T;
-    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string, errorLocation?: Location): T {
+    private consume<T extends Token>(tokenKind: TokenKind, message: string): T;
+    private consume<T extends Token>(tokenKinds: TokenKind[], message: string): T;
+    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string): T {
         const token = this.token();
         const arr = Array.isArray(tokenKind) ? tokenKind : [tokenKind];
         if (arr.some((k) => token.is<T>(k))) {
             this.nextToken();
             return token as T;
         } else {
-            this.reportError(message, errorLocation);
+            this.reportErrorAtCurrentToken(message);
             return Token.createEmpty(arr[0]);
         }
     }
@@ -175,7 +192,7 @@ export class Parser {
         const assignToken = this.expect<AssignToken>(TokenKind.Assign);
         if (assignToken) {
             if (!left.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                this.reportError('Can not assign a value to a non left-hand-value', this.previousToken);
+                this.reportErrorAt('Can not assign a value to a non left-hand-value', this.previousToken!);
             }
             left = new AssignExpression(left, assignToken, this.parseAssignExpression());
         }
@@ -286,13 +303,12 @@ export class Parser {
                 const name = this.consume<IdentifierToken>(
                     [TokenKind.Identifier, TokenKind.True, TokenKind.False, TokenKind.Null, TokenKind.Undefined],
                     'Expect an identifier after "."',
-                    { start: token.end, end: token.end },
                 );
                 primary = new PropertyAccessExpression(primary, token, name);
             } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
                 primary = new ElementAccessExpression(primary, this.parseElementAccess(token));
             } else {
-                throw new Error('Impossible here!');
+                Debug.fail('Impossible run into this place!');
             }
         }
         return primary;
@@ -319,7 +335,7 @@ export class Parser {
         ) {
             return new Literal(this.previousToken as LiteralToken);
         } else {
-            this.reportError('Unexpected token: ' + this.token().toString());
+            this.reportErrorAtCurrentToken('Unexpected token: ' + this.token().toString());
             this.nextToken();
             return this.parsePrimaryExpression();
         }
@@ -386,7 +402,7 @@ export class Parser {
             this.nextToken();
             key = this.parseElementAccess(token);
         } else {
-            this.reportError('Expected an object property key, but got: ' + this.token().toString());
+            this.reportErrorAtCurrentToken('Expected an object property key, but got: ' + this.token().toString());
             key = new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
             this.nextToken();
         }

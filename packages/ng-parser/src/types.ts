@@ -19,6 +19,16 @@ import type {
 } from './parser/node';
 import type { Token } from './scanner/token';
 
+/**
+ * @internal
+ */
+export type AnyFunction = (...args: never[]) => void;
+
+/**
+ * @internal
+ */
+export type Mutable<T extends object> = { -readonly [K in keyof T]: T[K] };
+
 export interface Location {
     readonly start: number;
     readonly end: number;

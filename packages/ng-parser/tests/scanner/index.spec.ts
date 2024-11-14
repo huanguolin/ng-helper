@@ -280,15 +280,17 @@ describe('Scanner', () => {
 
             it('should report unterminated string', () => {
                 const errors: NgParseError[] = [];
-                scanner.initialize('"unclosed', (error) => errors.push(error));
+                const input = '"unclosed';
+                scanner.initialize(input, (error) => errors.push(error));
                 const token = scanner.scan();
 
                 expect(token.kind).toBe(TokenKind.String);
-                expect(token.value).toBe('unclosed');
+                expect(token.value).toBe(input.slice(1));
 
                 expect(errors.length).toBe(1);
                 expect(errors[0].message).toBe('Unterminated string');
-                expect(errors[0].start).toBe(9);
+                expect(errors[0].start).toBe(input.length);
+                expect(errors[0].end).toBe(input.length);
             });
 
             it('should report unexpected end of text', () => {
