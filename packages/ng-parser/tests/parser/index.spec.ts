@@ -23,6 +23,8 @@ import { resolveLocation } from '../../src/parser/utils';
 import { Token } from '../../src/scanner/token';
 import { SyntaxKind, TokenKind, type INodeVisitor, type Location } from '../../src/types';
 
+const MISSING_IDENTIFIER = '$$';
+
 class SExpr implements INodeVisitor<string> {
     toString(node: Expression): string {
         return node.accept(this);
@@ -75,7 +77,7 @@ class SExpr implements INodeVisitor<string> {
         return `${node.parent.accept(this)}[${node.elementExpression.accept(this)}]`;
     }
     visitIdentifier(node: Identifier): string {
-        return node.name;
+        return node.name || MISSING_IDENTIFIER;
     }
     visitGroupExpression(node: GroupExpression): string {
         return node.expression.accept(this);
@@ -398,34 +400,35 @@ describe('Parser', () => {
         );
 
         it.each([
-            ['a.', 'a.', 1, [2, 2]],
-            ['a.b.', 'a.b.', 1, [4, 4]],
+            // $$ 代表缺失的标识符
+            ['a.', 'a.$$', 1, [2, 2]],
+            ['a.b.', 'a.b.$$', 1, [4, 4]],
             // assign expression
-            ['a. = 123', '(= a. 123)', 1, [3, 4]],
-            ['a. = c.', '(= a. c.)', 2, [3, 4], [7, 7]],
+            ['a. = 123', '(= a.$$ 123)', 1, [3, 4]],
+            ['a. = c.', '(= a.$$ c.$$)', 2, [3, 4], [7, 7]],
             // conditional expression
-            ['a. > b. ? c. : d.', '(cond? (> a. b.) c. d.)', 4, [3, 4], [8, 9], [13, 14], [17, 17]],
+            ['a. > b. ? c. : d.', '(cond? (> a.$$ b.$$) c.$$ d.$$)', 4, [3, 4], [8, 9], [13, 14], [17, 17]],
             // binary expression
-            ['1 + a.b.', '(+ 1 a.b.)', 1, [8, 8]],
-            ['a.b. + 1', '(+ a.b. 1)', 1, [5, 6]],
+            ['1 + a.b.', '(+ 1 a.b.$$)', 1, [8, 8]],
+            ['a.b. + 1', '(+ a.b.$$ 1)', 1, [5, 6]],
             // unary expression
-            ['-!a.b.', '(- (! a.b.))', 1, [6, 6]],
+            ['-!a.b.', '(- (! a.b.$$))', 1, [6, 6]],
             // filter expression
-            ['a.b. | f1', '(filter f1| a.b.)', 1, [5, 6]],
-            ['a.b. | f1: c.', '(filter f1| a.b. c.)', 2, [5, 6], [13, 13]],
+            ['a.b. | f1', '(filter f1| a.b.$$)', 1, [5, 6]],
+            ['a.b. | f1: c.', '(filter f1| a.b.$$ c.$$)', 2, [5, 6], [13, 13]],
             // call expression
-            ['a.b.()', '(a.b.)', 1, [4, 5]],
-            ['a.b.(c., 3)', '(a.b. c. 3)', 2, [4, 5], [7, 8]],
+            ['a.b.()', '(a.b.$$)', 1, [4, 5]],
+            ['a.b.(c., 3)', '(a.b.$$ c.$$ 3)', 2, [4, 5], [7, 8]],
             // element access
-            ['a.b.[1]', 'a.b.[1]', 1, [4, 5]],
-            ['a.b.[c.]', 'a.b.[c.]', 2, [4, 5], [7, 8]],
+            ['a.b.[1]', 'a.b.$$[1]', 1, [4, 5]],
+            ['a.b.[c.]', 'a.b.$$[c.$$]', 2, [4, 5], [7, 8]],
             // array literal
-            ['[1, b.]', '([array] 1 b.)', 1, [6, 7]],
-            ['[1, b., 3]', '([array] 1 b. 3)', 1, [6, 7]],
+            ['[1, b.]', '([array] 1 b.$$)', 1, [6, 7]],
+            ['[1, b., 3]', '([array] 1 b.$$ 3)', 1, [6, 7]],
             // object literal
-            ['{a: b.}', '({object} (a b.))', 1, [6, 7]],
-            ['{[a.]: b.}', '({object} ([a.] b.))', 2, [4, 5], [9, 10]],
-            ['{a: b., c: d.}', '({object} (a b.) (c d.))', 2, [6, 7], [13, 14]],
+            ['{a: b.}', '({object} (a b.$$))', 1, [6, 7]],
+            ['{[a.]: b.}', '({object} ([a.$$] b.$$))', 2, [4, 5], [9, 10]],
+            ['{a: b., c: d.}', '({object} (a b.$$) (c d.$$))', 2, [6, 7], [13, 14]],
         ])(
             'error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
