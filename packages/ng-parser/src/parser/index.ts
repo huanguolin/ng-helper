@@ -192,7 +192,7 @@ export class Parser {
         const assignToken = this.expect<AssignToken>(TokenKind.Assign);
         if (assignToken) {
             if (!left.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                this.reportErrorAt('Can not assign a value to a non left-hand-value', this.previousToken!);
+                this.reportErrorAt('Can not assign a value to a non left-hand-value', left);
             }
             left = new AssignExpression(left, assignToken, this.parseAssignExpression());
         }
@@ -296,7 +296,10 @@ export class Parser {
         while ((token = this.expect(TokenKind.LeftParen, TokenKind.Dot, TokenKind.LeftBracket))) {
             if (token.is<LeftParenToken>(TokenKind.LeftParen)) {
                 const args = this.parseArguments();
-                const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of arguments');
+                const rightParen = this.consume<RightParenToken>(
+                    TokenKind.RightParen,
+                    'Expect ")" end of call expression',
+                );
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
                 // `undefined`, `true`, `false`, `null` also can used as identifiers(e.g.: 'foo.null')
@@ -334,6 +337,9 @@ export class Parser {
             )
         ) {
             return new Literal(this.previousToken as LiteralToken);
+        } else if (this.isEnd()) {
+            this.reportErrorAtCurrentToken('Expression expected, but got end');
+            return new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
         } else {
             this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
             this.nextToken();
