@@ -207,7 +207,7 @@ describe('Parser', () => {
      * create error
      */
     function err(
-        key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr',
+        key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr' | '@',
         start: number,
         end: number,
     ): ErrorInfo {
@@ -242,6 +242,10 @@ describe('Parser', () => {
                 break;
             case 'UnterminatedStr':
                 msg = 'Unterminated string' as ErrorMessageType;
+                break;
+            case '@':
+                msg = 'Unexpected character: @' as ErrorMessageType;
+                break;
         }
         return [msg, start, end];
     }
@@ -769,9 +773,12 @@ describe('Parser', () => {
             ['a * %', '(% (* a $$) $$)', err('Expr', 4, 5), err('Expr', 5, 5)],
             // TODO: miss operator with group
             // ['(a b)', '(+ a b)', err('Op', 5, 5)],
+            // unknown char '@'
+            ['@1 + 3', '(+ 1 3)', err('@', 0, 1)],
             // mess
             ['| +', '(filter $$| $$);(+ $$)', err('Expr', 0, 1), err('Ident', 2, 3), err('Expr', 3, 3)],
             ['= ([', '(= $$ ([array]))', err('Expr', 0, 1), err(']', 4, 4)],
+            ['= a([', '(= $$ (a ([array])))', err('Expr', 0, 1), err(']', 5, 5)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             expect(sExpr.toString(program)).toBe(expected);
