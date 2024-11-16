@@ -389,6 +389,64 @@ describe('Scanner', () => {
             });
         });
     });
+
+    describe('lookAhead()', () => {
+        it('should return preview result without affecting scanner position', () => {
+            scanner.initialize('123 456');
+
+            // Look ahead to get first token
+            const firstToken = scanner.lookAhead(() => scanner.scan());
+            expect(firstToken.kind).toBe(TokenKind.Number);
+            expect(firstToken.value).toBe('123');
+
+            // Actual scan should return the same token
+            const actualToken = scanner.scan();
+            expect(actualToken.kind).toBe(TokenKind.Number);
+            expect(actualToken.value).toBe('123');
+        });
+
+        it('should support multiple tokens look ahead', () => {
+            scanner.initialize('123 456');
+
+            // Look ahead multiple tokens
+            const tokens = scanner.lookAhead(() => {
+                const results = [];
+                results.push(scanner.scan()); // 123
+                results.push(scanner.scan()); // 456
+                return results;
+            });
+
+            expect(tokens).toHaveLength(2);
+            expect(tokens[0].value).toBe('123');
+            expect(tokens[1].value).toBe('456');
+
+            // Scanner position should not be affected
+            const firstScan = scanner.scan();
+            expect(firstScan.value).toBe('123');
+        });
+
+        it('should off error report in look ahead', () => {
+            const errors: NgParseError[] = [];
+            scanner.initialize('123 @#$ 456', (error) => errors.push(error));
+
+            // Look ahead through invalid characters
+            const result = scanner.lookAhead(() => {
+                scanner.scan(); // 123
+                scanner.scan(); // @#$
+                return scanner.scan(); // 456
+            });
+
+            // error report should off
+            expect(errors.length).toBe(0);
+
+            // test lookAhead() return
+            expect(result.value).toBe('456');
+
+            // Scanner should still be at the start
+            const firstScan = scanner.scan();
+            expect(firstScan.value).toBe('123');
+        });
+    });
 });
 
 // Helper function to scan all tokens

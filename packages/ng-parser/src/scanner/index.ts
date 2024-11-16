@@ -66,6 +66,23 @@ export class Scanner {
         return this.createEOFToken();
     }
 
+    lookAhead<T>(callback: () => T): T {
+        // save state
+        const savePos = this.pos;
+        const saveOnError = this.onError;
+
+        // off error report
+        this.onError = noop;
+
+        const result = callback();
+
+        // restore
+        this.pos = savePos;
+        this.onError = saveOnError;
+
+        return result;
+    }
+
     private createEOFToken(): Token {
         return this.createToken({ kind: TokenKind.EOF, value: '' });
     }
