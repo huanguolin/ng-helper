@@ -357,17 +357,13 @@ describe('Parser', () => {
         it('(2) error-tolerant', () => {
             const input = 'a ? b';
             const expected = '(cond? a b $$)';
-            const errorCount = 2;
             const program = parse(input);
             looseValidateLocation(program);
             expect(sExpr.toString(program)).toBe(expected);
-            expect(program.errors).toHaveLength(errorCount);
+            expect(program.errors).toHaveLength(1);
             expect(program.errors[0].message).toBe('Expect ":" for conditional expression');
             expect(program.errors[0].start).toBe(5);
             expect(program.errors[0].end).toBe(5);
-            expect(program.errors[1].message).toBe('Expression expected, but got end');
-            expect(program.errors[1].start).toBe(5);
-            expect(program.errors[1].end).toBe(5);
         });
     });
 
@@ -600,7 +596,7 @@ describe('Parser', () => {
         it.each([
             ['(b', 'b', 1, [2, 2]],
             ['(b / (1 + 2)', '(/ b (+ 1 2))', 1, [12, 12]],
-            ['(b / (1 + 2', '(/ b (+ 1 2))', 2, [11, 11], [11, 11]],
+            ['(b / (1 + 2', '(/ b (+ 1 2))', 1, [11, 11]],
         ])(
             'error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
@@ -651,7 +647,7 @@ describe('Parser', () => {
         it.each([
             ['{b', '({object} (b b))', 1, [2, 2]],
             ['{b: 1', '({object} (b 1))', 1, [5, 5]],
-            ['{b:{a', '({object} (b ({object} (a a))))', 2, [5, 5], [5, 5]],
+            ['{b:{a', '({object} (b ({object} (a a))))', 1, [5, 5]],
         ])(
             '(1) error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
@@ -685,7 +681,7 @@ describe('Parser', () => {
 
         it.each([
             ['[b', '([array] b)', 1, [2, 2]],
-            ['[b,[x', '([array] b ([array] x))', 2, [5, 5], [5, 5]],
+            ['[b,[x', '([array] b ([array] x))', 1, [5, 5]],
         ])(
             'error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {

@@ -89,6 +89,12 @@ export class Parser {
     }
 
     private reportError(error: NgParseError) {
+        // 同一个位置只报错一次
+        const lastError = this.errors[this.errors.length - 1];
+        if (lastError && lastError.start === error.start) {
+            return;
+        }
+
         this.assertErrorLocation(error);
         this.errors.push(error);
     }
