@@ -544,8 +544,8 @@ describe('Parser', () => {
         );
 
         it.each([
-            ['.a', 'a', 1, [0, 1]],
-            ['.a.b', 'a.b', 1, [0, 1]],
+            ['.a', '$$.a', 1, [0, 1]],
+            ['.a.b', '$$.a.b', 1, [0, 1]],
         ])(
             'property access (2) error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {

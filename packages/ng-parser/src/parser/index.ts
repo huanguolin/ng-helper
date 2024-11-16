@@ -146,8 +146,16 @@ export class Parser {
             return token as T;
         } else {
             this.reportErrorAtCurrentToken(message);
-            return Token.createEmpty(arr[0]);
+            return this.createMissToken(arr[0]);
         }
+    }
+
+    private createMissToken<T extends Token>(tokenKind: TokenKind): T {
+        return Token.createEmpty(tokenKind);
+    }
+
+    private createMissIdentifier(): Identifier {
+        return new Identifier(this.createMissToken<IdentifierToken>(TokenKind.Identifier));
     }
 
     private expect<T extends Token>(...tokenKinds: TokenKind[]): T | undefined {
@@ -343,13 +351,9 @@ export class Parser {
             )
         ) {
             return new Literal(this.previousToken as LiteralToken);
-        } else if (this.isEnd()) {
-            this.reportErrorAtCurrentToken('Expression expected, but got end');
-            return new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
         } else {
             this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
-            this.nextToken();
-            return this.parsePrimaryExpression();
+            return this.createMissIdentifier();
         }
     }
 
