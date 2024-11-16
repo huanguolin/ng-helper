@@ -68,21 +68,31 @@ export class Parser {
 
         const statements: ExpressionStatement[] = [];
         while (!this.isEnd()) {
-            if (
-                this.token().is(TokenKind.Semicolon, TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)
-            ) {
-                if (!this.token().is(TokenKind.Semicolon)) {
-                    this.reportErrorAtCurrentToken(ErrorMessage.Expression_expected);
-                }
-                this.nextToken();
-            } else if (this.token().is(TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)) {
-                this.nextToken();
+            if (this.isUnExpectedTokenOfExpressionStart()) {
+                this.skipUnExpectedTokenOfExpressionStart();
             } else {
                 statements.push(this.parseExpressionStatement());
             }
         }
 
         return new Program(sourceText, statements, this.errors);
+    }
+
+    private isUnExpectedTokenOfExpressionStart(): boolean {
+        return this.token().is(
+            TokenKind.Semicolon,
+            TokenKind.Comma,
+            TokenKind.RightBrace,
+            TokenKind.RightBracket,
+            TokenKind.RightParen,
+        );
+    }
+
+    private skipUnExpectedTokenOfExpressionStart() {
+        if (!this.token().is(TokenKind.Semicolon)) {
+            this.reportErrorAtCurrentToken(ErrorMessage.Expression_expected);
+        }
+        this.nextToken();
     }
 
     private isEnd(): boolean {
@@ -186,7 +196,7 @@ export class Parser {
     private parseExpressionStatement(): ExpressionStatement {
         const expression = this.parseExpression();
         const semicolon = this.isEnd()
-            ? this.createMissToken<SemicolonToken>(TokenKind.Semicolon)
+            ? this.createMissToken<SemicolonToken>(TokenKind.Semicolon) // 这个 ';' 是可以省略的
             : this.consume(TokenKind.Semicolon, ErrorMessage.Semicolon_expected);
         return new ExpressionStatement(expression, semicolon);
     }

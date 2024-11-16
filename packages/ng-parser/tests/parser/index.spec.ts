@@ -293,6 +293,10 @@ describe('Parser', () => {
             // leading ')'
             [')a+b', '(+ a b)', err('Expr', 0, 1)],
             ['1)a+b', '1;(+ a b)', err(';', 1, 2)],
+            // leading ','
+            [',a+b', '(+ a b)', err('Expr', 0, 1)],
+            // tail ','
+            ['a+b,', '(+ a b)', err(';', 3, 4)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             expect(sExpr.toString(program)).toBe(expected);
@@ -752,6 +756,26 @@ describe('Parser', () => {
                     expect(sExpr.toString(program)).toBe(expected);
                 });
             });
+        });
+    });
+
+    describe('error tolerant', () => {
+        it.each([
+            // miss operand
+            ['>= a + b', '(>= $$ (+ a b))', err('Expr', 0, 2)],
+            ['>= && a + b', '(&& (>= $$ $$) (+ a b))', err('Expr', 0, 2), err('Expr', 3, 5)],
+            ['a + b *', '(+ a (* b $$))', err('Expr', 7, 7)],
+            ['a + b * !', '(+ a (* b (! $$)))', err('Expr', 9, 9)],
+            ['a * %', '(% (* a $$) $$)', err('Expr', 4, 5), err('Expr', 5, 5)],
+            // TODO: miss operator with group
+            // ['(a b)', '(+ a b)', err('Op', 5, 5)],
+            // mess
+            ['| +', '(filter $$| $$);(+ $$)', err('Expr', 0, 1), err('Ident', 2, 3), err('Expr', 3, 3)],
+            ['= ([', '(= $$ ([array]))', err('Expr', 0, 1), err(']', 4, 4)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
         });
     });
 });
