@@ -28,6 +28,7 @@ import {
     type UnaryOperatorToken,
 } from '../types';
 
+import { ErrorMessage, type ErrorMessageType } from './errorMessage';
 import {
     Program,
     ExpressionStatement,
@@ -71,7 +72,7 @@ export class Parser {
                 this.token().is(TokenKind.Semicolon, TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)
             ) {
                 if (!this.token().is(TokenKind.Semicolon)) {
-                    this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
+                    this.reportErrorAtCurrentToken(ErrorMessage.Expression_expected);
                 }
                 this.nextToken();
             } else if (this.token().is(TokenKind.RightBrace, TokenKind.RightBracket, TokenKind.RightParen)) {
@@ -107,7 +108,7 @@ export class Parser {
         Debug.assert(start <= end);
     }
 
-    private reportErrorAt(message: string, errorLocation: Location) {
+    private reportErrorAt(message: ErrorMessageType, errorLocation: Location) {
         if (errorLocation.end > this.sourceText.length) {
             (errorLocation as Mutable<Location>).end = this.sourceText.length;
         }
@@ -119,7 +120,7 @@ export class Parser {
         });
     }
 
-    private reportErrorAtCurrentToken(message: string) {
+    private reportErrorAtCurrentToken(message: ErrorMessageType) {
         this.reportErrorAt(message, this.token());
     }
 
@@ -152,9 +153,9 @@ export class Parser {
         return result;
     }
 
-    private consume<T extends Token>(tokenKind: TokenKind, message: string): T;
-    private consume<T extends Token>(tokenKinds: TokenKind[], message: string): T;
-    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string): T {
+    private consume<T extends Token>(tokenKind: TokenKind, message: ErrorMessageType): T;
+    private consume<T extends Token>(tokenKinds: TokenKind[], message: ErrorMessageType): T;
+    private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: ErrorMessageType): T {
         const token = this.token();
         const arr = Array.isArray(tokenKind) ? tokenKind : [tokenKind];
         if (arr.some((k) => token.is<T>(k))) {
@@ -186,7 +187,7 @@ export class Parser {
         const expression = this.parseExpression();
         const semicolon = this.isEnd()
             ? this.createMissToken<SemicolonToken>(TokenKind.Semicolon)
-            : this.consume(TokenKind.Semicolon, 'Expect ";" after expression');
+            : this.consume(TokenKind.Semicolon, ErrorMessage.Semicolon_expected);
         return new ExpressionStatement(expression, semicolon);
     }
 
@@ -204,7 +205,7 @@ export class Parser {
     }
 
     private parseFilterExpression(input: NormalExpression, pipeToken: PipeToken): Expression {
-        const token = this.consume<IdentifierToken>(TokenKind.Identifier, 'Expect an "Identifier" after "|"');
+        const token = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
         const name = new Identifier(token);
         const args: NormalExpression[] = [];
         while (this.expect(TokenKind.Colon)) {
@@ -222,7 +223,7 @@ export class Parser {
         const assignToken = this.expect<AssignToken>(TokenKind.Assign);
         if (assignToken) {
             if (!left.checkIs<LeftHandExpression>(NodeFlags.LeftHandExpression)) {
-                this.reportErrorAt('Can not assign a value to a non left-hand-value', left);
+                this.reportErrorAt(ErrorMessage.Cannot_assign, left);
             }
             left = new AssignExpression(left, assignToken, this.parseAssignExpression());
         }
@@ -234,7 +235,7 @@ export class Parser {
         const questionToken = this.expect<QuestionToken>(TokenKind.Question);
         if (questionToken) {
             const whenTrue = this.parseNormalExpression();
-            const colonToken = this.consume<ColonToken>(TokenKind.Colon, 'Expect ":" for conditional expression');
+            const colonToken = this.consume<ColonToken>(TokenKind.Colon, ErrorMessage.Colon_expected);
             const whenFalse = this.parseNormalExpression();
             return new ConditionalExpression(condition, questionToken, whenTrue, colonToken, whenFalse);
         }
@@ -328,14 +329,14 @@ export class Parser {
                 const args = this.parseArguments();
                 const rightParen = this.consume<RightParenToken>(
                     TokenKind.RightParen,
-                    'Expect ")" end of call expression',
+                    ErrorMessage.RightParen_expected,
                 );
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
                 // `undefined`, `true`, `false`, `null` also can used as identifiers(e.g.: 'foo.null')
                 const name = this.consume<IdentifierToken>(
                     [TokenKind.Identifier, TokenKind.True, TokenKind.False, TokenKind.Null, TokenKind.Undefined],
-                    'Expect an identifier after "."',
+                    ErrorMessage.Identifier_expected,
                 );
                 primary = new PropertyAccessExpression(primary, token, name);
             } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
@@ -368,7 +369,7 @@ export class Parser {
         ) {
             return new Literal(this.previousToken as LiteralToken);
         } else {
-            this.reportErrorAtCurrentToken(`Expression expected, but got: "${this.token().toString()}"`);
+            this.reportErrorAtCurrentToken(ErrorMessage.Expression_expected);
             return this.createMissIdentifier();
         }
     }
@@ -376,21 +377,24 @@ export class Parser {
     private parseGroupExpression() {
         const leftParen = this.previousToken as LeftParenToken;
         const expression = this.parseExpression();
-        const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, 'Expect ")" end of group expression');
+        const rightParen = this.consume<RightParenToken>(TokenKind.RightParen, ErrorMessage.RightParen_expected);
         return new GroupExpression(leftParen, expression, rightParen);
     }
 
     private parseObjectLiteralExpression(): ObjectLiteralExpression {
         const leftBrace = this.previousToken as LeftBraceToken;
         const properties = this.parseObjectProperties();
-        const rightBrace = this.consume<RightBraceToken>(TokenKind.RightBrace, 'Expect "}" end of object literal');
+        const rightBrace = this.consume<RightBraceToken>(TokenKind.RightBrace, ErrorMessage.RightBrace_expected);
         return new ObjectLiteralExpression(leftBrace, properties, rightBrace);
     }
 
     private parseArrayLiteralExpression(): ArrayLiteralExpression {
         const leftBracket = this.previousToken as LeftBracketToken;
         const elements = this.parseArrayElements();
-        const rightBracket = this.consume<RightBracketToken>(TokenKind.RightBracket, 'Expect "]" end of array literal');
+        const rightBracket = this.consume<RightBracketToken>(
+            TokenKind.RightBracket,
+            ErrorMessage.RightBracket_expected,
+        );
         return new ArrayLiteralExpression(leftBracket, elements, rightBracket);
     }
 
@@ -429,10 +433,10 @@ export class Parser {
             this.nextToken();
             key = this.parseElementAccess(token);
         } else {
-            this.reportErrorAtCurrentToken(`Expected an object property key, but got: "${this.token().toString()}"`);
+            this.reportErrorAtCurrentToken(ErrorMessage.Property_assign_expected);
             key = this.createMissIdentifier();
         }
-        this.consume<ColonToken>(TokenKind.Colon, 'Expect ":" after property key');
+        this.consume<ColonToken>(TokenKind.Colon, ErrorMessage.Colon_expected);
         const value = this.parseNormalExpression();
         return new PropertyAssignment(key, value);
     }
@@ -455,7 +459,7 @@ export class Parser {
         const expression = this.parseNormalExpression();
         const rightBracketToken = this.consume<RightBracketToken>(
             TokenKind.RightBracket,
-            'Expect "]" end of element access',
+            ErrorMessage.RightBracket_expected,
         );
         return new ElementAccess(leftBracketToken, expression, rightBracketToken);
     }

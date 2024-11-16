@@ -1,4 +1,5 @@
 import { Parser } from '../../src/parser';
+import { ErrorMessage, type ErrorMessageType } from '../../src/parser/errorMessage';
 import type { Expression, Node } from '../../src/parser/node';
 import type {
     ArrayLiteralExpression,
@@ -182,42 +183,91 @@ describe('Parser', () => {
     const parser = new Parser();
     const sExpr = new SExpr();
     const locationValidator = new LocationValidator();
+    type ErrorInfo = [ErrorMessageType, number, number];
 
     function parse(text: string) {
         return parser.parse(text);
     }
 
-    function noErrorAndCheckLocations(program: Program) {
-        expect(program.errors).toHaveLength(0);
-        expect(locationValidator.validate(program)).toBe(true);
+    function checkNoErrorAndLocations(program: Program) {
+        checkErrorAndLocations(program);
     }
 
-    function looseValidateLocation(program: Program) {
-        expect(locationValidator.validate(program, false)).toBe(true);
+    function checkErrorAndLocations(program: Program, ...errors: ErrorInfo[]) {
+        expect(locationValidator.validate(program, errors.length === 0)).toBe(true);
+        expect(program.errors).toHaveLength(errors.length);
+        program.errors.forEach((error, index) => {
+            expect(error.message).toBe(errors[index][0]);
+            expect(error.start).toBe(errors[index][1]);
+            expect(error.end).toBe(errors[index][2]);
+        });
+    }
+
+    /**
+     * create error
+     */
+    function err(
+        key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr',
+        start: number,
+        end: number,
+    ): ErrorInfo {
+        let msg;
+        switch (key) {
+            case ')':
+                msg = ErrorMessage.RightParen_expected;
+                break;
+            case '}':
+                msg = ErrorMessage.RightBrace_expected;
+                break;
+            case ']':
+                msg = ErrorMessage.RightBracket_expected;
+                break;
+            case ':':
+                msg = ErrorMessage.Colon_expected;
+                break;
+            case ';':
+                msg = ErrorMessage.Semicolon_expected;
+                break;
+            case 'Expr':
+                msg = ErrorMessage.Expression_expected;
+                break;
+            case 'Ident':
+                msg = ErrorMessage.Identifier_expected;
+                break;
+            case 'PropAssign':
+                msg = ErrorMessage.Property_assign_expected;
+                break;
+            case 'NotAssign':
+                msg = ErrorMessage.Cannot_assign;
+                break;
+            case 'UnterminatedStr':
+                msg = 'Unterminated string' as ErrorMessageType;
+        }
+        return [msg, start, end];
     }
 
     describe('statement', () => {
         it('should handle an empty list of tokens', () => {
             const program = parse('');
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe('');
         });
 
         it('single statement', () => {
             const program = parse('foo;');
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe('foo');
         });
 
         it('multiple statements', () => {
             const program = parse('foo; bar; foo = bar; man = shell');
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe('foo;bar;(= foo bar);(= man shell)');
         });
 
         it('single statement without semicolon', () => {
             const program = parse('foo');
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe('foo');
         });
 
@@ -227,27 +277,18 @@ describe('Parser', () => {
             [';;;;', ''],
         ])('should skip empty expressions', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['foo bar', 'foo;bar', 1, [4, 7]],
-            ['foo bar baz', 'foo;bar;baz', 2, [4, 7], [8, 11]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Expect ";" after expression');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['foo bar', 'foo;bar', err(';', 4, 7)],
+            ['foo bar baz', 'foo;bar;baz', err(';', 4, 7), err(';', 8, 11)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('filter expression', () => {
@@ -268,28 +309,18 @@ describe('Parser', () => {
             ],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            // $$ 代表缺失的标识符
-            ['a |', '(filter $$| a)', 1, [3, 3]],
-            ['a | f1 | ;', '(filter $$| (filter f1| a))', 1, [9, 10]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Expect an "Identifier" after "|"');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['a |', '(filter $$| a)', err('Ident', 3, 3)],
+            ['a | f1 | ;', '(filter $$| (filter f1| a))', err('Ident', 9, 10)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('assign expression', () => {
@@ -299,27 +330,18 @@ describe('Parser', () => {
             ['a = b = c', '(= a (= b c))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['1 = a', '(= 1 a)', 1, [0, 1]],
-            ['a + 1 = b', '(= (+ a 1) b)', 1, [0, 5]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Can not assign a value to a non left-hand-value');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['1 = a', '(= 1 a)', err('NotAssign', 0, 1)],
+            ['a + 1 = b', '(= (+ a 1) b)', err('NotAssign', 0, 5)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('conditional expression', () => {
@@ -331,39 +353,27 @@ describe('Parser', () => {
             ['a?b:c?d?e:f:g?h:i', '(cond? a b (cond? c (cond? d e f) (cond? g h i)))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['a ? b c', '(cond? a b c)', 1, [6, 7]],
-            ['a ? b m ? n : o', '(cond? a b (cond? m n o))', 1, [6, 7]],
-            ['a ? m ? n : o c', '(cond? a (cond? m n o) c)', 1, [14, 15]],
-        ])(
-            '(1) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Expect ":" for conditional expression');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['a ? b c', '(cond? a b c)', err(':', 6, 7)],
+            ['a ? b m ? n : o', '(cond? a b (cond? m n o))', err(':', 6, 7)],
+            ['a ? m ? n : o c', '(cond? a (cond? m n o) c)', err(':', 14, 15)],
+            ['a?b', '(cond? a b $$)', err(':', 3, 3)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it('(2) error-tolerant', () => {
             const input = 'a ? b';
             const expected = '(cond? a b $$)';
             const program = parse(input);
-            looseValidateLocation(program);
             expect(sExpr.toString(program)).toBe(expected);
-            expect(program.errors).toHaveLength(1);
-            expect(program.errors[0].message).toBe('Expect ":" for conditional expression');
-            expect(program.errors[0].start).toBe(5);
-            expect(program.errors[0].end).toBe(5);
+            checkErrorAndLocations(program, err(':', 5, 5));
         });
     });
 
@@ -401,7 +411,7 @@ describe('Parser', () => {
             ['a || b || c', '(|| (|| a b) c)'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
     });
@@ -416,7 +426,7 @@ describe('Parser', () => {
             ['++42', '(+ (+ 42))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
@@ -426,7 +436,7 @@ describe('Parser', () => {
             ['!+-foo', '(! (+ (- foo)))'],
         ])('should handle all unary operators with the same precedence: %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
     });
@@ -445,22 +455,16 @@ describe('Parser', () => {
             ['a(1 | f1:b = 123, 2 + 5)', '(a (filter f1| 1 (= b 123)) (+ 2 5))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
-        it.each([['a(b', '(a b)', 1, [3, 3]]])(
+        it.each([['a(b', '(a b)', err(')', 3, 3)]])(
             'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+            (input: string, expected: string, ...errors: ErrorInfo[]) => {
                 const program = parse(input);
-                looseValidateLocation(program);
                 expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Expect ")" end of call expression');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
+                checkErrorAndLocations(program, ...errors);
             },
         );
     });
@@ -485,7 +489,7 @@ describe('Parser', () => {
             ['a()[1].b["x" + i].c[3 + 4]', '(a)[1].b[(+ "x" i)].c[(+ 3 4)]'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
@@ -493,91 +497,71 @@ describe('Parser', () => {
             'should not confuse `%s` when used as identifiers',
             (keyword) => {
                 const program = parse('foo.' + keyword);
-                noErrorAndCheckLocations(program);
+                checkNoErrorAndLocations(program);
                 expect(sExpr.toString(program)).toBe('foo.' + keyword);
             },
         );
 
         it.each([
             // $$ 代表缺失的标识符
-            ['a.', 'a.$$', 1, [2, 2]],
-            ['a.b.', 'a.b.$$', 1, [4, 4]],
+            ['a.', 'a.$$', err('Ident', 2, 2)],
+            ['a.b.', 'a.b.$$', err('Ident', 4, 4)],
             // assign expression
-            ['a. = 123', '(= a.$$ 123)', 1, [3, 4]],
-            ['a. = c.', '(= a.$$ c.$$)', 2, [3, 4], [7, 7]],
+            ['a. = 123', '(= a.$$ 123)', err('Ident', 3, 4)],
+            ['a. = c.', '(= a.$$ c.$$)', err('Ident', 3, 4), err('Ident', 7, 7)],
             // conditional expression
-            ['a. > b. ? c. : d.', '(cond? (> a.$$ b.$$) c.$$ d.$$)', 4, [3, 4], [8, 9], [13, 14], [17, 17]],
+            [
+                'a. > b. ? c. : d.',
+                '(cond? (> a.$$ b.$$) c.$$ d.$$)',
+                err('Ident', 3, 4),
+                err('Ident', 8, 9),
+                err('Ident', 13, 14),
+                err('Ident', 17, 17),
+            ],
             // binary expression
-            ['1 + a.b.', '(+ 1 a.b.$$)', 1, [8, 8]],
-            ['a.b. + 1', '(+ a.b.$$ 1)', 1, [5, 6]],
+            ['1 + a.b.', '(+ 1 a.b.$$)', err('Ident', 8, 8)],
+            ['a.b. + 1', '(+ a.b.$$ 1)', err('Ident', 5, 6)],
             // unary expression
-            ['-!a.b.', '(- (! a.b.$$))', 1, [6, 6]],
+            ['-!a.b.', '(- (! a.b.$$))', err('Ident', 6, 6)],
             // filter expression
-            ['a.b. | f1', '(filter f1| a.b.$$)', 1, [5, 6]],
-            ['a.b. | f1: c.', '(filter f1| a.b.$$ c.$$)', 2, [5, 6], [13, 13]],
+            ['a.b. | f1', '(filter f1| a.b.$$)', err('Ident', 5, 6)],
+            ['a.b. | f1: c.', '(filter f1| a.b.$$ c.$$)', err('Ident', 5, 6), err('Ident', 13, 13)],
             // call expression
-            ['a.b.()', '(a.b.$$)', 1, [4, 5]],
-            ['a.b.(c., 3)', '(a.b.$$ c.$$ 3)', 2, [4, 5], [7, 8]],
+            ['a.b.()', '(a.b.$$)', err('Ident', 4, 5)],
+            ['a.b.(c., 3)', '(a.b.$$ c.$$ 3)', err('Ident', 4, 5), err('Ident', 7, 8)],
             // element access
-            ['a.b.[1]', 'a.b.$$[1]', 1, [4, 5]],
-            ['a.b.[c.]', 'a.b.$$[c.$$]', 2, [4, 5], [7, 8]],
+            ['a.b.[1]', 'a.b.$$[1]', err('Ident', 4, 5)],
+            ['a.b.[c.]', 'a.b.$$[c.$$]', err('Ident', 4, 5), err('Ident', 7, 8)],
             // array literal
-            ['[1, b.]', '([array] 1 b.$$)', 1, [6, 7]],
-            ['[1, b., 3]', '([array] 1 b.$$ 3)', 1, [6, 7]],
+            ['[1, b.]', '([array] 1 b.$$)', err('Ident', 6, 7)],
+            ['[1, b., 3]', '([array] 1 b.$$ 3)', err('Ident', 6, 7)],
             // object literal
-            ['{a: b.}', '({object} (a b.$$))', 1, [6, 7]],
-            ['{[a.]: b.}', '({object} ([a.$$] b.$$))', 2, [4, 5], [9, 10]],
-            ['{a: b., c: d.}', '({object} (a b.$$) (c d.$$))', 2, [6, 7], [13, 14]],
-        ])(
-            'property access (1) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe('Expect an identifier after "."');
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['{a: b.}', '({object} (a b.$$))', err('Ident', 6, 7)],
+            ['{[a.]: b.}', '({object} ([a.$$] b.$$))', err('Ident', 4, 5), err('Ident', 9, 10)],
+            ['{a: b., c: d.}', '({object} (a b.$$) (c d.$$))', err('Ident', 6, 7), err('Ident', 13, 14)],
+        ])('property access (1) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it.each([
-            ['.a', '$$.a', 1, [0, 1]],
-            ['.a.b', '$$.a.b', 1, [0, 1]],
-        ])(
-            'property access (2) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expression expected, but got: "."`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['.a', '$$.a', err('Expr', 0, 1)],
+            ['.a.b', '$$.a.b', err('Expr', 0, 1)],
+        ])('property access (2) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it.each([
-            ['a[b', 'a[b]', 1, [3, 3]],
-            ['a[1 + 2', 'a[(+ 1 2)]', 1, [7, 7]],
-        ])(
-            'element access error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect "]" end of element access`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['a[b', 'a[b]', err(']', 3, 3)],
+            ['a[1 + 2', 'a[(+ 1 2)]', err(']', 7, 7)],
+        ])('element access error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('group expression', () => {
@@ -589,28 +573,19 @@ describe('Parser', () => {
             ['a + (b | f1:c = 123)', '(+ a (filter f1| b (= c 123)))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['(b', 'b', 1, [2, 2]],
-            ['(b / (1 + 2)', '(/ b (+ 1 2))', 1, [12, 12]],
-            ['(b / (1 + 2', '(/ b (+ 1 2))', 1, [11, 11]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect ")" end of group expression`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['(b', 'b', err(')', 2, 2)],
+            ['(b / (1 + 2)', '(/ b (+ 1 2))', err(')', 12, 12)],
+            ['(b / (1 + 2', '(/ b (+ 1 2))', err(')', 11, 11)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('object literal expression', () => {
@@ -640,88 +615,52 @@ describe('Parser', () => {
             ],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['{b', '({object} (b b))', 1, [2, 2]],
-            ['{b: 1', '({object} (b 1))', 1, [5, 5]],
-            ['{b:{a', '({object} (b ({object} (a a))))', 1, [5, 5]],
-            ['{[b]: 1', '({object} ([b] 1))', 1, [7, 7]],
+            ['{b', '({object} (b b))', err('}', 2, 2)],
+            ['{b: 1', '({object} (b 1))', err('}', 5, 5)],
+            ['{b:{a', '({object} (b ({object} (a a))))', err('}', 5, 5)],
+            ['{[b]: 1', '({object} ([b] 1))', err('}', 7, 7)],
             // tail comma
-            ['{b,', '({object} (b b))', 1, [3, 3]],
-            ['{b: 1,', '({object} (b 1))', 1, [6, 6]],
-            ['{b:{a,', '({object} (b ({object} (a a))))', 1, [6, 6]],
-            ['{[b]: 1,', '({object} ([b] 1))', 1, [8, 8]],
-        ])(
-            '(1) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect "}" end of object literal`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['{b,', '({object} (b b))', err('}', 3, 3)],
+            ['{b: 1,', '({object} (b 1))', err('}', 6, 6)],
+            ['{b:{a,', '({object} (b ({object} (a a))))', err('}', 6, 6)],
+            ['{[b]: 1,', '({object} ([b] 1))', err('}', 8, 8)],
+        ])('(1) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it.each([
-            ['{[b: 1}', '({object} ([b] 1))', 1, [3, 4]],
-            ['{[b:{[a: 1}}', '({object} ([b] ({object} ([a] 1))))', 2, [3, 4], [7, 8]],
-        ])(
-            '(2) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect "]" end of element access`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['{[b: 1}', '({object} ([b] 1))', err(']', 3, 4)],
+            ['{[b:{[a: 1}}', '({object} ([b] ({object} ([a] 1))))', err(']', 3, 4), err(']', 7, 8)],
+        ])('(2) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it.each([
-            ['{:1}', '({object} ($$ 1))', 1, [1, 2]],
-            ['{:{:1}}', '({object} ($$ ({object} ($$ 1))))', 2, [1, 2], [3, 4]],
-        ])(
-            '(3) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expected an object property key, but got: ":"`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['{:1}', '({object} ($$ 1))', err('PropAssign', 1, 2)],
+            ['{:{:1}}', '({object} ($$ ({object} ($$ 1))))', err('PropAssign', 1, 2), err('PropAssign', 3, 4)],
+        ])('(3) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
 
         it.each([
-            ['{a 1}', '({object} (a 1))', 1, [3, 4]],
-            ['{a{b 1}}', '({object} (a ({object} (b 1))))', 2, [2, 3], [5, 6]],
-        ])(
-            '(3) error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect ":" after property key`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['{a 1}', '({object} (a 1))', err(':', 3, 4)],
+            ['{a{b 1}}', '({object} (a ({object} (b 1))))', err(':', 2, 3), err(':', 5, 6)],
+        ])('(4) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('array literal expression', () => {
@@ -735,63 +674,45 @@ describe('Parser', () => {
             ['[a = 123, b = 456]', '([array] (= a 123) (= b 456))'],
         ])('parse %s', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
         it.each([
-            ['[b', '([array] b)', 1, [2, 2]],
-            ['[b,[x', '([array] b ([array] x))', 1, [5, 5]],
+            ['[b', '([array] b)', err(']', 2, 2)],
+            ['[b,[x', '([array] b ([array] x))', err(']', 5, 5)],
             // tail comma
-            ['[b,', '([array] b)', 1, [3, 3]],
-            ['[b,[x,', '([array] b ([array] x))', 1, [6, 6]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect "]" end of array literal`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['[b,', '([array] b)', err(']', 3, 3)],
+            ['[b,[x,', '([array] b ([array] x))', err(']', 6, 6)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('literal', () => {
         it.each([['42'], ['"hello"'], ['true'], ['false'], ['null'], ['undefined']])('parse %s', (input) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Literal);
             expect(sExpr.toString(program)).toBe(input);
         });
 
         it.each([
-            ['"', '""', 1, [1, 1]],
-            ['"123', '"123"', 1, [4, 4]],
-        ])(
-            'error-tolerant %s',
-            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
-                const program = parse(input);
-                looseValidateLocation(program);
-                expect(sExpr.toString(program)).toBe(expected);
-                expect(program.errors).toHaveLength(errorCount);
-                program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Unterminated string`);
-                    expect(error.start).toBe(errorLocations[index][0]);
-                    expect(error.end).toBe(errorLocations[index][1]);
-                });
-            },
-        );
+            ['"', '""', err('UnterminatedStr', 1, 1)],
+            ['"123', '"123"', err('UnterminatedStr', 4, 4)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('identifier', () => {
         it('parse identifier', () => {
             const program = parse('foo');
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Identifier);
             expect(sExpr.toString(program)).toBe('foo');
         });
@@ -839,7 +760,7 @@ describe('Parser', () => {
             ['!a && b || c ? d + e * f : g', '(cond? (|| (&& (! a) b) c) (+ d (* e f)) g)'],
         ])('should parse %s with correct precedence', (input, expected) => {
             const program = parse(input);
-            noErrorAndCheckLocations(program);
+            checkNoErrorAndLocations(program);
             expect(sExpr.toString(program)).toBe(expected);
         });
 
@@ -849,7 +770,7 @@ describe('Parser', () => {
                     const input = op + memberCall;
                     const expected = `(${op} ${memberCall === 'foo()' ? '(foo)' : memberCall})`;
                     const program = parse(input);
-                    noErrorAndCheckLocations(program);
+                    checkNoErrorAndLocations(program);
                     expect(sExpr.toString(program)).toBe(expected);
                 });
             });
