@@ -662,6 +662,25 @@ describe('Parser', () => {
                 });
             },
         );
+
+        it.each([
+            ['{b,', '({object} (b b))', 1, [2, 2]],
+            // ['{b: 1', '({object} (b 1))', 1, [5, 5]],
+            // ['{b:{a', '({object} (b ({object} (a a))))', 1, [5, 5]],
+        ])(
+            '(2) error-tolerant %s',
+            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+                const program = parse(input);
+                looseValidateLocation(program);
+                expect(sExpr.toString(program)).toBe(expected);
+                expect(program.errors).toHaveLength(errorCount);
+                program.errors.forEach((error, index) => {
+                    expect(error.message).toBe(`Expect "}" end of object literal`);
+                    expect(error.start).toBe(errorLocations[index][0]);
+                    expect(error.end).toBe(errorLocations[index][1]);
+                });
+            },
+        );
     });
 
     describe('array literal expression', () => {

@@ -169,7 +169,7 @@ export class Parser {
     private parseExpressionStatement(): ExpressionStatement {
         const expression = this.parseExpression();
         const semicolon = this.isEnd()
-            ? Token.createEmpty<SemicolonToken>(TokenKind.Semicolon)
+            ? this.createMissToken<SemicolonToken>(TokenKind.Semicolon)
             : this.consume(TokenKind.Semicolon, 'Expect ";" after expression');
         return new ExpressionStatement(expression, semicolon);
     }
@@ -419,8 +419,7 @@ export class Parser {
             key = this.parseElementAccess(token);
         } else {
             this.reportErrorAtCurrentToken(`Expected an object property key, but got: "${this.token().toString()}"`);
-            key = new Identifier(Token.createEmpty<IdentifierToken>(TokenKind.Identifier));
-            this.nextToken();
+            key = this.createMissIdentifier();
         }
         this.consume<ColonToken>(TokenKind.Colon, 'Expect ":" after property key');
         const value = this.parseNormalExpression();
