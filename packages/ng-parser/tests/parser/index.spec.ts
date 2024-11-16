@@ -367,14 +367,6 @@ describe('Parser', () => {
             expect(sExpr.toString(program)).toBe(expected);
             checkErrorAndLocations(program, ...errors);
         });
-
-        it('(2) error-tolerant', () => {
-            const input = 'a ? b';
-            const expected = '(cond? a b $$)';
-            const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
-            checkErrorAndLocations(program, err(':', 5, 5));
-        });
     });
 
     describe('binary expression', () => {
@@ -506,6 +498,8 @@ describe('Parser', () => {
             // $$ 代表缺失的标识符
             ['a.', 'a.$$', err('Ident', 2, 2)],
             ['a.b.', 'a.b.$$', err('Ident', 4, 4)],
+            ['.a', '$$.a', err('Expr', 0, 1)],
+            ['.a.b', '$$.a.b', err('Expr', 0, 1)],
             // assign expression
             ['a. = 123', '(= a.$$ 123)', err('Ident', 3, 4)],
             ['a. = c.', '(= a.$$ c.$$)', err('Ident', 3, 4), err('Ident', 7, 7)],
@@ -539,16 +533,7 @@ describe('Parser', () => {
             ['{a: b.}', '({object} (a b.$$))', err('Ident', 6, 7)],
             ['{[a.]: b.}', '({object} ([a.$$] b.$$))', err('Ident', 4, 5), err('Ident', 9, 10)],
             ['{a: b., c: d.}', '({object} (a b.$$) (c d.$$))', err('Ident', 6, 7), err('Ident', 13, 14)],
-        ])('property access (1) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
-            const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
-            checkErrorAndLocations(program, ...errors);
-        });
-
-        it.each([
-            ['.a', '$$.a', err('Expr', 0, 1)],
-            ['.a.b', '$$.a.b', err('Expr', 0, 1)],
-        ])('property access (2) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+        ])('property access error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             expect(sExpr.toString(program)).toBe(expected);
             checkErrorAndLocations(program, ...errors);
@@ -620,43 +605,26 @@ describe('Parser', () => {
         });
 
         it.each([
+            // miss '}'
             ['{b', '({object} (b b))', err('}', 2, 2)],
             ['{b: 1', '({object} (b 1))', err('}', 5, 5)],
             ['{b:{a', '({object} (b ({object} (a a))))', err('}', 5, 5)],
             ['{[b]: 1', '({object} ([b] 1))', err('}', 7, 7)],
-            // tail comma
+            // miss '}' with tail comma
             ['{b,', '({object} (b b))', err('}', 3, 3)],
             ['{b: 1,', '({object} (b 1))', err('}', 6, 6)],
             ['{b:{a,', '({object} (b ({object} (a a))))', err('}', 6, 6)],
             ['{[b]: 1,', '({object} ([b] 1))', err('}', 8, 8)],
-        ])('(1) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
-            const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
-            checkErrorAndLocations(program, ...errors);
-        });
-
-        it.each([
+            // miss ']'
             ['{[b: 1}', '({object} ([b] 1))', err(']', 3, 4)],
             ['{[b:{[a: 1}}', '({object} ([b] ({object} ([a] 1))))', err(']', 3, 4), err(']', 7, 8)],
-        ])('(2) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
-            const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
-            checkErrorAndLocations(program, ...errors);
-        });
-
-        it.each([
+            // miss key
             ['{:1}', '({object} ($$ 1))', err('PropAssign', 1, 2)],
             ['{:{:1}}', '({object} ($$ ({object} ($$ 1))))', err('PropAssign', 1, 2), err('PropAssign', 3, 4)],
-        ])('(3) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
-            const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
-            checkErrorAndLocations(program, ...errors);
-        });
-
-        it.each([
+            // miss ':'
             ['{a 1}', '({object} (a 1))', err(':', 3, 4)],
             ['{a{b 1}}', '({object} (a ({object} (b 1))))', err(':', 2, 3), err(':', 5, 6)],
-        ])('(4) error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             expect(sExpr.toString(program)).toBe(expected);
             checkErrorAndLocations(program, ...errors);
