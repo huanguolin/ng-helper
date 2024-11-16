@@ -284,6 +284,15 @@ describe('Parser', () => {
         it.each([
             ['foo bar', 'foo;bar', err(';', 4, 7)],
             ['foo bar baz', 'foo;bar;baz', err(';', 4, 7), err(';', 8, 11)],
+            // leading '}'
+            ['}1', '1', err('Expr', 0, 1)],
+            ['2}1', '2;1', err(';', 1, 2)],
+            // leading ']'
+            [']a', 'a', err('Expr', 0, 1)],
+            ['1+2]a', '(+ 1 2);a', err(';', 3, 4)],
+            // leading ')'
+            [')a+b', '(+ a b)', err('Expr', 0, 1)],
+            ['1)a+b', '1;(+ a b)', err(';', 1, 2)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             expect(sExpr.toString(program)).toBe(expected);
@@ -451,14 +460,15 @@ describe('Parser', () => {
             expect(sExpr.toString(program)).toBe(expected);
         });
 
-        it.each([['a(b', '(a b)', err(')', 3, 3)]])(
-            'error-tolerant %s',
-            (input: string, expected: string, ...errors: ErrorInfo[]) => {
-                const program = parse(input);
-                expect(sExpr.toString(program)).toBe(expected);
-                checkErrorAndLocations(program, ...errors);
-            },
-        );
+        it.each([
+            ['a(b', '(a b)', err(')', 3, 3)],
+            ['a(1+2', '(a (+ 1 2))', err(')', 5, 5)],
+            ['a(1+2;b', '(a (+ 1 2));b', err(')', 5, 6)],
+        ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parse(input);
+            expect(sExpr.toString(program)).toBe(expected);
+            checkErrorAndLocations(program, ...errors);
+        });
     });
 
     describe('property/element access expression', () => {
