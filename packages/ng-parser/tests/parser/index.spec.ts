@@ -1,278 +1,40 @@
 import { Parser } from '../../src/parser';
 import { ErrorMessage, type ErrorMessageType } from '../../src/parser/errorMessage';
-import type { Expression, Node } from '../../src/parser/node';
-import type {
-    ArrayLiteralExpression,
-    AssignExpression,
-    BinaryExpression,
-    CallExpression,
-    ConditionalExpression,
-    ElementAccess,
-    ElementAccessExpression,
-    ExpressionStatement,
-    FilterExpression,
-    GroupExpression,
-    Identifier,
-    Literal,
-    ObjectLiteralExpression,
-    Program,
-    PropertyAccessExpression,
-    PropertyAssignment,
-    UnaryExpression,
-} from '../../src/parser/node';
-import { resolveLocation } from '../../src/parser/utils';
-import { Token } from '../../src/scanner/token';
-import { SyntaxKind, TokenKind, type INodeVisitor, type Location } from '../../src/types';
-
-const MISSING_IDENTIFIER = '$$';
-
-class SExpr implements INodeVisitor<string> {
-    toString(node: Expression): string {
-        return node.accept(this);
-    }
-
-    visitProgram(node: Program): string {
-        return node.statements.map((stmt) => stmt.accept(this)).join(';');
-    }
-    visitExpressionStatement(node: ExpressionStatement): string {
-        return node.expression.accept(this);
-    }
-    visitFilterExpression(node: FilterExpression): string {
-        const arr = [node.input.accept(this), ...node.args.map((arg) => arg.accept(this))];
-        return `(filter ${node.name.accept(this)}| ${arr.join(' ')})`;
-    }
-    visitBinaryExpression(node: BinaryExpression): string {
-        return `(${node.operator.toString()} ${node.left.accept(this)} ${node.right.accept(this)})`;
-    }
-    visitUnaryExpression(node: UnaryExpression): string {
-        return `(${node.operator.toString()} ${node.operand.accept(this)})`;
-    }
-    visitAssignExpression(node: AssignExpression): string {
-        return `(= ${node.left.accept(this)} ${node.right.accept(this)})`;
-    }
-    visitConditionalExpression(node: ConditionalExpression): string {
-        return `(cond? ${node.condition.accept(this)} ${node.whenTrue.accept(this)} ${node.whenFalse.accept(this)})`;
-    }
-    visitArrayLiteralExpression(node: ArrayLiteralExpression): string {
-        const arr = ['[array]', ...node.elements.map((element) => element.accept(this))];
-        return `(${arr.join(' ')})`;
-    }
-    visitObjectLiteralExpression(node: ObjectLiteralExpression): string {
-        const arr = ['{object}', ...node.properties.map((property) => property.accept(this))];
-        return `(${arr.join(' ')})`;
-    }
-    visitPropertyAssignment(node: PropertyAssignment): string {
-        return `(${node.property.accept(this)} ${node.initializer.accept(this)})`;
-    }
-    visitElementAccess(node: ElementAccess): string {
-        return `[${node.expression.accept(this)}]`;
-    }
-    visitCallExpression(node: CallExpression): string {
-        const arr = [node.callee.accept(this), ...node.args.map((arg) => arg.accept(this))];
-        return `(${arr.join(' ')})`;
-    }
-    visitPropertyAccessExpression(node: PropertyAccessExpression): string {
-        return `${node.parent.accept(this)}.${node.name.accept(this)}`;
-    }
-    visitElementAccessExpression(node: ElementAccessExpression): string {
-        return `${node.parent.accept(this)}[${node.elementExpression.accept(this)}]`;
-    }
-    visitIdentifier(node: Identifier): string {
-        return node.name || MISSING_IDENTIFIER;
-    }
-    visitGroupExpression(node: GroupExpression): string {
-        return node.expression.accept(this);
-    }
-    visitLiteral(node: Literal): string {
-        if (node.literalTokenKind === TokenKind.String) {
-            return `"${node.value}"`;
-        }
-        return Token.shouldHaveValue(node.literalTokenKind)
-            ? node.value ?? ''
-            : Token.createEmpty(node.literalTokenKind).toString();
-    }
-}
-
-class LocationValidator implements INodeVisitor<boolean> {
-    private strict = true;
-    validate(node: Expression, strict = true): boolean {
-        this.strict = strict;
-        return node.accept(this);
-    }
-
-    private compareToChildren(parent: Node, childNodes: Node[], childTokens: Token[] = []): boolean {
-        if (!this.checkLocations(parent, ...childTokens, ...childNodes)) {
-            return false;
-        }
-
-        const childLocations = [...(childTokens as Location[]), ...(childNodes as Location[])];
-        if (childLocations.length > 0) {
-            const { start, end } = resolveLocation(...childLocations);
-            if (start < parent.start || end > parent.end) {
-                return false;
-            }
-        }
-
-        return childNodes.every((child) => child.accept(this));
-    }
-
-    private checkLocations(...nodes: Location[]): boolean {
-        if (!this.strict) {
-            return true;
-        }
-        return nodes.every((node) => node.start >= 0 && node.end >= 0 && node.end >= node.start);
-    }
-
-    visitProgram(node: Program): boolean {
-        if (node.start < 0 || (node.source.length > 0 && node.end > node.source.length)) {
-            return false;
-        }
-        return this.compareToChildren(node, node.statements);
-    }
-    visitExpressionStatement(node: ExpressionStatement): boolean {
-        return this.compareToChildren(node, [node.expression]);
-    }
-    visitFilterExpression(node: FilterExpression): boolean {
-        return this.compareToChildren(node, [node.input, node.name, ...node.args]);
-    }
-    visitBinaryExpression(node: BinaryExpression): boolean {
-        return this.compareToChildren(node, [node.left, node.right], [node.operator]);
-    }
-    visitUnaryExpression(node: UnaryExpression): boolean {
-        return this.compareToChildren(node, [node.operand], [node.operator]);
-    }
-    visitAssignExpression(node: AssignExpression): boolean {
-        return this.compareToChildren(node, [node.left, node.right], [node.operator]);
-    }
-    visitConditionalExpression(node: ConditionalExpression): boolean {
-        return this.compareToChildren(node, [node.condition, node.whenTrue, node.whenFalse]);
-    }
-    visitArrayLiteralExpression(node: ArrayLiteralExpression): boolean {
-        return this.compareToChildren(node, node.elements);
-    }
-    visitObjectLiteralExpression(node: ObjectLiteralExpression): boolean {
-        return this.compareToChildren(node, node.properties);
-    }
-    visitPropertyAssignment(node: PropertyAssignment): boolean {
-        return this.compareToChildren(node, [node.property, node.initializer]);
-    }
-    visitElementAccess(node: ElementAccess): boolean {
-        return this.compareToChildren(node, [node.expression]);
-    }
-    visitCallExpression(node: CallExpression): boolean {
-        return this.compareToChildren(node, [node.callee, ...node.args]);
-    }
-    visitPropertyAccessExpression(node: PropertyAccessExpression): boolean {
-        return this.compareToChildren(node, [node.parent, node.name]);
-    }
-    visitElementAccessExpression(node: ElementAccessExpression): boolean {
-        return this.compareToChildren(node, [node.parent, node.elementExpression]);
-    }
-    visitIdentifier(node: Identifier): boolean {
-        return this.compareToChildren(node, []);
-    }
-    visitGroupExpression(node: GroupExpression): boolean {
-        return this.compareToChildren(node, [node.expression]);
-    }
-    visitLiteral(node: Literal): boolean {
-        return this.compareToChildren(node, []);
-    }
-}
+import type { Expression } from '../../src/parser/node';
+import type { Program } from '../../src/parser/node';
+import { SyntaxKind } from '../../src/types';
+import { checkErrorAndLocations, checkNoErrorAndLocations, compareAstUseSExpr, type ErrorInfo } from '../testUtils';
 
 describe('Parser', () => {
     const parser = new Parser();
-    const sExpr = new SExpr();
-    const locationValidator = new LocationValidator();
-    type ErrorInfo = [ErrorMessageType, number, number];
 
     function parse(text: string) {
         return parser.parse(text);
-    }
-
-    function checkNoErrorAndLocations(program: Program) {
-        checkErrorAndLocations(program);
-    }
-
-    function checkErrorAndLocations(program: Program, ...errors: ErrorInfo[]) {
-        expect(locationValidator.validate(program, errors.length === 0)).toBe(true);
-        expect(program.errors).toHaveLength(errors.length);
-        program.errors.forEach((error, index) => {
-            expect(error.message).toBe(errors[index][0]);
-            expect(error.start).toBe(errors[index][1]);
-            expect(error.end).toBe(errors[index][2]);
-        });
-    }
-
-    /**
-     * create error
-     */
-    function err(
-        key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr' | '@',
-        start: number,
-        end: number,
-    ): ErrorInfo {
-        let msg;
-        switch (key) {
-            case ')':
-                msg = ErrorMessage.RightParen_expected;
-                break;
-            case '}':
-                msg = ErrorMessage.RightBrace_expected;
-                break;
-            case ']':
-                msg = ErrorMessage.RightBracket_expected;
-                break;
-            case ':':
-                msg = ErrorMessage.Colon_expected;
-                break;
-            case ';':
-                msg = ErrorMessage.Semicolon_expected;
-                break;
-            case 'Expr':
-                msg = ErrorMessage.Expression_expected;
-                break;
-            case 'Ident':
-                msg = ErrorMessage.Identifier_expected;
-                break;
-            case 'PropAssign':
-                msg = ErrorMessage.Property_assign_expected;
-                break;
-            case 'NotAssign':
-                msg = ErrorMessage.Cannot_assign;
-                break;
-            case 'UnterminatedStr':
-                msg = 'Unterminated string' as ErrorMessageType;
-                break;
-            case '@':
-                msg = 'Unexpected character: @' as ErrorMessageType;
-                break;
-        }
-        return [msg, start, end];
     }
 
     describe('statement', () => {
         it('should handle an empty list of tokens', () => {
             const program = parse('');
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe('');
+            compareAstUseSExpr(program, '');
         });
 
         it('single statement', () => {
             const program = parse('foo;');
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe('foo');
+            compareAstUseSExpr(program, 'foo');
         });
 
         it('multiple statements', () => {
             const program = parse('foo; bar; foo = bar; man = shell');
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe('foo;bar;(= foo bar);(= man shell)');
+            compareAstUseSExpr(program, 'foo;bar;(= foo bar);(= man shell)');
         });
 
         it('single statement without semicolon', () => {
             const program = parse('foo');
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe('foo');
+            compareAstUseSExpr(program, 'foo');
         });
 
         it.each([
@@ -282,7 +44,7 @@ describe('Parser', () => {
         ])('should skip empty expressions', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -301,9 +63,11 @@ describe('Parser', () => {
             [',a+b', '(+ a b)', err('Expr', 0, 1)],
             // tail ','
             ['a+b,', '(+ a b)', err(';', 3, 4)],
+            // leading ':'
+            [':a+b', '(+ a b)', err('Expr', 0, 1)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -327,7 +91,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -335,7 +99,7 @@ describe('Parser', () => {
             ['a | f1 | ;', '(filter $$| (filter f1| a))', err('Ident', 9, 10)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -348,7 +112,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -356,7 +120,7 @@ describe('Parser', () => {
             ['a + 1 = b', '(= (+ a 1) b)', err('NotAssign', 0, 5)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -371,7 +135,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -381,7 +145,7 @@ describe('Parser', () => {
             ['a?b', '(cond? a b $$)', err(':', 3, 3)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -421,7 +185,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
     });
 
@@ -436,7 +200,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -446,7 +210,7 @@ describe('Parser', () => {
         ])('should handle all unary operators with the same precedence: %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
     });
 
@@ -465,7 +229,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -474,7 +238,7 @@ describe('Parser', () => {
             ['a(1+2;b', '(a (+ 1 2));b', err(')', 5, 6)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -500,7 +264,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([`undefined`, `true`, `false`, `null`])(
@@ -508,7 +272,7 @@ describe('Parser', () => {
             (keyword) => {
                 const program = parse('foo.' + keyword);
                 checkNoErrorAndLocations(program);
-                expect(sExpr.toString(program)).toBe('foo.' + keyword);
+                compareAstUseSExpr(program, 'foo.' + keyword);
             },
         );
 
@@ -553,7 +317,7 @@ describe('Parser', () => {
             ['{a: b., c: d.}', '({object} (a b.$$) (c d.$$))', err('Ident', 6, 7), err('Ident', 13, 14)],
         ])('property access error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
 
@@ -562,7 +326,7 @@ describe('Parser', () => {
             ['a[1 + 2', 'a[(+ 1 2)]', err(']', 7, 7)],
         ])('element access error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -577,7 +341,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -586,7 +350,7 @@ describe('Parser', () => {
             ['(b / (1 + 2', '(/ b (+ 1 2))', err(')', 11, 11)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -619,7 +383,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -644,7 +408,7 @@ describe('Parser', () => {
             ['{a{b 1}}', '({object} (a ({object} (b 1))))', err(':', 2, 3), err(':', 5, 6)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -661,7 +425,7 @@ describe('Parser', () => {
         ])('parse %s', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it.each([
@@ -672,7 +436,7 @@ describe('Parser', () => {
             ['[b,[x,', '([array] b ([array] x))', err(']', 6, 6)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -682,7 +446,7 @@ describe('Parser', () => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
             expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Literal);
-            expect(sExpr.toString(program)).toBe(input);
+            compareAstUseSExpr(program, input);
         });
 
         it.each([
@@ -690,7 +454,7 @@ describe('Parser', () => {
             ['"123', '"123"', err('UnterminatedStr', 4, 4)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
@@ -700,7 +464,7 @@ describe('Parser', () => {
             const program = parse('foo');
             checkNoErrorAndLocations(program);
             expect(pickStatementExpression(program).kind).toBe(SyntaxKind.Identifier);
-            expect(sExpr.toString(program)).toBe('foo');
+            compareAstUseSExpr(program, 'foo');
         });
     });
 
@@ -747,7 +511,7 @@ describe('Parser', () => {
         ])('should parse %s with correct precedence', (input, expected) => {
             const program = parse(input);
             checkNoErrorAndLocations(program);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
         });
 
         it('should give higher precedence to member calls than to unary expressions', () => {
@@ -757,7 +521,7 @@ describe('Parser', () => {
                     const expected = `(${op} ${memberCall === 'foo()' ? '(foo)' : memberCall})`;
                     const program = parse(input);
                     checkNoErrorAndLocations(program);
-                    expect(sExpr.toString(program)).toBe(expected);
+                    compareAstUseSExpr(program, expected);
                 });
             });
         });
@@ -781,11 +545,58 @@ describe('Parser', () => {
             ['= a([', '(= $$ (a ([array])))', err('Expr', 0, 1), err(']', 5, 5)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
-            expect(sExpr.toString(program)).toBe(expected);
+            compareAstUseSExpr(program, expected);
             checkErrorAndLocations(program, ...errors);
         });
     });
 });
+
+/**
+ * create error
+ */
+function err(
+    key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr' | '@',
+    start: number,
+    end: number,
+): ErrorInfo {
+    let msg;
+    switch (key) {
+        case ')':
+            msg = ErrorMessage.RightParen_expected;
+            break;
+        case '}':
+            msg = ErrorMessage.RightBrace_expected;
+            break;
+        case ']':
+            msg = ErrorMessage.RightBracket_expected;
+            break;
+        case ':':
+            msg = ErrorMessage.Colon_expected;
+            break;
+        case ';':
+            msg = ErrorMessage.Semicolon_expected;
+            break;
+        case 'Expr':
+            msg = ErrorMessage.Expression_expected;
+            break;
+        case 'Ident':
+            msg = ErrorMessage.Identifier_expected;
+            break;
+        case 'PropAssign':
+            msg = ErrorMessage.Property_assign_expected;
+            break;
+        case 'NotAssign':
+            msg = ErrorMessage.Cannot_assign;
+            break;
+        case 'UnterminatedStr':
+            msg = 'Unterminated string' as ErrorMessageType;
+            break;
+        case '@':
+            msg = 'Unexpected character: @' as ErrorMessageType;
+            break;
+    }
+    return [msg, start, end];
+}
 
 function pickStatementExpression(program: Program, index: number = 0): Expression {
     return program.statements[index].expression;

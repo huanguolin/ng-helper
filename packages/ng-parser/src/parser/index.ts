@@ -85,6 +85,7 @@ export class Parser {
             TokenKind.RightBrace,
             TokenKind.RightBracket,
             TokenKind.RightParen,
+            TokenKind.Colon,
         );
     }
 
@@ -147,21 +148,21 @@ export class Parser {
         return this.token();
     }
 
-    private lookAhead<T>(callback: () => T): T {
-        // save state
-        const saveErrors = this.errors;
-        const savePreviousToken = this.previousToken;
-        const saveCurrentToken = this.currentToken;
+    // private lookAhead<T>(callback: () => T): T {
+    //     // save state
+    //     const saveErrors = this.errors;
+    //     const savePreviousToken = this.previousToken;
+    //     const saveCurrentToken = this.currentToken;
 
-        const result = this.scanner.lookAhead<T>(callback);
+    //     const result = this.scanner.lookAhead<T>(callback);
 
-        // restore
-        this.errors = saveErrors;
-        this.previousToken = savePreviousToken;
-        this.currentToken = saveCurrentToken;
+    //     // restore
+    //     this.errors = saveErrors;
+    //     this.previousToken = savePreviousToken;
+    //     this.currentToken = saveCurrentToken;
 
-        return result;
-    }
+    //     return result;
+    // }
 
     private consume<T extends Token>(tokenKind: TokenKind, message: ErrorMessageType): T;
     private consume<T extends Token>(tokenKinds: TokenKind[], message: ErrorMessageType): T;
