@@ -136,6 +136,22 @@ export class Parser {
         return this.token();
     }
 
+    private lookAhead<T>(callback: () => T): T {
+        // save state
+        const saveErrors = this.errors;
+        const savePreviousToken = this.previousToken;
+        const saveCurrentToken = this.currentToken;
+
+        const result = this.scanner.lookAhead<T>(callback);
+
+        // restore
+        this.errors = saveErrors;
+        this.previousToken = savePreviousToken;
+        this.currentToken = saveCurrentToken;
+
+        return result;
+    }
+
     private consume<T extends Token>(tokenKind: TokenKind, message: string): T;
     private consume<T extends Token>(tokenKinds: TokenKind[], message: string): T;
     private consume<T extends Token>(tokenKind: TokenKind | TokenKind[], message: string): T {
@@ -382,7 +398,7 @@ export class Parser {
         const properties: PropertyAssignment[] = [];
         if (!this.token().is(TokenKind.RightBrace)) {
             do {
-                if (this.token().is(TokenKind.RightBrace)) {
+                if (this.token().is(TokenKind.RightBrace, TokenKind.EOF)) {
                     // Support trailing commas per ES5.1.
                     break;
                 }
@@ -399,19 +415,14 @@ export class Parser {
         if (token.is<IdentifierToken>(TokenKind.Identifier)) {
             key = new Identifier(token);
             this.nextToken();
-            if (this.expect(TokenKind.Colon)) {
-                const value = this.parseNormalExpression();
-                return new PropertyAssignment(key, value);
-            } else {
+            if (this.token().is(TokenKind.Comma, TokenKind.RightBrace, TokenKind.EOF)) {
                 // Support ES6 object initializer
                 // 官方代码: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L527
                 // 官方测试: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/test/ng/parseSpec.js#L1360
                 const value = key;
                 return new PropertyAssignment(key, value);
             }
-        }
-
-        if (token.is<LiteralToken>(TokenKind.String, TokenKind.Number)) {
+        } else if (token.is<LiteralToken>(TokenKind.String, TokenKind.Number)) {
             key = new Literal(token);
             this.nextToken();
         } else if (token.is<LeftBracketToken>(TokenKind.LeftBracket)) {
@@ -430,7 +441,7 @@ export class Parser {
         const elements: Expression[] = [];
         if (!this.token().is(TokenKind.RightBracket)) {
             do {
-                if (this.token().is(TokenKind.RightBracket)) {
+                if (this.token().is(TokenKind.RightBracket, TokenKind.EOF)) {
                     // Support trailing commas per ES5.1.
                     break;
                 }

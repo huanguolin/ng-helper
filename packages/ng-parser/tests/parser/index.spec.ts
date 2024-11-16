@@ -648,6 +648,12 @@ describe('Parser', () => {
             ['{b', '({object} (b b))', 1, [2, 2]],
             ['{b: 1', '({object} (b 1))', 1, [5, 5]],
             ['{b:{a', '({object} (b ({object} (a a))))', 1, [5, 5]],
+            ['{[b]: 1', '({object} ([b] 1))', 1, [7, 7]],
+            // tail comma
+            ['{b,', '({object} (b b))', 1, [3, 3]],
+            ['{b: 1,', '({object} (b 1))', 1, [6, 6]],
+            ['{b:{a,', '({object} (b ({object} (a a))))', 1, [6, 6]],
+            ['{[b]: 1,', '({object} ([b] 1))', 1, [8, 8]],
         ])(
             '(1) error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
@@ -664,9 +670,8 @@ describe('Parser', () => {
         );
 
         it.each([
-            ['{b,', '({object} (b b))', 1, [2, 2]],
-            // ['{b: 1', '({object} (b 1))', 1, [5, 5]],
-            // ['{b:{a', '({object} (b ({object} (a a))))', 1, [5, 5]],
+            ['{[b: 1}', '({object} ([b] 1))', 1, [3, 4]],
+            ['{[b:{[a: 1}}', '({object} ([b] ({object} ([a] 1))))', 2, [3, 4], [7, 8]],
         ])(
             '(2) error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
@@ -675,7 +680,43 @@ describe('Parser', () => {
                 expect(sExpr.toString(program)).toBe(expected);
                 expect(program.errors).toHaveLength(errorCount);
                 program.errors.forEach((error, index) => {
-                    expect(error.message).toBe(`Expect "}" end of object literal`);
+                    expect(error.message).toBe(`Expect "]" end of element access`);
+                    expect(error.start).toBe(errorLocations[index][0]);
+                    expect(error.end).toBe(errorLocations[index][1]);
+                });
+            },
+        );
+
+        it.each([
+            ['{:1}', '({object} ($$ 1))', 1, [1, 2]],
+            ['{:{:1}}', '({object} ($$ ({object} ($$ 1))))', 2, [1, 2], [3, 4]],
+        ])(
+            '(3) error-tolerant %s',
+            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+                const program = parse(input);
+                looseValidateLocation(program);
+                expect(sExpr.toString(program)).toBe(expected);
+                expect(program.errors).toHaveLength(errorCount);
+                program.errors.forEach((error, index) => {
+                    expect(error.message).toBe(`Expected an object property key, but got: ":"`);
+                    expect(error.start).toBe(errorLocations[index][0]);
+                    expect(error.end).toBe(errorLocations[index][1]);
+                });
+            },
+        );
+
+        it.each([
+            ['{a 1}', '({object} (a 1))', 1, [3, 4]],
+            ['{a{b 1}}', '({object} (a ({object} (b 1))))', 2, [2, 3], [5, 6]],
+        ])(
+            '(3) error-tolerant %s',
+            (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
+                const program = parse(input);
+                looseValidateLocation(program);
+                expect(sExpr.toString(program)).toBe(expected);
+                expect(program.errors).toHaveLength(errorCount);
+                program.errors.forEach((error, index) => {
+                    expect(error.message).toBe(`Expect ":" after property key`);
                     expect(error.start).toBe(errorLocations[index][0]);
                     expect(error.end).toBe(errorLocations[index][1]);
                 });
@@ -701,6 +742,9 @@ describe('Parser', () => {
         it.each([
             ['[b', '([array] b)', 1, [2, 2]],
             ['[b,[x', '([array] b ([array] x))', 1, [5, 5]],
+            // tail comma
+            ['[b,', '([array] b)', 1, [3, 3]],
+            ['[b,[x,', '([array] b ([array] x))', 1, [6, 6]],
         ])(
             'error-tolerant %s',
             (input: string, expected: string, errorCount: number, ...errorLocations: number[][]) => {
