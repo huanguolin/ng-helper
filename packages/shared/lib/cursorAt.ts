@@ -257,20 +257,18 @@ function findCursorAtNode(htmlFragment: DocumentFragment, cursorAt: number): Tex
                     }
                 }
                 return node;
+            } else if (isTextNode(node)) {
+                return node;
             }
-        } else if (isTextNode(node)) {
-            return node;
-        } else {
-            // 不可能到这里
         }
     }
 }
 
 function isTextNode(node: ChildNode): node is TextNode {
-    return node.nodeName === '#textNode';
+    return node.nodeName === '#text';
 }
 
-const notElementNodeNames = ['#document', '#document-fragment', '#documentType', '#comment', 'template', '#textNode'];
+const notElementNodeNames = ['#document', '#document-fragment', '#documentType', '#comment', 'template', '#text'];
 function isElement(node?: Node | null): node is Element {
     return !!node && !notElementNodeNames.includes(node.nodeName);
 }

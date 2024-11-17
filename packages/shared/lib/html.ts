@@ -217,7 +217,7 @@ export function getHtmlTagAt(htmlText: string, cursor: Cursor): HtmlTag | undefi
             }
             item.value = {
                 text: attr.value,
-                start: start + location.startOffset + attrValueStart,
+                start: start + attrValueStart,
             };
             return item;
         });
@@ -258,7 +258,7 @@ export function getAttrValueStart(attr: Attribute, location: Location, htmlText:
     const guessedAttrText = guessAttrText(attr, '"');
     if (realAttrText.length === guessedAttrText.length) {
         if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
-            return attr.name.length + '="'.length + '"'.length - 1; // base zero
+            return location.startOffset + attr.name.length + '="'.length + '"'.length - 1; // base zero
         } else {
             throw new Error('getAttrValueStart(): Impossible here.');
         }
@@ -267,7 +267,7 @@ export function getAttrValueStart(attr: Attribute, location: Location, htmlText:
         return undefined;
     }
     const v = realAttrText.lastIndexOf(attr.value);
-    return v >= 0 ? v : undefined;
+    return v >= 0 ? location.startOffset + v : undefined;
 
     function guessAttrText(attr: Attribute, quote: string): string {
         return `${attr.name}=${quote}${attr.value}${quote}`;
