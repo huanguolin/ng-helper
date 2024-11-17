@@ -344,7 +344,7 @@ export function getBeforeCursorText({ text: str, cursor }: CursorTextSpan): stri
     return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
-function ensureInputValid(htmlText: string, cursor: Cursor) {
+export function ensureInputValid(htmlText: string, cursor: Cursor) {
     if (cursor.at < 0 || cursor.at > htmlText.length) {
         throw new Error('"cursorAt" is invalid: ' + JSON.stringify(cursor) + ', htmlText: ' + htmlText);
     }
