@@ -10,7 +10,7 @@ import {
     getControllerTypeHoverApi,
     getDirectiveHoverApi,
 } from '../../service/api';
-import { cursor } from '../../utils';
+import { buildCursor } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,
     getControllerNameInfo,
@@ -27,12 +27,17 @@ export function registerHover(context: ExtensionContext, port: number): void {
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
                 return timeCost('provideHover', async () => {
-                    const cursorAtInfo = getCursorAtInfo(document.getText(), cursor(document, position));
-                    if (!cursorAtInfo || cursorAtInfo.type === 'startTag') {
+                    const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                    if (!cursorAtInfo) {
                         return;
                     }
 
-                    if (cursorAtInfo.type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng')) {
+                    const { type } = cursorAtInfo;
+                    if (type === 'endTag' || type === 'startTag' || type === 'text') {
+                        return;
+                    }
+
+                    if (type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng')) {
                         const ngAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
                         return buildHoverResult({
                             formattedTypeString: `(directive) ${ngAttrName}`,
@@ -40,7 +45,7 @@ export function registerHover(context: ExtensionContext, port: number): void {
                         });
                     }
 
-                    if (cursorAtInfo.type === 'tagName' || cursorAtInfo.type === 'attrName') {
+                    if (type === 'tagName' || type === 'attrName') {
                         if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
                             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
                             if (!scriptFilePath) {
@@ -49,7 +54,7 @@ export function registerHover(context: ExtensionContext, port: number): void {
                             const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
                             return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
                         }
-                    } else if (cursorAtInfo.type === 'attrValue' || cursorAtInfo.type === 'template') {
+                    } else if (type === 'attrValue' || type === 'template') {
                         if (!isHoverValidIdentifierChar(document, position)) {
                             return;
                         }

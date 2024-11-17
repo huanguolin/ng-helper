@@ -11,7 +11,7 @@ import type {
 
 import { ensureInputValid, getAttrValueStart, getTextInTemplate, type Cursor } from './html';
 
-export type CursorAtType = 'startTag' | 'tagName' | 'attrName' | 'attrValue' | 'template';
+export type CursorAtType = 'tagName' | 'attrName' | 'attrValue' | 'template' | 'text' | 'startTag' | 'endTag';
 
 export interface CursorAtContext {
     /**
@@ -37,16 +37,6 @@ interface TagInfo {
      * 可用于查 transclude 的情况。
      */
     parentTagName?: string;
-}
-
-/**
- * 光标在 start tag 的范围内, 但没有在 tag 名字，或者属性名/属性值上。
- * 这个可用于属性名自动补全。
- */
-export interface CursorAtTagInfo extends TagInfo {
-    type: 'startTag';
-    start: number;
-    end: number;
 }
 
 /**
@@ -92,12 +82,45 @@ export interface CursorAtTemplateInfo {
     context: CursorAtContext[];
 }
 
+/**
+ * 光标在 text node 中但不在 template 中。
+ * 这个可用于组件名自动补全。
+ */
+export interface CursorAtTextInfo {
+    type: 'text';
+    parentTagName?: string;
+    /**
+     * transclude 需要。
+     */
+    siblingTagNames: string[];
+}
+
+/**
+ * 光标在 startTag 的范围内(注意：没有 endTag 的情况也算在 startTag), 但没有在 tag 名字，或者属性名/属性值上。
+ * 这个可用于属性名自动补全。
+ */
+export interface CursorAtStartTagInfo extends TagInfo {
+    type: 'startTag';
+    start: number;
+    end: number;
+}
+
+/**
+ * 光标在 endTag 内(首先必须要有 endTag 才行)。
+ * 这个可用于排除光标在 endTag 内。
+ */
+export interface CursorAtEndTagInfo extends TagInfo {
+    type: 'endTag';
+}
+
 export type CursorAtInfo =
-    | CursorAtTagInfo
     | CursorAtTagNameInfo
     | CursorAtAttrNameInfo
     | CursorAtAttrValueInfo
-    | CursorAtTemplateInfo;
+    | CursorAtTemplateInfo
+    | CursorAtTextInfo
+    | CursorAtStartTagInfo
+    | CursorAtEndTagInfo;
 
 export function cursorAt(at: number, isHover = true): Cursor {
     return { at, isHover };
@@ -106,10 +129,16 @@ export function cursorAt(at: number, isHover = true): Cursor {
 export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo | undefined {
     ensureInputValid(htmlText, cursor);
 
+    // 空字符串
+    if (!htmlText) {
+        return;
+    }
+
     const cursorAt = cursor.at - (cursor.isHover ? 0 : 1);
 
     const htmlFragment = parseFragment(htmlText, { sourceCodeLocationInfo: true });
-    const targetNode = findCursorAtNode(htmlFragment, cursorAt);
+    // 前面排除了空字符串的情况，所以这里一定能找到一个节点。
+    const targetNode = findCursorAtNode(htmlFragment, cursorAt)!;
 
     // 这种查找方式涵盖了模版在 textNode 和 在 attrValue 的情况。
     const template = getTextInTemplate(htmlText, cursor);
@@ -121,8 +150,13 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         };
     }
 
-    if (!targetNode || !isElement(targetNode)) {
-        return;
+    if (isTextNode(targetNode)) {
+        const p = isElement(targetNode.parentNode) ? targetNode.parentNode : undefined;
+        return {
+            type: 'text',
+            parentTagName: p?.tagName,
+            siblingTagNames: p ? p.childNodes.filter(isElement).map((x) => x.tagName) : [],
+        };
     }
 
     const element = targetNode;
@@ -160,19 +194,24 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         };
     }
 
-    if (isCursorAtTagStart(element, cursorAt)) {
+    if (isCursorAtEndTag(element, cursorAt)) {
         return {
-            type: 'startTag',
-            start: element.sourceCodeLocation!.startOffset,
-            end: element.sourceCodeLocation!.startTag!.endOffset,
+            type: 'endTag',
             ...getTagInfo(element),
         };
     }
+
+    return {
+        type: 'startTag',
+        start: element.sourceCodeLocation!.startOffset,
+        end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
+        ...getTagInfo(element),
+    };
 }
 
-function isCursorAtTagStart(element: Element, cursorAt: number): boolean {
-    const startTagLocation = element.sourceCodeLocation!.startTag;
-    return !!startTagLocation && cursorAt > startTagLocation.startOffset && cursorAt < startTagLocation.endOffset;
+function isCursorAtEndTag(element: Element, cursorAt: number): boolean {
+    const endTagLocation = element.sourceCodeLocation!.endTag;
+    return !!endTagLocation && cursorAt >= endTagLocation.startOffset && cursorAt < endTagLocation.endOffset;
 }
 
 function isCursorAtTagName(element: Element, cursorAt: number): boolean {

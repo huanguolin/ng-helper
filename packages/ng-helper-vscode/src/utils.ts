@@ -207,6 +207,6 @@ export function intersect<T>(arr1: T[], arr2: T[]): T[] {
     return arr1.filter((x) => arr2.includes(x));
 }
 
-export function cursor(document: TextDocument, position: Position, isHover = true): Cursor {
+export function buildCursor(document: TextDocument, position: Position, isHover = true): Cursor {
     return cursorAt(document.offsetAt(position), isHover);
 }

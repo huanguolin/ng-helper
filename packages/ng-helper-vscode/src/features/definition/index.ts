@@ -22,7 +22,7 @@ import {
     getControllerTypeDefinitionApi,
     getDirectiveDefinitionApi,
 } from '../../service/api';
-import { cursor } from '../../utils';
+import { buildCursor } from '../../utils';
 import { provideTypeHoverInfo } from '../hover/utils';
 import {
     checkServiceAndGetScriptFilePath,
@@ -42,16 +42,22 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
                 return timeCost('provideDefinition', async () => {
-                    const cursorAtInfo = getCursorAtInfo(document.getText(), cursor(document, position));
+                    const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                    if (!cursorAtInfo) {
+                        return;
+                    }
+
+                    const { type } = cursorAtInfo;
                     if (
-                        !cursorAtInfo ||
-                        cursorAtInfo.type === 'startTag' ||
-                        (cursorAtInfo.type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng'))
+                        type === 'endTag' ||
+                        type === 'startTag' ||
+                        type === 'text' ||
+                        (type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng'))
                     ) {
                         return;
                     }
 
-                    if (cursorAtInfo.type === 'tagName' || cursorAtInfo.type === 'attrName') {
+                    if (type === 'tagName' || type === 'attrName') {
                         if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
                             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
                             if (!scriptFilePath) {
@@ -65,7 +71,7 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                                     info: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
                                 });
                                 return await buildDefinition(definitionInfo);
-                            } else if (cursorAtInfo.type === 'attrName') {
+                            } else if (type === 'attrName') {
                                 const cursorAtAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
                                 const definitionInfo = await getDirectiveDefinitionApi({
                                     port,
@@ -79,7 +85,7 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                                 return await buildDefinition(definitionInfo);
                             }
                         }
-                    } else if (cursorAtInfo.type === 'attrValue' || cursorAtInfo.type === 'template') {
+                    } else if (type === 'attrValue' || type === 'template') {
                         if (!isHoverValidIdentifierChar(document, position)) {
                             return;
                         }

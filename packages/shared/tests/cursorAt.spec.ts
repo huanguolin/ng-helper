@@ -41,6 +41,24 @@ describe('getCursorAtInfo()', () => {
                 end: 18,
             });
         });
+
+        it.each([
+            // '<'
+            6,
+            // '/'
+            7,
+            // '>'
+            11,
+        ])('should detect cursor at end tag when cursor at %s', (at) => {
+            const html = '<div>a</div>';
+            const result = getCursorAtInfo(html, cursor(at));
+            expect(result).toEqual({
+                type: 'endTag',
+                tagName: 'div',
+                attrNames: [],
+                parentTagName: undefined,
+            });
+        });
     });
 
     describe('attribute related', () => {
@@ -174,11 +192,68 @@ describe('getCursorAtInfo()', () => {
         });
     });
 
+    describe('text related', () => {
+        it.each([
+            // At start of text content
+            5,
+            // In middle of text content
+            7,
+            // At end of text content
+            9,
+        ])('should detect cursor at text content when cursor at %s', (at) => {
+            const html = '<p>content</p>';
+            const result = getCursorAtInfo(html, cursor(at));
+            expect(result).toEqual({
+                type: 'text',
+                parentTagName: 'p',
+                siblingTagNames: [],
+            });
+        });
+
+        it('should detect cursor at text with nested parent tag', () => {
+            const html = '<div><span>nested text</span></div>';
+            const result = getCursorAtInfo(html, cursor(12));
+            expect(result).toEqual({
+                type: 'text',
+                parentTagName: 'span',
+                siblingTagNames: [],
+            });
+        });
+
+        it('should detect cursor at text with sibling tag', () => {
+            const html = '<div>text<span></span></div>';
+            const result = getCursorAtInfo(html, cursor(5));
+            expect(result).toEqual({
+                type: 'text',
+                parentTagName: 'div',
+                siblingTagNames: ['span'],
+            });
+        });
+
+        it('should detect cursor at text with only text', () => {
+            const html = 'text';
+            const result = getCursorAtInfo(html, cursor(1));
+            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
+        });
+
+        it('should detect cursor at text with whitespace text', () => {
+            const html = '  ';
+            const result = getCursorAtInfo(html, cursor(0));
+            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
+        });
+    });
+
     describe('edge cases', () => {
         it('should throw error for invalid cursor position', () => {
             const html = '<div>content</div>';
             expect(() => getCursorAtInfo(html, cursor(-1))).toThrow();
             expect(() => getCursorAtInfo(html, cursor(100))).toThrow();
+        });
+
+        it('should return undefined with empty text', () => {
+            const html = '';
+            const result = getCursorAtInfo(html, cursor(0));
+            expect(result).toBeUndefined();
         });
 
         it('should handle empty elements', () => {

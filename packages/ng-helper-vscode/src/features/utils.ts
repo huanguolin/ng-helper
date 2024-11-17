@@ -22,43 +22,6 @@ export function isComponentHtml(document: TextDocument): boolean {
     return fileName.endsWith('.component.html');
 }
 
-export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
-    const docText = document.getText();
-    const tag = getHtmlTagAt(docText, { at: cursorAt, isHover: true });
-    if (!tag) {
-        return;
-    }
-
-    const tagName = camelCase(tag.tagName);
-    const parentTagName = tag.parent?.tagName && camelCase(tag.parent?.tagName);
-    const attrNames = tag.attrs.sort((a, b) => a.name.start - b.name.start).map((x) => camelCase(x.name.text));
-
-    const hoverAtStartTagName = cursorAt > tag.start && cursorAt <= tag.start + tag.tagName.length;
-    const hoverAtEndTagName = tag.endTagStart !== undefined && cursorAt > tag.endTagStart + 1 && cursorAt < tag.end;
-    if (hoverAtStartTagName || hoverAtEndTagName) {
-        return {
-            type: 'tagName',
-            name: tagName,
-            tagName,
-            parentTagName,
-            attrNames,
-        };
-    }
-
-    const attr = tag.attrs.find(
-        (attr) => cursorAt >= attr.name.start && cursorAt < attr.name.start + attr.name.text.length,
-    );
-    if (attr) {
-        return {
-            type: 'attrName',
-            name: camelCase(attr.name.text),
-            tagName,
-            parentTagName,
-            attrNames,
-        };
-    }
-}
-
 export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {
     if (isComponentHtml(document)) {
         return;
