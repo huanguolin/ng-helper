@@ -99,6 +99,10 @@ export type CursorAtInfo =
     | CursorAtAttrValueInfo
     | CursorAtTemplateInfo;
 
+export function cursorAt(at: number, isHover = true): Cursor {
+    return { at, isHover };
+}
+
 export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo | undefined {
     ensureInputValid(htmlText, cursor);
 

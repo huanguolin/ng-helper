@@ -14,7 +14,6 @@ import {
     isNgBuiltinDirective,
     checkServiceAndGetScriptFilePath,
     isNgUserCustomAttr,
-    isValidIdentifierChar,
 } from '../utils';
 
 export async function provideTypeHoverInfo<T>({
@@ -30,11 +29,6 @@ export async function provideTypeHoverInfo<T>({
 }): Promise<T | undefined> {
     const docText = document.getText();
     const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
-
-    const theChar = docText[cursor.at];
-    if (!isValidIdentifierChar(theChar)) {
-        return;
-    }
 
     // 模版 {{}} 中
     const tplText = getTextInTemplate(docText, cursor);

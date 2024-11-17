@@ -47,6 +47,9 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
+/**
+ * @deprecated
+ */
 export interface HtmlTagBase {
     tagName: string;
     start: number;
@@ -54,6 +57,7 @@ export interface HtmlTagBase {
 }
 
 /**
+ * @deprecated
  * Represents an HTML tag.
  */
 export interface HtmlTag extends HtmlTagBase {
@@ -65,6 +69,7 @@ export interface HtmlTag extends HtmlTagBase {
 }
 
 /**
+ * @deprecated
  * Represents an HTML attribute.
  */
 export type HtmlAttr = {
@@ -72,6 +77,9 @@ export type HtmlAttr = {
     value?: TextSpan;
 };
 
+/**
+ * @deprecated
+ */
 export type CanCompleteComponentNameResult = {
     canComplete: boolean;
     tag?: HtmlTag;
@@ -79,9 +87,13 @@ export type CanCompleteComponentNameResult = {
 
 export const SPACE = '\u0020';
 
+/**
+ * @deprecated
+ */
 export const NG_FILTER_PATTERN = /(^|[^|])\|([^|]|$)/;
 
 /**
+ * @deprecated
  * Checks if the given text contains an Angular filter.
  * @param text - The text to check.
  * @returns A boolean indicating whether the text contains an Angular filter.
@@ -91,6 +103,7 @@ export function isContainsNgFilter(text: string): boolean {
 }
 
 /**
+ * @deprecated
  * Finds the index of the first occurrence of an Angular filter in the given text.
  *
  * @param text - The text to search for the Angular filter.
@@ -105,6 +118,7 @@ export function indexOfNgFilter(text: string): number {
 }
 
 /**
+ * @deprecated
  * Retrieves the HtmlAttr object while the cursor is at the value position.
  *
  * @param tag - The HtmlTag object.
@@ -124,6 +138,7 @@ export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): Html
 }
 
 /**
+ * @deprecated
  * Parses the given HTML text and returns a Document object.
  *
  * @param htmlText - The HTML text to parse.
@@ -134,6 +149,7 @@ export function parseHtml(htmlText: string): Document {
 }
 
 /**
+ * @deprecated
  * Retrieves the HTML tag at the specified cursor position in the given HTML text.
  * @param htmlText - The HTML text.
  * @param cursor - The cursor position.
@@ -411,6 +427,9 @@ export function getMapValues(mapString: string): TextSpan[] | undefined {
     return result;
 }
 
+/**
+ * @deprecated
+ */
 export function canCompletionComponentName(htmlText: string, cursor: Cursor): CanCompleteComponentNameResult {
     if (getTextInTemplate(htmlText, cursor)) {
         return { canComplete: false };

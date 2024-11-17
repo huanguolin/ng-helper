@@ -1,10 +1,11 @@
 import os from 'node:os';
 
+import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { getHtmlTagAt, isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
-import { TextDocument, Uri } from 'vscode';
+import { TextDocument, Uri, type Position } from 'vscode';
 
 import { checkNgHelperServerRunning, getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
@@ -84,6 +85,15 @@ export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInf
     console.log('getControllerNameFromHtml() find controller name info:', result);
 
     return result;
+}
+
+export function getControllerNameInfo(cursorAtContext: CursorAtContext[]): NgCtrlInfo | undefined {
+    const ngController = cursorAtContext.find((x) => x.kind === 'ng-controller');
+    if (ngController) {
+        const result: NgCtrlInfo = getNgCtrlInfo(ngController.value);
+        console.log('getControllerNameFromHtml() find controller name info:', result);
+        return result;
+    }
 }
 
 export function getNgCtrlInfo(text: string): NgCtrlInfo {
@@ -182,6 +192,11 @@ export function isValidIdentifierChar(char: string): boolean {
     return /^[a-zA-Z\d_$]*$/.test(char);
 }
 
+export function isHoverValidIdentifierChar(document: TextDocument, position: Position): boolean {
+    const ch = document.getText()[document.offsetAt(position)];
+    return isValidIdentifierChar(ch);
+}
+
 export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
 }
@@ -197,4 +212,19 @@ export async function checkServiceAndGetScriptFilePath(
     }
 
     return scriptFilePath;
+}
+
+export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHoverInfo {
+    const { type } = cursorAtInfo;
+    if (type !== 'tagName' && type !== 'attrName') {
+        throw new Error('Only "tagName" or "attrName" can convert!');
+    }
+
+    return {
+        type,
+        name: camelCase(type === 'attrName' ? cursorAtInfo.cursorAtAttrName : cursorAtInfo.tagName),
+        tagName: camelCase(cursorAtInfo.tagName),
+        attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
+        parentTagName: cursorAtInfo.parentTagName ? camelCase(cursorAtInfo.parentTagName) : undefined,
+    };
 }

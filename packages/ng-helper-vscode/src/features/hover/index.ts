@@ -1,4 +1,6 @@
+import { getCursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { NgHoverInfo, type NgCtrlInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
+import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
 import { timeCost } from '../../debug';
@@ -8,12 +10,14 @@ import {
     getControllerTypeHoverApi,
     getDirectiveHoverApi,
 } from '../../service/api';
+import { cursor } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,
-    getControllerNameInfoFromHtml,
-    getHoveredTagNameOrAttr,
+    getControllerNameInfo,
     isComponentHtml,
     isComponentTagName,
+    isHoverValidIdentifierChar,
+    toNgElementHoverInfo,
 } from '../utils';
 
 import { provideTypeHoverInfo } from './utils';
@@ -22,51 +26,45 @@ export function registerHover(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
-                const tagOrAttrHoverInfo = getHoveredTagNameOrAttr(document, document.offsetAt(position));
-                if (tagOrAttrHoverInfo) {
-                    return handleTagOrAttr(tagOrAttrHoverInfo, document, port, token);
-                }
+                return timeCost('provideHover', async () => {
+                    const cursorAtInfo = getCursorAtInfo(document.getText(), cursor(document, position));
+                    if (!cursorAtInfo || cursorAtInfo.type === 'startTag') {
+                        return;
+                    }
 
-                if (isComponentHtml(document)) {
-                    return handleComponentType(document, position, port, token);
-                }
+                    if (cursorAtInfo.type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng')) {
+                        const ngAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
+                        return buildHoverResult({
+                            formattedTypeString: `(directive) ${ngAttrName}`,
+                            document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${ngAttrName}).`,
+                        });
+                    }
 
-                const ctrlInfo = getControllerNameInfoFromHtml(document);
-                if (ctrlInfo && ctrlInfo.controllerAs) {
-                    return handleControllerType(ctrlInfo, document, position, port, token);
-                }
+                    if (cursorAtInfo.type === 'tagName' || cursorAtInfo.type === 'attrName') {
+                        if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
+                            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+                            if (!scriptFilePath) {
+                                return;
+                            }
+                            const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
+                            return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
+                        }
+                    } else if (cursorAtInfo.type === 'attrValue' || cursorAtInfo.type === 'template') {
+                        if (!isHoverValidIdentifierChar(document, position)) {
+                            return;
+                        }
+                        if (isComponentHtml(document)) {
+                            return handleComponentType(document, position, port, token);
+                        }
+                        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+                        if (ctrlInfo && ctrlInfo.controllerAs) {
+                            return handleControllerType(ctrlInfo, document, position, port, token);
+                        }
+                    }
+                });
             },
         }),
     );
-}
-
-async function handleTagOrAttr(
-    hoverInfo: NgElementHoverInfo,
-    document: TextDocument,
-    port: number,
-    token: CancellationToken,
-): Promise<Hover | undefined> {
-    return timeCost('provideComponentNameOrAttrNameHover', async () => {
-        if (hoverInfo.type === 'attrName' && hoverInfo.name.startsWith('ng')) {
-            return buildHoverResult({
-                formattedTypeString: `(directive) ${hoverInfo.name}`,
-                document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${hoverInfo.name}).`,
-            });
-        }
-
-        if (isComponentTagName(hoverInfo.tagName) || (hoverInfo.type === 'attrName' && hoverInfo.attrNames.length)) {
-            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
-            if (!scriptFilePath) {
-                return;
-            }
-
-            if (isComponentTagName(hoverInfo.tagName)) {
-                return await getComponentHover(scriptFilePath, hoverInfo, port, token);
-            } else {
-                return await getDirectiveHover(scriptFilePath, hoverInfo, port, token);
-            }
-        }
-    });
 }
 
 async function getComponentHover(
@@ -105,20 +103,18 @@ async function handleComponentType(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
-    return timeCost('provideComponentTypeHover', async () => {
-        const info = await provideTypeHoverInfo({
-            document,
-            position,
-            port,
-            api: (scriptFilePath, contextString, cursorAt) =>
-                getComponentTypeHoverApi({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { fileName: scriptFilePath, contextString, cursorAt },
-                }),
-        });
-        return buildHoverResult(info);
+    const info = await provideTypeHoverInfo({
+        document,
+        position,
+        port,
+        api: (scriptFilePath, contextString, cursorAt) =>
+            getComponentTypeHoverApi({
+                port,
+                vscodeCancelToken: token,
+                info: { fileName: scriptFilePath, contextString, cursorAt },
+            }),
     });
+    return buildHoverResult(info);
 }
 
 async function handleControllerType(
@@ -128,20 +124,18 @@ async function handleControllerType(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
-    return timeCost('provideControllerTypeHover', async () => {
-        const info = await provideTypeHoverInfo({
-            document,
-            position,
-            port,
-            api: (scriptFilePath, contextString, cursorAt) =>
-                getControllerTypeHoverApi({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
-                }),
-        });
-        return buildHoverResult(info);
+    const info = await provideTypeHoverInfo({
+        document,
+        position,
+        port,
+        api: (scriptFilePath, contextString, cursorAt) =>
+            getControllerTypeHoverApi({
+                port,
+                vscodeCancelToken: token,
+                info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+            }),
     });
+    return buildHoverResult(info);
 }
 
 function buildHoverResult(res: NgHoverInfo | undefined): Hover | undefined {

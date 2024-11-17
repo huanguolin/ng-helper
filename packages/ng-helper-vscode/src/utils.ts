@@ -1,6 +1,8 @@
 import { normalize } from 'node:path';
 
-import { window, workspace, Uri, FileType } from 'vscode';
+import { cursorAt } from '@ng-helper/shared/lib/cursorAt';
+import type { Cursor } from '@ng-helper/shared/lib/html';
+import { window, workspace, Uri, FileType, TextDocument, type Position } from 'vscode';
 
 import { checkNgHelperServerRunningApi } from './service/api';
 
@@ -203,4 +205,8 @@ export function uniq<T>(arr: T[]): T[] {
 
 export function intersect<T>(arr1: T[], arr2: T[]): T[] {
     return arr1.filter((x) => arr2.includes(x));
+}
+
+export function cursor(document: TextDocument, position: Position, isHover = true): Cursor {
+    return cursorAt(document.offsetAt(position), isHover);
 }
