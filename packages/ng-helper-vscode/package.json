@@ -120,6 +120,7 @@
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
+    "@ng-helper/ng-parser": "^0.0.1",
     "@ng-helper/shared": "^0.0.1",
     "@ng-helper/typescript-plugin": "^0.0.1",
     "axios": "^1.7.2",

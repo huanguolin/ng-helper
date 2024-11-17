@@ -1,6 +1,7 @@
 {
     "references": [
         { "path": "./packages/ng-helper-vscode" },
+        { "path": "./packages/ng-parser" },
         { "path": "./packages/shared" },
         { "path": "./packages/typescript-plugin" }
     ],
