@@ -29,14 +29,16 @@ describe('getCursorAtInfo()', () => {
             11,
             // At quote after attribute value
             16,
-        ])('should detect cursor at tag start when cursor at %s', (at) => {
+        ])('should detect cursor at start tag when cursor at %s', (at) => {
             const html = '<div class="test">content</div>';
             const result = getCursorAtInfo(html, cursor(at));
             expect(result).toEqual({
-                type: 'tagStart',
+                type: 'startTag',
                 tagName: 'div',
                 attrNames: ['class'],
                 parentTagName: undefined,
+                start: 0,
+                end: 18,
             });
         });
     });

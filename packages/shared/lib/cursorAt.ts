@@ -11,7 +11,7 @@ import type {
 
 import { ensureInputValid, getAttrValueStart, getTextInTemplate, type Cursor } from './html';
 
-export type CursorAtType = 'tagStart' | 'tagName' | 'attrName' | 'attrValue' | 'template';
+export type CursorAtType = 'startTag' | 'tagName' | 'attrName' | 'attrValue' | 'template';
 
 export interface CursorAtContext {
     /**
@@ -44,7 +44,9 @@ interface TagInfo {
  * 这个可用于属性名自动补全。
  */
 export interface CursorAtTagInfo extends TagInfo {
-    type: 'tagStart';
+    type: 'startTag';
+    start: number;
+    end: number;
 }
 
 /**
@@ -156,7 +158,9 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
 
     if (isCursorAtTagStart(element, cursorAt)) {
         return {
-            type: 'tagStart',
+            type: 'startTag',
+            start: element.sourceCodeLocation!.startOffset,
+            end: element.sourceCodeLocation!.startTag!.endOffset,
             ...getTagInfo(element),
         };
     }
