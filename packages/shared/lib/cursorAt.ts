@@ -126,12 +126,15 @@ export function cursorAt(at: number, isHover = true): Cursor {
     return { at, isHover };
 }
 
-export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo | undefined {
+export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo {
     ensureInputValid(htmlText, cursor);
 
-    // 空字符串
     if (!htmlText) {
-        return;
+        // 空字符串时，认为光标在 text 节点上, 可以简化 getCursorAtInfo(） 的使用。
+        return {
+            type: 'text',
+            siblingTagNames: [],
+        };
     }
 
     const cursorAt = cursor.at - (cursor.isHover ? 0 : 1);

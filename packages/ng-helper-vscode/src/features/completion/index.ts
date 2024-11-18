@@ -39,22 +39,18 @@ export type CompletionParamObj<T extends CursorAtInfo | undefined = undefined> =
 };
 
 export function registerCompletion2(context: ExtensionContext, port: number) {
+    const provideCompletionItems = (
+        document: TextDocument,
+        position: Position,
+        token: CancellationToken,
+        context: CompletionContext,
+    ) => {
+        return completion({ document, position, token, context, port });
+    };
+
     context.subscriptions.push(
-        languages.registerCompletionItemProvider('html', {
-            provideCompletionItems(document, position, token, context) {
-                return completion({ document, position, token, context, port });
-            },
-        }),
-        languages.registerCompletionItemProvider(
-            'html',
-            {
-                provideCompletionItems(document, position, token, context) {
-                    return completion({ document, position, token, context, port });
-                },
-            },
-            SPACE,
-            '<',
-        ),
+        languages.registerCompletionItemProvider('html', { provideCompletionItems }),
+        languages.registerCompletionItemProvider('html', { provideCompletionItems }, SPACE, '<'),
     );
 }
 
@@ -73,9 +69,6 @@ export async function completion({
 }) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
-    if (!cursorAtInfo) {
-        return;
-    }
 
     const obj = { document, cursor, port, vscodeCancelToken: token, context };
     switch (cursorAtInfo.type) {

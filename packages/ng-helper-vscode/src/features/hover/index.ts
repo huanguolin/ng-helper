@@ -1,4 +1,10 @@
-import { getCursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
+import {
+    getCursorAtInfo,
+    type CursorAtAttrNameInfo,
+    type CursorAtAttrValueInfo,
+    type CursorAtTagNameInfo,
+    type CursorAtTemplateInfo,
+} from '@ng-helper/shared/lib/cursorAt';
 import { NgHoverInfo, type NgCtrlInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
@@ -17,6 +23,7 @@ import {
     isComponentHtml,
     isComponentTagName,
     isHoverValidIdentifierChar,
+    isNgBuiltinDirective,
     toNgElementHoverInfo,
 } from '../utils';
 
@@ -28,48 +35,71 @@ export function registerHover(context: ExtensionContext, port: number): void {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
                 return timeCost('provideHover', async () => {
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
-                    if (!cursorAtInfo) {
-                        return;
-                    }
-
-                    const { type } = cursorAtInfo;
-                    if (type === 'endTag' || type === 'startTag' || type === 'text') {
-                        return;
-                    }
-
-                    if (type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng')) {
-                        const ngAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
-                        return buildHoverResult({
-                            formattedTypeString: `(directive) ${ngAttrName}`,
-                            document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${ngAttrName}).`,
-                        });
-                    }
-
-                    if (type === 'tagName' || type === 'attrName') {
-                        if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
-                            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
-                            if (!scriptFilePath) {
-                                return;
-                            }
-                            const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
-                            return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
-                        }
-                    } else if (type === 'attrValue' || type === 'template') {
-                        if (!isHoverValidIdentifierChar(document, position)) {
+                    switch (cursorAtInfo.type) {
+                        case 'endTag':
+                        case 'startTag':
+                        case 'text':
+                            // do nothing
                             return;
-                        }
-                        if (isComponentHtml(document)) {
-                            return handleComponentType(document, position, port, token);
-                        }
-                        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-                        if (ctrlInfo && ctrlInfo.controllerAs) {
-                            return handleControllerType(ctrlInfo, document, position, port, token);
-                        }
+                        case 'attrName':
+                            if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
+                                return handleBuiltinDirective(cursorAtInfo.cursorAtAttrName);
+                            }
+                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                        case 'tagName':
+                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                        case 'attrValue':
+                        case 'template':
+                            return handleTemplateOrAttrValue(document, position, port, token, cursorAtInfo);
                     }
                 });
             },
         }),
     );
+}
+
+async function handleTagNameOrAttrName(
+    cursorAtInfo: CursorAtTagNameInfo | CursorAtAttrNameInfo,
+    document: TextDocument,
+    port: number,
+    token: CancellationToken,
+): Promise<Hover | undefined> {
+    if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
+        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+        if (!scriptFilePath) {
+            return;
+        }
+        const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
+        return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
+    }
+    return undefined;
+}
+
+function handleBuiltinDirective(cursorAtAttrName: string): Hover | undefined {
+    const ngAttrName = camelCase(cursorAtAttrName);
+    return buildHoverResult({
+        formattedTypeString: `(directive) ${ngAttrName}`,
+        document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${ngAttrName}).`,
+    });
+}
+
+async function handleTemplateOrAttrValue(
+    document: TextDocument,
+    position: Position,
+    port: number,
+    token: CancellationToken,
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
+): Promise<Hover | undefined> {
+    if (!isHoverValidIdentifierChar(document, position)) {
+        return;
+    }
+    if (isComponentHtml(document)) {
+        return handleComponentType(document, position, port, token);
+    }
+    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+    if (ctrlInfo && ctrlInfo.controllerAs) {
+        return handleControllerType(ctrlInfo, document, position, port, token);
+    }
 }
 
 async function getComponentHover(

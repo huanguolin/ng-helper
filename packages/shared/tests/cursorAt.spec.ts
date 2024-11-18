@@ -250,10 +250,10 @@ describe('getCursorAtInfo()', () => {
             expect(() => getCursorAtInfo(html, cursor(100))).toThrow();
         });
 
-        it('should return undefined with empty text', () => {
+        it('should return text type with empty text', () => {
             const html = '';
             const result = getCursorAtInfo(html, cursor(0));
-            expect(result).toBeUndefined();
+            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
         });
 
         it('should handle empty elements', () => {

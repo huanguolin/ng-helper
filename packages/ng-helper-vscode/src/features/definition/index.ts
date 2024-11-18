@@ -1,4 +1,10 @@
-import { getCursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
+import {
+    getCursorAtInfo,
+    type CursorAtAttrNameInfo,
+    type CursorAtAttrValueInfo,
+    type CursorAtTagNameInfo,
+    type CursorAtTemplateInfo,
+} from '@ng-helper/shared/lib/cursorAt';
 import type { NgCtrlInfo, NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import {
@@ -30,6 +36,7 @@ import {
     isComponentHtml,
     isComponentTagName,
     isHoverValidIdentifierChar,
+    isNgBuiltinDirective,
     toNgElementHoverInfo,
 } from '../utils';
 
@@ -43,64 +50,82 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
             ): Promise<Definition | undefined> {
                 return timeCost('provideDefinition', async () => {
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
-                    if (!cursorAtInfo) {
-                        return;
-                    }
 
-                    const { type } = cursorAtInfo;
-                    if (
-                        type === 'endTag' ||
-                        type === 'startTag' ||
-                        type === 'text' ||
-                        (type === 'attrName' && cursorAtInfo.cursorAtAttrName.startsWith('ng'))
-                    ) {
-                        return;
-                    }
-
-                    if (type === 'tagName' || type === 'attrName') {
-                        if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
-                            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
-                            if (!scriptFilePath) {
+                    switch (cursorAtInfo.type) {
+                        case 'endTag':
+                        case 'startTag':
+                        case 'text':
+                            // do nothing
+                            return;
+                        case 'attrName':
+                            if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
                                 return;
                             }
-
-                            if (isComponentTagName(cursorAtInfo.tagName)) {
-                                const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
-                                    port,
-                                    vscodeCancelToken: token,
-                                    info: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
-                                });
-                                return await buildDefinition(definitionInfo);
-                            } else if (type === 'attrName') {
-                                const cursorAtAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
-                                const definitionInfo = await getDirectiveDefinitionApi({
-                                    port,
-                                    vscodeCancelToken: token,
-                                    info: {
-                                        fileName: scriptFilePath,
-                                        attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
-                                        cursorAtAttrName,
-                                    },
-                                });
-                                return await buildDefinition(definitionInfo);
-                            }
-                        }
-                    } else if (type === 'attrValue' || type === 'template') {
-                        if (!isHoverValidIdentifierChar(document, position)) {
-                            return;
-                        }
-                        if (isComponentHtml(document)) {
-                            return handleComponentType(document, position, port, token);
-                        }
-                        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-                        if (ctrlInfo) {
-                            return handleControllerType(ctrlInfo, document, position, port, token);
-                        }
+                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                        case 'tagName':
+                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                        case 'attrValue':
+                        case 'template':
+                            return handleTemplateOrAttrValue(document, position, cursorAtInfo, port, token);
                     }
                 });
             },
         }),
     );
+}
+
+async function handleTagNameOrAttrName(
+    cursorAtInfo: CursorAtTagNameInfo | CursorAtAttrNameInfo,
+    document: TextDocument,
+    port: number,
+    token: CancellationToken,
+): Promise<Definition | undefined> {
+    if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
+        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+        if (!scriptFilePath) {
+            return;
+        }
+
+        if (isComponentTagName(cursorAtInfo.tagName)) {
+            const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
+                port,
+                vscodeCancelToken: token,
+                info: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
+            });
+            return await buildDefinition(definitionInfo);
+        } else if (cursorAtInfo.type === 'attrName') {
+            const cursorAtAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
+            const definitionInfo = await getDirectiveDefinitionApi({
+                port,
+                vscodeCancelToken: token,
+                info: {
+                    fileName: scriptFilePath,
+                    attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
+                    cursorAtAttrName,
+                },
+            });
+            return await buildDefinition(definitionInfo);
+        }
+    }
+}
+
+async function handleTemplateOrAttrValue(
+    document: TextDocument,
+    position: Position,
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
+    port: number,
+    token: CancellationToken,
+): Promise<Definition | undefined> {
+    if (!isHoverValidIdentifierChar(document, position)) {
+        return;
+    }
+    if (isComponentHtml(document)) {
+        return handleComponentType(document, position, port, token);
+    }
+    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+    if (ctrlInfo) {
+        return handleControllerType(ctrlInfo, document, position, port, token);
+    }
 }
 
 async function handleComponentType(
