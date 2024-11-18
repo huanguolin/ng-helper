@@ -228,11 +228,13 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
 
 function getStartTagInfo(element: Element): CursorAtStartTagInfo {
     const attrLocations: Record<string, SimpleLocation> = {};
-    for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs!)) {
-        attrLocations[key] = {
-            start: value.startOffset,
-            end: value.endOffset,
-        };
+    if (element.sourceCodeLocation!.attrs) {
+        for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs)) {
+            attrLocations[key] = {
+                start: value.startOffset,
+                end: value.endOffset,
+            };
+        }
     }
     return {
         type: 'startTag',

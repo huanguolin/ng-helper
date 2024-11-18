@@ -169,7 +169,7 @@ class TypeCompletionProvider implements CompletionItemProvider {
             info: { fileName: scriptFilePath, prefix, ...ctrlInfo },
         });
         if (res) {
-            return this.buildCompletionList(res);
+            return buildCompletionList(res);
         }
     }
 
@@ -190,30 +190,27 @@ class TypeCompletionProvider implements CompletionItemProvider {
             info: { fileName: scriptFilePath, prefix },
         });
         if (res) {
-            return this.buildCompletionList(res);
+            return buildCompletionList(res);
         }
     }
+}
 
-    private buildCompletionList(res: NgTypeInfo[]) {
-        const items = res.map((x, i) => {
-            const item = new CompletionItem(
-                x.name,
-                x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field,
-            );
-            if (x.isFunction) {
-                // 分两段补全，第一段是函数名，第二段是参数
-                let snippet = `${x.name}$1(`;
-                snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
-                snippet += ')$0';
-                item.insertText = new SnippetString(snippet);
-            }
-            item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
-            item.documentation = x.document;
-            item.sortText = i.toString().padStart(3, '0');
-            return item;
-        });
-        return new CompletionList(items, false);
-    }
+function buildCompletionList(res: NgTypeInfo[]) {
+    const items = res.map((x, i) => {
+        const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
+        if (x.isFunction) {
+            // 分两段补全，第一段是函数名，第二段是参数
+            let snippet = `${x.name}$1(`;
+            snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
+            snippet += ')$0';
+            item.insertText = new SnippetString(snippet);
+        }
+        item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
+        item.documentation = x.document;
+        item.sortText = i.toString().padStart(3, '0');
+        return item;
+    });
+    return new CompletionList(items, false);
 }
 
 // 特殊处理:
@@ -233,10 +230,11 @@ export async function templateOrAttrValueCompletion({
     vscodeCancelToken,
     cursorAtInfo,
     context,
+    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
     CompletionList<CompletionItem> | undefined
 > {
-    if (!context.triggerCharacter) {
+    if (!context.triggerCharacter && noRegisterTriggerChar) {
         return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
     } else if (context.triggerCharacter === '.') {
         return await getTypeCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
@@ -254,8 +252,65 @@ async function getTypeCompletion({
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
-    // TODO: 获取类型补全
-    return undefined;
+    const isComponent = isComponentHtml(document);
+    const ctrlInfo = getControllerNameInfoFromHtml(document);
+    if (!isComponent && !ctrlInfo) {
+        return;
+    }
+
+    if (cursorAtInfo.type === 'template') {
+        const prefix = cursorAtInfo.template.slice(0, cursorAtInfo.relativeCursorAt + 1);
+        // TODO: use ng-parser handle this
+        if (prefix && !isContainsNgFilter(prefix)) {
+            return await getTypeCompletionQuery({ document, ctrlInfo, prefix, port, vscodeCancelToken });
+        }
+    } else {
+        if (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName)) {
+            // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
+            let prefix = cursorAtInfo.attrValue.slice(0, cursorAtInfo.relativeCursorAt + 1);
+            // TODO: use ng-parser handle this
+            if (prefix && !isContainsNgFilter(prefix)) {
+                prefix = processPrefix(cursorAtInfo.attrValue, prefix);
+                if (prefix) {
+                    return await getTypeCompletionQuery({ document, ctrlInfo, prefix, port, vscodeCancelToken });
+                }
+            }
+        }
+    }
+}
+
+async function getTypeCompletionQuery({
+    document,
+    ctrlInfo,
+    prefix,
+    port,
+    vscodeCancelToken,
+}: {
+    document: TextDocument;
+    ctrlInfo?: NgCtrlInfo;
+    prefix: string;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}) {
+    const scriptFilePath = (await getCorrespondingScriptFileName(document, ctrlInfo?.controllerName))!;
+    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
+        return;
+    }
+
+    const res = ctrlInfo
+        ? await getControllerTypeCompletionApi({
+              vscodeCancelToken,
+              port,
+              info: { fileName: scriptFilePath, prefix, ...ctrlInfo },
+          })
+        : await getComponentTypeCompletionApi({
+              vscodeCancelToken,
+              port,
+              info: { fileName: scriptFilePath, prefix },
+          });
+    if (res) {
+        return buildCompletionList(res);
+    }
 }
 
 async function getCtrlCompletion({

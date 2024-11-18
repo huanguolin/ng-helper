@@ -29,48 +29,71 @@ export function registerCompletion(context: ExtensionContext, port: number) {
     );
 }
 
-export type CompletionParamObj<T extends CursorAtInfo | undefined = undefined> = {
+interface BaseCompletionParam {
     document: TextDocument;
-    cursorAtInfo: T;
-    cursor: Cursor;
     vscodeCancelToken: CancellationToken;
     context: CompletionContext;
+    noRegisterTriggerChar: boolean;
     port: number;
-};
+}
+
+interface CompletionParam extends BaseCompletionParam {
+    document: TextDocument;
+    position: Position;
+}
+
+export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefined> extends BaseCompletionParam {
+    cursorAtInfo: T;
+    cursor: Cursor;
+}
 
 export function registerCompletion2(context: ExtensionContext, port: number) {
-    const provideCompletionItems = (
-        document: TextDocument,
-        position: Position,
-        token: CancellationToken,
-        context: CompletionContext,
-    ) => {
-        return completion({ document, position, token, context, port });
-    };
-
     context.subscriptions.push(
-        languages.registerCompletionItemProvider('html', { provideCompletionItems }),
-        languages.registerCompletionItemProvider('html', { provideCompletionItems }, SPACE, '<', '.'),
+        languages.registerCompletionItemProvider('html', {
+            provideCompletionItems(document, position, vscodeCancelToken, context) {
+                return completion({
+                    noRegisterTriggerChar: true,
+                    document,
+                    position,
+                    vscodeCancelToken,
+                    context,
+                    port,
+                });
+            },
+        }),
+        languages.registerCompletionItemProvider(
+            'html',
+            {
+                provideCompletionItems(document, position, vscodeCancelToken, context) {
+                    return completion({
+                        noRegisterTriggerChar: false,
+                        document,
+                        position,
+                        vscodeCancelToken,
+                        context,
+                        port,
+                    });
+                },
+            },
+            SPACE,
+            '<',
+            '.',
+        ),
     );
 }
 
 export async function completion({
     document,
     position,
-    token,
+    vscodeCancelToken,
     context,
     port,
-}: {
-    document: TextDocument;
-    position: Position;
-    token: CancellationToken;
-    context: CompletionContext;
-    port: number;
-}) {
+    noRegisterTriggerChar,
+}: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
-    const obj = { document, cursor, port, vscodeCancelToken: token, context };
+    const obj = { document, cursor, port, vscodeCancelToken, context, noRegisterTriggerChar };
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':

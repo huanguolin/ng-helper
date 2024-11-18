@@ -159,7 +159,8 @@ export async function componentOrDirectiveAttrCompletion({
                 cursor,
                 port,
                 vscodeCancelToken,
-                queryType: context.triggerCharacter === SPACE ? 'directiveAttr' : 'directive',
+                queryType:
+                    context.triggerCharacter === SPACE && cursorAtInfo.attrNames.length ? 'directiveAttr' : 'directive',
                 builtInAttrItems,
             });
         }
@@ -247,7 +248,12 @@ async function handleDirective({
 
     const list = await getDirectiveCompletionApi({
         port,
-        info: { fileName: relatedScriptFile, attrNames: cursorAtInfo.attrNames, queryType, afterCursorAttrName },
+        info: {
+            fileName: relatedScriptFile,
+            attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
+            afterCursorAttrName: camelCase(afterCursorAttrName),
+            queryType,
+        },
         vscodeCancelToken,
     });
     if (!list || !list.length) {
