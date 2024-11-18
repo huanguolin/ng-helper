@@ -11,6 +11,11 @@ import type {
 
 import { ensureInputValid, getAttrValueStart, getTextInTemplate, type Cursor } from './html';
 
+export interface SimpleLocation {
+    start: number;
+    end: number;
+}
+
 export type CursorAtType = 'tagName' | 'attrName' | 'attrValue' | 'template' | 'text' | 'startTag' | 'endTag';
 
 export interface CursorAtContext {
@@ -57,7 +62,7 @@ export interface CursorAtAttrNameInfo extends TagInfo {
 /**
  * 光标在属性值上, 且不含属性值有模版的情况(比如: ng-url="https://example.com?id={{id}}")。
  */
-export interface CursorAtAttrValueInfo {
+export interface CursorAtAttrValueInfo extends TagInfo {
     type: 'attrValue';
     attrValue: string;
     /**
@@ -68,6 +73,10 @@ export interface CursorAtAttrValueInfo {
      * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的则是祖父或者曾祖父节点的。
      */
     context: CursorAtContext[];
+    /**
+     * 相对于 attrValue 的开始位置的 cursorAt。
+     */
+    relativeCursorAt: number;
 }
 
 /**
@@ -80,6 +89,10 @@ export interface CursorAtTemplateInfo {
      * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的可能是祖父或者曾祖父节点的。
      */
     context: CursorAtContext[];
+    /**
+     * 相对于 template 的开始位置的 cursorAt。
+     */
+    relativeCursorAt: number;
 }
 
 /**
@@ -99,10 +112,12 @@ export interface CursorAtTextInfo {
  * 光标在 startTag 的范围内(注意：没有 endTag 的情况也算在 startTag), 但没有在 tag 名字，或者属性名/属性值上。
  * 这个可用于属性名自动补全。
  */
-export interface CursorAtStartTagInfo extends TagInfo {
+export interface CursorAtStartTagInfo extends TagInfo, SimpleLocation {
     type: 'startTag';
-    start: number;
-    end: number;
+    /**
+     * 目前只用于指令的自动补全。
+     */
+    attrLocations: Record<string, SimpleLocation>;
 }
 
 /**
@@ -150,6 +165,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
             type: 'template',
             template: template.text,
             context: targetNode ? getContext(targetNode) : [],
+            relativeCursorAt: cursorAt - template.start,
         };
     }
 
@@ -178,13 +194,16 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
             }
 
             // attrValue
-            if (isCursorAtAttrValue(attr, attrLocation, htmlText, cursorAt)) {
+            const attrValueStart = getAttrValueStart(attr, attrLocation, htmlText);
+            if (isCursorAtAttrValue(attr, attrValueStart, cursorAt)) {
                 // 这里无需考虑模版在 attrValue 的情况，前面已经统一处理。
                 return {
                     type: 'attrValue',
                     attrName: attr.name,
                     attrValue: attr.value,
                     context: getContext(targetNode),
+                    relativeCursorAt: cursorAt - attrValueStart!,
+                    ...getTagInfo(element),
                 };
             }
         }
@@ -204,10 +223,22 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         };
     }
 
+    return getStartTagInfo(element);
+}
+
+function getStartTagInfo(element: Element): CursorAtStartTagInfo {
+    const attrLocations: Record<string, SimpleLocation> = {};
+    for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs!)) {
+        attrLocations[key] = {
+            start: value.startOffset,
+            end: value.endOffset,
+        };
+    }
     return {
         type: 'startTag',
         start: element.sourceCodeLocation!.startOffset,
         end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
+        attrLocations,
         ...getTagInfo(element),
     };
 }
@@ -232,8 +263,7 @@ function isCursorAtTagName(element: Element, cursorAt: number): boolean {
     return atStartTagName || atEndTagName;
 }
 
-function isCursorAtAttrValue(attr: Attribute, location: Location, htmlText: string, cursorAt: number): boolean {
-    const attrValueStart = getAttrValueStart(attr, location, htmlText);
+function isCursorAtAttrValue(attr: Attribute, attrValueStart: number | undefined, cursorAt: number): boolean {
     return (
         typeof attrValueStart === 'number' &&
         cursorAt >= attrValueStart &&

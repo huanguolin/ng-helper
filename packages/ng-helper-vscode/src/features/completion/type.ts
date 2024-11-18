@@ -1,3 +1,4 @@
+import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import {
     getTextInTemplate,
     isContainsNgFilter,
@@ -29,6 +30,10 @@ import {
     isComponentTagName,
     isNgBuiltinDirective,
 } from '../utils';
+
+import { getComponentControllerAsCompletion } from './ctrl';
+
+import type { CompletionParamObj } from '.';
 
 export function type(port: number) {
     return languages.registerCompletionItemProvider('html', new TypeCompletionProvider(port), '.');
@@ -220,4 +225,61 @@ function processPrefix(attrName: string, prefix: string): string {
         return prefix.split(':').pop()!;
     }
     return prefix;
+}
+
+export async function templateOrAttrValueCompletion({
+    document,
+    port,
+    vscodeCancelToken,
+    cursorAtInfo,
+    context,
+}: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
+    CompletionList<CompletionItem> | undefined
+> {
+    if (!context.triggerCharacter) {
+        return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
+    } else if (context.triggerCharacter === '.') {
+        return await getTypeCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
+    }
+}
+
+async function getTypeCompletion({
+    document,
+    cursorAtInfo,
+    port,
+    vscodeCancelToken,
+}: {
+    document: TextDocument;
+    cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}) {
+    // TODO: 获取类型补全
+    return undefined;
+}
+
+async function getCtrlCompletion({
+    document,
+    cursorAtInfo,
+    port,
+    vscodeCancelToken,
+}: {
+    document: TextDocument;
+    cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}) {
+    if (isComponentHtml(document)) {
+        if (cursorAtInfo.type === 'template') {
+            return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        } else if (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName)) {
+            // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
+            return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        }
+    } else {
+        const ctrlInfo = getControllerNameInfoFromHtml(document);
+        if (ctrlInfo && ctrlInfo.controllerAs) {
+            return new CompletionList([new CompletionItem(ctrlInfo.controllerAs)], false);
+        }
+    }
 }

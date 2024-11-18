@@ -74,7 +74,7 @@ async function provideComponentCtrlCompletion({
     }
 }
 
-async function getComponentControllerAsCompletion(
+export async function getComponentControllerAsCompletion(
     document: TextDocument,
     port: number,
     vscodeCancelToken: CancellationToken,

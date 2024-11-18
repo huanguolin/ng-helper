@@ -3,11 +3,11 @@ import { languages, TextDocument, Position, CompletionItem, SnippetString } from
 
 import { timeCost } from '../../debug';
 
-const defaultNgConfigExpr: NgDirectiveConfig = {
+export const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:expression}`,
 };
-const defaultNgConfigStr: NgDirectiveConfig = {
+export const defaultNgConfigStr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:string}`,
 };
@@ -52,7 +52,7 @@ function provideNgDirectiveCompletion({ document, position }: { document: TextDo
         });
 }
 
-function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
+export function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
     const item = new CompletionItem(`${name} ${config.name}`);
     if (config.snippet) {
         item.insertText = new SnippetString(`${name}="${config.snippet}"`);
@@ -61,7 +61,7 @@ function configToCompletionItem(name: string, config: NgDirectiveConfig): Comple
     return item;
 }
 
-function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
+export function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
     // 这里依据我们使用的频率排序的
     return [
         ['ng-click', []],

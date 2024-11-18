@@ -39,6 +39,12 @@ describe('getCursorAtInfo()', () => {
                 parentTagName: undefined,
                 start: 0,
                 end: 18,
+                attrLocations: {
+                    class: {
+                        start: 5,
+                        end: 17,
+                    },
+                },
             });
         });
 
@@ -96,6 +102,10 @@ describe('getCursorAtInfo()', () => {
                 attrName: 'class',
                 attrValue: 'test',
                 context: [],
+                relativeCursorAt: at - 12,
+                tagName: 'div',
+                attrNames: ['class'],
+                parentTagName: undefined,
             });
         });
     });
@@ -115,6 +125,7 @@ describe('getCursorAtInfo()', () => {
                 type: 'template',
                 template: 'value',
                 context: [],
+                relativeCursorAt: at - 7,
             });
         });
 
@@ -132,6 +143,7 @@ describe('getCursorAtInfo()', () => {
                 type: 'template',
                 template: 'value',
                 context: [],
+                relativeCursorAt: at - 21,
             });
         });
     });
@@ -156,6 +168,7 @@ describe('getCursorAtInfo()', () => {
                         value: 'item in items',
                     },
                 ],
+                relativeCursorAt: at - 39,
             });
         });
 
@@ -188,6 +201,7 @@ describe('getCursorAtInfo()', () => {
                         value: 'MainCtrl',
                     },
                 ],
+                relativeCursorAt: at - 132,
             });
         });
     });

@@ -11,12 +11,12 @@ import {
 
 import { buildCursor } from '../../utils';
 
-import { componentAttr, componentAttrCompletion } from './componentAttr';
+import { componentAttr, componentOrDirectiveAttrCompletion } from './componentAttr';
 import { componentName, componentNameCompletion } from './componentName';
 import { ctrl } from './ctrl';
 import { customDirective } from './customDirective';
 import { ngDirective } from './ngDirective';
-import { type } from './type';
+import { templateOrAttrValueCompletion, type } from './type';
 
 export function registerCompletion(context: ExtensionContext, port: number) {
     context.subscriptions.push(
@@ -50,7 +50,7 @@ export function registerCompletion2(context: ExtensionContext, port: number) {
 
     context.subscriptions.push(
         languages.registerCompletionItemProvider('html', { provideCompletionItems }),
-        languages.registerCompletionItemProvider('html', { provideCompletionItems }, SPACE, '<'),
+        languages.registerCompletionItemProvider('html', { provideCompletionItems }, SPACE, '<', '.'),
     );
 }
 
@@ -80,11 +80,9 @@ export async function completion({
         case 'text':
             return await componentNameCompletion({ ...obj, cursorAtInfo });
         case 'startTag':
-            // TODO custom directive
-            return await componentAttrCompletion({ ...obj, cursorAtInfo });
+            return await componentOrDirectiveAttrCompletion({ ...obj, cursorAtInfo });
         case 'attrValue':
         case 'template':
-            // TODO: completion ctrl/type/filter
-            break;
+            return await templateOrAttrValueCompletion({ ...obj, cursorAtInfo });
     }
 }
