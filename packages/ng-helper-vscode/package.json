@@ -117,7 +117,8 @@
     "compile": "yarn tsc && yarn lint && node esbuild.js --production",
     "watch:esbuild": "yarn plugin:clean && node esbuild.js --watch",
     "tsc": "tsc --noEmit",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "test": "cd tests && rm -rf dist && tsc && node ./dist/runTest.js"
   },
   "dependencies": {
     "@ng-helper/ng-parser": "^0.0.1",
@@ -130,16 +131,21 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10.0.9",
     "@types/node": "18.x",
     "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^2.30.0",
     "commander": "^12.1.0",
     "esbuild": "^0.21.4",
     "eslint": "^8.57.0",
     "fs-extra": "^11.2.0",
+    "glob": "^11.0.0",
+    "mocha": "^10.8.2",
     "npm-run-all": "^4.1.5",
-    "typescript": "~5.4.5"
+    "typescript": "~5.4.5",
+    "vscode-uri": "^3.0.8"
   }
 }
