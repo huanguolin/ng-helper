@@ -24,6 +24,7 @@ import { timeCost } from '../../debug';
 import { getComponentTypeCompletionApi, getControllerTypeCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import {
+    getControllerNameInfo,
     getControllerNameInfoFromHtml,
     getCorrespondingScriptFileName,
     isComponentHtml,
@@ -253,7 +254,7 @@ async function getTypeCompletion({
     vscodeCancelToken: CancellationToken;
 }) {
     const isComponent = isComponentHtml(document);
-    const ctrlInfo = getControllerNameInfoFromHtml(document);
+    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
     if (!isComponent && !ctrlInfo) {
         return;
     }
@@ -332,7 +333,7 @@ async function getCtrlCompletion({
             return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
         }
     } else {
-        const ctrlInfo = getControllerNameInfoFromHtml(document);
+        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
         if (ctrlInfo && ctrlInfo.controllerAs) {
             return new CompletionList([new CompletionItem(ctrlInfo.controllerAs)], false);
         }
