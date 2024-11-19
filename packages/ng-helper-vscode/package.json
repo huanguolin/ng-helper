@@ -118,7 +118,10 @@
     "watch:esbuild": "yarn plugin:clean && node esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts",
-    "test": "cd tests && rm -rf dist && tsc && node ./dist/runTest.js"
+    "test": "yarn test:e2e",
+    "test:e2e": "yarn e2e:clean && yarn e2e:compile && cd tests && node ./dist/runTest.js",
+    "e2e:clean": "cd tests && rm -rf dist && rm -f .vscode-test/user-data/1.93-main",
+    "e2e:compile": "cd tests && tsc"
   },
   "dependencies": {
     "@ng-helper/ng-parser": "^0.0.1",

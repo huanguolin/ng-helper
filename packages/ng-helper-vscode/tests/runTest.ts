@@ -2,6 +2,8 @@ import * as path from 'path';
 
 import { runTests } from '@vscode/test-electron';
 
+import { PROJECT_PATH } from './testConstants';
+
 async function main() {
     try {
         // The folder containing the Extension Manifest package.json
@@ -18,7 +20,11 @@ async function main() {
             extensionDevelopmentPath,
             extensionTestsPath,
             // 禁用其他插件，只启用当前插件
-            // launchArgs: ['--disable-extensions', '--extensions-dir', 'none'],
+            launchArgs: [
+                PROJECT_PATH,
+                // This disables all extensions except the one being tested
+                '--disable-extensions',
+            ],
         });
     } catch {
         console.error('Failed to run tests');

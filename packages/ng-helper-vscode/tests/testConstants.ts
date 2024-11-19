@@ -1,7 +1,11 @@
 import { join, resolve } from 'path';
 
-export const PACKAGE_ROOT = resolve(__dirname, '..');
-export const PROJECT_PATH = join(PACKAGE_ROOT, 'tests', 'fixtures');
+// extension relation info
+export const EXTENSION_ID = 'huanguolin.ng-helper';
+export const COMMAND_ID = 'ng-helper.createComponent';
+
+// 注意这个路径要按照编译后的文件位置来写，编译后文件在 tests/dist 目录下。
+export const PROJECT_PATH = resolve(__dirname, '..', 'fixtures');
 
 // .vscode
 export const VSCODE_DIR = join(PROJECT_PATH, '.vscode');
