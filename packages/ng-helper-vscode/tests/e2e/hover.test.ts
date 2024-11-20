@@ -4,8 +4,7 @@ import { suite, test, suiteSetup } from 'mocha';
 import * as vscode from 'vscode';
 
 import { BAR_FOO_COMPONENT_HTML_PATH, HOVER_COMMAND } from '../testConstants';
-
-import { activate } from './helper';
+import { activate } from '../testUtils';
 
 suite('Hover', () => {
     suiteSetup(async () => {
