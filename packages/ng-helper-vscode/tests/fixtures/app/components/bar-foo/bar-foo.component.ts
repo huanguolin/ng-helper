@@ -11,6 +11,7 @@ namespace app.components {
 
         bar!: number;
         foo!: string;
+        disabled?: boolean;
     }
 
     angular.module('myApp.components').component('barFoo', {
@@ -18,6 +19,7 @@ namespace app.components {
         bindings : {
             bar : '<',
             foo : '@',
+            disabled : '?<attrDisabled'
         },
         controllerAs : 'ctrl',
         controller : BarFooController,

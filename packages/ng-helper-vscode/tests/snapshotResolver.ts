@@ -1,18 +1,15 @@
 // snapshotResolver.js
 import * as path from 'path';
 
-console.log('===> snapshotResolver', __dirname);
-
+// see https://jestjs.io/docs/configuration#snapshotresolver-string
 export default {
     resolveSnapshotPath: (testPath: string, snapshotExtension: string) => {
-        console.log('===> resolveSnapshotPath', testPath, snapshotExtension);
         return resolveSnapshotPath(testPath, snapshotExtension);
     },
     resolveTestPath: (snapshotPath: string, snapshotExtension: string) => {
-        console.log('===> resolveTestPath', snapshotPath, snapshotExtension);
         return resolveTestPath(snapshotPath, snapshotExtension);
     },
-    snapshotExtension: '.snap', // Optional, default is '.snap'
+    testPathForConsistencyCheck: 'tests/dist/e2e/hover.test.js',
 };
 
 // 编译后的代码放在 tests/dist 目录下，所以默认情况下,
@@ -34,14 +31,18 @@ function resolveTestPath(snapshotPath: string, snapshotExtension: string) {
     const snapshotDir = path.dirname(snapshotPath);
 
     // tests/e2e/__snapshots__/ -> tests/dist/e2e/
-    const testTsDir = snapshotDir.replace('/__snapshots__', '');
-    const arr = testTsDir.split(path.sep);
-    const testsDirIndex = arr.findIndex((item) => item === 'tests');
-    if (testsDirIndex === -1) {
-        throw new Error('tests dir not found');
+    const inArr = snapshotDir.split(path.sep);
+    const outArr: string[] = [];
+    for (const item of inArr) {
+        if (item === '__snapshots__') {
+            continue;
+        }
+        outArr.push(item);
+        if (item === 'tests') {
+            outArr.push('dist');
+        }
     }
-    arr.splice(testsDirIndex + 1, 0, 'dist');
-    const testJsDir = path.join(...arr);
+    const testJsDir = path.join(...outArr);
 
     const testFileName = path.basename(snapshotPath).replace(snapshotExtension, '');
     return path.join(testJsDir, testFileName);

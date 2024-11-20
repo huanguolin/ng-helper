@@ -7,6 +7,7 @@
   "private": "true",
   "scripts": {
     "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
+    "compile:e2e": "node esbuild.js",
     "watch:esbuild": "node esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts",

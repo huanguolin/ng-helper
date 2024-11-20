@@ -6,7 +6,7 @@ class BazQuxController {
         $scope,
     ) {
         this.baz = 100;
-        this.qux = 'qux';
+        this.title = 'some title'; // default value
     }
 }
 
@@ -14,7 +14,8 @@ angular.module('myApp.components').component('bazQux', {
     templateUrl: 'app/components/baz-qux/baz-qux.component.html',
     bindings: {
         baz: '<',
-        qux: '@',
+        qux: '&?',
+        title : '?@attrTitle'
     },
     controllerAs: 'ctrl',
     controller: BazQuxController,

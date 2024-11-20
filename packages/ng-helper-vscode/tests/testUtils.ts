@@ -1,12 +1,10 @@
-import * as path from 'path';
+import path = require('path');
 
+import chai = require('chai');
 import { jestSnapshotPlugin } from 'mocha-chai-jest-snapshot';
 import * as vscode from 'vscode';
 
 import { BAR_FOO_COMPONENT_HTML_PATH, BAR_FOO_COMPONENT_TS_PATH, COMPLETION_COMMAND } from './testConstants';
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
-const chai = require('chai');
 
 export function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -18,6 +16,12 @@ export function setupChaiSnapshotPlugin() {
     chai.use(
         jestSnapshotPlugin({
             snapshotResolver: path.resolve(__dirname, 'snapshotResolver.js'),
+            /**
+             * fix error:
+             * TypeError: Cannot read properties of undefined (reading 'filter')
+             * at ScriptTransformer.requireAndTranspileModule (.../node_modules/@jest/transform/build/ScriptTransformer.js:785:12)
+             */
+            moduleFileExtensions: ['js'],
         }),
     );
 }

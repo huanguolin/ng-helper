@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Hover component name/attr Should show hover info on component attr 1`] = `
+"
+\`\`\`typescript
+(property) attrTitle: string
+\`\`\`
+"
+`;
+
+exports[`Hover component name/attr show hover info on component name 1`] = `
+"
+\`\`\`typescript
+(component) bazQux
+bindings: {
+    baz: \\"<\\" // number
+    qux: \\"&?\\"
+    title: \\"?@attrTitle\\" // string
+}
+\`\`\`
+"
+`;
