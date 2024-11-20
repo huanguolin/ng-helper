@@ -14,7 +14,7 @@ namespace app.components {
         disabled?: boolean;
     }
 
-    angular.module('myApp.components').component('barFoo', {
+    angular.module('app.components').component('barFoo', {
         templateUrl : 'app/components/bar-foo/bar-foo.component.html',
         bindings : {
             bar : '<',

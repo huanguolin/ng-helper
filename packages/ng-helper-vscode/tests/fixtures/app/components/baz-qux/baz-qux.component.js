@@ -10,7 +10,7 @@ class BazQuxController {
     }
 }
 
-angular.module('myApp.components').component('bazQux', {
+angular.module('app.components').component('bazQux', {
     templateUrl: 'app/components/baz-qux/baz-qux.component.html',
     bindings: {
         baz: '<',

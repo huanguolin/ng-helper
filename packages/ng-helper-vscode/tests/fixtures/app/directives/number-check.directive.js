@@ -1,5 +1,5 @@
 'use strict';
-angular.module('myApp.directives').directive('numberCheck', [
+angular.module('app.directives').directive('numberCheck', [
     function () {
         return {
             restrict : 'A',

@@ -35,3 +35,5 @@ export const NUMBER_CHECK_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'number-c
 
 // pages
 export const APP_PAGES_DIR = join(APP_DIR, 'pages');
+export const APP_PAGES_P1_DIR = join(APP_PAGES_DIR, 'p1');
+export const APP_PAGES_P1_HTML_PATH = join(APP_PAGES_P1_DIR, 'p1.html');

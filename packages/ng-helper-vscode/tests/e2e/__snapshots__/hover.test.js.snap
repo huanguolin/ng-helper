@@ -8,6 +8,14 @@ exports[`Hover component name/attr Should show hover info on component attr 1`] 
 "
 `;
 
+exports[`Hover component name/attr show hover info on component attr 1`] = `
+"
+\`\`\`typescript
+(property) attrTitle: string
+\`\`\`
+"
+`;
+
 exports[`Hover component name/attr show hover info on component name 1`] = `
 "
 \`\`\`typescript
@@ -22,6 +30,15 @@ bindings: {
 `;
 
 exports[`Hover directive name/attr Should show hover info on directive attr 1`] = `
+"
+\`\`\`typescript
+(attribute of [numberCheck]) canNaN: any
+scope configs: \\"?<allowNan\\"
+\`\`\`
+"
+`;
+
+exports[`Hover directive name/attr show hover info on directive attr 1`] = `
 "
 \`\`\`typescript
 (attribute of [numberCheck]) canNaN: any
@@ -45,10 +62,81 @@ scope: {
 "
 `;
 
+exports[`Hover ng-* show hover info on "ng-if" 1`] = `
+"
+\`\`\`typescript
+(directive) ngIf
+\`\`\`
+Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
+`;
+
 exports[`Hover ng-* show hover info on ng-if 1`] = `
 "
 \`\`\`typescript
 (directive) ngIf
 \`\`\`
 Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
+`;
+
+exports[`Hover type show hover info on "(ctl.obj.)arr" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) obj: {
+    txt: string;
+    arr: {
+        id: number;
+        name: string;
+    }
+    [];
+}
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "(ctrl.)bar" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) bar: number
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "ctl" (controller html) 1`] = `
+"
+\`\`\`typescript
+(class) ctl: P1Controller
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "ctrl" (component html) 1`] = `
+"
+\`\`\`typescript
+(class) ctrl: BarFooController
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on (ctrl.)bar (component html) 1`] = `
+"
+\`\`\`typescript
+(property) bar: number
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on ctl (controller html) 1`] = `
+"
+\`\`\`typescript
+(class) ctrl: P1Controller
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on ctrl (component html) 1`] = `
+"
+\`\`\`typescript
+(class) ctrl: BarFooController
+\`\`\`
+"
 `;
