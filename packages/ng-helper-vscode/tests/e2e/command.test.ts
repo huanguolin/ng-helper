@@ -1,15 +1,19 @@
-import * as assert from 'assert';
-
-import { suite, test } from 'mocha';
+import { expect } from 'chai';
+import { describe, it } from 'mocha';
 import * as vscode from 'vscode';
 
 import { CREATE_COMPONENT_COMMAND } from '../testConstants';
+import { activate } from '../testUtils';
 
-suite('Command', () => {
-    test("Should register 'Create Component' command", async () => {
+describe('Command', () => {
+    before(async () => {
+        await activate();
+    });
+
+    it('Should register "Create Component" command', async () => {
         // 1. 获取所有已注册的命令
         const allCommands = await vscode.commands.getCommands();
         // 2. 验证我们的命令是否已注册
-        assert.ok(allCommands.includes(CREATE_COMPONENT_COMMAND), 'command should be registered');
+        expect(allCommands.includes(CREATE_COMPONENT_COMMAND)).to.be.true;
     });
 });

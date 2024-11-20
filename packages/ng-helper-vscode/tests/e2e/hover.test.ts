@@ -1,17 +1,18 @@
-import * as assert from 'assert';
-
-import { suite, test, suiteSetup } from 'mocha';
+import { expect } from 'chai';
+import { describe, it, before } from 'mocha';
 import * as vscode from 'vscode';
 
 import { BAR_FOO_COMPONENT_HTML_PATH, HOVER_COMMAND } from '../testConstants';
-import { activate } from '../testUtils';
+import { activate, setupChaiSnapshotPlugin } from '../testUtils';
 
-suite('Hover', () => {
-    suiteSetup(async () => {
+describe('Hover', () => {
+    setupChaiSnapshotPlugin();
+
+    before(async () => {
         await activate();
     });
 
-    test('Should show hover info on component name', async () => {
+    it('Should show hover info on component name', async () => {
         // show the document
         await vscode.window.showTextDocument(vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH));
 
@@ -23,6 +24,7 @@ suite('Hover', () => {
         );
 
         // assert
-        assert.ok(hoverInfoList?.length > 0, 'hover info should be returned');
+        expect(hoverInfoList.length).to.be.greaterThan(0);
+        expect(hoverInfoList).to.matchSnapshot();
     });
 });
