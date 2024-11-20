@@ -17,7 +17,7 @@ export function setupChaiSnapshotPlugin() {
     // see https://github.com/mochiya98/mocha-chai-jest-snapshot/issues/16#issuecomment-1537182345
     chai.use(
         jestSnapshotPlugin({
-            resolver: path.resolve(__dirname, 'snapshotResolver.js'),
+            snapshotResolver: path.resolve(__dirname, 'snapshotResolver.js'),
         }),
     );
 }
