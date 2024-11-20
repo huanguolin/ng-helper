@@ -31,6 +31,12 @@ describe('Hover', () => {
             await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 20));
         });
     });
+
+    describe('ng-*', () => {
+        it('show hover info on ng-if', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 7));
+        });
+    });
 });
 
 async function testHover(filePath: string, position: vscode.Position) {

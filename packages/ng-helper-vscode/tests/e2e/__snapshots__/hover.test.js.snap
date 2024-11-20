@@ -44,3 +44,11 @@ scope: {
 \`\`\`
 "
 `;
+
+exports[`Hover ng-* show hover info on ng-if 1`] = `
+"
+\`\`\`typescript
+(directive) ngIf
+\`\`\`
+Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
+`;
