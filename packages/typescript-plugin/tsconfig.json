@@ -1,15 +1,6 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "esModuleInterop": true,
-        "target": "es2017",
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "strict": true,
-        "noImplicitAny": true,
-        "rootDir": ".",
-        "sourceMap": true,
-        "declaration": true,
-        "noEmit": true
-    },
-    "exclude": ["node_modules", "dist"]
+        "types": ["jest", "node", "vscode", "express"]
+    }
 }
