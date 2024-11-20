@@ -120,7 +120,7 @@
     "watch:esbuild": "yarn plugin:clean && node esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts",
-    "test": "yarn test:e2e",
+    "test:e2e:u": "UPDATE_SNAPSHOT=1 yarn test:e2e",
     "test:e2e": "yarn e2e:prepare && cd tests && node ./dist/runTest.js",
     "e2e:prepare": "yarn compile:e2e && yarn e2e:clean && yarn e2e:compile",
     "e2e:clean": "cd tests && rm -rf dist",

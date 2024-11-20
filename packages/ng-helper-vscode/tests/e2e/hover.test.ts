@@ -14,41 +14,40 @@ describe('Hover', () => {
 
     describe('component name/attr', () => {
         it('show hover info on component name', async () => {
-            // show the document
-            await vscode.window.showTextDocument(vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH));
-
-            // get hover info
-            const hoverInfoList = await vscode.commands.executeCommand<vscode.Hover[]>(
-                HOVER_COMMAND,
-                vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH),
-                new vscode.Position(0, 2),
-            );
-
-            // assert
-            expect(hoverInfoList.length).to.be.greaterThan(0);
-            // 必须这样，否则序列化出来的不正确
-            const content = hoverInfoList[0].contents[0];
-            const markdownString = typeof content === 'string' ? content : content.value;
-            expect(markdownString).toMatchSnapshot();
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(0, 2));
         });
 
         it('Should show hover info on component attr', async () => {
-            // show the document
-            await vscode.window.showTextDocument(vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH));
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(0, 12));
+        });
+    });
 
-            // get hover info
-            const hoverInfoList = await vscode.commands.executeCommand<vscode.Hover[]>(
-                HOVER_COMMAND,
-                vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH),
-                new vscode.Position(0, 12),
-            );
+    describe('directive name/attr', () => {
+        it('show hover info on directive name', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 7));
+        });
 
-            // assert
-            expect(hoverInfoList.length).to.be.greaterThan(0);
-            // 必须这样，否则序列化出来的不正确
-            const content = hoverInfoList[0].contents[0];
-            const markdownString = typeof content === 'string' ? content : content.value;
-            expect(markdownString).toMatchSnapshot();
+        it('Should show hover info on directive attr', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 20));
         });
     });
 });
+
+async function testHover(filePath: string, position: vscode.Position) {
+    // show the document
+    await vscode.window.showTextDocument(vscode.Uri.file(filePath));
+
+    // get hover info
+    const hoverInfoList = await vscode.commands.executeCommand<vscode.Hover[]>(
+        HOVER_COMMAND,
+        vscode.Uri.file(filePath),
+        position,
+    );
+
+    // assert
+    expect(hoverInfoList.length).to.be.greaterThan(0);
+    // 必须这样，否则序列化出来的不正确
+    const content = hoverInfoList[0].contents[0];
+    const markdownString = typeof content === 'string' ? content : content.value;
+    expect(markdownString).toMatchSnapshot();
+}

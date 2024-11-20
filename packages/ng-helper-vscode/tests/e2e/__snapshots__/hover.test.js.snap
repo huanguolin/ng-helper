@@ -20,3 +20,27 @@ bindings: {
 \`\`\`
 "
 `;
+
+exports[`Hover directive name/attr Should show hover info on directive attr 1`] = `
+"
+\`\`\`typescript
+(attribute of [numberCheck]) canNaN: any
+scope configs: \\"?<allowNan\\"
+\`\`\`
+"
+`;
+
+exports[`Hover directive name/attr show hover info on directive name 1`] = `
+"
+\`\`\`typescript
+(directive) numberCheck
+restrict: \\"A\\"
+require: \\"ngModel\\"
+scope: {
+    min: \\"?<\\"
+    max: \\"?<\\"
+    canNaN: \\"?<allowNan\\"
+}
+\`\`\`
+"
+`;

@@ -26,8 +26,12 @@ export const BAR_FOO_DIR = join(APP_COMPONENTS_DIR, 'bar-foo');
 export const BAR_FOO_COMPONENT_TS_PATH = join(BAR_FOO_DIR, 'bar-foo.component.ts');
 export const BAR_FOO_COMPONENT_HTML_PATH = join(BAR_FOO_DIR, 'bar-foo.component.html');
 export const BAZ_QUX_DIR = join(APP_COMPONENTS_DIR, 'baz-qux');
-export const BAZ_QUX_COMPONENT_TS_PATH = join(BAZ_QUX_DIR, 'baz-qux.component.ts');
+export const BAZ_QUX_COMPONENT_JS_PATH = join(BAZ_QUX_DIR, 'baz-qux.component.js');
 export const BAZ_QUX_COMPONENT_HTML_PATH = join(BAZ_QUX_DIR, 'baz-qux.component.html');
+
+// directives
+export const APP_DIRECTIVES_DIR = join(APP_DIR, 'directives');
+export const NUMBER_CHECK_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'number-check.directive.js');
 
 // pages
 export const APP_PAGES_DIR = join(APP_DIR, 'pages');
