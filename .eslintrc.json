@@ -87,6 +87,7 @@
         "node_modules",
         "dist",
         "**/*.d.ts",
-        "jest.config.ts"
+        "jest.config.ts",
+        "fixtures"
     ]
 }
