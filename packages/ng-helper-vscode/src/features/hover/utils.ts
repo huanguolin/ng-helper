@@ -1,13 +1,6 @@
-import {
-    type Cursor,
-    getTextInTemplate,
-    getHtmlTagAt,
-    getTheAttrWhileCursorAtValue,
-    indexOfNgFilter,
-    getMapValues,
-    type HtmlAttr,
-} from '@ng-helper/shared/lib/html';
-import type { TextDocument, Position } from 'vscode';
+import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import { indexOfNgFilter, getMapValues } from '@ng-helper/shared/lib/html';
+import type { TextDocument } from 'vscode';
 
 import {
     isComponentTagName,
@@ -18,43 +11,31 @@ import {
 
 export async function provideTypeHoverInfo<T>({
     document,
-    position,
+    cursorAtInfo,
     port,
     api,
 }: {
     document: TextDocument;
-    position: Position;
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
     port: number;
     api: (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
 }): Promise<T | undefined> {
-    const docText = document.getText();
-    const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
+    let cursorAt = cursorAtInfo.relativeCursorAt;
 
-    // 模版 {{}} 中
-    const tplText = getTextInTemplate(docText, cursor);
-    if (tplText) {
-        const cursorAt = tplText.cursor.at;
-        const contextString = trimFilters(tplText.text, cursorAt);
+    if (cursorAtInfo.type === 'template') {
+        const contextString = trimFilters(cursorAtInfo.template, cursorAt);
         if (contextString) {
             return await callApi(contextString, cursorAt);
         }
-    }
-
-    // 组件属性值中 或者 ng-* 属性值中
-    const tag = getHtmlTagAt(docText, cursor);
-    if (tag) {
-        const attr = getTheAttrWhileCursorAtValue(tag, cursor);
+    } else if (cursorAtInfo.type === 'attrValue') {
         if (
-            attr &&
-            attr.value &&
-            (isComponentTagName(tag.tagName) ||
-                isNgBuiltinDirective(attr.name.text) ||
-                isNgUserCustomAttr(attr.name.text))
+            isComponentTagName(cursorAtInfo.tagName) ||
+            isNgBuiltinDirective(cursorAtInfo.attrName) ||
+            isNgUserCustomAttr(cursorAtInfo.attrName)
         ) {
-            let cursorAt = cursor.at - attr.value.start;
-            let contextString = trimFilters(attr.value.text, cursorAt);
+            let contextString = trimFilters(cursorAtInfo.attrValue, cursorAt);
             // handle ng-class/ng-style map value
-            ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
+            ({ contextString, cursorAt } = handleMapAttrValue(cursorAtInfo.attrName, contextString, cursorAt));
             return await callApi(contextString, cursorAt);
         }
     }
@@ -86,8 +67,8 @@ function trimFilters(contextString: string, cursorAt: number): string {
     return contextString.slice(0, index);
 }
 
-function handleMapAttrValue(attr: HtmlAttr, contextString: string, cursorAt: number) {
-    if (attr.name.text === 'ng-class' || attr.name.text === 'ng-style') {
+function handleMapAttrValue(attrName: string, contextString: string, cursorAt: number) {
+    if (attrName === 'ng-class' || attrName === 'ng-style') {
         const mapValues = getMapValues(contextString);
         if (mapValues && mapValues.length) {
             const hoveredValue = mapValues.find((v) => v.start <= cursorAt && cursorAt <= v.start + v.text.length);

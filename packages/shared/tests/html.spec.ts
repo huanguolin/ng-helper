@@ -5,9 +5,6 @@ import {
     indexOfNgFilter,
     getMapValues,
     getBeforeCursorText,
-    getHtmlTagAt,
-    getTheAttrWhileCursorAtValue,
-    HtmlTag,
     getAttrValueStart,
     type Location,
 } from '../lib/html';
@@ -171,105 +168,6 @@ describe('getMapValues()', () => {
     });
 });
 
-describe('getHtmlTagAt()', () => {
-    const h1Tag: HtmlTag = {
-        tagName: 'h1',
-        attrs: [],
-        parent: {
-            end: 47,
-            start: 4,
-            tagName: 'div',
-        },
-        start: 27,
-        end: 41,
-        startTagEnd: 31,
-        endTagStart: 36,
-    };
-    const divTag: HtmlTag = {
-        tagName: 'div',
-        attrs: [
-            {
-                name: { text: 'class', start: 9 },
-                value: { text: 'container', start: 16 },
-            },
-        ],
-        children: [
-            {
-                tagName: 'h1',
-                start: 27,
-                end: 41,
-            },
-        ],
-        start: 4,
-        end: 47,
-        startTagEnd: 27,
-        endTagStart: 41,
-    };
-
-    it.each([
-        [{ at: 0, isHover: true }, undefined],
-        [{ at: 4, isHover: false }, undefined],
-        [{ at: 4, isHover: true }, divTag],
-        [{ at: 26, isHover: true }, divTag],
-        [{ at: 27, isHover: true }, h1Tag],
-        [{ at: 28, isHover: false }, h1Tag],
-        [{ at: 33, isHover: true }, h1Tag],
-        [{ at: 40, isHover: true }, h1Tag],
-        [{ at: 41, isHover: true }, divTag],
-        [{ at: 41, isHover: false }, h1Tag],
-        [{ at: 47, isHover: false }, divTag],
-    ])('input cursor: %s, return tag: %s', (cursor, htmlTag) => {
-        const htmlText = 'text<div class="container"><h1>Title</h1></div>';
-        const tag = getHtmlTagAt(htmlText, cursor);
-        expect(tag).toEqual(htmlTag);
-    });
-
-    it('parse no value attr should ok', () => {
-        const htmlText = '<h1 disabled>Title</h1>';
-        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
-        expect(tag?.tagName).toEqual('h1');
-        expect(tag?.attrs.length).toEqual(1);
-        expect(tag?.attrs[0].name.text).toEqual('disabled');
-        expect(tag?.attrs[0].value).toBeUndefined();
-    });
-
-    it.each([[{ at: 4, isHover: true }], [{ at: 4, isHover: false }]])(
-        'should throw error when cursor invalid: %s',
-        (cursor) => {
-            const htmlText = '123';
-            expect(() => getHtmlTagAt(htmlText, cursor)).toThrow();
-        },
-    );
-
-    it(`test: 'ctrl' auto completion not working on <div ng-class="c">, see https://github.com/huanguolin/ng-helper/issues/2`, () => {
-        const htmlText = '<h1 ng-class="c">Title</h1>';
-        const tag = getHtmlTagAt(htmlText, { at: 15, isHover: false });
-        expect(tag?.tagName).toEqual('h1');
-        expect(tag?.attrs.length).toEqual(1);
-        expect(tag?.attrs[0].name).toEqual({ text: 'ng-class', start: 4 });
-        expect(tag?.attrs[0].value).toEqual({ text: 'c', start: 14 });
-    });
-
-    it('parse pure text', () => {
-        const htmlText = 'some text';
-        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
-        expect(tag).toBeUndefined();
-    });
-
-    it('text + <tag> and cursor at text', () => {
-        const htmlText = 'text <h1>h1</h1>';
-        const tag = getHtmlTagAt(htmlText, { at: 3, isHover: true });
-        expect(tag).toBeUndefined();
-    });
-
-    it('text + <tag> and cursor at <tag>', () => {
-        const htmlText = 'text <h1>h1</h1>';
-        const tag = getHtmlTagAt(htmlText, { at: 7, isHover: true });
-        expect(tag?.tagName).toEqual('h1');
-        expect(tag?.attrs.length).toEqual(0);
-    });
-});
-
 describe('getAttrValueStart()', () => {
     it.each([
         [{ name: 'class', value: 'container' }, { startOffset: 0, endOffset: 16 }, 'class="container"', 7],
@@ -286,34 +184,5 @@ describe('getAttrValueStart()', () => {
     ])('given attr: %p, location: %p, htmlText: %p, should return %p', (attr, location, htmlText, expectedOutput) => {
         const result = getAttrValueStart(attr, location as Location, htmlText);
         expect(result).toBe(expectedOutput);
-    });
-});
-
-describe('getTheAttrWhileCursorAtValue()', () => {
-    const divTag = {
-        tagName: 'div',
-        attrs: [
-            { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } },
-            { name: { text: 'id', start: 26 }, value: { text: 'myDiv', start: 30 } },
-            { name: { text: 'disabled', start: 37 } },
-        ],
-        start: 4,
-        end: 37,
-        startTagEnd: 32,
-        endTagStart: 32,
-    };
-
-    it.each([
-        [divTag, { at: 4, isHover: false }, undefined],
-        [
-            divTag,
-            { at: 16, isHover: true },
-            { name: { text: 'class', start: 9 }, value: { text: 'container', start: 16 } },
-        ],
-        [divTag, { at: 16, isHover: false }, undefined],
-        [divTag, { at: 37, isHover: false }, undefined],
-    ])('given tag: %p and cursor: %p, should return %p', (tag, cursor, expectedOutput) => {
-        const result = getTheAttrWhileCursorAtValue(tag, cursor);
-        expect(result).toEqual(expectedOutput);
     });
 });

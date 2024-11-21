@@ -94,11 +94,11 @@ async function handleTemplateOrAttrValue(
         return;
     }
     if (isComponentHtml(document)) {
-        return handleComponentType(document, position, port, token);
+        return handleComponentType(document, cursorAtInfo, port, token);
     }
     const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
     if (ctrlInfo && ctrlInfo.controllerAs) {
-        return handleControllerType(ctrlInfo, document, position, port, token);
+        return handleControllerType(ctrlInfo, document, cursorAtInfo, port, token);
     }
 }
 
@@ -134,13 +134,13 @@ async function getDirectiveHover(
 
 async function handleComponentType(
     document: TextDocument,
-    position: Position,
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
     const info = await provideTypeHoverInfo({
         document,
-        position,
+        cursorAtInfo,
         port,
         api: (scriptFilePath, contextString, cursorAt) =>
             getComponentTypeHoverApi({
@@ -155,13 +155,13 @@ async function handleComponentType(
 async function handleControllerType(
     ctrlInfo: NgCtrlInfo,
     document: TextDocument,
-    position: Position,
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
     const info = await provideTypeHoverInfo({
         document,
-        position,
+        cursorAtInfo,
         port,
         api: (scriptFilePath, contextString, cursorAt) =>
             getControllerTypeHoverApi({

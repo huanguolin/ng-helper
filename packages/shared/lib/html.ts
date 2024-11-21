@@ -1,9 +1,8 @@
-import type { ChildNode, Document } from 'domhandler';
-import { ElementType, parseDocument } from 'htmlparser2';
 import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
 import type { Element, DocumentFragment } from 'parse5/dist/tree-adapters/default';
 
+// TODO: 考虑移除这些
 export { parseFragment, DocumentFragment, Attribute, Location, Element };
 
 /**
@@ -47,36 +46,6 @@ export interface CursorTextSpan extends TextSpan {
     cursor: Cursor;
 }
 
-/**
- * @deprecated
- */
-export interface HtmlTagBase {
-    tagName: string;
-    start: number;
-    end: number;
-}
-
-/**
- * @deprecated
- * Represents an HTML tag.
- */
-export interface HtmlTag extends HtmlTagBase {
-    attrs: HtmlAttr[];
-    parent?: HtmlTagBase;
-    children?: HtmlTagBase[];
-    startTagEnd: number | undefined;
-    endTagStart: number | undefined;
-}
-
-/**
- * @deprecated
- * Represents an HTML attribute.
- */
-export type HtmlAttr = {
-    name: TextSpan;
-    value?: TextSpan;
-};
-
 export const SPACE = '\u0020';
 
 /**
@@ -107,158 +76,6 @@ export function indexOfNgFilter(text: string): number {
         return matched.index + matched[1].length;
     }
     return -1;
-}
-
-/**
- * @deprecated
- * Retrieves the HtmlAttr object while the cursor is at the value position.
- *
- * @param tag - The HtmlTag object.
- * @param cursor - The Cursor object representing the current position.
- * @returns The HtmlAttr object if the cursor is within the value position of an attribute, otherwise undefined.
- */
-export function getTheAttrWhileCursorAtValue(tag: HtmlTag, cursor: Cursor): HtmlAttr | undefined {
-    const pos = cursor.isHover ? cursor.at : cursor.at - 1;
-
-    if (pos < tag.start || pos >= (tag.startTagEnd ?? tag.end)) {
-        return;
-    }
-
-    return tag.attrs.find(
-        (attr) => attr.value && attr.value.start <= pos && pos < attr.value.start + attr.value.text.length,
-    );
-}
-
-/**
- * @deprecated
- * Parses the given HTML text and returns a Document object.
- *
- * @param htmlText - The HTML text to parse.
- * @returns The parsed Document object.
- */
-export function parseHtml(htmlText: string): Document {
-    return parseDocument(htmlText, { withStartIndices: true, withEndIndices: true });
-}
-
-/**
- * @deprecated
- * Retrieves the HTML tag at the specified cursor position in the given HTML text.
- * @param htmlText - The HTML text.
- * @param cursor - The cursor position.
- * @returns The HTML tag at the cursor position, or undefined if no tag is found.
- */
-export function getHtmlTagAt(htmlText: string, cursor: Cursor): HtmlTag | undefined {
-    ensureInputValid(htmlText, cursor);
-
-    const document = parseHtml(htmlText);
-    const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
-    const tag = findTargetTag();
-    if (!tag) {
-        return;
-    }
-
-    const fragment = htmlText.slice(tag.startIndex!, tag.endIndex! + 1);
-    const element = parseFragment(fragment, { sourceCodeLocationInfo: true }).childNodes[0] as Element;
-
-    const start = tag.startIndex!;
-    // 注意：end, endOffset 是不含的，但 endIndex 是含的
-    const end = tag.endIndex! + 1;
-
-    // 注意:
-    // element 中 tag 的起始位置（比如：startTag.startOffset = 0）。
-    // 所以最终的结果要加上 start.
-
-    let startTagEnd: number | undefined;
-    let endTagStart: number | undefined;
-    if (typeof element.sourceCodeLocation?.startTag?.endOffset === 'number') {
-        startTagEnd = start + element.sourceCodeLocation.startTag.endOffset;
-    }
-    if (typeof element.sourceCodeLocation?.endTag?.startOffset === 'number') {
-        endTagStart = start + element.sourceCodeLocation.endTag.startOffset;
-    }
-
-    return {
-        tagName: element.tagName,
-        attrs: buildTagAttrs(),
-        parent: buildParent(),
-        children: buildChildren(),
-        start,
-        end,
-        startTagEnd,
-        endTagStart,
-    };
-
-    function findTargetTag(): ChildNode | undefined {
-        for (const childNode of document.children) {
-            const target = findTargetTagInner(childNode);
-            if (target) {
-                return target;
-            }
-        }
-    }
-
-    function findTargetTagInner(node: ChildNode): ChildNode | undefined {
-        if (node.type === ElementType.Tag && cursorAt >= node.startIndex! && cursorAt <= node.endIndex!) {
-            for (const childNode of node.children) {
-                const target = findTargetTagInner(childNode);
-                if (target) {
-                    return target;
-                }
-            }
-            return node;
-        }
-    }
-
-    function buildTagAttrs(): HtmlAttr[] {
-        const { attrs } = element.sourceCodeLocation!;
-        return element.attrs.map((attr) => {
-            const location = attrs![attr.name];
-            const item: HtmlAttr = {
-                name: {
-                    text: attr.name,
-                    start: start + location.startOffset,
-                },
-            };
-            const attrValueStart = getAttrValueStart(attr, location, fragment);
-            if (typeof attrValueStart === 'undefined') {
-                return item;
-            }
-            item.value = {
-                text: attr.value,
-                start: start + attrValueStart,
-            };
-            return item;
-        });
-    }
-
-    function buildParent(): HtmlTagBase | undefined {
-        const p = tag?.parent;
-        if (!p || p.type !== ElementType.Tag) {
-            return;
-        }
-
-        return {
-            tagName: p.tagName,
-            start: p.startIndex!,
-            end: p.endIndex! + 1,
-        };
-    }
-
-    function buildChildren(): HtmlTagBase[] | undefined {
-        const childNodes = element.childNodes;
-        if (!childNodes.length) {
-            return;
-        }
-
-        const result = childNodes
-            .filter((x) => x.nodeName !== '#text')
-            .map((x) => ({
-                tagName: x.nodeName,
-                start: start + x.sourceCodeLocation!.startOffset,
-                end: start + x.sourceCodeLocation!.endOffset,
-            }));
-        return result.length ? result : undefined;
-    }
 }
 
 export function getAttrValueStart(attr: Attribute, location: Location, htmlText: string): number | undefined {
