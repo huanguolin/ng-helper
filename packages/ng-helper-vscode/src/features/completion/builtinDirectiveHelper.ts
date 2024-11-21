@@ -1,7 +1,4 @@
-import { canCompletionHtmlAttr, Cursor, getHtmlTagAt } from '@ng-helper/shared/lib/html';
-import { languages, TextDocument, Position, CompletionItem, SnippetString } from 'vscode';
-
-import { timeCost } from '../../debug';
+import { CompletionItem, SnippetString } from 'vscode';
 
 export const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
@@ -11,46 +8,6 @@ export const defaultNgConfigStr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:string}`,
 };
-
-export function ngDirective(_port: number) {
-    return languages.registerCompletionItemProvider('html', {
-        provideCompletionItems(document: TextDocument, position: Position, _, context) {
-            return timeCost('provideNgDirectiveCompletion', () => {
-                // 避免在 inline template 中扰乱 component attr 的 completion
-                if (context.triggerCharacter) {
-                    return;
-                }
-                return provideNgDirectiveCompletion({ document, position });
-            });
-        },
-    });
-}
-
-function provideNgDirectiveCompletion({ document, position }: { document: TextDocument; position: Position }) {
-    const docText = document.getText();
-    const cursor: Cursor = { at: document.offsetAt(position), isHover: false };
-    const tag = getHtmlTagAt(docText, cursor);
-    if (!tag || (typeof tag.startTagEnd === 'number' && cursor.at >= tag.startTagEnd)) {
-        return;
-    }
-
-    const tagTextBeforeCursor = docText.slice(tag.start, cursor.at);
-    if (!canCompletionHtmlAttr(tagTextBeforeCursor)) {
-        return;
-    }
-
-    return getNgDirectiveConfigList()
-        .map(([name, configs]) =>
-            configs.length > 0
-                ? configs.map((c) => configToCompletionItem(name, c))
-                : [configToCompletionItem(name, defaultNgConfigExpr)],
-        )
-        .flat()
-        .map((item, index) => {
-            item.sortText = index.toString().padStart(3, '0');
-            return item;
-        });
-}
 
 export function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
     const item = new CompletionItem(`${name} ${config.name}`);

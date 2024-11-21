@@ -11,23 +11,9 @@ import {
 
 import { buildCursor } from '../../utils';
 
-import { componentAttr, componentOrDirectiveAttrCompletion } from './componentAttr';
-import { componentName, componentNameCompletion } from './componentName';
-import { ctrl } from './ctrl';
-import { customDirective } from './customDirective';
-import { ngDirective } from './ngDirective';
-import { templateOrAttrValueCompletion, type } from './type';
-
-export function registerCompletion(context: ExtensionContext, port: number) {
-    context.subscriptions.push(
-        type(port),
-        ctrl(port),
-        ngDirective(port),
-        ...customDirective(port),
-        componentName(port),
-        componentAttr(port),
-    );
-}
+import { componentNameCompletion } from './componentName';
+import { componentOrDirectiveAttrCompletion } from './componentOrDirectiveAttr';
+import { templateOrAttrValueCompletion } from './type';
 
 interface BaseCompletionParam {
     document: TextDocument;
@@ -47,7 +33,7 @@ export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefin
     cursor: Cursor;
 }
 
-export function registerCompletion2(context: ExtensionContext, port: number) {
+export function registerCompletion(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerCompletionItemProvider('html', {
             provideCompletionItems(document, position, vscodeCancelToken, context) {

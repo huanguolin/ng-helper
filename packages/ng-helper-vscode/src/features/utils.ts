@@ -22,6 +22,12 @@ export function isComponentHtml(document: TextDocument): boolean {
     return fileName.endsWith('.component.html');
 }
 
+/**
+ * @deprecated
+ * Get controller name info from html.
+ * @param document - The TextDocument object representing the document.
+ * @returns The controller name info if the document is a component HTML file, otherwise undefined.
+ */
 export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {
     if (isComponentHtml(document)) {
         return;
