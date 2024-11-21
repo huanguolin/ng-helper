@@ -5,7 +5,7 @@ import { CompletionList, CancellationToken, CompletionItem, SnippetString, Compl
 
 import { getComponentAttrCompletionApi, getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import { getControllerNameInfoFromHtml, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
+import { getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 import { defaultNgConfigExpr, getNgDirectiveConfigList } from './builtinDirectiveHelper';
 import { configToCompletionItem } from './builtinDirectiveHelper';
@@ -37,8 +37,10 @@ export async function componentOrDirectiveAttrCompletion({
         }
 
         const relatedScriptFile =
-            (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ??
-            document.fileName;
+            (await getCorrespondingScriptFileName(
+                document,
+                getControllerNameInfo(cursorAtInfo.context)?.controllerName,
+            )) ?? document.fileName;
         if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
             return builtInAttrItems;
         }

@@ -6,12 +6,7 @@ import { CompletionItem, CompletionList, SnippetString } from 'vscode';
 
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
-import {
-    getComponentName,
-    getControllerNameInfoFromHtml,
-    getCorrespondingScriptFileName,
-    isComponentTagName,
-} from '../utils';
+import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 import type { CompletionParamObj } from '.';
 
@@ -33,8 +28,10 @@ export async function componentNameCompletion({
 
     async function componentNameCompletionImpl() {
         const relatedScriptFile =
-            (await getCorrespondingScriptFileName(document, getControllerNameInfoFromHtml(document)?.controllerName)) ??
-            document.fileName;
+            (await getCorrespondingScriptFileName(
+                document,
+                getControllerNameInfo(cursorAtInfo.context)?.controllerName,
+            )) ?? document.fileName;
         if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
             return;
         }

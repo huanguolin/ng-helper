@@ -77,14 +77,6 @@ export type HtmlAttr = {
     value?: TextSpan;
 };
 
-/**
- * @deprecated
- */
-export type CanCompleteComponentNameResult = {
-    canComplete: boolean;
-    tag?: HtmlTag;
-};
-
 export const SPACE = '\u0020';
 
 /**

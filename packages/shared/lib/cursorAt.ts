@@ -106,6 +106,10 @@ export interface CursorAtTextInfo {
      * transclude 需要。
      */
     siblingTagNames: string[];
+    /**
+     * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的可能是祖父或者曾祖父节点的。
+     */
+    context: CursorAtContext[];
 }
 
 /**
@@ -118,6 +122,10 @@ export interface CursorAtStartTagInfo extends TagInfo, SimpleLocation {
      * 目前只用于指令的自动补全。
      */
     attrLocations: Record<string, SimpleLocation>;
+    /**
+     * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的可能是祖父或者曾祖父节点的。
+     */
+    context: CursorAtContext[];
 }
 
 /**
@@ -149,6 +157,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         return {
             type: 'text',
             siblingTagNames: [],
+            context: [],
         };
     }
 
@@ -175,6 +184,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
             type: 'text',
             parentTagName: p?.tagName,
             siblingTagNames: p ? p.childNodes.filter(isElement).map((x) => x.tagName) : [],
+            context: p ? getContext(p) : [],
         };
     }
 
@@ -240,6 +250,7 @@ function getStartTagInfo(element: Element): CursorAtStartTagInfo {
         type: 'startTag',
         start: element.sourceCodeLocation!.startOffset,
         end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
+        context: getContext(element),
         attrLocations,
         ...getTagInfo(element),
     };

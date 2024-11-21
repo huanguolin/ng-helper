@@ -39,6 +39,7 @@ describe('getCursorAtInfo()', () => {
                 parentTagName: undefined,
                 start: 0,
                 end: 18,
+                context: [],
                 attrLocations: {
                     class: {
                         start: 5,
@@ -221,6 +222,7 @@ describe('getCursorAtInfo()', () => {
                 type: 'text',
                 parentTagName: 'p',
                 siblingTagNames: [],
+                context: [],
             });
         });
 
@@ -231,6 +233,7 @@ describe('getCursorAtInfo()', () => {
                 type: 'text',
                 parentTagName: 'span',
                 siblingTagNames: [],
+                context: [],
             });
         });
 
@@ -241,19 +244,30 @@ describe('getCursorAtInfo()', () => {
                 type: 'text',
                 parentTagName: 'div',
                 siblingTagNames: ['span'],
+                context: [],
             });
         });
 
         it('should detect cursor at text with only text', () => {
             const html = 'text';
             const result = getCursorAtInfo(html, cursor(1));
-            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
+            expect(result).toEqual({
+                type: 'text',
+                siblingTagNames: [],
+                parentTagName: undefined,
+                context: [],
+            });
         });
 
         it('should detect cursor at text with whitespace text', () => {
             const html = '  ';
             const result = getCursorAtInfo(html, cursor(0));
-            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
+            expect(result).toEqual({
+                type: 'text',
+                siblingTagNames: [],
+                parentTagName: undefined,
+                context: [],
+            });
         });
     });
 
@@ -267,7 +281,11 @@ describe('getCursorAtInfo()', () => {
         it('should return text type with empty text', () => {
             const html = '';
             const result = getCursorAtInfo(html, cursor(0));
-            expect(result).toEqual({ type: 'text', siblingTagNames: [] });
+            expect(result).toEqual({
+                type: 'text',
+                siblingTagNames: [],
+                context: [],
+            });
         });
 
         it('should handle empty elements', () => {

@@ -1,7 +1,7 @@
 import os from 'node:os';
 
 import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
-import { getHtmlTagAt, isHtmlTagName } from '@ng-helper/shared/lib/html';
+import { isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
@@ -20,40 +20,6 @@ export function isComponentHtml(document: TextDocument): boolean {
         return fileName.endsWith('.component.ts.html') || fileName.endsWith('component.js.html');
     }
     return fileName.endsWith('.component.html');
-}
-
-/**
- * @deprecated
- * Get controller name info from html.
- * @param document - The TextDocument object representing the document.
- * @returns The controller name info if the document is a component HTML file, otherwise undefined.
- */
-export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {
-    if (isComponentHtml(document)) {
-        return;
-    }
-
-    const docText = document.getText();
-    const pos = docText.indexOf('ng-controller=');
-    if (pos < 0) {
-        return;
-    }
-
-    const tag = getHtmlTagAt(docText, { at: pos, isHover: true });
-    if (!tag) {
-        return;
-    }
-
-    const attrValue = tag.attrs.find((attr) => attr.name.text === 'ng-controller')?.value;
-    if (!attrValue) {
-        return;
-    }
-
-    const result: NgCtrlInfo = getNgCtrlInfo(attrValue.text);
-
-    console.log('getControllerNameFromHtml() find controller name info:', result);
-
-    return result;
 }
 
 export function getControllerNameInfo(cursorAtContext: CursorAtContext[]): NgCtrlInfo | undefined {
