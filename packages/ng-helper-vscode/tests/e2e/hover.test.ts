@@ -2,7 +2,12 @@ import { expect } from 'chai';
 import { describe, it, before } from 'mocha';
 import * as vscode from 'vscode';
 
-import { APP_PAGES_P1_HTML_PATH, BAR_FOO_COMPONENT_HTML_PATH, HOVER_COMMAND } from '../testConstants';
+import {
+    APP_PAGES_P1_HTML_PATH,
+    BAR_FOO_COMPONENT_HTML_PATH,
+    DRAG_SOURCE_COMPONENT_TS_PATH,
+    HOVER_COMMAND,
+} from '../testConstants';
 import { activate, setupChaiSnapshotPlugin, sleep } from '../testUtils';
 
 describe('Hover', () => {
@@ -53,6 +58,33 @@ describe('Hover', () => {
 
         it('show hover info on "(ctl.obj.)arr" (controller html)', async () => {
             await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 33));
+        });
+    });
+
+    describe('inline html', () => {
+        it('hover component name', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 10));
+        });
+
+        it('hover component attr', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 24));
+        });
+
+        it('hover directive name', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 15));
+        });
+
+        it('hover directive attr', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 27));
+        });
+
+        it('hover ng-*', async () => {
+            // ng-modal
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 42));
+        });
+
+        it('hover type', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 71));
         });
     });
 });

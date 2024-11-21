@@ -1,13 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Hover component name/attr Should show hover info on component attr 1`] = `
-"
-\`\`\`typescript
-(property) attrTitle: string
-\`\`\`
-"
-`;
-
 exports[`Hover component name/attr show hover info on component attr 1`] = `
 "
 \`\`\`typescript
@@ -25,15 +17,6 @@ bindings: {
     qux: \\"&?\\"
     title: \\"?@attrTitle\\" // string
 }
-\`\`\`
-"
-`;
-
-exports[`Hover directive name/attr Should show hover info on directive attr 1`] = `
-"
-\`\`\`typescript
-(attribute of [numberCheck]) canNaN: any
-scope configs: \\"?<allowNan\\"
 \`\`\`
 "
 `;
@@ -62,15 +45,68 @@ scope: {
 "
 `;
 
-exports[`Hover ng-* show hover info on "ng-if" 1`] = `
+exports[`Hover inline html hover component attr 1`] = `
 "
 \`\`\`typescript
-(directive) ngIf
+(property) attrTitle: string
 \`\`\`
-Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
+"
 `;
 
-exports[`Hover ng-* show hover info on ng-if 1`] = `
+exports[`Hover inline html hover component name 1`] = `
+"
+\`\`\`typescript
+(component) bazQux
+bindings: {
+    baz: \\"<\\" // number
+    qux: \\"&?\\"
+    title: \\"?@attrTitle\\" // string
+}
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover directive attr 1`] = `
+"
+\`\`\`typescript
+(attribute of [numberCheck]) max: any
+scope configs: \\"?<\\"
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover directive name 1`] = `
+"
+\`\`\`typescript
+(directive) numberCheck
+restrict: \\"A\\"
+require: \\"ngModel\\"
+scope: {
+    min: \\"?<\\"
+    max: \\"?<\\"
+    canNaN: \\"?<allowNan\\"
+}
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover ng-* 1`] = `
+"
+\`\`\`typescript
+(directive) ngModal
+\`\`\`
+Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngModal)."
+`;
+
+exports[`Hover inline html hover type 1`] = `
+"
+\`\`\`typescript
+(property) disabledDrag: boolean | undefined
+\`\`\`
+"
+`;
+
+exports[`Hover ng-* show hover info on "ng-if" 1`] = `
 "
 \`\`\`typescript
 (directive) ngIf
@@ -110,30 +146,6 @@ exports[`Hover type show hover info on "ctl" (controller html) 1`] = `
 `;
 
 exports[`Hover type show hover info on "ctrl" (component html) 1`] = `
-"
-\`\`\`typescript
-(class) ctrl: BarFooController
-\`\`\`
-"
-`;
-
-exports[`Hover type show hover info on (ctrl.)bar (component html) 1`] = `
-"
-\`\`\`typescript
-(property) bar: number
-\`\`\`
-"
-`;
-
-exports[`Hover type show hover info on ctl (controller html) 1`] = `
-"
-\`\`\`typescript
-(class) ctrl: P1Controller
-\`\`\`
-"
-`;
-
-exports[`Hover type show hover info on ctrl (component html) 1`] = `
 "
 \`\`\`typescript
 (class) ctrl: BarFooController
