@@ -319,7 +319,7 @@ export function getBindingTypeInfo(
         kind: 'property',
         name: perspectivesOnUsing ? getBindingName(binding) : binding.name,
         typeString: getBindingType(binding.value, perspectivesOnUsing),
-        document: `bindings config: "${binding.name}"`,
+        document: `bindings config: "${binding.value}"`,
         optional: isOptionalBinding(binding.value),
         isFunction: false,
     };

@@ -106,9 +106,10 @@ function getComponentAttrHoverInfo(coreCtx: CorePluginContext, attrName: string,
         return;
     }
 
+    const bindingTypeInfo = getBindingTypeInfo(binding, true);
     const result = {
-        formattedTypeString: `(property) ${attrName}: ${getBindingType(binding.value, true)}`,
-        document: '',
+        formattedTypeString: `(property) ${attrName}: ${bindingTypeInfo.typeString}`,
+        document: bindingTypeInfo.document, // document 放着 binding 的配置
     };
 
     const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
@@ -157,8 +158,8 @@ function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInf
     const scopeInfo = `scope configs: "${attr.value}"`;
 
     return {
-        formattedTypeString: [attrInfo, scopeInfo].filter((x) => !!x).join('\n'),
-        document: '',
+        formattedTypeString: attrInfo,
+        document: scopeInfo,
     };
 }
 
