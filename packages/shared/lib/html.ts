@@ -427,41 +427,6 @@ export function getMapValues(mapString: string): TextSpan[] | undefined {
     return result;
 }
 
-/**
- * @deprecated
- */
-export function canCompletionComponentName(htmlText: string, cursor: Cursor): CanCompleteComponentNameResult {
-    if (getTextInTemplate(htmlText, cursor)) {
-        return { canComplete: false };
-    }
-
-    const tag = getHtmlTagAt(htmlText, cursor);
-    if (!tag) {
-        return { canComplete: true };
-    }
-
-    const cursorAt = cursor.isHover ? cursor.at : cursor.at - 1;
-
-    if (typeof tag.startTagEnd === 'undefined') {
-        return { canComplete: false };
-    }
-
-    if (cursorAt >= tag.start && cursorAt < tag.startTagEnd) {
-        return { canComplete: false };
-    }
-
-    if (typeof tag.endTagStart === 'undefined') {
-        return { canComplete: true, tag };
-    }
-
-    // 光标位置在靠后一个位置，所以这里不包含起始位置
-    if (cursorAt > tag.endTagStart && cursorAt < tag.end) {
-        return { canComplete: false };
-    }
-
-    return { canComplete: true, tag };
-}
-
 const htmlTagNameSet = new Set([
     'a',
     'abbr',
