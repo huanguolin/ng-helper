@@ -9,7 +9,8 @@ export default {
     resolveTestPath: (snapshotPath: string, snapshotExtension: string) => {
         return resolveTestPath(snapshotPath, snapshotExtension);
     },
-    testPathForConsistencyCheck: 'tests/dist/e2e/hover.test.js',
+    // 这里一定要用 path.join, 否则不同平台由于路径分割符不同, 会导致测试失败
+    testPathForConsistencyCheck: path.join('tests', 'dist', 'e2e', 'hover.test.js'),
 };
 
 // 编译后的代码放在 tests/dist 目录下，所以默认情况下,
