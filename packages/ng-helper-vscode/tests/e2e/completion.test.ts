@@ -73,9 +73,20 @@ describe('Completion', () => {
         });
 
         it('get completion info of directive attr', async () => {
+            // 这个同时测试了，依据光标位置，总是获取光标前最近的那个指令的属性
+
+            // 获取 best-xyz 的属性，它排在第一
             await testCompletion({
                 filePath: BAZ_QUX_COMPONENT_HTML_PATH,
                 position: new vscode.Position(12, 16),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
+                triggerChar: ' ',
+            });
+
+            // 获取 number-check 的属性，它排在第二, 并且结果集中排除了已经存在的 min 属性
+            await testCompletion({
+                filePath: BAZ_QUX_COMPONENT_HTML_PATH,
+                position: new vscode.Position(12, 42),
                 itemsFilter: (item) => item.detail === '[ng-helper]',
                 triggerChar: ' ',
             });

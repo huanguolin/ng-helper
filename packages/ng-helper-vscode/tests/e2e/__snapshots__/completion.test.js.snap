@@ -249,6 +249,43 @@ bindings config: \\"?=all\\"",
 ]
 `;
 
+exports[`Completion directive name/attr get completion info of directive attr 2`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "max=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "max",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<allowNan\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "allow-nan=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "allow-nan",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+]
+`;
+
 exports[`Completion directive name/attr get completion info of directive name 1`] = `
 Array [
   Object {
