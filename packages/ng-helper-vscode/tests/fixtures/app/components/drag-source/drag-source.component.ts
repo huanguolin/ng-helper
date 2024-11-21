@@ -30,6 +30,10 @@ namespace app.directives {
         <baz-qux attr-title="bar-foo"></baz-qux>
         <div number-check max="100" ng-modal="ctrl.num"></div>
         <div class="drag-source-container" draggable="{{!ctrl.disabledDrag}}" ng-transclude></div>
+        <!-- 'ctrl' completion -->
+        {{   }}
+        <!-- 'ctrl.*' completion -->
+        {{ctrl.}}
         `,
         bindings : {
             disabledDrag : '<?',

@@ -213,7 +213,7 @@ Array [
     ],
     "uri": Object {
       "$mid": 1,
-      "path": "/tests/fixtures/app/pages/p1/p1.controller.ts",
+      "path": "/tests/fixtures/app/pages/p1/p1.ts",
       "scheme": "file",
     },
   },
@@ -257,7 +257,7 @@ Array [
     ],
     "uri": Object {
       "$mid": 1,
-      "path": "/tests/fixtures/app/pages/p1/p1.controller.ts",
+      "path": "/tests/fixtures/app/pages/p1/p1.ts",
       "scheme": "file",
     },
   },
