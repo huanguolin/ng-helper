@@ -111,7 +111,7 @@ export async function completion({
         // 1. 'startTag' 时一定为 component/directive attr 补全。
         // 2. 'attrName' 时，有两种情况：
         //   a. tagName 是组件，则可以补全 ng-*, 或者 component attr.
-        //   b. tagName 不是组件，则可以补全 ng-*, 或者 directive attr.
+        //   b. tagName 不是组件，则可以补全 ng-*, 或者 directive name.
         case 'startTag':
             return await componentOrDirectiveAttrCompletion({ ...obj, cursorAtInfo });
         case 'attrName': {
