@@ -235,9 +235,9 @@ export async function templateOrAttrValueCompletion({
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
     CompletionList<CompletionItem> | undefined
 > {
-    if (!context.triggerCharacter && noRegisterTriggerChar) {
+    if (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') {
         return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
-    } else if (context.triggerCharacter === '.') {
+    } else if (!noRegisterTriggerChar && context.triggerCharacter === '.') {
         return await getTypeCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
     }
 }

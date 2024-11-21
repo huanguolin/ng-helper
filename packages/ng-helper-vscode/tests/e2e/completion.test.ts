@@ -31,8 +31,7 @@ describe('Completion', () => {
                 filePath: BAZ_QUX_COMPONENT_HTML_PATH,
                 position: new vscode.Position(1, 6),
                 itemsFilter: (item) => item.detail === '[ng-helper]',
-                // 注意：这个不会过滤结果，过滤的部分是 vscode 从 UI 端处理的
-                triggerChar: 'd',
+                // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
             });
         });
 
