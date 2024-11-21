@@ -5,7 +5,7 @@ exports[`Hover component name/attr show hover info on component attr 1`] = `
 \`\`\`typescript
 (property) attrTitle: string
 \`\`\`
-"
+bindings config: \\"?@attrTitle\\""
 `;
 
 exports[`Hover component name/attr show hover info on component name 1`] = `
@@ -25,9 +25,8 @@ exports[`Hover directive name/attr show hover info on directive attr 1`] = `
 "
 \`\`\`typescript
 (attribute of [numberCheck]) canNaN: any
-scope configs: \\"?<allowNan\\"
 \`\`\`
-"
+scope configs: \\"?<allowNan\\""
 `;
 
 exports[`Hover directive name/attr show hover info on directive name 1`] = `
@@ -50,7 +49,7 @@ exports[`Hover inline html hover component attr 1`] = `
 \`\`\`typescript
 (property) attrTitle: string
 \`\`\`
-"
+bindings config: \\"?@attrTitle\\""
 `;
 
 exports[`Hover inline html hover component name 1`] = `
@@ -70,9 +69,8 @@ exports[`Hover inline html hover directive attr 1`] = `
 "
 \`\`\`typescript
 (attribute of [numberCheck]) max: any
-scope configs: \\"?<\\"
 \`\`\`
-"
+scope configs: \\"?<\\""
 `;
 
 exports[`Hover inline html hover directive name 1`] = `

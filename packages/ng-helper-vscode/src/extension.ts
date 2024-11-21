@@ -3,7 +3,7 @@ import { ExtensionContext } from 'vscode';
 import { activateExt } from './activate';
 import { registerCodeLens } from './features/codeLens';
 import { createComponentCommand } from './features/command/createComponent';
-import { registerCompletion2 } from './features/completion';
+import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
 import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
@@ -26,8 +26,8 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(createComponentCommand(config.componentStyleFileExt, config.componentScriptFileExt));
 
     // completion
-    // registerCompletion(context, config.port);
-    registerCompletion2(context, config.port);
+    registerCompletion(context, config.port);
+    // registerCompletion2(context, config.port);
 
     // hover
     registerHover(context, config.port);
