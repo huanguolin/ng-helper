@@ -124,8 +124,12 @@ export async function componentOrDirectiveAttrCompletion({
     vscodeCancelToken,
     context,
     port,
+    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtStartTagInfo>) {
-    if (context.triggerCharacter === SPACE || typeof context.triggerCharacter === 'undefined') {
+    if (
+        (!noRegisterTriggerChar && context.triggerCharacter === SPACE) ||
+        (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined')
+    ) {
         const tagTextBeforeCursor = document.getText().slice(cursorAtInfo.start, cursor.at);
         if (!canCompletionHtmlAttr(tagTextBeforeCursor)) {
             return;
