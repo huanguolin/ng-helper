@@ -2,7 +2,6 @@ import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
 import type { Element, DocumentFragment } from 'parse5/dist/tree-adapters/default';
 
-// TODO: 考虑移除这些
 export { parseFragment, DocumentFragment, Attribute, Location, Element };
 
 /**
