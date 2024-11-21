@@ -1,15 +1,44 @@
+import type { CursorAtAttrNameInfo } from '@ng-helper/shared/lib/cursorAt';
 import { CompletionItem, SnippetString } from 'vscode';
 
-export const defaultNgConfigExpr: NgDirectiveConfig = {
+import type { CompletionParamObj } from '.';
+
+interface NgDirectiveConfig {
+    name: string;
+    description?: string;
+    snippet?: string;
+}
+
+const defaultNgConfigExpr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:expression}`,
 };
-export const defaultNgConfigStr: NgDirectiveConfig = {
+const defaultNgConfigStr: NgDirectiveConfig = {
     name: '',
     snippet: `\${0:string}`,
 };
 
-export function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
+export function builtInDirectiveNameCompletion({
+    context,
+    noRegisterTriggerChar,
+}: CompletionParamObj<CursorAtAttrNameInfo>): CompletionItem[] | undefined {
+    // 只走没有设置触发字符的那个分支。
+    if (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') {
+        return getNgDirectiveConfigList()
+            .map(([name, configs]) =>
+                configs.length > 0
+                    ? configs.map((c) => configToCompletionItem(name, c))
+                    : [configToCompletionItem(name, defaultNgConfigExpr)],
+            )
+            .flat()
+            .map((item, index) => {
+                item.sortText = index.toString().padStart(3, '0');
+                return item;
+            });
+    }
+}
+
+function configToCompletionItem(name: string, config: NgDirectiveConfig): CompletionItem {
     const item = new CompletionItem(`${name} ${config.name}`);
     if (config.snippet) {
         item.insertText = new SnippetString(`${name}="${config.snippet}"`);
@@ -18,7 +47,7 @@ export function configToCompletionItem(name: string, config: NgDirectiveConfig):
     return item;
 }
 
-export function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
+function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]> {
     // 这里依据我们使用的频率排序的
     return [
         ['ng-click', []],
@@ -102,10 +131,4 @@ export function getNgDirectiveConfigList(): Array<[string, NgDirectiveConfig[]]>
         ['ng-mouseleave', []],
         ['ng-mouseenter', []],
     ];
-}
-
-interface NgDirectiveConfig {
-    name: string;
-    description?: string;
-    snippet?: string;
 }

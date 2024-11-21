@@ -61,6 +61,10 @@ export interface CursorAtAttrNameInfo extends TagInfo {
      * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的则是祖父或者曾祖父节点的。
      */
     context: CursorAtContext[];
+    /**
+     * 目前只用于指令的属性自动补全。
+     */
+    attrLocations: Record<string, SimpleLocation>;
 }
 
 /**
@@ -123,7 +127,7 @@ export interface CursorAtTextInfo {
 export interface CursorAtStartTagInfo extends TagInfo, SimpleLocation {
     type: 'startTag';
     /**
-     * 目前只用于指令的自动补全。
+     * 目前只用于指令的属性自动补全。
      */
     attrLocations: Record<string, SimpleLocation>;
     /**
@@ -204,6 +208,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
                     type: 'attrName',
                     cursorAtAttrName: attr.name,
                     context: getContext(element),
+                    attrLocations: getAttrLocations(element),
                     ...getTagInfo(element),
                 };
             }
@@ -242,6 +247,17 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
 }
 
 function getStartTagInfo(element: Element): CursorAtStartTagInfo {
+    return {
+        type: 'startTag',
+        start: element.sourceCodeLocation!.startOffset,
+        end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
+        context: getContext(element),
+        attrLocations: getAttrLocations(element),
+        ...getTagInfo(element),
+    };
+}
+
+function getAttrLocations(element: Element) {
     const attrLocations: Record<string, SimpleLocation> = {};
     if (element.sourceCodeLocation!.attrs) {
         for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs)) {
@@ -251,14 +267,7 @@ function getStartTagInfo(element: Element): CursorAtStartTagInfo {
             };
         }
     }
-    return {
-        type: 'startTag',
-        start: element.sourceCodeLocation!.startOffset,
-        end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
-        context: getContext(element),
-        attrLocations,
-        ...getTagInfo(element),
-    };
+    return attrLocations;
 }
 
 function isCursorAtEndTag(element: Element, cursorAt: number): boolean {

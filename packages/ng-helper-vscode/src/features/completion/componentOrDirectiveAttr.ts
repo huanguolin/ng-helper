@@ -1,7 +1,7 @@
-import type { CursorAtStartTagInfo } from '@ng-helper/shared/lib/cursorAt';
+import type { CursorAtAttrNameInfo, CursorAtStartTagInfo } from '@ng-helper/shared/lib/cursorAt';
 import { Cursor, SPACE, canCompletionHtmlAttr } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
-import { CompletionList, CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
+import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
 import { getComponentAttrCompletionApi, getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
@@ -17,12 +17,18 @@ export async function componentOrDirectiveAttrCompletion({
     context,
     port,
     noRegisterTriggerChar,
-}: CompletionParamObj<CursorAtStartTagInfo>) {
-    // 只有空格能触发属性补全。
-    if (!noRegisterTriggerChar && context.triggerCharacter === SPACE) {
-        const tagTextBeforeCursor = document.getText().slice(cursorAtInfo.start, cursor.at);
-        if (!canCompletionHtmlAttr(tagTextBeforeCursor)) {
-            return;
+}: CompletionParamObj<CursorAtStartTagInfo | CursorAtAttrNameInfo>) {
+    // 属性补全触发方式有两种: 空格和输入字符。
+    if (
+        (!noRegisterTriggerChar && context.triggerCharacter === SPACE) ||
+        (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined')
+    ) {
+        if (cursorAtInfo.type === 'startTag') {
+            // 只有是 'startTag' 时才需要看这个
+            const tagTextBeforeCursor = document.getText().slice(cursorAtInfo.start, cursor.at);
+            if (!canCompletionHtmlAttr(tagTextBeforeCursor)) {
+                return;
+            }
         }
 
         const relatedScriptFile =
@@ -60,7 +66,7 @@ async function handleComponentAttr({
     vscodeCancelToken,
 }: {
     relatedScriptFile: string;
-    cursorAtInfo: CursorAtStartTagInfo;
+    cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
@@ -93,17 +99,14 @@ async function handleComponentAttr({
         return 0;
     });
 
-    return new CompletionList(
-        list.map((x, i) => {
-            const item = new CompletionItem(x.name, CompletionItemKind.Field);
-            item.insertText = new SnippetString(`${x.name}="$1"$0`);
-            item.documentation = `type: ${x.typeString}\n` + x.document;
-            item.detail = '[ng-helper]';
-            item.sortText = i.toString().padStart(2, '0');
-            return item;
-        }),
-        false,
-    );
+    return list.map((x, i) => {
+        const item = new CompletionItem(x.name, CompletionItemKind.Field);
+        item.insertText = new SnippetString(`${x.name}="$1"$0`);
+        item.documentation = `type: ${x.typeString}\n` + x.document;
+        item.detail = '[ng-helper]';
+        item.sortText = i.toString().padStart(2, '0');
+        return item;
+    });
 }
 
 async function handleDirectiveAttr({
@@ -114,7 +117,7 @@ async function handleDirectiveAttr({
     vscodeCancelToken,
 }: {
     relatedScriptFile: string;
-    cursorAtInfo: CursorAtStartTagInfo;
+    cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
     cursor: Cursor;
     port: number;
     vscodeCancelToken: CancellationToken;
@@ -138,18 +141,15 @@ async function handleDirectiveAttr({
         return;
     }
 
-    return new CompletionList(
-        list.map((x, i) => {
-            const directiveName = kebabCase(x.name);
-            const item = new CompletionItem(directiveName, CompletionItemKind.Field);
-            item.insertText = new SnippetString(`${directiveName}="$1"$0`);
-            item.documentation = ['(attribute of directive)', x.typeString && `type: ${x.typeString}`, x.document]
-                .filter(Boolean)
-                .join('\n');
-            item.detail = '[ng-helper]';
-            item.sortText = i.toString().padStart(2, '0');
-            return item;
-        }),
-        false,
-    );
+    return list.map((x, i) => {
+        const directiveName = kebabCase(x.name);
+        const item = new CompletionItem(directiveName, CompletionItemKind.Field);
+        item.insertText = new SnippetString(`${directiveName}="$1"$0`);
+        item.documentation = ['(attribute of directive)', x.typeString && `type: ${x.typeString}`, x.document]
+            .filter(Boolean)
+            .join('\n');
+        item.detail = '[ng-helper]';
+        item.sortText = i.toString().padStart(2, '0');
+        return item;
+    });
 }

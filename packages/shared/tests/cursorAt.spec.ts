@@ -85,6 +85,7 @@ describe('getCursorAtInfo()', () => {
                 tagName: 'div',
                 attrNames: ['class'],
                 context: [],
+                attrLocations: { class: { start: 5, end: 17 } },
                 parentTagName: undefined,
             });
         });
