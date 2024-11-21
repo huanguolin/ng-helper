@@ -15,11 +15,11 @@ angular.module('app.directives').directive('bestXyz', [
 <!-- component attr completion -->
 <bar-foo  ></bar-foo>
 <!-- directive name completion -->
-<div   ></div>
+<div  b ></div>
 <!-- directive attr completion -->
 <div best-xyz   ></div>
 <!-- ng-* completion -->
-<div   ></div>
+<div  n ></div>
             `,
             link : function (scope, element, attrs, ctrl) {
             },

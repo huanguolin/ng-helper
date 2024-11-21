@@ -84,6 +84,7 @@ describe('getCursorAtInfo()', () => {
                 cursorAtAttrName: 'class',
                 tagName: 'div',
                 attrNames: ['class'],
+                context: [],
                 parentTagName: undefined,
             });
         });

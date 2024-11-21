@@ -13,6 +13,7 @@ import { buildCursor } from '../../utils';
 
 import { componentNameCompletion } from './componentName';
 import { componentOrDirectiveAttrCompletion } from './componentOrDirectiveAttr';
+import { directiveNameCompletion } from './directiveName';
 import { templateOrAttrValueCompletion } from './type';
 
 interface BaseCompletionParam {
@@ -83,11 +84,15 @@ export async function completion({
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':
-        case 'attrName':
             // do nothing
             break;
         case 'text':
             return await componentNameCompletion({ ...obj, cursorAtInfo });
+        case 'attrName':
+            // 指令名字自动补全，必须输入至少一个字符才能触发。
+            // 输入这个字符后，在非 hover 模式下，光标被认为在这个字符上，
+            // 所以就进入了 'attrName' 分支。
+            return await directiveNameCompletion({ ...obj, cursorAtInfo });
         case 'startTag':
             return await componentOrDirectiveAttrCompletion({ ...obj, cursorAtInfo });
         case 'attrValue':

@@ -57,6 +57,10 @@ export interface CursorAtTagNameInfo extends TagInfo {
 export interface CursorAtAttrNameInfo extends TagInfo {
     type: 'attrName';
     cursorAtAttrName: string;
+    /**
+     * 顺序是由近及远。即：排在第一的可能是父节点上的，后面的则是祖父或者曾祖父节点的。
+     */
+    context: CursorAtContext[];
 }
 
 /**
@@ -199,6 +203,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
                 return {
                     type: 'attrName',
                     cursorAtAttrName: attr.name,
+                    context: getContext(element),
                     ...getTagInfo(element),
                 };
             }
