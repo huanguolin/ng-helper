@@ -9,6 +9,8 @@ export const CREATE_COMPONENT_COMMAND = 'ng-helper.createComponent';
 export const COMPLETION_COMMAND = 'vscode.executeCompletionItemProvider';
 export const HOVER_COMMAND = 'vscode.executeHoverProvider';
 export const DEFINITION_COMMAND = 'vscode.executeDefinitionProvider';
+export const SEMANTIC_TOKENS_LEGEND_COMMAND = 'vscode.provideDocumentSemanticTokensLegend';
+export const SEMANTIC_TOKENS_COMMAND = 'vscode.provideDocumentSemanticTokens';
 
 // ---- project path ----
 // 注意这个路径要按照编译后的文件位置来写，编译后文件在 tests/dist 目录下。
@@ -38,6 +40,7 @@ export const DRAG_SOURCE_COMPONENT_TS_PATH = join(DRAG_SOURCE_DIR, 'drag-source.
 // ---- directives ----
 export const APP_DIRECTIVES_DIR = join(APP_DIR, 'directives');
 export const BEST_XYZ_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'best-xyz.directive.js');
+export const NUMBER_CHECK_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'number-check.directive.js');
 // ---- pages ----
 export const APP_PAGES_DIR = join(APP_DIR, 'pages');
 // p1
@@ -46,3 +49,6 @@ export const APP_PAGES_P1_HTML_PATH = join(APP_PAGES_P1_DIR, 'p1.html');
 // p2
 export const APP_PAGES_P2_DIR = join(APP_PAGES_DIR, 'p2');
 export const APP_PAGES_P2_HTML_PATH = join(APP_PAGES_P2_DIR, 'p2.html');
+// p3
+export const APP_PAGES_P3_DIR = join(APP_PAGES_DIR, 'p3');
+export const APP_PAGES_P3_HTML_PATH = join(APP_PAGES_P3_DIR, 'p3.html');

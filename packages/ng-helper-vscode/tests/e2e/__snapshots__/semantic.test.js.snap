@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Semantic html semantic 1`] = `
+Ki {
+  "data": Uint32Array [
+    3,
+    30,
+    4,
+    0,
+    0,
+    1,
+    17,
+    9,
+    0,
+    0,
+    2,
+    21,
+    2,
+    0,
+    0,
+  ],
+  "resultId": undefined,
+}
+`;
+
+exports[`Semantic inline html semantic 1`] = `
+Ki {
+  "data": Uint32Array [
+    15,
+    30,
+    4,
+    0,
+    0,
+    1,
+    17,
+    9,
+    0,
+    0,
+    2,
+    21,
+    2,
+    0,
+    0,
+  ],
+  "resultId": undefined,
+}
+`;

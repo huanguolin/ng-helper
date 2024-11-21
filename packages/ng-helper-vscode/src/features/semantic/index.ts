@@ -219,12 +219,11 @@ function fillStringSemanticToken({
     attr: Attribute;
 }): void {
     const attrLocation = attrsLocation[attr.name];
-    let attrValueStart = getAttrValueStart(attr, attrLocation, htmlDocument.getText());
+    const attrValueStart = getAttrValueStart(attr, attrLocation, htmlDocument.getText());
     if (typeof attrValueStart === 'undefined') {
         return;
     }
 
-    attrValueStart += attrLocation.startOffset;
     const start = htmlDocument.positionAt(attrValueStart);
     const end = htmlDocument.positionAt(attrValueStart + attr.value.length);
     tokensBuilder.push(new Range(start, end), 'string');
