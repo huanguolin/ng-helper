@@ -10,7 +10,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "htmlparser2": "^9.1.0",
+    "@ng-helper/ng-parser": "^0.0.1",
     "parse5": "^7.1.2"
   },
   "devDependencies": {
