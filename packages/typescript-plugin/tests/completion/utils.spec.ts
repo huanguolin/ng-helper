@@ -1,8 +1,8 @@
 import type ts from 'typescript';
 
-import { getNodeType, getMinSyntaxNodeForCompletion } from '../../src/completion/utils';
+import { getNodeType, getExpressionSyntaxNode, getMinSyntaxNode } from '../../src/completion/utils';
 import { PluginContext } from '../../src/type';
-import { typeToString } from '../../src/utils/common';
+import { createTmpSourceFile, typeToString } from '../../src/utils/common';
 import { prepareTestContext } from '../helper';
 
 describe('getNodeType()', () => {
@@ -62,11 +62,10 @@ describe('getNodeType()', () => {
         // function call
         ['ctrl.x().', 'string'],
         ['ctrl.y(ctrl.b.c.d).', 'number[]'],
-        // array
+        // element access
         ['ctrl.b.e[0].', 'number'],
         ['ctrl.b.e[ctrl.b.c.d].', 'number'],
         ['ctrl.b.e[ctrl.b.c.d + 1].', 'number'],
-        ['[ctrl.a.', 'string'],
         // tuple
         ['ctrl.t[0].', 'number'],
         ['ctrl.t[1].', 'string'],
@@ -82,20 +81,13 @@ describe('getNodeType()', () => {
         ['1.', '1'],
         ['"a".', '"a"'],
     ])('input: %s => output: %s', (input, output) => {
-        const node = getMinSyntaxNodeForCompletion(ctx, input)!;
+        const node = getExpressionSyntaxNode(ctx, input)!;
         const result = getNodeType(ctx, type, node);
         expect(typeToString(ctx, result)).toBe(output);
     });
-
-    // it('debug & test', () => {
-    //     const [input, output] = ['"a".', 'string'];
-    //     const node = getMinSyntaxNodeForCompletion(ctx, input)!;
-    //     const result = getNodeType(ctx, type, node);
-    //     expect(typeToString(ctx, result)).toBe(output);
-    // });
 });
 
-describe('getMinSyntaxNodeForCompletion()', () => {
+describe('getMinSyntaxNode()', () => {
     const ctx = prepareTestContext('');
     it.each([
         // 字段访问
@@ -105,8 +97,8 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         ['ctrl.a[ctrl.prefix + "b"].', 'ctrl.a[ctrl.prefix + "b"].'],
 
         // 数组访问
-        ['ctrl.a[ctrl.b.c.', 'ctrl.b.c.'],
-        ['ctrl.a[1 + ctrl.b.c].', 'ctrl.a[1 + ctrl.b.c].'],
+        ['[ctrl.b.c.', 'ctrl.b.c.'],
+        ['[1, ctrl.b.c.', 'ctrl.b.c.'],
 
         // 方法调用
         ['ctrl.a(ctrl.b.c.', 'ctrl.b.c.'],
@@ -127,9 +119,6 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         // 字面量对象
         ['({ a:ctrl.b, b:ctrl.c.', 'ctrl.c.'],
 
-        // 逗号表达式
-        ['ctrl.a = 1, ctrl.b.', 'ctrl.b.'],
-
         // 多语句
         ['ctrl.a = ctrl.b.c; ctrl.d.', 'ctrl.d.'],
 
@@ -137,7 +126,8 @@ describe('getMinSyntaxNodeForCompletion()', () => {
         ['1', '1'],
         ['"a"', '"a"'],
     ])('input: %s => output: %s', (input: string, output: string) => {
-        const v = getMinSyntaxNodeForCompletion(ctx, input);
+        const sourceFile = createTmpSourceFile(ctx, input);
+        const v = getMinSyntaxNode(ctx, sourceFile, sourceFile);
         expect(v?.minNode.getText(v?.sourceFile)).toBe(output);
     });
 });

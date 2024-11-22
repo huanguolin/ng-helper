@@ -9,7 +9,7 @@ import {
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
-import { getNodeType, getMinSyntaxNodeForCompletion } from '../completion/utils';
+import { getNodeType, getExpressionSyntaxNode } from '../completion/utils';
 import { ngHelperServer } from '../ngHelperServer';
 import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
@@ -362,7 +362,7 @@ function getHoverInfoOfType({
 
     // hover 在后代节点上, 取父节点的类型(目的是需要通过它获取关联的文档)，然后再取目标节点类型
     const prefixContextString = contextString.slice(0, targetNode.getStart(minSyntaxSourceFile));
-    const prefixMinSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefixContextString)!;
+    const prefixMinSyntaxNode = getExpressionSyntaxNode(ctx, prefixContextString)!;
     const parentType = getNodeType(ctx, controllerType, prefixMinSyntaxNode);
     logger.info('parentType:', typeToString(ctx, parentType));
     if (!parentType) {

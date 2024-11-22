@@ -22,7 +22,7 @@ import {
     isElementDirective,
 } from '../utils/ng';
 
-import { getMinSyntaxNodeForCompletion, getNodeType } from './utils';
+import { getExpressionSyntaxNode, getNodeType } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     const logger = ctx.logger.prefix('getComponentControllerAs()');
@@ -52,7 +52,7 @@ export function getComponentControllerAs(ctx: PluginContext): string | undefined
 export function getComponentTypeCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
     const logger = ctx.logger.prefix('getComponentCompletions()');
 
-    const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, prefix);
+    const minSyntaxNode = getExpressionSyntaxNode(ctx, prefix);
     const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix) {
@@ -123,7 +123,7 @@ export function getControllerTypeCompletions(
         return;
     }
 
-    const minSyntaxNode = getMinSyntaxNodeForCompletion(ctx, info.prefix);
+    const minSyntaxNode = getExpressionSyntaxNode(ctx, info.prefix);
     const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
     logger.info('minPrefix:', minPrefix);
     if (!minSyntaxNode || !minPrefix || !minPrefix.startsWith(info.controllerAs)) {

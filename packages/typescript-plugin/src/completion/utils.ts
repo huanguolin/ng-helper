@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 
 import { PluginContext, SyntaxNodeInfo } from '../type';
-import { getPropertyType, createTmpSourceFile, typeToString, isCommaListExpression } from '../utils/common';
+import { getPropertyType, createTmpSourceFile, typeToString } from '../utils/common';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -162,6 +162,15 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
     }
 }
 
+export function getExpressionSyntaxNode(ctx: PluginContext, prefix: string): SyntaxNodeInfo | undefined {
+    const sourceFile = createTmpSourceFile(ctx, prefix);
+    // 这里不需要再调用 getMinSyntaxNode 来处理了，请求发送过来的 prefix 已经处理成最小节点了。
+    const statement = sourceFile.statements[0];
+    if (ctx.ts.isExpressionStatement(statement)) {
+        return { sourceFile, minNode: statement.expression };
+    }
+}
+
 /**
  * 获取用于补全的最小语法节点。举例：
  *
@@ -172,8 +181,8 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  * ctrl.a[ctrl.prefix + 'b']. -> ctrl.a[ctrl.prefix + 'b'].
  *
  * 数组访问
- * ctrl.a[ctrl.b.c. -> ctrl.b.c.
- * ctrl.a[1 + ctrl.b.c]. -> ctrl.a[1 + ctrl.b.c].
+ * [ctrl.b.c. -> ctrl.b.c.
+ * [1 + ctrl.b.c. -> [1 + ctrl.b.c.
  *
  * 数组值
  * [ctrl.b.c. -> ctrl.b.c.
@@ -197,9 +206,6 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  * 字面量对象
  * ({ a:ctrl.b, b:ctrl.c. -> ctrl.c.
  *
- * 逗号表达式
- * ctrl.a = 1, ctrl.b. -> ctrl.b.
- *
  * 多语句
  * ctrl.a = ctrl.b.c; ctrl.d. -> ctrl.d.
  *
@@ -211,15 +217,14 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  * 'a'.toString().
  *
  * @param ctx 上下文
- * @param prefix 补全前缀字符串
+ * @param sourceFile 编译后的源文件
  * @returns 最小语法节点
  */
-export function getMinSyntaxNodeForCompletion(ctx: PluginContext, prefix: string): SyntaxNodeInfo | undefined {
-    const sourceFile = createTmpSourceFile(ctx, prefix);
-    return getMinSyntaxNode(ctx, sourceFile, sourceFile);
-}
-
-function getMinSyntaxNode(ctx: PluginContext, sourceFile: ts.SourceFile, node: ts.Node): SyntaxNodeInfo | undefined {
+export function getMinSyntaxNode(
+    ctx: PluginContext,
+    sourceFile: ts.SourceFile,
+    node: ts.Node,
+): SyntaxNodeInfo | undefined {
     return visit(node);
 
     function visit(node: ts.Node): SyntaxNodeInfo | undefined {
@@ -227,8 +232,6 @@ function getMinSyntaxNode(ctx: PluginContext, sourceFile: ts.SourceFile, node: t
             return visit(node.statements[node.statements.length - 1]);
         } else if (ctx.ts.isExpressionStatement(node)) {
             return visit(node.expression);
-        } else if (isCommaListExpression(ctx, node)) {
-            return visit(node.elements[node.elements.length - 1]);
         } else if (ctx.ts.isBinaryExpression(node)) {
             return visit(node.right);
         } else if (ctx.ts.isPrefixUnaryExpression(node)) {
