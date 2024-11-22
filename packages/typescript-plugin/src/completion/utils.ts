@@ -168,8 +168,8 @@ function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type
  * 字段访问
  * ctrl. -> ctrl.
  * ctrl.a.b. -> ctrl.a.b.
- * ctrl.a.['b']. -> ctrl.a.['b'].
- * ctrl.a.[ctrl.prefix + 'b']. -> ctrl.a.[ctrl.prefix + 'b'].
+ * ctrl.a['b']. -> ctrl.a['b'].
+ * ctrl.a[ctrl.prefix + 'b']. -> ctrl.a[ctrl.prefix + 'b'].
  *
  * 数组访问
  * ctrl.a[ctrl.b.c. -> ctrl.b.c.
