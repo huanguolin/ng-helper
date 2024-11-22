@@ -35,8 +35,8 @@ export function registerSemantic(context: ExtensionContext, port: number) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
-            async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
-                return timeCost('htmlSemanticProvider', () => htmlSemanticProvider({ document, port, token }));
+            provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
+                return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
             },
         },
         legend,

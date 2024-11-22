@@ -10,6 +10,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
+import { timeCost } from '../../debug';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -41,28 +42,32 @@ export function registerCompletion(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerCompletionItemProvider('html', {
             provideCompletionItems(document, position, vscodeCancelToken, context) {
-                return completion({
-                    noRegisterTriggerChar: true,
-                    document,
-                    position,
-                    vscodeCancelToken,
-                    context,
-                    port,
-                });
+                return timeCost('provideCompletion', () =>
+                    completion({
+                        noRegisterTriggerChar: true,
+                        document,
+                        position,
+                        vscodeCancelToken,
+                        context,
+                        port,
+                    }),
+                );
             },
         }),
         languages.registerCompletionItemProvider(
             'html',
             {
                 provideCompletionItems(document, position, vscodeCancelToken, context) {
-                    return completion({
-                        noRegisterTriggerChar: false,
-                        document,
-                        position,
-                        vscodeCancelToken,
-                        context,
-                        port,
-                    });
+                    return timeCost('provideCompletion', () =>
+                        completion({
+                            noRegisterTriggerChar: false,
+                            document,
+                            position,
+                            vscodeCancelToken,
+                            context,
+                            port,
+                        }),
+                    );
                 },
             },
             SPACE,
