@@ -1,5 +1,4 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
-import { isContainsNgFilter } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import {
     CancellationToken,
@@ -17,6 +16,7 @@ import {
 } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import {
+    getContextString,
     getControllerNameInfo,
     getCorrespondingScriptFileName,
     isComponentHtml,
@@ -60,23 +60,28 @@ async function getTypeCompletion({
         return;
     }
 
-    if (cursorAtInfo.type === 'template') {
-        const prefix = cursorAtInfo.template.slice(0, cursorAtInfo.relativeCursorAt + 1);
-        // TODO: use ng-parser handle this
-        if (prefix && !isContainsNgFilter(prefix)) {
-            return await getTypeCompletionQuery({ document, ctrlInfo, prefix, port, vscodeCancelToken });
-        }
-    } else {
-        if (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName)) {
-            // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
-            let prefix = cursorAtInfo.attrValue.slice(0, cursorAtInfo.relativeCursorAt + 1);
-            // TODO: use ng-parser handle this
-            if (prefix && !isContainsNgFilter(prefix)) {
-                prefix = processPrefix(cursorAtInfo.attrValue, prefix);
-                if (prefix) {
-                    return await getTypeCompletionQuery({ document, ctrlInfo, prefix, port, vscodeCancelToken });
-                }
-            }
+    const contextString = getContextString(cursorAtInfo);
+    switch (contextString.type) {
+        case 'none':
+        case 'literal':
+            // do nothing
+            return;
+        case 'filterName':
+            // TODO: support filter name hover
+            break;
+        case 'identifier':
+        case 'propertyAccess':
+            return await checkAndCallApi(contextString.value);
+    }
+
+    async function checkAndCallApi(contextString: string) {
+        const isTemplateValue = cursorAtInfo.type === 'template';
+        // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
+        const isAttrValueAndCompletable =
+            cursorAtInfo.type === 'attrValue' &&
+            (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName));
+        if (isTemplateValue || isAttrValueAndCompletable) {
+            return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, port, vscodeCancelToken });
         }
     }
 }
@@ -131,17 +136,6 @@ function buildCompletionList(res: NgTypeInfo[]) {
         return item;
     });
     return new CompletionList(items, false);
-}
-
-// 特殊处理:
-// 输入：prefix = "{ 'class-name': ctrl."
-// 输出：prefix = "ctrl."
-function processPrefix(attrName: string, prefix: string): string {
-    prefix = prefix.trim();
-    if ((attrName === 'ng-class' || attrName === 'ng-style') && prefix.startsWith('{') && prefix.includes(':')) {
-        return prefix.split(':').pop()!;
-    }
-    return prefix;
 }
 
 async function getCtrlCompletion({

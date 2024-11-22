@@ -1,5 +1,4 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
-import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import type { TextDocument } from 'vscode';
 
 import {
@@ -7,6 +6,7 @@ import {
     isNgBuiltinDirective,
     checkServiceAndGetScriptFilePath,
     isNgUserCustomAttr,
+    getContextString,
 } from '../utils';
 
 export async function provideTypeHoverInfo<T>({
@@ -55,10 +55,4 @@ export async function provideTypeHoverInfo<T>({
             }
         }
     }
-}
-
-function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
-    const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
-    const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
-    return minNgSyntaxInfo;
 }

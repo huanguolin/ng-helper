@@ -1,7 +1,9 @@
 import os from 'node:os';
 
+import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { isHtmlTagName } from '@ng-helper/shared/lib/html';
+import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
@@ -162,4 +164,10 @@ export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHover
         attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
         parentTagName: cursorAtInfo.parentTagName ? camelCase(cursorAtInfo.parentTagName) : undefined,
     };
+}
+
+export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
+    const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
+    const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    return minNgSyntaxInfo;
 }

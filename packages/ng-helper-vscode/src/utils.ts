@@ -208,5 +208,7 @@ export function intersect<T>(arr1: T[], arr2: T[]): T[] {
 }
 
 export function buildCursor(document: TextDocument, position: Position, isHover = true): Cursor {
-    return cursorAt(document.offsetAt(position), isHover);
+    const c = cursorAt(document.offsetAt(position), isHover);
+    console.log('============ buildCursor >>>', c, document.positionAt(c.at), position);
+    return c;
 }
