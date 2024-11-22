@@ -118,7 +118,7 @@ export function getTextInTemplate(htmlText: string, cursor: Cursor): CursorTextS
  * @returns The text span between the left and right markers, along with the updated cursor position.
  *          Returns undefined if the markers are not found or if the text span contains the markers.
  */
-export function getTextInside(
+function getTextInside(
     htmlText: string,
     cursor: Cursor,
     leftMarker: string,
@@ -156,16 +156,6 @@ export function getTextInside(
             },
         };
     }
-}
-
-/**
- * Retrieves the text before the cursor position.
- *
- * @param cursorTextSpan - The cursor and text information.
- * @returns The text before the cursor position.
- */
-export function getBeforeCursorText({ text: str, cursor }: CursorTextSpan): string {
-    return str.slice(0, cursor.isHover ? cursor.at + 1 : cursor.at);
 }
 
 export function ensureInputValid(htmlText: string, cursor: Cursor) {

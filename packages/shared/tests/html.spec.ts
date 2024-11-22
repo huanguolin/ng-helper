@@ -4,7 +4,6 @@ import {
     getTextInTemplate,
     indexOfNgFilter,
     getMapValues,
-    getBeforeCursorText,
     getAttrValueStart,
     type Location,
 } from '../lib/html';
@@ -47,6 +46,25 @@ describe('indexOfNgFilter()', () => {
     ])('input: %s => output: %s', (input: string, output: number) => {
         const result = indexOfNgFilter(input);
         expect(result).toBe(output);
+    });
+});
+
+describe('getAttrValueStart()', () => {
+    it.each([
+        [{ name: 'class', value: 'container' }, { startOffset: 0, endOffset: 16 }, 'class="container"', 7],
+        [{ name: 'id', value: 'myDiv' }, { startOffset: 0, endOffset: 11 }, 'id="myDiv"', 4],
+        [{ name: 'disabled', value: '' }, { startOffset: 0, endOffset: 8 }, 'disabled', undefined],
+        [{ name: 'data-test', value: 'value' }, { startOffset: 0, endOffset: 18 }, 'data-test="value"', 11],
+        [{ name: 'style', value: 'color: red' }, { startOffset: 0, endOffset: 19 }, 'style="color: red"', 7],
+        [
+            { name: 'ng-click', value: 'doSomething()' },
+            { startOffset: 0, endOffset: 25 },
+            `ng-click='doSomething()'`,
+            10,
+        ],
+    ])('given attr: %p, location: %p, htmlText: %p, should return %p', (attr, location, htmlText, expectedOutput) => {
+        const result = getAttrValueStart(attr, location as Location, htmlText);
+        expect(result).toBe(expectedOutput);
     });
 });
 
@@ -111,31 +129,6 @@ describe('canCompletionHtmlAttr()', () => {
     });
 });
 
-describe('getBeforeCursorText()', () => {
-    it.each([
-        ['1234', 2, '12'],
-        ['1234', 1, '1'],
-        ['1234', 0, ''],
-        ['1234', 3, '123'],
-        ['1234', 4, '1234'],
-        ['', 0, ''],
-    ])('[isHover = false] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getBeforeCursorText({ text: text, start: 0, cursor: { at: offset, isHover: false } });
-        expect(result).toBe(expectedOutput);
-    });
-
-    it.each([
-        ['1234', 2, '123'],
-        ['1234', 1, '12'],
-        ['1234', 0, '1'],
-        ['1234', 3, '1234'],
-        ['', 0, ''],
-    ])('[isHover = true] given text: "%s", offset: %s, should return "%s"', (text, offset, expectedOutput) => {
-        const result = getBeforeCursorText({ text: text, start: 0, cursor: { at: offset, isHover: true } });
-        expect(result).toBe(expectedOutput);
-    });
-});
-
 describe('getMapValues()', () => {
     it.each([
         {
@@ -165,24 +158,5 @@ describe('getMapValues()', () => {
     ])('given input: "%s", should return %s', ({ input, output }) => {
         const result = getMapValues(input);
         expect(result).toStrictEqual(output);
-    });
-});
-
-describe('getAttrValueStart()', () => {
-    it.each([
-        [{ name: 'class', value: 'container' }, { startOffset: 0, endOffset: 16 }, 'class="container"', 7],
-        [{ name: 'id', value: 'myDiv' }, { startOffset: 0, endOffset: 11 }, 'id="myDiv"', 4],
-        [{ name: 'disabled', value: '' }, { startOffset: 0, endOffset: 8 }, 'disabled', undefined],
-        [{ name: 'data-test', value: 'value' }, { startOffset: 0, endOffset: 18 }, 'data-test="value"', 11],
-        [{ name: 'style', value: 'color: red' }, { startOffset: 0, endOffset: 19 }, 'style="color: red"', 7],
-        [
-            { name: 'ng-click', value: 'doSomething()' },
-            { startOffset: 0, endOffset: 25 },
-            `ng-click='doSomething()'`,
-            10,
-        ],
-    ])('given attr: %p, location: %p, htmlText: %p, should return %p', (attr, location, htmlText, expectedOutput) => {
-        const result = getAttrValueStart(attr, location as Location, htmlText);
-        expect(result).toBe(expectedOutput);
     });
 });
