@@ -1,5 +1,5 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
-import { indexOfNgFilter, getMapValues } from '@ng-helper/shared/lib/html';
+import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import type { TextDocument } from 'vscode';
 
 import {
@@ -20,63 +20,45 @@ export async function provideTypeHoverInfo<T>({
     port: number;
     api: (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
 }): Promise<T | undefined> {
-    let cursorAt = cursorAtInfo.relativeCursorAt;
-
-    if (cursorAtInfo.type === 'template') {
-        const contextString = trimFilters(cursorAtInfo.template, cursorAt);
-        if (contextString) {
-            return await callApi(contextString, cursorAt);
-        }
-    } else if (cursorAtInfo.type === 'attrValue') {
-        if (
-            isComponentTagName(cursorAtInfo.tagName) ||
-            isNgBuiltinDirective(cursorAtInfo.attrName) ||
-            isNgUserCustomAttr(cursorAtInfo.attrName)
-        ) {
-            let contextString = trimFilters(cursorAtInfo.attrValue, cursorAt);
-            // handle ng-class/ng-style map value
-            ({ contextString, cursorAt } = handleMapAttrValue(cursorAtInfo.attrName, contextString, cursorAt));
-            return await callApi(contextString, cursorAt);
-        }
+    const contextString = getContextString(cursorAtInfo);
+    switch (contextString.type) {
+        case 'none':
+        case 'literal':
+            // do nothing
+            return;
+        case 'filterName':
+            // TODO: support filter name hover
+            break;
+        case 'identifier':
+        case 'propertyAccess':
+            return await checkAndCallApi(contextString.value);
     }
 
-    async function callApi(contextString: string, cursorAt: number) {
-        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
-
-        if (!scriptFilePath) {
+    async function checkAndCallApi(contextString: string) {
+        if (!contextString) {
             return;
         }
 
-        return await api(scriptFilePath, contextString, cursorAt);
-    }
-}
-
-// 特殊处理:
-// 输入：xxx | filter
-// 输出：xxx
-function trimFilters(contextString: string, cursorAt: number): string {
-    const index = indexOfNgFilter(contextString);
-    if (index < 0) {
-        return contextString;
-    }
-
-    if (index <= cursorAt) {
-        return '';
-    }
-
-    return contextString.slice(0, index);
-}
-
-function handleMapAttrValue(attrName: string, contextString: string, cursorAt: number) {
-    if (attrName === 'ng-class' || attrName === 'ng-style') {
-        const mapValues = getMapValues(contextString);
-        if (mapValues && mapValues.length) {
-            const hoveredValue = mapValues.find((v) => v.start <= cursorAt && cursorAt <= v.start + v.text.length);
-            if (hoveredValue) {
-                contextString = hoveredValue.text;
-                cursorAt = cursorAt - hoveredValue.start;
+        // 这里简单起见，直接取最后一个字符的位置。
+        // 只要 getMinNgSyntaxInfo 没有问题，这里的处理就没问题。
+        const cursorAt = contextString.length - 1;
+        if (
+            cursorAtInfo.type === 'template' ||
+            (cursorAtInfo.type === 'attrValue' &&
+                (isComponentTagName(cursorAtInfo.tagName) ||
+                    isNgBuiltinDirective(cursorAtInfo.attrName) ||
+                    isNgUserCustomAttr(cursorAtInfo.attrName)))
+        ) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            if (scriptFilePath) {
+                return await api(scriptFilePath, contextString, cursorAt);
             }
         }
     }
-    return { contextString, cursorAt };
+}
+
+function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
+    const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
+    const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    return minNgSyntaxInfo;
 }

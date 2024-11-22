@@ -5,7 +5,7 @@ import { isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
-import { TextDocument, Uri, type Position } from 'vscode';
+import { Range, TextDocument, Uri, type Position } from 'vscode';
 
 import { checkNgHelperServerRunning, getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
@@ -128,7 +128,7 @@ export function isValidIdentifierChar(char: string): boolean {
 }
 
 export function isHoverValidIdentifierChar(document: TextDocument, position: Position): boolean {
-    const ch = document.getText()[document.offsetAt(position)];
+    const ch = document.getText(new Range(position, position.translate(0, 1)));
     return isValidIdentifierChar(ch);
 }
 

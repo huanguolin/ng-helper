@@ -2,8 +2,6 @@ import {
     canCompletionHtmlAttr,
     isContainsNgFilter,
     getTextInTemplate,
-    indexOfNgFilter,
-    getMapValues,
     getAttrValueStart,
     type Location,
 } from '../lib/html';
@@ -24,28 +22,6 @@ describe('isContainsNgFilter()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = isContainsNgFilter(input);
         expect(v).toBe(output);
-    });
-});
-
-describe('indexOfNgFilter()', () => {
-    it.each([
-        ['', -1],
-        ['abc', -1],
-        ['abc |', 4],
-        ['abc | def', 4],
-        ['abc | def |', 4],
-        ['| abc', 0],
-        ['| abc | def', 0],
-        ['|', 0],
-        ['x|', 1],
-        ['|y', 0],
-        ['x|y', 1],
-        ['abc || def', -1],
-        ['abc | | def', 4],
-        ['||', -1],
-    ])('input: %s => output: %s', (input: string, output: number) => {
-        const result = indexOfNgFilter(input);
-        expect(result).toBe(output);
     });
 });
 
@@ -126,37 +102,5 @@ describe('canCompletionHtmlAttr()', () => {
     ])('input: %s => output: %s', (input: string, output: boolean) => {
         const v = canCompletionHtmlAttr(input);
         expect(v).toBe(output);
-    });
-});
-
-describe('getMapValues()', () => {
-    it.each([
-        {
-            input: `{ 'class-x': ctrl.x, 'class-y': ctrl.y, z: ctrl.z > 5 }`,
-            output: [
-                { text: ' ctrl.x', start: 12 },
-                { text: ' ctrl.y', start: 31 },
-                { text: ' ctrl.z > 5 ', start: 42 },
-            ],
-        },
-        {
-            input: `{}`,
-            output: undefined,
-        },
-        {
-            input: `{ 'class-x': ctrl.x`,
-            output: undefined,
-        },
-        {
-            input: `{ 'class-x': ctrl.x, }`,
-            output: undefined,
-        },
-        {
-            input: `{ 'class-x': ctrl.x, extra: }`,
-            output: undefined,
-        },
-    ])('given input: "%s", should return %s', ({ input, output }) => {
-        const result = getMapValues(input);
-        expect(result).toStrictEqual(output);
     });
 });

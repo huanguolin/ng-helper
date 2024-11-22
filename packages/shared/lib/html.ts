@@ -62,21 +62,6 @@ export function isContainsNgFilter(text: string): boolean {
     return NG_FILTER_PATTERN.test(text);
 }
 
-/**
- * @deprecated
- * Finds the index of the first occurrence of an Angular filter in the given text.
- *
- * @param text - The text to search for the Angular filter.
- * @returns The index of the first occurrence of the Angular filter, or -1 if not found.
- */
-export function indexOfNgFilter(text: string): number {
-    const matched = text.match(NG_FILTER_PATTERN);
-    if (matched && typeof matched.index === 'number') {
-        return matched.index + matched[1].length;
-    }
-    return -1;
-}
-
 export function getAttrValueStart(attr: Attribute, location: Location, htmlText: string): number | undefined {
     const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
     const guessedAttrText = guessAttrText(attr, '"');
@@ -192,37 +177,6 @@ export function canCompletionHtmlAttr(tagTextBeforeCursor: string): boolean {
     }
 
     return true;
-}
-
-// 特殊处理:
-// 输入：{ 'class-x': ctrl.x, 'class-y': ctrl.y, z: ctrl.z > 5 }
-// 输出：[ctrl.x, ctrl.y, ctrl.z > 5]
-export function getMapValues(mapString: string): TextSpan[] | undefined {
-    const start = mapString.indexOf('{');
-    const end = mapString.indexOf('}');
-    if (start < 0 || end < 0 || start > end) {
-        return;
-    }
-
-    const arr = mapString.slice(start + 1, end).split(/[:,]/);
-    if (arr.length % 2 !== 0 || arr.length !== arr.filter((x) => x.trim()).length) {
-        // not paired
-        return;
-    }
-
-    const result: TextSpan[] = [];
-    let baseStart = start + 1;
-    for (let i = 0; i < arr.length; i++) {
-        const text = arr[i];
-        if ((i + 1) % 2 === 0) {
-            result.push({
-                text,
-                start: baseStart,
-            });
-        }
-        baseStart += text.length + 1; // ':' or ','
-    }
-    return result;
 }
 
 const htmlTagNameSet = new Set([
