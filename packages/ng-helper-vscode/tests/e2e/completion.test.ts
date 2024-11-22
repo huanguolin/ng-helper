@@ -134,7 +134,7 @@ describe('Completion', () => {
         it('get completion info of "ctrl.obj.*" (controller html)', async () => {
             await testCompletion({
                 filePath: APP_PAGES_P2_HTML_PATH,
-                position: new vscode.Position(4, 15),
+                position: new vscode.Position(4, 27),
                 triggerChar: '.',
             });
         });
