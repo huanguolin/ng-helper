@@ -117,7 +117,7 @@ describe('Completion', () => {
         it('get completion info of "ctrl.*" (component html)', async () => {
             await testCompletion({
                 filePath: BAZ_QUX_COMPONENT_HTML_PATH,
-                position: new vscode.Position(18, 8),
+                position: new vscode.Position(18, 7),
                 triggerChar: '.',
             });
         });
@@ -134,7 +134,7 @@ describe('Completion', () => {
         it('get completion info of "ctrl.obj.*" (controller html)', async () => {
             await testCompletion({
                 filePath: APP_PAGES_P2_HTML_PATH,
-                position: new vscode.Position(4, 16),
+                position: new vscode.Position(4, 15),
                 triggerChar: '.',
             });
         });
@@ -195,7 +195,7 @@ describe('Completion', () => {
             // ctrl.*
             await testCompletion({
                 filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
-                position: new vscode.Position(35, 16),
+                position: new vscode.Position(35, 15),
                 triggerChar: '.',
             });
         });

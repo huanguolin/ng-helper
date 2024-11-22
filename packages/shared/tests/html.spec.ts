@@ -1,29 +1,4 @@
-import {
-    canCompletionHtmlAttr,
-    isContainsNgFilter,
-    getTextInTemplate,
-    getAttrValueStart,
-    type Location,
-} from '../lib/html';
-
-describe('isContainsNgFilter()', () => {
-    it.each([
-        ['', false],
-        ['  ', false],
-        ['||', false],
-        ['a||', false],
-        ['||b', false],
-        ['a||b', false],
-        ['|', true],
-        ['"A"|', true],
-        ['|date', true],
-        ['"A"|date', true],
-        ['"A" | date', true],
-    ])('input: %s => output: %s', (input: string, output: boolean) => {
-        const v = isContainsNgFilter(input);
-        expect(v).toBe(output);
-    });
-});
+import { canCompletionHtmlAttr, getTextInTemplate, getAttrValueStart, type Location } from '../lib/html';
 
 describe('getAttrValueStart()', () => {
     it.each([

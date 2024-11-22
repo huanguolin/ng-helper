@@ -47,21 +47,6 @@ export interface CursorTextSpan extends TextSpan {
 
 export const SPACE = '\u0020';
 
-/**
- * @deprecated
- */
-export const NG_FILTER_PATTERN = /(^|[^|])\|([^|]|$)/;
-
-/**
- * @deprecated
- * Checks if the given text contains an Angular filter.
- * @param text - The text to check.
- * @returns A boolean indicating whether the text contains an Angular filter.
- */
-export function isContainsNgFilter(text: string): boolean {
-    return NG_FILTER_PATTERN.test(text);
-}
-
 export function getAttrValueStart(attr: Attribute, location: Location, htmlText: string): number | undefined {
     const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
     const guessedAttrText = guessAttrText(attr, '"');
