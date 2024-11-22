@@ -168,6 +168,8 @@ describe('getMinNgSyntaxInfo', () => {
 
         // Object literal tests
         ['({ a:ctrl., b:ctrl.c }', 3, 'a', 'identifier'],
+        ['({ 1:ctrl.x, b:ctrl.c }', 3, '1', 'literal'],
+        ['({ "class-x":ctrl.x, b:ctrl.c }', 10, '"class-x"', 'literal'],
         ['({ [1 + ctrl.x * 2]:ctrl., b:ctrl.c }', 13, 'ctrl.x', 'propertyAccess'],
 
         // Filter tests
