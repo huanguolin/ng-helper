@@ -18,7 +18,6 @@ import {
     type CancellationToken,
 } from 'vscode';
 
-import { timeCost } from '../../debug';
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
 import { intersect, uniq } from '../../utils';
 import {
@@ -36,7 +35,9 @@ export function registerSemantic(context: ExtensionContext, port: number) {
         'html',
         {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
-                return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
+                // log 记录的太多了，暂时不要 timeCost
+                // return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
+                return htmlSemanticProvider({ document, port, token });
             },
         },
         legend,
