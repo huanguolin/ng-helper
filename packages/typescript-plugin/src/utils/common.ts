@@ -225,5 +225,5 @@ export function getProp(
 }
 
 export function formatParameters(params: Parameter[]): string {
-    return params.map((p) => (p.name + p.type ? `: ${p.type}` : '')).join(',');
+    return params.map((p) => p.name + (p.type ? `: ${p.type}` : '')).join(', ');
 }

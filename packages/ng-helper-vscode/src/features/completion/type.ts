@@ -147,6 +147,7 @@ function buildCompletionList(res: NgTypeInfo[]) {
                   ? CompletionItemKind.Function
                   : CompletionItemKind.Field,
         );
+
         if (x.isFunction) {
             // 分两段补全，第一段是函数名，第二段是参数
             let snippet = `${x.name}$1(`;
@@ -155,11 +156,16 @@ function buildCompletionList(res: NgTypeInfo[]) {
             item.insertText = new SnippetString(snippet);
         } else if (x.isFilter) {
             let snippet = `${x.name}$1 `;
-            snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
+            snippet += x.paramNames!.map((x, i) => `:\${${i + 2}:${x}}`).join(' ');
             snippet += '$0';
             item.insertText = new SnippetString(snippet);
         }
-        item.detail = `(${x.isFilter ? 'filter' : x.kind}) ${x.name}: ${x.typeString}`;
+
+        if (x.isFilter) {
+            item.detail = `(filter) ${x.name}${x.typeString}`;
+        } else {
+            item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
+        }
         item.documentation = x.document;
         item.sortText = i.toString().padStart(3, '0');
         return item;

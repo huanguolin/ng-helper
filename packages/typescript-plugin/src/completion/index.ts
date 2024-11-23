@@ -376,6 +376,7 @@ export function getFilterNameCompletions(coreCtx: CorePluginContext, info: NgReq
         document: '',
         isFunction: false,
         isFilter: true,
-        paramNames: x.parameters.map((p) => p.name),
+        // 注意：这里用于自动补全，要跳过第一个参数。上面显示类型的部分不用跳过。
+        paramNames: x.parameters.slice(1).map((p) => p.name),
     }));
 }
