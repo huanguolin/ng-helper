@@ -492,7 +492,7 @@ function getFilterInfo(ctx: PluginContext, node: ts.CallExpression): FilterInfo 
 
     const name = nameNode.text;
     const parameters: Parameter[] = [];
-    const funcExpr = getAngularDefineFunctionExpression(ctx, node);
+    const funcExpr = getAngularDefineFunctionExpression(ctx, node.arguments[1]);
     if (funcExpr) {
         const returnStatement = getAngularDefineFunctionReturnStatement(ctx, funcExpr);
         if (returnStatement && returnStatement.expression && ctx.ts.isFunctionExpression(returnStatement.expression)) {
