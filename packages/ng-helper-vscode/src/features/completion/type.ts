@@ -22,6 +22,7 @@ import {
     isComponentHtml,
     isComponentTagName,
     isNgBuiltinDirective,
+    isNgUserCustomAttr,
 } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -76,10 +77,11 @@ async function getTypeCompletion({
 
     async function checkAndCallApi(contextString: string) {
         const isTemplateValue = cursorAtInfo.type === 'template';
-        // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
         const isAttrValueAndCompletable =
             cursorAtInfo.type === 'attrValue' &&
-            (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName));
+            (isComponentTagName(cursorAtInfo.tagName) ||
+                isNgBuiltinDirective(cursorAtInfo.attrName) ||
+                isNgUserCustomAttr(cursorAtInfo.attrName));
         if (isTemplateValue || isAttrValueAndCompletable) {
             return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, port, vscodeCancelToken });
         }
@@ -152,8 +154,11 @@ async function getCtrlCompletion({
     if (isComponentHtml(document)) {
         if (cursorAtInfo.type === 'template') {
             return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
-        } else if (isComponentTagName(cursorAtInfo.tagName) || isNgBuiltinDirective(cursorAtInfo.attrName)) {
-            // TODO: 指令的属性也要走这个分支，需要考虑怎么去判断：当前属性是一个指令的属性
+        } else if (
+            isComponentTagName(cursorAtInfo.tagName) ||
+            isNgBuiltinDirective(cursorAtInfo.attrName) ||
+            isNgUserCustomAttr(cursorAtInfo.attrName)
+        ) {
             return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
         }
     } else {

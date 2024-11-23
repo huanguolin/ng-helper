@@ -58,7 +58,6 @@ export async function htmlSemanticProvider({
 }) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
-    // TODO: 使用 getCursorAt 或者 parse5 的 parse5.parseFragment 方法
     const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
     if (!componentNodes.length && !maybeDirectiveNodes.length) {

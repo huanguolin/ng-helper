@@ -42,13 +42,14 @@ export async function provideTypeHoverInfo<T>({
         // 这里简单起见，直接取最后一个字符的位置。
         // 只要 getMinNgSyntaxInfo 没有问题，这里的处理就没问题。
         const cursorAt = contextString.length - 1;
-        if (
-            cursorAtInfo.type === 'template' ||
-            (cursorAtInfo.type === 'attrValue' &&
-                (isComponentTagName(cursorAtInfo.tagName) ||
-                    isNgBuiltinDirective(cursorAtInfo.attrName) ||
-                    isNgUserCustomAttr(cursorAtInfo.attrName)))
-        ) {
+
+        const isTemplateValue = cursorAtInfo.type === 'template';
+        const isAttrValueAndCompletable =
+            cursorAtInfo.type === 'attrValue' &&
+            (isComponentTagName(cursorAtInfo.tagName) ||
+                isNgBuiltinDirective(cursorAtInfo.attrName) ||
+                isNgUserCustomAttr(cursorAtInfo.attrName));
+        if (isTemplateValue || isAttrValueAndCompletable) {
             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
             if (scriptFilePath) {
                 return await api(scriptFilePath, contextString, cursorAt);
