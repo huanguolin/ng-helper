@@ -24,6 +24,7 @@ import type {
     NgResponse,
     NgListDirectivesStringAttrsRequest,
     NgDirectivesStringAttrsResponse,
+    NgFilterNameDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 
@@ -34,6 +35,7 @@ import {
     getComponentAttrCompletions,
     getDirectiveCompletions,
     getControllerTypeCompletions,
+    getFilterNameCompletions,
 } from '../completion';
 import {
     getComponentNameOrAttrNameDefinitionInfo,
@@ -41,12 +43,14 @@ import {
     getControllerNameDefinitionInfo,
     getControllerTypeDefinitionInfo,
     getDirectiveDefinitionInfo,
+    getFilterNameDefinitionInfo,
 } from '../definition';
 import {
     getComponentTypeHoverInfo,
     getComponentNameOrAttrNameHoverInfo,
     getControllerTypeHoverInfo,
     getDirectiveHoverInfo,
+    getFilterNameHoverInfo,
 } from '../hover';
 import { getComponentsStringAttrsInfo, getDirectivesStringAttrsInfo } from '../other';
 import type { PluginContext, CorePluginContext } from '../type';
@@ -88,6 +92,14 @@ export function configApi(app: express.Application) {
 }
 
 function configDefinitionApi(app: express.Application) {
+    app.post('/ng-helper/filter/name/definition', (req, res) => {
+        handleRequestWithCoreCtx<NgFilterNameDefinitionRequest, NgDefinitionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getFilterNameDefinitionInfo(coreCtx, body),
+        });
+    });
+
     app.post('/ng-helper/controller/name/definition', (req, res) => {
         handleRequestWithCtx<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
             req,
@@ -138,6 +150,14 @@ function configDefinitionApi(app: express.Application) {
 }
 
 function configHoverApi(app: express.Application) {
+    app.post('/ng-helper/filter/name/hover', (req, res) => {
+        handleRequestWithCoreCtx<NgHoverRequest, NgHoverResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getFilterNameHoverInfo(coreCtx, body),
+        });
+    });
+
     app.post('/ng-helper/component/type/hover', (req, res) => {
         handleRequestWithCtx<NgHoverRequest, NgHoverResponse>({
             req,
@@ -180,6 +200,14 @@ function configHoverApi(app: express.Application) {
 }
 
 function configCompletionApi(app: express.Application) {
+    app.post('/ng-helper/filter/name/completion', (req, res) => {
+        handleRequestWithCoreCtx<NgRequest, NgTypeCompletionResponse>({
+            req,
+            res,
+            action: (coreCtx, body) => getFilterNameCompletions(coreCtx, body),
+        });
+    });
+
     app.post('/ng-helper/component/type/completion', (req, res) => {
         handleRequestWithCtx<NgTypeCompletionRequest, NgTypeCompletionResponse>({
             req,

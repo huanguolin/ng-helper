@@ -24,6 +24,7 @@ import {
     type NgControllerNameDefinitionRequest,
     type NgListDirectivesStringAttrsRequest,
     type NgDirectivesStringAttrsResponse,
+    type NgFilterNameDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import axios, { CancelToken } from 'axios';
 import { CancellationToken } from 'vscode';
@@ -43,18 +44,6 @@ interface BizRequestInput<T> {
     vscodeCancelToken: CancellationToken;
 }
 
-export function getControllerNameDefinitionApi({
-    port,
-    vscodeCancelToken,
-    info,
-}: ApiInput<NgControllerNameDefinitionRequest>) {
-    return bizRequest<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
-        url: buildUrl(port, 'controller', 'name', 'definition'),
-        info,
-        vscodeCancelToken,
-        apiName: 'getControllerNameDefinitionApi',
-    });
-}
 export function listDirectivesStringAttrs({
     port,
     vscodeCancelToken,
@@ -78,6 +67,28 @@ export function listComponentsStringAttrs({
         info,
         vscodeCancelToken,
         apiName: 'listComponentsStringAttrs',
+    });
+}
+
+export function getFilterNameDefinitionApi({ port, vscodeCancelToken, info }: ApiInput<NgFilterNameDefinitionRequest>) {
+    return bizRequest<NgFilterNameDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'filter', 'name', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getFilterNameDefinitionApi',
+    });
+}
+
+export function getControllerNameDefinitionApi({
+    port,
+    vscodeCancelToken,
+    info,
+}: ApiInput<NgControllerNameDefinitionRequest>) {
+    return bizRequest<NgControllerNameDefinitionRequest, NgDefinitionResponse>({
+        url: buildUrl(port, 'controller', 'name', 'definition'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getControllerNameDefinitionApi',
     });
 }
 
@@ -162,6 +173,24 @@ export function getDirectiveHoverApi({ port, vscodeCancelToken, info }: ApiInput
         info,
         vscodeCancelToken,
         apiName: 'getDirectiveHoverApi',
+    });
+}
+
+export function getFilterNameHoverApi({ port, vscodeCancelToken, info }: ApiInput<NgHoverRequest>) {
+    return bizRequest<NgHoverRequest, NgHoverResponse>({
+        url: buildUrl(port, 'filter', 'name', 'hover'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getFilterNameHoverApi',
+    });
+}
+
+export function getFilterNameCompletionApi({ port, vscodeCancelToken, info }: ApiInput<NgRequest>) {
+    return bizRequest<NgRequest, NgTypeCompletionResponse>({
+        url: buildUrl(port, 'filter', 'name', 'completion'),
+        info,
+        vscodeCancelToken,
+        apiName: 'getFilterNameCompletionApi',
     });
 }
 

@@ -121,6 +121,23 @@ export function isNgUserCustomAttr(attrName: string): boolean {
     );
 }
 
+export const BUILTIN_FILTER_NAMES = [
+    'currency',
+    'date',
+    'filter',
+    'json',
+    'limitTo',
+    'lowercase',
+    'number',
+    'orderBy',
+    'uppercase',
+    'translate',
+] as const;
+export type BuiltinFilterNames = (typeof BUILTIN_FILTER_NAMES)[number];
+export function isBuiltinFilter(filterName: string): boolean {
+    return BUILTIN_FILTER_NAMES.includes(filterName as BuiltinFilterNames);
+}
+
 export function isValidIdentifier(text: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z\d_$]*$/.test(text);
 }

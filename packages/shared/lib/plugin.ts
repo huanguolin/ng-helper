@@ -11,6 +11,7 @@ export interface NgTypeInfo {
     document: string;
     optional?: boolean;
     isFunction: boolean;
+    isFilter?: boolean;
     paramNames?: string[];
 }
 
@@ -110,6 +111,10 @@ export interface NgListDirectivesStringAttrsRequest extends NgRequest {
 
 export interface NgControllerNameDefinitionRequest extends NgRequest {
     controllerName: string;
+}
+
+export interface NgFilterNameDefinitionRequest extends NgRequest {
+    filterName: string;
 }
 
 export interface NgHoverInfo {

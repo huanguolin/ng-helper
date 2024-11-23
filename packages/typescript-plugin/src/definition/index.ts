@@ -4,6 +4,7 @@ import {
     type NgCtrlTypeDefinitionRequest,
     type NgDefinitionResponse,
     type NgDirectiveDefinitionRequest,
+    type NgFilterNameDefinitionRequest,
     type NgTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
@@ -341,5 +342,29 @@ export function getControllerNameDefinitionInfo(
     return {
         filePath: controllerInfo.filePath,
         ...controllerInfo.location,
+    };
+}
+
+export function getFilterNameDefinitionInfo(
+    coreCtx: CorePluginContext,
+    { fileName, filterName }: NgFilterNameDefinitionRequest,
+): NgDefinitionResponse | undefined {
+    const logger = coreCtx.logger.prefix('getFilterNameDefinitionInfo()');
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
+        return;
+    }
+
+    const filterMap = cache.getFilterMap();
+    const filter = filterMap.get(filterName);
+    if (!filter) {
+        return;
+    }
+
+    return {
+        filePath: filter.filePath,
+        ...filter.location,
     };
 }

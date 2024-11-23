@@ -9,16 +9,21 @@ import {
     getContextString,
 } from '../utils';
 
+type OnHoverFilterName<T> = (filterName: string, scriptFilePath?: string) => Promise<T | undefined>;
+type OnHoverType<T> = (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
+
 export async function onTypeHover<T>({
     document,
     cursorAtInfo,
     port,
-    api,
+    onHoverFilterName,
+    onHoverType,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
     port: number;
-    api: (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
+    onHoverFilterName: OnHoverFilterName<T>;
+    onHoverType: OnHoverType<T>;
 }): Promise<T | undefined> {
     const contextString = getContextString(cursorAtInfo);
     switch (contextString.type) {
@@ -27,16 +32,20 @@ export async function onTypeHover<T>({
             // do nothing
             return;
         case 'filterName':
-            // TODO: support filter name hover
-            break;
+            return await checkAndCallHandler(contextString.value, true);
         case 'identifier':
         case 'propertyAccess':
-            return await checkAndCallApi(contextString.value);
+            return await checkAndCallHandler(contextString.value);
     }
 
-    async function checkAndCallApi(contextString: string) {
+    async function checkAndCallHandler(contextString: string, isFilterName?: boolean) {
         if (!contextString) {
             return;
+        }
+
+        if (isFilterName) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            return await onHoverFilterName(contextString, scriptFilePath);
         }
 
         // 这里简单起见，直接取最后一个字符的位置。
@@ -52,7 +61,7 @@ export async function onTypeHover<T>({
         if (isTemplateValue || isAttrValueAndCompletable) {
             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
             if (scriptFilePath) {
-                return await api(scriptFilePath, contextString, cursorAt);
+                return await onHoverType(scriptFilePath, contextString, cursorAt);
             }
         }
     }

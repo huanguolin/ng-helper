@@ -14,7 +14,7 @@ import { timeCost } from '../../debug';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
-import { builtInDirectiveNameCompletion } from './builtinDirectiveName';
+import { builtinDirectiveNameCompletion } from './builtin';
 import { componentNameCompletion } from './componentName';
 import { componentOrDirectiveAttrCompletion } from './componentOrDirectiveAttr';
 import { customDirectiveNameCompletion } from './customDirectiveName';
@@ -121,7 +121,7 @@ export async function completion({
             return await componentOrDirectiveAttrCompletion({ ...obj, cursorAtInfo });
         case 'attrName': {
             const args = { ...obj, cursorAtInfo };
-            const builtinList = builtInDirectiveNameCompletion(args) ?? [];
+            const builtinList = builtinDirectiveNameCompletion(args) ?? [];
             if (isComponentTagName(cursorAtInfo.tagName)) {
                 const list = (await componentOrDirectiveAttrCompletion(args)) ?? [];
                 return new CompletionList(builtinList.concat(list), false);

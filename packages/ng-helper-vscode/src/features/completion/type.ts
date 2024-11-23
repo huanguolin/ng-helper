@@ -13,6 +13,7 @@ import {
     getComponentControllerAsApi,
     getComponentTypeCompletionApi,
     getControllerTypeCompletionApi,
+    getFilterNameCompletionApi,
 } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import {
@@ -24,6 +25,8 @@ import {
     isNgBuiltinDirective,
     isNgUserCustomAttr,
 } from '../utils';
+
+import { builtinFilterNameCompletion } from './builtin';
 
 import type { CompletionParamObj } from '.';
 
@@ -37,9 +40,10 @@ export async function templateOrAttrValueCompletion({
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
     CompletionList<CompletionItem> | undefined
 > {
-    if (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') {
+    const isUndefinedTriggerChar = typeof context.triggerCharacter === 'undefined';
+    if (noRegisterTriggerChar && isUndefinedTriggerChar) {
         return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
-    } else if (!noRegisterTriggerChar && context.triggerCharacter === '.') {
+    } else if (!noRegisterTriggerChar && (context.triggerCharacter === '.' || isUndefinedTriggerChar)) {
         return await getTypeCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
     }
 }
@@ -47,20 +51,16 @@ export async function templateOrAttrValueCompletion({
 async function getTypeCompletion({
     document,
     cursorAtInfo,
+    triggerCharacter,
     port,
     vscodeCancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
+    triggerCharacter?: string;
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
-    const isComponent = isComponentHtml(document);
-    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-    if (!isComponent && !ctrlInfo) {
-        return;
-    }
-
     const contextString = getContextString(cursorAtInfo);
     switch (contextString.type) {
         case 'none':
@@ -68,14 +68,23 @@ async function getTypeCompletion({
             // do nothing
             return;
         case 'filterName':
-            // TODO: support filter name hover
-            break;
+            return await getFilterNameCompletion({ document, port, vscodeCancelToken });
         case 'identifier':
         case 'propertyAccess':
-            return await checkAndCallApi(contextString.value);
+            return await checkAndCallTypeQuery(contextString.value);
     }
 
-    async function checkAndCallApi(contextString: string) {
+    async function checkAndCallTypeQuery(contextString: string) {
+        if (triggerCharacter !== '.') {
+            return;
+        }
+
+        const isComponent = isComponentHtml(document);
+        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+        if (!isComponent && !ctrlInfo) {
+            return;
+        }
+
         const isTemplateValue = cursorAtInfo.type === 'template';
         const isAttrValueAndCompletable =
             cursorAtInfo.type === 'attrValue' &&
@@ -124,12 +133,24 @@ async function getTypeCompletionQuery({
 
 function buildCompletionList(res: NgTypeInfo[]) {
     const items = res.map((x, i) => {
-        const item = new CompletionItem(x.name, x.isFunction ? CompletionItemKind.Method : CompletionItemKind.Field);
+        const item = new CompletionItem(
+            x.name,
+            x.isFunction
+                ? CompletionItemKind.Method
+                : x.isFilter
+                  ? CompletionItemKind.Function
+                  : CompletionItemKind.Field,
+        );
         if (x.isFunction) {
             // 分两段补全，第一段是函数名，第二段是参数
             let snippet = `${x.name}$1(`;
             snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
             snippet += ')$0';
+            item.insertText = new SnippetString(snippet);
+        } else if (x.isFilter) {
+            let snippet = `${x.name}$1 `;
+            snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
+            snippet += '$0';
             item.insertText = new SnippetString(snippet);
         }
         item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
@@ -183,5 +204,30 @@ async function getComponentControllerAsCompletion(
     const res = await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
     if (res) {
         return new CompletionList([new CompletionItem(res)], false);
+    }
+}
+
+async function getFilterNameCompletion({
+    document,
+    port,
+    vscodeCancelToken,
+}: {
+    document: TextDocument;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}): Promise<CompletionList | undefined> {
+    const builtinList = builtinFilterNameCompletion();
+
+    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
+    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
+        return new CompletionList(builtinList);
+    }
+
+    const res = await getFilterNameCompletionApi({ port, vscodeCancelToken, info: { fileName: scriptFilePath } });
+    if (res) {
+        const custom = buildCompletionList(res);
+        return new CompletionList(builtinList.concat(custom.items), false);
+    } else {
+        return new CompletionList(builtinList);
     }
 }

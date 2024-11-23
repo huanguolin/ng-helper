@@ -15,7 +15,7 @@ import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/n
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
-import { getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
+import { formatParameters, getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getControllerType,
     getBindingType,
@@ -450,4 +450,28 @@ export function getDirectiveHoverInfo(
             }
         }
     }
+}
+
+export function getFilterNameHoverInfo(
+    coreCtx: CorePluginContext,
+    { contextString: filterName, fileName }: NgHoverRequest,
+): NgHoverResponse {
+    const logger = coreCtx.logger.prefix('getFilterNameHoverInfo()');
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
+        return;
+    }
+
+    const filterMap = cache.getFilterMap();
+    const filter = filterMap.get(filterName);
+    if (!filter) {
+        return;
+    }
+
+    return {
+        formattedTypeString: `(filter) ${filter.name}(${formatParameters(filter.parameters)}): any`,
+        document: '',
+    };
 }

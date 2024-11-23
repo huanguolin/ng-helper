@@ -27,12 +27,14 @@ import {
     getControllerNameDefinitionApi,
     getControllerTypeDefinitionApi,
     getDirectiveDefinitionApi,
+    getFilterNameDefinitionApi,
 } from '../../service/api';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {
     checkServiceAndGetScriptFilePath,
     getControllerNameInfo,
+    isBuiltinFilter,
     isComponentHtml,
     isComponentTagName,
     isHoverValidIdentifierChar,
@@ -132,20 +134,49 @@ async function handleComponentType(
     document: TextDocument,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     port: number,
-    token: CancellationToken,
+    vscodeCancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     const definitionInfo = await onTypeHover({
         document,
         cursorAtInfo,
         port,
-        api: (scriptFilePath, contextString, cursorAt) =>
+        onHoverFilterName: (filterName, scriptFilePath) =>
+            handleFilterName({
+                port,
+                vscodeCancelToken,
+                filterName,
+                scriptFilePath,
+            }),
+        onHoverType: (scriptFilePath, contextString, cursorAt) =>
             getComponentTypeDefinitionApi({
                 port,
-                vscodeCancelToken: token,
+                vscodeCancelToken,
                 info: { fileName: scriptFilePath, contextString, cursorAt },
             }),
     });
     return await buildDefinition(definitionInfo);
+}
+
+async function handleFilterName({
+    filterName,
+    scriptFilePath,
+    port,
+    vscodeCancelToken,
+}: {
+    filterName: string;
+    scriptFilePath?: string;
+    port: number;
+    vscodeCancelToken: CancellationToken;
+}): Promise<NgDefinitionInfo | undefined> {
+    if (isBuiltinFilter(filterName)) {
+        return;
+    } else if (scriptFilePath) {
+        return await getFilterNameDefinitionApi({
+            port,
+            vscodeCancelToken,
+            info: { fileName: scriptFilePath, filterName },
+        });
+    }
 }
 
 async function handleControllerType(
@@ -153,22 +184,29 @@ async function handleControllerType(
     document: TextDocument,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     port: number,
-    token: CancellationToken,
+    vscodeCancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     const definitionInfo = await onTypeHover({
         document,
         cursorAtInfo,
         port,
-        api: (scriptFilePath, contextString, cursorAt) =>
+        onHoverFilterName: (filterName, scriptFilePath) =>
+            handleFilterName({
+                port,
+                vscodeCancelToken,
+                filterName,
+                scriptFilePath,
+            }),
+        onHoverType: (scriptFilePath, contextString, cursorAt) =>
             ctrlInfo.controllerAs
                 ? getControllerTypeDefinitionApi({
                       port,
-                      vscodeCancelToken: token,
+                      vscodeCancelToken: vscodeCancelToken,
                       info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
                   })
                 : getControllerNameDefinitionApi({
                       port,
-                      vscodeCancelToken: token,
+                      vscodeCancelToken: vscodeCancelToken,
                       info: { fileName: scriptFilePath, controllerName: ctrlInfo.controllerName },
                   }),
     });

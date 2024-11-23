@@ -6,6 +6,7 @@ import {
     type NgComponentAttrCompletionResponse,
     type NgDirectiveCompletionResponse,
     type NgDirectiveCompletionRequest,
+    type NgRequest,
 } from '@ng-helper/shared/lib/plugin';
 
 import { ngHelperServer } from '../ngHelperServer';
@@ -13,7 +14,7 @@ import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/n
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
-import { getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
+import { formatParameters, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
     getBindingName,
     getComponentControllerType,
@@ -338,6 +339,7 @@ export function getDirectiveCompletions(
             typeString: '',
             document: '',
             isFunction: false,
+            isFilter: false,
         }));
     }
 }
@@ -355,4 +357,25 @@ function findClosestMatchedDirective(
         }
     }
     return undefined;
+}
+
+export function getFilterNameCompletions(coreCtx: CorePluginContext, info: NgRequest): NgTypeCompletionResponse {
+    const logger = coreCtx.logger.prefix('getFilterNameCompletions()');
+
+    const cache = ngHelperServer.getCache(info.fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${info.fileName})!`);
+        return;
+    }
+
+    const filterMap = cache.getFilterMap();
+    return Array.from(filterMap.values()).map((x) => ({
+        kind: 'property',
+        name: x.name,
+        typeString: `(${formatParameters(x.parameters)}): any`,
+        document: '',
+        isFunction: false,
+        isFilter: true,
+        paramNames: x.parameters.map((p) => p.name),
+    }));
 }

@@ -1,6 +1,7 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
+import type { Parameter } from '../ngHelperServer/ngCache';
 import { PluginContext, FileVersion, type CorePluginContext } from '../type';
 
 export function createTmpSourceFile(
@@ -100,6 +101,7 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
             typeString: ctx.typeChecker.typeToString(memberType),
             document: getSymbolDocument(ctx, memberSymbol),
             isFunction: false,
+            isFilter: false,
         };
         const signatures = memberType.getCallSignatures();
         if (signatures.length > 0) {
@@ -220,4 +222,8 @@ export function getProp(
     return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as
         | ts.PropertyAssignment
         | undefined;
+}
+
+export function formatParameters(params: Parameter[]): string {
+    return params.map((p) => (p.name + p.type ? `: ${p.type}` : '')).join(',');
 }
