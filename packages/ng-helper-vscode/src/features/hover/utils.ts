@@ -9,7 +9,7 @@ import {
     getContextString,
 } from '../utils';
 
-export async function provideTypeHoverInfo<T>({
+export async function onTypeHover<T>({
     document,
     cursorAtInfo,
     port,

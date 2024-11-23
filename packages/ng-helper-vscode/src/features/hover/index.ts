@@ -27,7 +27,7 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
-import { provideTypeHoverInfo } from './utils';
+import { onTypeHover } from './utils';
 
 export function registerHover(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
@@ -138,7 +138,7 @@ async function handleComponentType(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
-    const info = await provideTypeHoverInfo({
+    const info = await onTypeHover({
         document,
         cursorAtInfo,
         port,
@@ -159,7 +159,7 @@ async function handleControllerType(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
-    const info = await provideTypeHoverInfo({
+    const info = await onTypeHover({
         document,
         cursorAtInfo,
         port,

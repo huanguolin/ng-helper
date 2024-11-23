@@ -29,7 +29,7 @@ import {
     getDirectiveDefinitionApi,
 } from '../../service/api';
 import { buildCursor } from '../../utils';
-import { provideTypeHoverInfo } from '../hover/utils';
+import { onTypeHover } from '../hover/utils';
 import {
     checkServiceAndGetScriptFilePath,
     getControllerNameInfo,
@@ -134,7 +134,7 @@ async function handleComponentType(
     port: number,
     token: CancellationToken,
 ): Promise<Definition | undefined> {
-    const definitionInfo = await provideTypeHoverInfo({
+    const definitionInfo = await onTypeHover({
         document,
         cursorAtInfo,
         port,
@@ -155,7 +155,7 @@ async function handleControllerType(
     port: number,
     token: CancellationToken,
 ): Promise<Definition | undefined> {
-    const definitionInfo = await provideTypeHoverInfo({
+    const definitionInfo = await onTypeHover({
         document,
         cursorAtInfo,
         port,
