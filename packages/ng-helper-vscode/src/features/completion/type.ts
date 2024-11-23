@@ -44,7 +44,13 @@ export async function templateOrAttrValueCompletion({
     if (noRegisterTriggerChar && isUndefinedTriggerChar) {
         return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
     } else if (!noRegisterTriggerChar && (context.triggerCharacter === '.' || isUndefinedTriggerChar)) {
-        return await getTypeCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
+        return await getTypeCompletion({
+            document,
+            triggerCharacter: context.triggerCharacter,
+            cursorAtInfo,
+            port,
+            vscodeCancelToken,
+        });
     }
 }
 
