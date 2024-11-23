@@ -153,7 +153,7 @@ function buildCompletionList(res: NgTypeInfo[]) {
             snippet += '$0';
             item.insertText = new SnippetString(snippet);
         }
-        item.detail = `(${x.kind}) ${x.name}: ${x.typeString}`;
+        item.detail = `(${x.isFilter ? 'filter' : x.kind}) ${x.name}: ${x.typeString}`;
         item.documentation = x.document;
         item.sortText = i.toString().padStart(3, '0');
         return item;

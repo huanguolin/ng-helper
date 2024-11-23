@@ -1,6 +1,7 @@
 import type { CursorAtAttrNameInfo } from '@ng-helper/shared/lib/cursorAt';
-import { CompletionItem, SnippetString } from 'vscode';
+import { CompletionItem, CompletionItemKind, SnippetString } from 'vscode';
 
+import { builtinFilterConfig } from '../hover/builtin';
 import type { BuiltinFilterNames } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -143,12 +144,14 @@ export function builtinFilterNameCompletion(): CompletionItem[] {
     return getBuiltinFilterConfigList().map(filterConfigToCompletionItem);
 }
 
-function filterConfigToCompletionItem(config: BuiltinConfig): CompletionItem {
-    const item = new CompletionItem(`${config.name}`);
-    if (config.name) {
+function filterConfigToCompletionItem(config: BuiltinFilerConfig): CompletionItem {
+    const item = new CompletionItem(`${config.name}`, CompletionItemKind.Function);
+    if (config.snippet) {
         item.insertText = new SnippetString(config.snippet);
     }
-    item.detail = config.description;
+    const hoverConfig = builtinFilterConfig[config.name];
+    // 避免签名过长，所以只截取一部分
+    item.detail = '(filter) ' + hoverConfig.declare.slice(0, 42) + '...  ' + config.description;
     return item;
 }
 
