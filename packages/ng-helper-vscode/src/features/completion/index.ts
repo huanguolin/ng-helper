@@ -38,6 +38,8 @@ export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefin
     cursor: Cursor;
 }
 
+export const triggerChars = [SPACE, '<', '.'];
+
 export function registerCompletion(context: ExtensionContext, port: number) {
     context.subscriptions.push(
         languages.registerCompletionItemProvider('html', {
@@ -70,9 +72,7 @@ export function registerCompletion(context: ExtensionContext, port: number) {
                     );
                 },
             },
-            SPACE,
-            '<',
-            '.',
+            ...triggerChars,
         ),
     );
 }
