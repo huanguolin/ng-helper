@@ -55,6 +55,18 @@ describe('Definition', () => {
         });
     });
 
+    describe('filter', () => {
+        // ts
+        it('get definition info on "status"', async () => {
+            await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 81));
+        });
+
+        // js
+        it('get definition info on "f2"', async () => {
+            await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 86));
+        });
+    });
+
     describe('inline html', () => {
         it('component name', async () => {
             await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 10));
@@ -74,6 +86,10 @@ describe('Definition', () => {
 
         it('type', async () => {
             await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 71));
+        });
+
+        it('filter', async () => {
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 62));
         });
     });
 });

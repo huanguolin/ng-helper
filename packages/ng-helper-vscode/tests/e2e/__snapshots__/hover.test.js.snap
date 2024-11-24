@@ -44,6 +44,35 @@ scope: {
 "
 `;
 
+exports[`Hover filter show hover info on "status" 1`] = `
+"
+\`\`\`typescript
+(filter) status(input: Status, step: number): any
+\`\`\`
+"
+`;
+
+exports[`Hover filter show hover info on "translate" 1`] = `
+"
+\`\`\`typescript
+(filter [builtin]) translate(input: string, interpolateParams?: Object, interpolationId?: string, forceLanguage?: string, sanitizeStrategy?: string): string
+\`\`\`
+Translates a given token into the selected language.  
+  
+  
+  
+  
+*@param* \`input\` A translation id to be translated.  
+  
+*@param* \`interpolateParams\` An object hash for dynamic value interpolation.  
+  
+*@param* \`interpolationId\` The id of the interpolation algorithm to use.  
+  
+*@param* \`forceLanguage\` Ignore the current language and force a language-specific translation.  
+  
+*@param* \`sanitizeStrategy\` Specify a policy to clean up translated content to prevent cross-site scripting attacks."
+`;
+
 exports[`Hover inline html hover component attr 1`] = `
 "
 \`\`\`typescript
@@ -84,6 +113,14 @@ scope: {
     max: \\"?<\\"
     canNaN: \\"?<allowNan\\"
 }
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover filter 1`] = `
+"
+\`\`\`typescript
+(filter) status(input: Status, step: number): any
 \`\`\`
 "
 `;

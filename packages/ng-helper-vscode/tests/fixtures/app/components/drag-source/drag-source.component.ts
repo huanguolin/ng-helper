@@ -28,7 +28,7 @@ namespace app.directives {
     angular.module('app.directives').component('dragSource', {
         template : `
         <baz-qux attr-title="bar-foo"></baz-qux>
-        <div number-check max="100" ng-modal="ctrl.num"></div>
+        <div number-check max="100" ng-modal="ctrl.num | status"></div>
         <div class="drag-source-container" draggable="{{!ctrl.disabledDrag}}" ng-transclude></div>
         <!-- 'ctrl' completion -->
         {{   }}

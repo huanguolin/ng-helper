@@ -61,6 +61,18 @@ describe('Hover', () => {
         });
     });
 
+    describe('filter', () => {
+        // builtin
+        it('show hover info on "translate"', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 42));
+        });
+
+        // custom
+        it('show hover info on "status"', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 81));
+        });
+    });
+
     describe('inline html', () => {
         it('hover component name', async () => {
             await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 10));
@@ -85,6 +97,10 @@ describe('Hover', () => {
 
         it('hover type', async () => {
             await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 71));
+        });
+
+        it('hover filter', async () => {
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 62));
         });
     });
 });

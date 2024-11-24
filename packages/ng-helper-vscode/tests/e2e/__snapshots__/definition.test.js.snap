@@ -88,6 +88,50 @@ Array [
 ]
 `;
 
+exports[`Definition filter get definition info on "f2" 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 12,
+        "line": 2,
+      },
+      Object {
+        "character": 16,
+        "line": 2,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f2.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition filter get definition info on "status" 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
 exports[`Definition inline html component attr 1`] = `
 Array [
   Object {
@@ -170,6 +214,28 @@ Array [
     "uri": Object {
       "$mid": 1,
       "path": "/tests/fixtures/app/directives/number-check.directive.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html filter 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f1.ts",
       "scheme": "file",
     },
   },
