@@ -160,20 +160,18 @@ export function cursorAt(at: number, isHover = true): Cursor {
 export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo {
     ensureInputValid(htmlText, cursor);
 
-    if (!htmlText) {
-        // 空字符串时，认为光标在 text 节点上, 可以简化 getCursorAtInfo(） 的使用。
+    const cursorAt = cursor.at - (cursor.isHover ? 0 : 1);
+
+    const htmlFragment = parseFragment(htmlText, { sourceCodeLocationInfo: true });
+    const targetNode = findCursorAtNode(htmlFragment, cursorAt)!;
+    if (!targetNode) {
+        // 找不到节点时，可以认为光标在 text 节点上, 可以简化 getCursorAtInfo(） 的使用。
         return {
             type: 'text',
             siblingTagNames: [],
             context: [],
         };
     }
-
-    const cursorAt = cursor.at - (cursor.isHover ? 0 : 1);
-
-    const htmlFragment = parseFragment(htmlText, { sourceCodeLocationInfo: true });
-    // 前面排除了空字符串的情况，所以这里一定能找到一个节点。
-    const targetNode = findCursorAtNode(htmlFragment, cursorAt)!;
 
     // 这种查找方式涵盖了模版在 textNode 和 在 attrValue 的情况。
     const template = getTextInTemplate(htmlText, cursor);
