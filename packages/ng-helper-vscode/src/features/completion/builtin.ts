@@ -27,10 +27,8 @@ const defaultNgConfigStr: BuiltinConfig = {
 
 export function builtinDirectiveNameCompletion({
     context,
-    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtAttrNameInfo>): CompletionItem[] | undefined {
-    // 只走没有设置触发字符的那个分支。
-    if (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') {
+    if (typeof context.triggerCharacter === 'undefined') {
         return getNgDirectiveConfigList()
             .map(([name, configs]) =>
                 configs.length > 0

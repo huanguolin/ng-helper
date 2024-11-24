@@ -36,70 +36,62 @@ export async function templateOrAttrValueCompletion({
     vscodeCancelToken,
     cursorAtInfo,
     context,
-    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
     CompletionList<CompletionItem> | undefined
 > {
+    const { type, value } = getContextString(cursorAtInfo);
+    const isPropAccessTriggerChar = context.triggerCharacter === '.';
     const isUndefinedTriggerChar = typeof context.triggerCharacter === 'undefined';
-    if (noRegisterTriggerChar && isUndefinedTriggerChar) {
-        return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
-    } else if (!noRegisterTriggerChar && (context.triggerCharacter === '.' || isUndefinedTriggerChar)) {
+
+    if (isPropAccessTriggerChar && type === 'propertyAccess') {
         return await getTypeCompletion({
             document,
-            triggerCharacter: context.triggerCharacter,
             cursorAtInfo,
+            contextString: value,
             port,
             vscodeCancelToken,
         });
+    } else if (isUndefinedTriggerChar) {
+        if (type === 'filterName') {
+            return await getFilterNameCompletion({
+                document,
+                port,
+                vscodeCancelToken,
+            });
+        } else if (type === 'identifier') {
+            // ctrl 输入第一个字符 c 后，便成为 'identifier' 状态。
+            return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
+        }
     }
 }
 
 async function getTypeCompletion({
     document,
     cursorAtInfo,
-    triggerCharacter,
+    contextString,
     port,
     vscodeCancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
-    triggerCharacter?: string;
+    contextString: string;
     port: number;
     vscodeCancelToken: CancellationToken;
 }) {
-    const contextString = getContextString(cursorAtInfo);
-    switch (contextString.type) {
-        case 'none':
-        case 'literal':
-            // do nothing
-            return;
-        case 'filterName':
-            return await getFilterNameCompletion({ document, port, vscodeCancelToken });
-        case 'identifier':
-        case 'propertyAccess':
-            return await checkAndCallTypeQuery(contextString.value);
+    const isComponent = isComponentHtml(document);
+    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+    if (!isComponent && !ctrlInfo) {
+        return;
     }
 
-    async function checkAndCallTypeQuery(contextString: string) {
-        if (triggerCharacter !== '.') {
-            return;
-        }
-
-        const isComponent = isComponentHtml(document);
-        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-        if (!isComponent && !ctrlInfo) {
-            return;
-        }
-
-        const isTemplateValue = cursorAtInfo.type === 'template';
-        const isAttrValueAndCompletable =
-            cursorAtInfo.type === 'attrValue' &&
-            (isComponentTagName(cursorAtInfo.tagName) ||
-                isNgBuiltinDirective(cursorAtInfo.attrName) ||
-                isNgUserCustomAttr(cursorAtInfo.attrName));
-        if (isTemplateValue || isAttrValueAndCompletable) {
-            return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, port, vscodeCancelToken });
-        }
+    const isTemplateValue = cursorAtInfo.type === 'template';
+    const isAttrValueAndCompletable =
+        cursorAtInfo.type === 'attrValue' &&
+        (isComponentTagName(cursorAtInfo.tagName) ||
+            isNgBuiltinDirective(cursorAtInfo.attrName) ||
+            isNgUserCustomAttr(cursorAtInfo.attrName));
+    if (isTemplateValue || isAttrValueAndCompletable) {
+        return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, port, vscodeCancelToken });
     }
 }
 
@@ -197,7 +189,7 @@ async function getCtrlCompletion({
     } else {
         const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
         if (ctrlInfo && ctrlInfo.controllerAs) {
-            return new CompletionList([new CompletionItem(ctrlInfo.controllerAs)], false);
+            return new CompletionList([new CompletionItem(ctrlInfo.controllerAs, CompletionItemKind.Property)], false);
         }
     }
 }

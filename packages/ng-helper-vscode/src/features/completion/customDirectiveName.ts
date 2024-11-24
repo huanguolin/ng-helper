@@ -14,10 +14,9 @@ export async function customDirectiveNameCompletion({
     vscodeCancelToken,
     context,
     port,
-    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtAttrNameInfo>) {
     // 只走没有设置触发字符的那个分支。
-    if (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') {
+    if (typeof context.triggerCharacter === 'undefined') {
         const relatedScriptFile =
             (await getCorrespondingScriptFileName(
                 document,

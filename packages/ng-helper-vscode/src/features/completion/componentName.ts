@@ -16,13 +16,9 @@ export async function componentNameCompletion({
     vscodeCancelToken,
     context,
     port,
-    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtTextInfo>) {
     // working on: no triggerChar or triggerChar is '<'
-    if (
-        (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined') ||
-        (!noRegisterTriggerChar && context.triggerCharacter === '<')
-    ) {
+    if (typeof context.triggerCharacter === 'undefined' || context.triggerCharacter === '<') {
         return await componentNameCompletionImpl();
     }
 

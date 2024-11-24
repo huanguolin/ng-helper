@@ -24,7 +24,6 @@ interface BaseCompletionParam {
     document: TextDocument;
     vscodeCancelToken: CancellationToken;
     context: CompletionContext;
-    noRegisterTriggerChar: boolean;
     port: number;
 }
 
@@ -42,27 +41,12 @@ export const triggerChars = [SPACE, '<', '.'];
 
 export function registerCompletion(context: ExtensionContext, port: number) {
     context.subscriptions.push(
-        languages.registerCompletionItemProvider('html', {
-            provideCompletionItems(document, position, vscodeCancelToken, context) {
-                return timeCost('provideCompletion', () =>
-                    completion({
-                        noRegisterTriggerChar: true,
-                        document,
-                        position,
-                        vscodeCancelToken,
-                        context,
-                        port,
-                    }),
-                );
-            },
-        }),
         languages.registerCompletionItemProvider(
             'html',
             {
                 provideCompletionItems(document, position, vscodeCancelToken, context) {
                     return timeCost('provideCompletion', () =>
                         completion({
-                            noRegisterTriggerChar: false,
                             document,
                             position,
                             vscodeCancelToken,
@@ -72,23 +56,16 @@ export function registerCompletion(context: ExtensionContext, port: number) {
                     );
                 },
             },
-            ...triggerChars,
+            ...triggerChars, // 除了注册的这几个字符外，word char 也会触发，具体看API的介绍。
         ),
     );
 }
 
-export async function completion({
-    document,
-    position,
-    vscodeCancelToken,
-    context,
-    port,
-    noRegisterTriggerChar,
-}: CompletionParam) {
+export async function completion({ document, position, vscodeCancelToken, context, port }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
-    const obj = { document, cursor, port, vscodeCancelToken, context, noRegisterTriggerChar };
+    const obj = { document, cursor, port, vscodeCancelToken, context };
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':

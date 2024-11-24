@@ -147,8 +147,12 @@ export function isValidIdentifierChar(char: string): boolean {
 }
 
 export function isHoverValidIdentifierChar(document: TextDocument, position: Position): boolean {
-    const ch = document.getText(new Range(position, position.translate(0, 1)));
+    const ch = getCursorAtChar(document, position);
     return isValidIdentifierChar(ch);
+}
+
+export function getCursorAtChar(document: TextDocument, position: Position): string {
+    return document.getText(new Range(position, position.translate(0, 1)));
 }
 
 export function isComponentTagName(name: string): boolean {

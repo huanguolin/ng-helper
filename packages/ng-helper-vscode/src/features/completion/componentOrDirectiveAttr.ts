@@ -16,13 +16,9 @@ export async function componentOrDirectiveAttrCompletion({
     vscodeCancelToken,
     context,
     port,
-    noRegisterTriggerChar,
 }: CompletionParamObj<CursorAtStartTagInfo | CursorAtAttrNameInfo>) {
     // 属性补全触发方式有两种: 空格和输入字符。
-    if (
-        (!noRegisterTriggerChar && context.triggerCharacter === SPACE) ||
-        (noRegisterTriggerChar && typeof context.triggerCharacter === 'undefined')
-    ) {
+    if (context.triggerCharacter === SPACE || typeof context.triggerCharacter === 'undefined') {
         if (cursorAtInfo.type === 'startTag') {
             // 只有是 'startTag' 时才需要看这个
             const tagTextBeforeCursor = document.getText().slice(cursorAtInfo.start, cursor.at);
