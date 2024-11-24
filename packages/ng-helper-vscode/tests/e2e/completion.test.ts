@@ -140,6 +140,16 @@ describe('Completion', () => {
         });
     });
 
+    describe('filter', () => {
+        // TODO: fix this test
+        // it('get completion info of filter', async () => {
+        //     await testCompletion({
+        //         filePath: BAZ_QUX_COMPONENT_HTML_PATH,
+        //         position: new vscode.Position(20, 11),
+        //     });
+        // });
+    });
+
     describe('inline html', () => {
         it('component name', async () => {
             await testCompletion({
