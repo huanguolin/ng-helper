@@ -8,6 +8,7 @@ export async function timeCost<T>(
 ): Promise<T | undefined> {
     const cnt = storeAndGetCount(fnName);
     const start = Date.now();
+    console.log('>>>>> ' + fnName);
     console.group(`[timeCost] ${fnName}()#${cnt}`);
     try {
         return await cb();
@@ -19,6 +20,7 @@ export async function timeCost<T>(
             console.warn(`${fnName}()#${cnt} cost ${cost}ms`);
         }
         console.groupEnd();
+        console.log('<<<<< ' + fnName);
     }
 }
 

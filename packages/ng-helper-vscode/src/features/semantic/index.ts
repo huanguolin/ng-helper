@@ -37,7 +37,12 @@ export function registerSemantic(context: ExtensionContext, port: number) {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
                 // log 记录的太多了，暂时不要 timeCost
                 // return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
-                return htmlSemanticProvider({ document, port, token });
+                console.log('>>> html semantic');
+                try {
+                    return htmlSemanticProvider({ document, port, token });
+                } finally {
+                    console.log('<<< html semantic');
+                }
             },
         },
         legend,
@@ -75,42 +80,52 @@ export async function htmlSemanticProvider({
     }
 
     const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName)));
-    if (componentNames.length) {
-        const componentsStringAttrs = await listComponentsStringAttrs({
-            port,
-            vscodeCancelToken: token,
-            info: { componentNames, fileName: scriptFilePath },
-        });
-        if (componentsStringAttrs) {
-            fillComponentSemanticTokens({
-                htmlDocument: document,
-                tokensBuilder,
-                componentsStringAttrs,
-                componentNodes,
-            });
-        }
-    }
-
     const maybeDirectiveNames = uniq(
         maybeDirectiveNodes
             .map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name)))
             .flat(),
     );
-    if (maybeDirectiveNames.length) {
-        const directivesStringAttrs = await listDirectivesStringAttrs({
-            port,
-            vscodeCancelToken: token,
-            info: { maybeDirectiveNames, fileName: scriptFilePath },
-        });
-        if (directivesStringAttrs) {
-            fillDirectiveSemanticTokens({
-                htmlDocument: document,
-                tokensBuilder,
-                directivesStringAttrs,
-                maybeDirectiveNodes,
-            });
-        }
+    const promiseArr: Promise<void>[] = [];
+    if (componentNames.length) {
+        promiseArr.push(
+            (async () => {
+                const componentsStringAttrs = await listComponentsStringAttrs({
+                    port,
+                    vscodeCancelToken: token,
+                    info: { componentNames, fileName: scriptFilePath },
+                });
+                if (componentsStringAttrs) {
+                    fillComponentSemanticTokens({
+                        htmlDocument: document,
+                        tokensBuilder,
+                        componentsStringAttrs,
+                        componentNodes,
+                    });
+                }
+            })(),
+        );
     }
+    if (maybeDirectiveNames.length) {
+        promiseArr.push(
+            (async () => {
+                const directivesStringAttrs = await listDirectivesStringAttrs({
+                    port,
+                    vscodeCancelToken: token,
+                    info: { maybeDirectiveNames, fileName: scriptFilePath },
+                });
+                if (directivesStringAttrs) {
+                    fillDirectiveSemanticTokens({
+                        htmlDocument: document,
+                        tokensBuilder,
+                        directivesStringAttrs,
+                        maybeDirectiveNodes,
+                    });
+                }
+            })(),
+        );
+    }
+
+    await Promise.all(promiseArr);
 
     return tokensBuilder.build();
 }
