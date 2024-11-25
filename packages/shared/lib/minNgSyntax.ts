@@ -31,6 +31,10 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined> {
     private cursorAt = 0;
 
     getCursorAtMinSyntax(program: Program, cursorAt: number): MinNgSyntaxInfo {
+        if (cursorAt < 0 || cursorAt >= program.source.length) {
+            return { type: 'none', value: '' };
+        }
+
         this.cursorAt = cursorAt;
         const node = this.visitProgram(program);
         const result: MinNgSyntaxInfo = { type: 'none', value: '' };
@@ -225,6 +229,12 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined> {
 const minNgSyntaxVisitor = new MinNgSyntaxVisitor();
 
 export function getMinNgSyntaxInfo(ngExprStr: string, cursorAt: number): MinNgSyntaxInfo {
+    if (!ngExprStr || typeof ngExprStr !== 'string') {
+        return { type: 'none', value: '' };
+    }
+
+    // TODO: 增加缓存提高效率
     const program = ngParse(ngExprStr);
+
     return minNgSyntaxVisitor.getCursorAtMinSyntax(program, cursorAt);
 }
