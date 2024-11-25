@@ -28,7 +28,6 @@ export function getControllerNameInfo(cursorAtContext: CursorAtContext[]): NgCtr
     const ngController = cursorAtContext.find((x) => x.kind === 'ng-controller');
     if (ngController) {
         const result: NgCtrlInfo = getNgCtrlInfo(ngController.value);
-        console.log('getControllerNameFromHtml() find controller name info:', result);
         return result;
     }
 }
