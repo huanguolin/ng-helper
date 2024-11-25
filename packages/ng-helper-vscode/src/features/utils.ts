@@ -186,8 +186,13 @@ export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHover
     };
 }
 
+let cnt = 0;
 export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
     const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
+    cnt++;
+    const label = `getMinNgSyntaxInfo()#${cnt}`;
+    console.time(label);
     const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    console.timeEnd(label);
     return minNgSyntaxInfo;
 }

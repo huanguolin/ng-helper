@@ -32,12 +32,18 @@ import {
 import { genBuiltinFilterHoverInfo } from './builtin';
 import { onTypeHover } from './utils';
 
+let cnt = 0;
 export function registerHover(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
                 return timeCost('provideHover', async () => {
+                    cnt++;
+                    const label = `getMinNgSyntaxInfo()#${cnt}`;
+                    console.time(label);
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                    console.timeEnd(label);
+
                     switch (cursorAtInfo.type) {
                         case 'endTag':
                         case 'startTag':

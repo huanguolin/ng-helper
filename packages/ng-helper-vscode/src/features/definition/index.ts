@@ -42,6 +42,7 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
+let cnt = 0;
 export function registerDefinition(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
@@ -51,7 +52,11 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
                 return timeCost('provideDefinition', async () => {
+                    cnt++;
+                    const label = `getMinNgSyntaxInfo()#${cnt}`;
+                    console.time(label);
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                    console.timeEnd(label);
 
                     switch (cursorAtInfo.type) {
                         case 'endTag':
