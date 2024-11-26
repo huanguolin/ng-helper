@@ -39,7 +39,7 @@ export function registerHover(context: ExtensionContext, port: number): void {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
                 return timeCost('provideHover', async () => {
                     cnt++;
-                    const label = `getMinNgSyntaxInfo()#${cnt}`;
+                    const label = `getCursorAtInfo()#${cnt}`;
                     console.time(label);
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
                     console.timeEnd(label);

@@ -53,7 +53,7 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
             ): Promise<Definition | undefined> {
                 return timeCost('provideDefinition', async () => {
                     cnt++;
-                    const label = `getMinNgSyntaxInfo()#${cnt}`;
+                    const label = `getCursorAtInfo()#${cnt}`;
                     console.time(label);
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
                     console.timeEnd(label);

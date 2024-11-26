@@ -66,7 +66,7 @@ export async function completion({ document, position, vscodeCancelToken, contex
     const cursor = buildCursor(document, position, false);
 
     cnt++;
-    const label = `getMinNgSyntaxInfo()#${cnt}`;
+    const label = `getCursorAtInfo()#${cnt}`;
     console.time(label);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
     console.timeEnd(label);
