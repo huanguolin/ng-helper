@@ -231,7 +231,7 @@ async function getFilterNameCompletion({
 
     const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
-        return new CompletionList(builtinList);
+        return new CompletionList(builtinList, false);
     }
 
     const res = await getFilterNameCompletionApi({ port, vscodeCancelToken, info: { fileName: scriptFilePath } });
@@ -239,6 +239,6 @@ async function getFilterNameCompletion({
         const custom = buildCompletionList(res);
         return new CompletionList(builtinList.concat(custom.items), false);
     } else {
-        return new CompletionList(builtinList);
+        return new CompletionList(builtinList, false);
     }
 }
