@@ -207,7 +207,10 @@ async function getComponentControllerAsCompletion(
 
     const res = await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
     if (res) {
-        return new CompletionList([new CompletionItem(res)], false);
+        const item = new CompletionItem(res);
+        // 往前排
+        item.sortText = '0';
+        return new CompletionList([item], false);
     }
 }
 
