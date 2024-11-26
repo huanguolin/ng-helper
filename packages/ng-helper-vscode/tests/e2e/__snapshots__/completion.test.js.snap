@@ -572,14 +572,14 @@ Array [
 exports[`Completion inline html type 1`] = `
 Array [
   Object {
-    "detail": undefined,
+    "detail": "[ng-helper]",
     "documentation": undefined,
     "filterText": undefined,
     "insertText": "ctrl",
     "kind": "Property",
     "label": "ctrl",
     "preselect": undefined,
-    "sortText": "ctrl",
+    "sortText": "0",
     "textEdit": undefined,
   },
 ]
@@ -1274,14 +1274,14 @@ Array [
 exports[`Completion type get completion info of "ctrl" (component html) 1`] = `
 Array [
   Object {
-    "detail": undefined,
+    "detail": "[ng-helper]",
     "documentation": undefined,
     "filterText": undefined,
     "insertText": "ctrl",
     "kind": "Property",
     "label": "ctrl",
     "preselect": undefined,
-    "sortText": "ctrl",
+    "sortText": "0",
     "textEdit": undefined,
   },
 ]
@@ -1290,14 +1290,14 @@ Array [
 exports[`Completion type get completion info of "ctrl" (controller html) 1`] = `
 Array [
   Object {
-    "detail": undefined,
+    "detail": "[ng-helper]",
     "documentation": undefined,
     "filterText": undefined,
     "insertText": "ctrl",
     "kind": "Property",
     "label": "ctrl",
     "preselect": undefined,
-    "sortText": "ctrl",
+    "sortText": "0",
     "textEdit": undefined,
   },
 ]

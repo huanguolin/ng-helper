@@ -108,8 +108,8 @@ describe('Completion', () => {
         it('get completion info of "ctrl" (component html)', async () => {
             await testCompletion({
                 filePath: BAZ_QUX_COMPONENT_HTML_PATH,
-                position: new vscode.Position(16, 4),
-                itemsFilter: (item) => typeof item.label === 'string' && item.label.startsWith('ctrl'),
+                position: new vscode.Position(16, 3),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
                 // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
             });
         });
@@ -125,8 +125,8 @@ describe('Completion', () => {
         it('get completion info of "ctrl" (controller html)', async () => {
             await testCompletion({
                 filePath: APP_PAGES_P2_HTML_PATH,
-                position: new vscode.Position(2, 20),
-                itemsFilter: (item) => typeof item.label === 'string' && item.label.startsWith('ctrl'),
+                position: new vscode.Position(2, 19),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
                 // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
             });
         });
@@ -198,7 +198,8 @@ describe('Completion', () => {
             // ctrl
             await testCompletion({
                 filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
-                position: new vscode.Position(33, 13),
+                position: new vscode.Position(33, 11),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
                 // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
             });
 

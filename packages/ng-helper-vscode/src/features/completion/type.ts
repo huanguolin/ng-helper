@@ -189,7 +189,10 @@ async function getCtrlCompletion({
     } else {
         const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
         if (ctrlInfo && ctrlInfo.controllerAs) {
-            return new CompletionList([new CompletionItem(ctrlInfo.controllerAs, CompletionItemKind.Property)], false);
+            const item = new CompletionItem(ctrlInfo.controllerAs, CompletionItemKind.Property);
+            item.sortText = '0';
+            item.detail = '[ng-helper]';
+            return new CompletionList([item], false);
         }
     }
 }
@@ -210,6 +213,7 @@ async function getComponentControllerAsCompletion(
         const item = new CompletionItem(res);
         // 往前排
         item.sortText = '0';
+        item.detail = '[ng-helper]';
         return new CompletionList([item], false);
     }
 }

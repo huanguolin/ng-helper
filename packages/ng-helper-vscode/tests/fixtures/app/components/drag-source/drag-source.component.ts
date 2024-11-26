@@ -31,7 +31,7 @@ namespace app.directives {
         <div number-check max="100" ng-modal="ctrl.num | status"></div>
         <div class="drag-source-container" draggable="{{!ctrl.disabledDrag}}" ng-transclude></div>
         <!-- 'ctrl' completion -->
-        {{   }}
+        {{c}}
         <!-- 'ctrl.*' completion -->
         {{ctrl.}}
         `,
