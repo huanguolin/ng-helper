@@ -141,13 +141,14 @@ describe('Completion', () => {
     });
 
     describe('filter', () => {
-        // TODO: fix this test
-        // it('get completion info of filter', async () => {
-        //     await testCompletion({
-        //         filePath: BAZ_QUX_COMPONENT_HTML_PATH,
-        //         position: new vscode.Position(20, 11),
-        //     });
-        // });
+        it('get completion info of filter', async () => {
+            await testCompletion({
+                filePath: BAZ_QUX_COMPONENT_HTML_PATH,
+                position: new vscode.Position(20, 11),
+                ignoreIsIncomplete: true,
+                itemsFilter: (item) => item.detail?.startsWith('(filter)') ?? false,
+            });
+        });
     });
 
     describe('inline html', () => {
@@ -210,6 +211,15 @@ describe('Completion', () => {
                 triggerChar: '.',
             });
         });
+
+        it('filter', async () => {
+            await testCompletion({
+                filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
+                position: new vscode.Position(37, 32),
+                ignoreIsIncomplete: true,
+                itemsFilter: (item) => item.detail?.startsWith('(filter)') ?? false,
+            });
+        });
     });
 });
 
@@ -218,12 +228,14 @@ async function testCompletion({
     position,
     itemsFilter,
     triggerChar,
+    ignoreIsIncomplete,
     waitSeconds,
 }: {
     filePath: string;
     position: vscode.Position;
     itemsFilter?: (item: vscode.CompletionItem) => boolean;
     triggerChar?: string;
+    ignoreIsIncomplete?: boolean;
     waitSeconds?: number;
 }) {
     // show the document
@@ -241,7 +253,9 @@ async function testCompletion({
     );
 
     // assert
-    expect(completionInfoList.isIncomplete).to.be.false;
+    if (!ignoreIsIncomplete) {
+        expect(completionInfoList.isIncomplete).to.be.false;
+    }
     let items = completionInfoList.items;
     if (itemsFilter) {
         items = items.filter(itemsFilter);
