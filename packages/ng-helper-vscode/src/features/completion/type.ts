@@ -1,4 +1,5 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import { SPACE } from '@ng-helper/shared/lib/html';
 import { NgCtrlInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import {
     CancellationToken,
@@ -144,12 +145,11 @@ function buildCompletionList(res: NgTypeInfo[]) {
             // 分两段补全，第一段是函数名，第二段是参数
             let snippet = `${x.name}$1(`;
             snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
-            snippet += ')$0';
+            snippet += ')';
             item.insertText = new SnippetString(snippet);
-        } else if (x.isFilter) {
-            let snippet = `${x.name}$1 `;
-            snippet += x.paramNames!.map((x, i) => `:\${${i + 2}:${x}}`).join(' ');
-            snippet += '$0';
+        } else if (x.isFilter && x.paramNames?.length) {
+            let snippet = x.name + SPACE;
+            snippet += x.paramNames.map((x, i) => `:\${${i + 1}:${x}}`).join(' ');
             item.insertText = new SnippetString(snippet);
         }
 

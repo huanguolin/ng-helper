@@ -149,7 +149,8 @@ function filterConfigToCompletionItem(config: BuiltinFilerConfig): CompletionIte
     }
     const hoverConfig = builtinFilterConfig[config.name];
     // 避免签名过长，所以只截取一部分
-    item.detail = '(filter) ' + hoverConfig.declare.slice(0, 42) + '...  ' + config.description;
+    item.detail = '(filter) ' + hoverConfig.declare.slice(0, 68) + '...  ';
+    item.documentation = config.description;
     return item;
 }
 

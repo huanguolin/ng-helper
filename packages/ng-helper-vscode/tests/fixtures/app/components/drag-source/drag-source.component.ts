@@ -34,6 +34,8 @@ namespace app.directives {
         {{c}}
         <!-- 'ctrl.*' completion -->
         {{ctrl.}}
+        <!-- filter completion -->
+        <div ng-if="ctrl.num | s"></div>
         `,
         bindings : {
             disabledDrag : '<?',
