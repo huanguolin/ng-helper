@@ -8,7 +8,7 @@ export async function timeCost<T>(
 ): Promise<T | undefined> {
     const cnt = storeAndGetCount(fnName);
     const start = Date.now();
-    console.group(`[timeCost] ${fnName}()#${cnt}`);
+    console.groupCollapsed(`[timeCost] ${fnName}()#${cnt}`);
     try {
         return await cb();
     } catch (error) {
