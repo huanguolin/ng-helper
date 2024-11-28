@@ -23,7 +23,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 > Useful utilities features:
 - [x] Jump from 'templateUrl' to the corresponding HTML ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif))
-- [x] ✨🆕 Jump from 'controller' to the implement `js`/`ts` file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
+- [x] ✨🆕 Jump from 'controller' name to the implement `js`/`ts` file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
 - [x] ✨🆕 Click to search for 'directive'/'component' where to use ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
 - [x] Right-click menu to create components ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif))
 
