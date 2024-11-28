@@ -63,7 +63,6 @@ export async function htmlSemanticProvider({
     const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
     if (!componentNodes.length && !maybeDirectiveNodes.length) {
-        console.warn('componentNodes and maybeDirectiveNodes not found!');
         return;
     }
 
