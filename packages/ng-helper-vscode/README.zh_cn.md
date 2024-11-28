@@ -27,8 +27,8 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 
 ## Requirements
 
-* 需要配合 TypeScript 才能使用，支持 TypeScript 3.5.3+
 * vscode 1.80.0+
+* TypeScript 3.5.3+ (有些功能需要配合 TypeScript 才能使用，具体见上文)
 
 
 ## Installation

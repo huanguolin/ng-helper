@@ -29,8 +29,8 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 ## Requirements
 
-* Requires TypeScript, supporting TypeScript 3.5.3+
 * vscode 1.80.0+
+* TypeScript 3.5.3+ (Some features require this, see above) 
 
 ## Installation
 
