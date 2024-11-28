@@ -2,6 +2,7 @@ import type { CursorAtAttrNameInfo, CursorAtStartTagInfo } from '@ng-helper/shar
 import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
+import { EXT_MARK } from '../../constants';
 import { getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
@@ -66,7 +67,7 @@ async function handleDirectiveName({
         item.documentation = ['(directive)', x.typeString && `type: ${x.typeString}`, x.document]
             .filter(Boolean)
             .join('\n');
-        item.detail = '[ng-helper]';
+        item.detail = EXT_MARK;
         item.sortText = i.toString().padStart(2, '0');
         return item;
     });

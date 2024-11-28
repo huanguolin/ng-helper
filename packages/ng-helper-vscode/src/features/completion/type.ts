@@ -10,6 +10,7 @@ import {
     TextDocument,
 } from 'vscode';
 
+import { EXT_MARK } from '../../constants';
 import {
     getComponentControllerAsApi,
     getComponentTypeCompletionApi,
@@ -191,7 +192,7 @@ async function getCtrlCompletion({
         if (ctrlInfo && ctrlInfo.controllerAs) {
             const item = new CompletionItem(ctrlInfo.controllerAs, CompletionItemKind.Property);
             item.sortText = '0';
-            item.detail = '[ng-helper]';
+            item.detail = EXT_MARK;
             return new CompletionList([item], false);
         }
     }
@@ -213,7 +214,7 @@ async function getComponentControllerAsCompletion(
         const item = new CompletionItem(res);
         // 往前排
         item.sortText = '0';
-        item.detail = '[ng-helper]';
+        item.detail = EXT_MARK;
         return new CompletionList([item], false);
     }
 }

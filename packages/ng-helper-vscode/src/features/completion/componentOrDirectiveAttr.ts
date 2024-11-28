@@ -3,6 +3,7 @@ import { Cursor, SPACE, canCompletionHtmlAttr } from '@ng-helper/shared/lib/html
 import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
+import { EXT_MARK } from '../../constants';
 import { getComponentAttrCompletionApi, getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
@@ -99,7 +100,7 @@ async function handleComponentAttr({
         const item = new CompletionItem(x.name, CompletionItemKind.Field);
         item.insertText = new SnippetString(`${x.name}="$1"$0`);
         item.documentation = `type: ${x.typeString}\n` + x.document;
-        item.detail = '[ng-helper]';
+        item.detail = EXT_MARK;
         item.sortText = i.toString().padStart(2, '0');
         return item;
     });
@@ -144,7 +145,7 @@ async function handleDirectiveAttr({
         item.documentation = ['(attribute of directive)', x.typeString && `type: ${x.typeString}`, x.document]
             .filter(Boolean)
             .join('\n');
-        item.detail = '[ng-helper]';
+        item.detail = EXT_MARK;
         item.sortText = i.toString().padStart(2, '0');
         return item;
     });

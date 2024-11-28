@@ -4,6 +4,7 @@ import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
 import { CompletionItem, CompletionList, SnippetString } from 'vscode';
 
+import { EXT_MARK } from '../../constants';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
 import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
@@ -86,7 +87,7 @@ export async function componentNameCompletion({
             const item = new CompletionItem(tag);
             item.insertText = new SnippetString(buildSnippet());
             item.documentation = buildDocumentation();
-            item.detail = '[ng-helper]';
+            item.detail = EXT_MARK;
             return item;
 
             function buildSnippet() {
