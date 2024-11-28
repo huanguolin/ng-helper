@@ -1,10 +1,11 @@
-import { NgComponentNameInfo, NgTypeInfo, type NgComponentDirectiveNamesInfo, type NgDirectiveNameInfo } from '@ng-helper/shared/lib/plugin';
+import { SPACE } from '@ng-helper/shared/lib/html';
+import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { NgComponentTypeInfo, PluginContext } from '../type';
+import type { DirectiveInfo, Property } from '../ngHelperServer/ngCache';
+import { PluginContext } from '../type';
 
-import { isTypeOfType } from './common';
-import { getObjLiteral } from './common';
+import { getPropValueByName, isTypeOfType } from './common';
 
 export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     // 检查 angular.module('moduleName') 的调用，注意 module 函数还有两个可选参数：
@@ -16,8 +17,7 @@ export function isAngularModuleNode(ctx: PluginContext, node: ts.Node): node is 
         node.expression.expression.text === 'angular' &&
         ctx.ts.isIdentifier(node.expression.name) &&
         node.expression.name.text === 'module' &&
-        node.arguments.length >= 1 &&
-        ctx.ts.isStringLiteral(node.arguments[0])
+        node.arguments.length >= 1
     ) {
         return true;
     }
@@ -127,34 +127,39 @@ export function isAngularConfigNode(ctx: PluginContext, node: ts.Node): node is 
 
 function isInjectableNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
     // 只考虑常见情况，其他情况不考虑
-    return ctx.ts.isArrayLiteralExpression(node) || ctx.ts.isFunctionExpression(node) || ctx.ts.isClassExpression(node) || ctx.ts.isIdentifier(node);
+    return (
+        ctx.ts.isArrayLiteralExpression(node) ||
+        ctx.ts.isFunctionExpression(node) ||
+        ctx.ts.isClassExpression(node) ||
+        ctx.ts.isIdentifier(node)
+    );
 }
 
-export function getComponentTypeInfo(ctx: PluginContext, componentLiteralNode: ts.ObjectLiteralExpression): NgComponentTypeInfo {
-    const result: NgComponentTypeInfo = {
-        controllerAs: '$ctrl',
-        bindings: new Map(),
-    };
-    for (const prop of componentLiteralNode.properties) {
-        if (ctx.ts.isPropertyAssignment(prop) && ctx.ts.isIdentifier(prop.name)) {
-            if (prop.name.text === 'controller' && ctx.ts.isIdentifier(prop.initializer)) {
-                let controllerType = ctx.typeChecker.getTypeAtLocation(prop.initializer);
-                if (isTypeOfType(ctx, controllerType)) {
-                    const targetSymbol = controllerType.symbol;
-                    if (targetSymbol) {
-                        controllerType = ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
-                    }
-                }
-                result.controllerType = controllerType;
-            } else if (prop.name.text === 'controllerAs' && ctx.ts.isStringLiteral(prop.initializer)) {
-                result.controllerAs = prop.initializer.text;
-            } else if (prop.name.text === 'bindings' && ctx.ts.isObjectLiteralExpression(prop.initializer)) {
-                const bindingsObj = getObjLiteral(ctx, prop.initializer);
-                result.bindings = new Map(Object.entries(bindingsObj));
-            }
+export function getComponentControllerType(ctx: PluginContext, componentName: string): ts.Type | undefined {
+    const logger = ctx.logger.prefix('getComponentControllerType()');
+
+    const componentLiteralNode = getComponentDeclareLiteralNode(ctx, componentName);
+    if (!componentLiteralNode) {
+        logger.info(`componentLiteralNode not found! componentName: ${componentName}`);
+        return;
+    }
+
+    const controllerPropValue = getPropValueByName(ctx, componentLiteralNode, 'controller');
+    // 暂不考虑 controller 是 inline class 的情况
+    if (!controllerPropValue || !ctx.ts.isIdentifier(controllerPropValue)) {
+        logger.info(`controllerPropValue not found, or it's not an identifier! componentName: ${componentName}`);
+        return;
+    }
+
+    let controllerType = ctx.typeChecker.getTypeAtLocation(controllerPropValue);
+    if (isTypeOfType(ctx, controllerType)) {
+        const targetSymbol = controllerType.symbol;
+        if (targetSymbol) {
+            controllerType = ctx.typeChecker.getDeclaredTypeOfSymbol(targetSymbol);
         }
     }
-    return result;
+
+    return controllerType;
 }
 
 export function getControllerType(ctx: PluginContext): ts.Type | undefined {
@@ -192,14 +197,20 @@ export function getControllerType(ctx: PluginContext): ts.Type | undefined {
     }
 }
 
-export function getComponentDeclareLiteralNode(ctx: PluginContext, componentName?: string): ts.ObjectLiteralExpression | undefined {
+export function getComponentDeclareLiteralNode(
+    ctx: PluginContext,
+    componentName?: string,
+): ts.ObjectLiteralExpression | undefined {
     let componentLiteralNode: ts.ObjectLiteralExpression | undefined;
     visit(ctx.sourceFile);
     return componentLiteralNode;
 
     function visit(node: ts.Node) {
         if (isAngularComponentRegisterNode(ctx, node)) {
-            if (!componentName || (ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === componentName)) {
+            if (
+                !componentName ||
+                (ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === componentName)
+            ) {
                 // 第二个参数是对象字面量
                 const theNode = node.arguments[1];
                 if (ctx.ts.isObjectLiteralExpression(theNode)) {
@@ -213,19 +224,32 @@ export function getComponentDeclareLiteralNode(ctx: PluginContext, componentName
     }
 }
 
-export function getDirectiveConfigNode(ctx: PluginContext, directiveName: string): ts.ObjectLiteralExpression | undefined {
+export function getDirectiveConfigNode(
+    ctx: PluginContext,
+    directiveName: string,
+): ts.ObjectLiteralExpression | undefined {
     let directiveConfigLiteralNode: ts.ObjectLiteralExpression | undefined;
     visit(ctx.sourceFile);
     return directiveConfigLiteralNode;
 
     function visit(node: ts.Node) {
-        if (isAngularDirectiveRegisterNode(ctx, node) && ctx.ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === directiveName) {
+        if (
+            isAngularDirectiveRegisterNode(ctx, node) &&
+            ctx.ts.isStringLiteral(node.arguments[0]) &&
+            node.arguments[0].text === directiveName
+        ) {
             // 第二个参数是数组字面量或者函数表达式
-            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
+            const directiveFuncExpr = getAngularDefineFunctionExpression(ctx, node.arguments[1]);
             // 获取函数的返回值
             if (directiveFuncExpr) {
-                const returnStatement = directiveFuncExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
-                if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
+                const returnStatement = directiveFuncExpr.body.statements.find((s) =>
+                    ctx.ts.isReturnStatement(s),
+                ) as ts.ReturnStatement;
+                if (
+                    returnStatement &&
+                    returnStatement.expression &&
+                    ctx.ts.isObjectLiteralExpression(returnStatement.expression)
+                ) {
                     directiveConfigLiteralNode = returnStatement.expression;
                 }
             }
@@ -236,257 +260,124 @@ export function getDirectiveConfigNode(ctx: PluginContext, directiveName: string
     }
 }
 
-export function getComponentDirectiveNameInfo(ctx: PluginContext): NgComponentDirectiveNamesInfo | undefined {
-    const info: NgComponentDirectiveNamesInfo = {
-        components: [],
-        directives: [],
-    };
-    visit(ctx.sourceFile);
-    return info.components.length || info.directives.length ? info : undefined;
-
-    function visit(node: ts.Node) {
-        if (isAngularComponentRegisterNode(ctx, node)) {
-            const componentInfo = getComponentNameInfo(node);
-            if (componentInfo) {
-                info.components.push(componentInfo);
-            }
-        } else if (isAngularDirectiveRegisterNode(ctx, node)) {
-            const directiveInfo = getDirectiveNameInfo(node);
-            if (directiveInfo) {
-                info.directives.push(directiveInfo);
-            }
-        }
-
-        ctx.ts.forEachChild(node, visit);
+export function getAngularDefineFunctionExpression(
+    ctx: PluginContext,
+    defineNode: ts.Expression,
+): ts.FunctionExpression | undefined {
+    let funcExpr: ts.FunctionExpression | undefined;
+    if (ctx.ts.isFunctionExpression(defineNode)) {
+        funcExpr = defineNode;
+    } else if (
+        ctx.ts.isArrayLiteralExpression(defineNode) &&
+        ctx.ts.isFunctionExpression(defineNode.elements[defineNode.elements.length - 1])
+    ) {
+        funcExpr = defineNode.elements[defineNode.elements.length - 1] as ts.FunctionExpression;
     }
-
-    function getComponentNameInfo(node: ts.CallExpression): NgComponentNameInfo | undefined {
-        let info: NgComponentNameInfo | undefined;
-
-        // 第一个参数是字符串字面量
-        const nameNode = node.arguments[0];
-        if (ctx.ts.isStringLiteralLike(nameNode)) {
-            info = {
-                componentName: nameNode.text,
-            };
-
-            // 第二个参数是对象字面量
-            const configNode = node.arguments[1];
-            if (ctx.ts.isObjectLiteralExpression(configNode)) {
-                const transcludeObj = configNode.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
-                if (transcludeObj) {
-                    info.transclude = getTranscludeInfo(transcludeObj);
-                }
-            }
-        }
-
-        return info;
-    }
-
-    function getDirectiveNameInfo(node: ts.CallExpression): NgDirectiveNameInfo | undefined {
-        let info: NgDirectiveNameInfo | undefined;
-
-        // 第一个参数是字符串字面量
-        const nameNode = node.arguments[0];
-        if (ctx.ts.isStringLiteralLike(nameNode)) {
-            info = {
-                directiveName: nameNode.text,
-                restrict: 'EA', // default value, see: https://docs.angularjs.org/api/ng/service/$compile#directive-definition-object
-            };
-
-            // 第二个参数是数组字面量或者函数表达式
-            const directiveFuncExpr = getDirectiveFunctionExpression(ctx, node.arguments[1]);
-
-            // 获取函数的返回值
-            if (directiveFuncExpr) {
-                const returnStatement = directiveFuncExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
-                if (returnStatement && returnStatement.expression && ctx.ts.isObjectLiteralExpression(returnStatement.expression)) {
-                    const returnObj = returnStatement.expression;
-
-                    // restrict
-                    const restrictStr = returnObj.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'restrict');
-                    if (restrictStr && ctx.ts.isPropertyAssignment(restrictStr) && ctx.ts.isStringLiteralLike(restrictStr.initializer)) {
-                        info.restrict = restrictStr.initializer.text;
-                    }
-
-                    // transclude
-                    const transcludeObj = returnObj.properties.find((p) => p.name && ctx.ts.isIdentifier(p.name) && p.name.text === 'transclude');
-                    if (transcludeObj) {
-                        info.transclude = getTranscludeInfo(transcludeObj);
-                    }
-                }
-            }
-        }
-
-        return info;
-    }
-
-    function getTranscludeInfo(transclude: ts.ObjectLiteralElementLike): boolean | Record<string, string> | undefined {
-        if (ctx.ts.isPropertyAssignment(transclude)) {
-            if (transclude.initializer.kind === ctx.ts.SyntaxKind.TrueKeyword) {
-                return true;
-            } else if (ctx.ts.isObjectLiteralExpression(transclude.initializer)) {
-                return getObjLiteral(ctx, transclude.initializer);
-            }
-        }
-    }
+    return funcExpr;
 }
 
-function getDirectiveFunctionExpression(ctx: PluginContext, configNode: ts.Expression) {
-    let directiveFuncExpr: ts.FunctionExpression | undefined;
-    if (ctx.ts.isFunctionExpression(configNode)) {
-        directiveFuncExpr = configNode;
-    } else if (ctx.ts.isArrayLiteralExpression(configNode) && ctx.ts.isFunctionExpression(configNode.elements[configNode.elements.length - 1])) {
-        directiveFuncExpr = configNode.elements[configNode.elements.length - 1] as ts.FunctionExpression;
-    }
-    return directiveFuncExpr;
-}
-
-export function getControllerNameInfo(ctx: PluginContext): string | undefined {
-    let name: string | undefined;
-    visit(ctx.sourceFile);
-    return name;
-
-    function visit(node: ts.Node) {
-        if (isAngularControllerRegisterNode(ctx, node)) {
-            // 第一个参数是字符串字面量
-            const nameNode = node.arguments[0];
-            if (ctx.ts.isStringLiteralLike(nameNode)) {
-                name = nameNode.text;
-            }
-        }
-
-        if (!name) {
-            ctx.ts.forEachChild(node, visit);
-        }
-    }
+export function getAngularDefineFunctionReturnStatement(
+    ctx: PluginContext,
+    funcExpr: ts.FunctionExpression,
+): ts.ReturnStatement | undefined {
+    return funcExpr.body.statements.find((s) => ctx.ts.isReturnStatement(s)) as ts.ReturnStatement;
 }
 
 export function getTypeInfoOfDirectiveScope(
     ctx: PluginContext,
-    scopeMap: Map<string, string>,
+    scope: Property[],
     /**
-     * 站在使用组件的视角。
+     * 是否站在使用组件的视角。
      */
     perspectivesOnUsing = true,
 ): NgTypeInfo[] | undefined {
-    return getPublicMembersTypeInfoOfBindings(ctx, scopeMap, perspectivesOnUsing);
+    return getPublicMembersTypeInfoOfBindings(ctx, scope, perspectivesOnUsing);
 }
 
 export function getPublicMembersTypeInfoOfBindings(
     ctx: PluginContext,
-    bindingsMap: Map<string, string>,
+    bindings: Property[],
     /**
-     * 站在使用组件的视角。
+     * 是否站在使用组件的视角。
      */
     perspectivesOnUsing = false,
-): NgTypeInfo[] | undefined {
-    if (!bindingsMap.size) {
-        return;
+): NgTypeInfo[] {
+    return bindings.map((binding) => getBindingTypeInfo(binding, perspectivesOnUsing));
+}
+
+export function getBindingTypeInfo(
+    binding: Property,
+    /**
+     * 是否站在使用组件的视角。
+     * 有两种视角（举例：input: '<inputValue'）：
+     * 1. 使用组件时，给组件属性传递值(此时属性的名字是 inputValue)。
+     * 2. 编写组件时，使用外部传入的值(此时属性的名字是 input)。
+     */
+    perspectivesOnUsing: boolean,
+): NgTypeInfo {
+    const item: NgTypeInfo = {
+        kind: 'property',
+        name: perspectivesOnUsing ? getBindingName(binding) : binding.name,
+        typeString: getBindingType(binding.value, perspectivesOnUsing),
+        document: `bindings config: "${binding.value}"`,
+        optional: isOptionalBinding(binding.value),
+        isFunction: false,
+    };
+    if (isEventBinding(binding.value)) {
+        item.isFunction = true;
+        item.paramNames = [];
     }
+    return item;
+}
 
-    const result: NgTypeInfo[] = [];
-    for (const [k, v] of bindingsMap) {
-        const typeInfo = getBindType(v);
-        const item: NgTypeInfo = {
-            kind: 'property',
-            name: perspectivesOnUsing ? typeInfo.inputName || k : k,
-            typeString: typeInfo.typeString,
-            document: `bindings config: "${v}"`,
-            optional: typeInfo.optional,
-            isFunction: false,
-        };
-        if (typeInfo.type === 'function') {
-            result.push({
-                ...item,
-                kind: 'method',
-                isFunction: true,
-                paramNames: [],
-            });
-        } else {
-            result.push(item);
-        }
+export function getBindingType(
+    bindingConfig: string,
+    /**
+     * 是否站在使用组件的视角。
+     * 有两种视角：
+     * 1. 使用组件时，给组件属性传递值；举例：对于 &, 接受表达式。
+     * 2. 编写组件时，使用外部传入的值；举例：对于 &, 其类型类似方法，可以按照方法调用。
+     */
+    perspectivesOnUsing: boolean,
+): string {
+    if (isEventBinding(bindingConfig)) {
+        return perspectivesOnUsing ? '<expression>' : '(...args: any[]) => any';
+    } else if (isStringBinding(bindingConfig)) {
+        return 'string';
     }
-    return result;
-
-    function getBindType(s: string) {
-        const inputName = removeBindingControlChars(s).trim();
-        const result: {
-            type: 'any' | 'string' | 'function';
-            optional: boolean;
-            typeString: string;
-            inputName?: string;
-        } = {
-            type: 'any',
-            optional: s.includes('?'),
-            typeString: 'any',
-            inputName: inputName ? inputName : undefined,
-        };
-
-        if (s.includes('@')) {
-            result.type = 'string';
-            result.typeString = 'string';
-        } else if (s.includes('&')) {
-            result.type = 'function';
-            result.typeString = perspectivesOnUsing ? 'expression' : '(...args: any[]) => any';
-        }
-
-        return result;
-    }
+    return 'any';
 }
 
-export function isStringBinding(bindingName: string): boolean {
-    return bindingName.includes('@');
+export function isStringBinding(bindingConfig: string): boolean {
+    return bindingConfig.includes('@');
 }
 
-export function removeBindingControlChars(bindingName: string): string {
-    return bindingName.replace(/[@=<?&]/g, '');
+export function isEventBinding(bindingConfig: string): boolean {
+    return bindingConfig.includes('&');
 }
 
-export function isElementDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
-    return directiveNameInfo.restrict.includes('E');
+export function isOptionalBinding(bindingConfig: string): boolean {
+    return bindingConfig.includes('?');
 }
 
-export function isAttributeDirective(directiveNameInfo: NgDirectiveNameInfo): boolean {
-    return directiveNameInfo.restrict.includes('A');
+export function getBindingName(binding: Property): string {
+    return removeBindingControlChars(binding.value).trim() || binding.name;
 }
 
-export function isComponentOrDirectiveFile(fileName: string): boolean {
-    return isComponentTsFile(fileName) || isComponentJsFile(fileName) || isDirectiveFile(fileName);
+export function removeBindingControlChars(bindingConfig: string): string {
+    return bindingConfig.replace(/[@=<?&]/g, '');
 }
 
-export function isTsFile(fileName: string): boolean {
-    return fileName.endsWith('.ts');
+export function isElementDirective(directiveInfo: DirectiveInfo): boolean {
+    return directiveInfo.restrict.includes('E');
+}
+
+export function isAttributeDirective(directiveInfo: DirectiveInfo): boolean {
+    return directiveInfo.restrict.includes('A');
 }
 
 export function isDtsFile(fileName: string): boolean {
     return fileName.endsWith('.d.ts');
 }
 
-export function isJsFile(fileName: string): boolean {
-    return fileName.endsWith('.js');
-}
-
-export function isDirectiveFile(fileName: string): boolean {
-    return (
-        fileName.endsWith('.directive.ts') ||
-        fileName.endsWith('.directives.ts') ||
-        fileName.endsWith('.directive.js') ||
-        fileName.endsWith('.directives.js')
-    );
-}
-export function isComponentJsFile(fileName: string): boolean {
-    return fileName.endsWith('.component.js');
-}
-
-export function isComponentTsFile(fileName: string): boolean {
-    return fileName.endsWith('.component.ts');
-}
-
-export function isControllerTsFile(fileName: string): boolean {
-    return fileName.endsWith('.controller.ts');
-}
-
-export function isServiceTsFile(fileName: string): boolean {
-    return fileName.endsWith('.service.ts');
-}
+export const INDENT = SPACE.repeat(4);

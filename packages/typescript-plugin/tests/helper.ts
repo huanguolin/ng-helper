@@ -18,7 +18,9 @@ export function createTestProgram(sourceFiles: Record<string, string>, options?:
     host.getSourceFile = (...args) => {
         const [fileName] = args;
         const sourceText = sourceFiles[fileName];
-        return sourceText !== undefined ? ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.ES2022) : getSourceFile(...args);
+        return sourceText !== undefined
+            ? ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.ES2022)
+            : getSourceFile(...args);
     };
     host.fileExists = (fileName) => {
         const sourceText = sourceFiles[fileName];

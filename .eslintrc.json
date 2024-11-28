@@ -7,7 +7,7 @@
         "tsconfigRootDir": "./",
         "project": [
             "./tsconfig.json",
-            "./packages/*/tsconfig.json"
+            "./packages/**/tsconfig.json"
         ]
     },
     "plugins": [
@@ -23,6 +23,18 @@
     ],
     "rules": {
         "semi": "off",
+        "curly": "error",
+        "eqeqeq": "error",
+        "no-throw-literal": "error",
+        "no-trailing-spaces": "error",
+        "require-await": "error",
+        "no-restricted-syntax": [
+            "error",
+            {
+                "selector": "ImportDeclaration[importKind!='type'][source.value='typescript']",
+                "message": "'import type' only from 'typescript'."
+            }
+        ],
         "@typescript-eslint/semi": "error",
         "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
         "@typescript-eslint/naming-convention": [
@@ -51,11 +63,7 @@
                 ]
             }
         ],
-        "curly": "error",
-        "eqeqeq": "error",
-        "no-throw-literal": "error",
         "unused-imports/no-unused-imports": "error",
-        "no-trailing-spaces": "error",
         "import/named": "off",
         "import/namespace": "off",
         "import/no-unresolved": "off",
@@ -74,19 +82,13 @@
                     "order": "asc"
                 }
             }
-        ],
-        "no-restricted-syntax": [
-            "error",
-            {
-                "selector": "ImportDeclaration[importKind!='type'][source.value='typescript']",
-                "message": "'import type' only from 'typescript'."
-            }
         ]
     },
     "ignorePatterns": [
         "node_modules",
         "dist",
         "**/*.d.ts",
-        "jest.config.ts"
+        "jest.config.ts",
+        "fixtures"
     ]
 }

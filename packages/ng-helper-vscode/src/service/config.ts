@@ -19,7 +19,10 @@ interface Api {
     getAPI(version: 0): ApiV0 | undefined;
 }
 
-export async function configTsPluginConfiguration(defaultPort: number, config: NgHelperConfig): Promise<number | undefined> {
+export async function configTsPluginConfiguration(
+    defaultPort: number,
+    config: NgHelperConfig,
+): Promise<number | undefined> {
     const extension = vscode.extensions.getExtension<Api>(typeScriptExtensionId);
     if (!extension) {
         return;

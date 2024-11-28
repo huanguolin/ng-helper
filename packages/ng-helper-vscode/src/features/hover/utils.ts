@@ -1,95 +1,68 @@
+import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import type { TextDocument } from 'vscode';
+
 import {
-    type Cursor,
-    getTextInTemplate,
-    getHtmlTagAt,
-    getTheAttrWhileCursorAtValue,
-    indexOfNgFilter,
-    getMapValues,
-    type HtmlAttr,
-} from '@ng-helper/shared/lib/html';
-import type { TextDocument, Position } from 'vscode';
+    isComponentTagName,
+    isNgBuiltinDirective,
+    checkServiceAndGetScriptFilePath,
+    isNgUserCustomAttr,
+    getContextString,
+} from '../utils';
 
-import { isValidIdentifier, isComponentTagName, isNgDirectiveAttr, checkServiceAndGetTsFilePath, isNgCustomAttr } from '../utils';
+type OnHoverFilterName<T> = (filterName: string, scriptFilePath?: string) => Promise<T | undefined>;
+type OnHoverType<T> = (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
 
-export async function provideTypeHoverInfo<T>({
+export async function onTypeHover<T>({
     document,
-    position,
+    cursorAtInfo,
     port,
-    api,
+    onHoverFilterName,
+    onHoverType,
 }: {
     document: TextDocument;
-    position: Position;
+    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
     port: number;
-    api: (tsFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
+    onHoverFilterName: OnHoverFilterName<T>;
+    onHoverType: OnHoverType<T>;
 }): Promise<T | undefined> {
-    const docText = document.getText();
-    const cursor: Cursor = { at: document.offsetAt(position), isHover: true };
-
-    const theChar = docText[cursor.at];
-    if (!isValidIdentifier(theChar)) {
-        return;
+    const contextString = getContextString(cursorAtInfo);
+    switch (contextString.type) {
+        case 'none':
+        case 'literal':
+            // do nothing
+            return;
+        case 'filterName':
+            return await checkAndCallHandler(contextString.value, true);
+        case 'identifier':
+        case 'propertyAccess':
+            return await checkAndCallHandler(contextString.value);
     }
 
-    // 模版 {{}} 中
-    const tplText = getTextInTemplate(docText, cursor);
-    if (tplText) {
-        const cursorAt = tplText.cursor.at;
-        const contextString = trimFilters(tplText.text, cursorAt);
-        if (contextString) {
-            return await callApi(contextString, cursorAt);
-        }
-    }
-
-    // 组件属性值中 或者 ng-* 属性值中
-    const tag = getHtmlTagAt(docText, cursor);
-    if (tag) {
-        const attr = getTheAttrWhileCursorAtValue(tag, cursor);
-        if (attr && attr.value && (isComponentTagName(tag.tagName) || isNgDirectiveAttr(attr.name.text) || isNgCustomAttr(attr.name.text))) {
-            let cursorAt = cursor.at - attr.value.start;
-            let contextString = trimFilters(attr.value.text, cursorAt);
-            // handle ng-class/ng-style map value
-            ({ contextString, cursorAt } = handleMapAttrValue(attr, contextString, cursorAt));
-            return await callApi(contextString, cursorAt);
-        }
-    }
-
-    async function callApi(contextString: string, cursorAt: number) {
-        const tsFilePath = await checkServiceAndGetTsFilePath(document, port);
-
-        if (!tsFilePath) {
+    async function checkAndCallHandler(contextString: string, isFilterName?: boolean) {
+        if (!contextString) {
             return;
         }
 
-        return await api(tsFilePath, contextString, cursorAt);
-    }
-}
+        if (isFilterName) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            return await onHoverFilterName(contextString, scriptFilePath);
+        }
 
-// 特殊处理:
-// 输入：xxx | filter
-// 输出：xxx
-function trimFilters(contextString: string, cursorAt: number): string {
-    const index = indexOfNgFilter(contextString);
-    if (index < 0) {
-        return contextString;
-    }
+        // 这里简单起见，直接取最后一个字符的位置。
+        // 只要 getMinNgSyntaxInfo 没有问题，这里的处理就没问题。
+        const cursorAt = contextString.length - 1;
 
-    if (index <= cursorAt) {
-        return '';
-    }
-
-    return contextString.slice(0, index);
-}
-
-function handleMapAttrValue(attr: HtmlAttr, contextString: string, cursorAt: number) {
-    if (attr.name.text === 'ng-class' || attr.name.text === 'ng-style') {
-        const mapValues = getMapValues(contextString);
-        if (mapValues && mapValues.length) {
-            const hoveredValue = mapValues.find((v) => v.start <= cursorAt && cursorAt <= v.start + v.text.length);
-            if (hoveredValue) {
-                contextString = hoveredValue.text;
-                cursorAt = cursorAt - hoveredValue.start;
+        const isTemplateValue = cursorAtInfo.type === 'template';
+        const isAttrValueAndCompletable =
+            cursorAtInfo.type === 'attrValue' &&
+            (isComponentTagName(cursorAtInfo.tagName) ||
+                isNgBuiltinDirective(cursorAtInfo.attrName) ||
+                isNgUserCustomAttr(cursorAtInfo.attrName));
+        if (isTemplateValue || isAttrValueAndCompletable) {
+            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            if (scriptFilePath) {
+                return await onHoverType(scriptFilePath, contextString, cursorAt);
             }
         }
     }
-    return { contextString, cursorAt };
 }

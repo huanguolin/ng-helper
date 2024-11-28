@@ -1,78 +1,81 @@
-import type { NgComponentsStringAttrsResponse, NgListComponentsStringAttrsRequest } from '@ng-helper/shared/lib/plugin';
+import type {
+    NgComponentsStringAttrsResponse,
+    NgDirectivesStringAttrsResponse,
+    NgListComponentsStringAttrsRequest,
+    NgListDirectivesStringAttrsRequest,
+} from '@ng-helper/shared/lib/plugin';
 
-import { getCtxOfCoreCtx, ngHelperServer } from '../ngHelperServer';
+import { ngHelperServer } from '../ngHelperServer';
 import type { CorePluginContext } from '../type';
-import { getComponentDeclareLiteralNode, getComponentTypeInfo, isStringBinding, removeBindingControlChars } from '../utils/ng';
+import { getBindingName, isAttributeDirective, isStringBinding } from '../utils/ng';
 
-type ComponentDirectivePathInfo = {
-    type: 'component' | 'directive';
-    /**
-     * component or directive name.
-     */
-    name: string;
-    filePath: string;
-};
-
+// 用于 html 中组件的语义颜色高亮
 export function getComponentsStringAttrsInfo(
     coreCtx: CorePluginContext,
     { fileName, componentNames }: NgListComponentsStringAttrsRequest,
 ): NgComponentsStringAttrsResponse {
-    const componentDirectiveMap = ngHelperServer.getComponentDirectiveMap(fileName);
-    if (!componentDirectiveMap) {
+    const logger = coreCtx.logger.prefix('getComponentsStringAttrsInfo()');
+
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${fileName})!`);
         return;
     }
 
-    const componentNameMap = new Map<string, ComponentDirectivePathInfo>();
-    for (const [filePath, componentDirectiveInfo] of componentDirectiveMap) {
-        for (const component of componentDirectiveInfo.components) {
-            componentNameMap.set(component.componentName, { type: 'component', name: component.componentName, filePath });
-        }
-        for (const directive of componentDirectiveInfo.directives) {
-            componentNameMap.set(directive.directiveName, { type: 'directive', name: directive.directiveName, filePath });
-        }
-    }
+    const componentMap = cache.getComponentMap();
+    const directiveMap = cache.getDirectiveMap();
 
     const result: Record<string, string[]> = {};
     for (const componentName of componentNames) {
-        if (componentNameMap.has(componentName)) {
-            const info = componentNameMap.get(componentName)!;
-            const bindings = getBindings(info);
-
-            const attrs: string[] = [];
-            if (bindings) {
-                for (const [k, v] of bindings) {
-                    // is string
-                    if (isStringBinding(v)) {
-                        const attrName = removeBindingControlChars(v).trim() || k;
-                        attrs.push(attrName);
-                    }
-                }
+        if (componentMap.has(componentName)) {
+            const componentInfo = componentMap.get(componentName)!;
+            const bindingNames = componentInfo.bindings
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
+            if (bindingNames.length > 0) {
+                result[componentName] = bindingNames;
             }
-
-            if (attrs.length) {
-                result[componentName] = attrs;
+        } else if (directiveMap.has(componentName)) {
+            const directiveInfo = directiveMap.get(componentName)!;
+            const bindingNames = directiveInfo.scope
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
+            if (bindingNames.length > 0) {
+                result[componentName] = bindingNames;
             }
         }
     }
 
     return Object.keys(result).length > 0 ? result : undefined;
+}
 
-    function getBindings({ type, name, filePath }: ComponentDirectivePathInfo) {
-        const ctx = getCtxOfCoreCtx(coreCtx, filePath);
-        if (!ctx) {
-            return;
-        }
+// 用于 html 中组件的语义颜色高亮
+export function getDirectivesStringAttrsInfo(
+    coreCtx: CorePluginContext,
+    { fileName, maybeDirectiveNames }: NgListDirectivesStringAttrsRequest,
+): NgDirectivesStringAttrsResponse {
+    const logger = coreCtx.logger.prefix('getDirectivesStringAttrsInfo()');
 
-        if (type === 'component') {
-            const componentLiteralNode = getComponentDeclareLiteralNode(ctx, name);
-            if (!componentLiteralNode) {
-                return;
+    const cache = ngHelperServer.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${fileName})!`);
+        return;
+    }
+
+    const directiveMap = cache.getDirectiveMap();
+
+    const result: Record<string, string[]> = {};
+    for (const maybeDirectiveName of maybeDirectiveNames) {
+        const directiveInfo = directiveMap.get(maybeDirectiveName)!;
+        if (directiveInfo && isAttributeDirective(directiveInfo)) {
+            const bindingNames = directiveInfo.scope
+                .filter((x) => isStringBinding(x.value))
+                .map((x) => getBindingName(x));
+            if (bindingNames.length > 0) {
+                result[maybeDirectiveName] = bindingNames;
             }
-
-            const info = getComponentTypeInfo(ctx, componentLiteralNode);
-            return info.bindings;
-        } else {
-            // TODO directive
         }
     }
+
+    return Object.keys(result).length > 0 ? result : undefined;
 }

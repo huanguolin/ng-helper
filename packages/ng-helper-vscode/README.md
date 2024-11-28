@@ -11,25 +11,26 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 ## Features
 
-- [x] `ng-*` directive auto-completion
+- [x] `ng-*` directive auto-completion ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/main/resources/builtin-drectives-demo.gif))
 - [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition
 - [x] Custom component tags/attributes: auto-completion, hover hints, go to definition
-- [ ] Custom filter: auto-completion, hover hints, go to definition
+- [x] ✨🆕 Custom filter: auto-completion, hover hints, go to definition
 - [x] HTML syntax highlighting, supporting inline HTML (including syntax highlighting, auto-completion, hover hints, Go to definition)
-- [x] Jump from 'templateUrl' to the corresponding HTML
-- [x] Right-click menu to create components
+- [x] Data binding (Require `TypeScript`): auto-completion, hover type hints, go to definition
 - [x] Dependency injection matching validation
   - [x] `TypeScript` code
   - [x] `JavaScript` code
 
-> The following features require `TypeScript` support:
-- [x] Data binding: auto-completion, hover type hints, go to definition
-
+> Useful utilities features:
+- [x] Jump from 'templateUrl' to the corresponding HTML
+- [x] ✨🆕 Jump from 'controller' to the implement `js`/`ts` file
+- [x] ✨🆕 Click to search for 'directive'/'component' where to use
+- [x] Right-click menu to create components
 
 ## Requirements
 
-* Requires TypeScript, supporting TypeScript 3.5.3+
 * vscode 1.80.0+
+* TypeScript 3.5.3+ (Some features require this, see above) 
 
 ## Installation
 
@@ -47,4 +48,4 @@ Create an empty `ng-helper.json` file in the `.vscode` directory of your workspa
 
 ## Known Issues
 
-When using data binding auto-completion in the component template, it may not work if no ts file has been opened for preview after the project is opened. This can cause the TypeScript language service to not start, resulting in no auto-completion. In this case, an error message will pop up in the lower right corner. Click OK, and a ts file will automatically open. After that, return to the HTML file, and the auto-completion should work normally.
+When using feature like auto-completion in the html template, it may not work if no ts/js file has been opened for preview after the project is opened. This can cause the TypeScript language service to not start, resulting in no auto-completion. In this case, an warning message will pop up in the lower right corner. Click OK, and a ts/js file will automatically open. After that, return to the HTML file, and the auto-completion should work normally.

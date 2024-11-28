@@ -113,11 +113,18 @@
     "vscode:prepublish": "yarn compile && yarn plugin:resolve",
     "plugin:resolve": "yarn plugin:compile && node scripts/resolver.js",
     "plugin:compile": "cd ../typescript-plugin && yarn compile",
+    "plugin:compile:e2e": "cd ../typescript-plugin && yarn compile:e2e",
     "plugin:clean": "node scripts/resolver.js --clean",
     "compile": "yarn tsc && yarn lint && node esbuild.js --production",
+    "compile:e2e": "yarn plugin:compile:e2e && node esbuild.js",
     "watch:esbuild": "yarn plugin:clean && node esbuild.js --watch",
     "tsc": "tsc --noEmit",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "test:e2e:u": "cross-env UPDATE_SNAPSHOT=1 yarn test:e2e",
+    "test:e2e": "yarn e2e:prepare && cd tests && node ./dist/runTest.js",
+    "e2e:prepare": "yarn compile:e2e && yarn e2e:clean && yarn e2e:compile",
+    "e2e:clean": "cd tests && rm -rf dist",
+    "e2e:compile": "cd tests && tsc"
   },
   "dependencies": {
     "@ng-helper/shared": "^0.0.1",
@@ -128,16 +135,24 @@
     "get-port": "^6.1.2"
   },
   "devDependencies": {
+    "@types/chai": "^5.0.1",
     "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10.0.9",
     "@types/node": "18.x",
     "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^2.30.0",
+    "chai": "^4.4.0",
     "commander": "^12.1.0",
+    "cross-env": "^7.0.3",
     "esbuild": "^0.21.4",
     "eslint": "^8.57.0",
     "fs-extra": "^11.2.0",
+    "glob": "^11.0.0",
+    "mocha": "^10.8.2",
+    "mocha-chai-jest-snapshot": "^1.1.6",
     "npm-run-all": "^4.1.5",
     "typescript": "~5.4.5"
   }

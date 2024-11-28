@@ -1,0 +1,189 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Hover component name/attr show hover info on component attr 1`] = `
+"
+\`\`\`typescript
+(property) attrTitle: string
+\`\`\`
+bindings config: \\"?@attrTitle\\""
+`;
+
+exports[`Hover component name/attr show hover info on component name 1`] = `
+"
+\`\`\`typescript
+(component) bazQux
+bindings: {
+    baz: \\"<\\" // number
+    qux: \\"&?\\"
+    title: \\"?@attrTitle\\" // string
+}
+\`\`\`
+"
+`;
+
+exports[`Hover directive name/attr show hover info on directive attr 1`] = `
+"
+\`\`\`typescript
+(attribute of [numberCheck]) canNaN: any
+\`\`\`
+scope configs: \\"?<allowNan\\""
+`;
+
+exports[`Hover directive name/attr show hover info on directive name 1`] = `
+"
+\`\`\`typescript
+(directive) numberCheck
+restrict: \\"A\\"
+require: \\"ngModel\\"
+scope: {
+    min: \\"?<\\"
+    max: \\"?<\\"
+    canNaN: \\"?<allowNan\\"
+}
+\`\`\`
+"
+`;
+
+exports[`Hover filter show hover info on "status" 1`] = `
+"
+\`\`\`typescript
+(filter) status(input: Status, step: number): any
+\`\`\`
+"
+`;
+
+exports[`Hover filter show hover info on "translate" 1`] = `
+"
+\`\`\`typescript
+(filter [builtin]) translate(input: string, interpolateParams?: Object, interpolationId?: string, forceLanguage?: string, sanitizeStrategy?: string): string
+\`\`\`
+Translates a given token into the selected language.  
+  
+  
+  
+  
+*@param* \`input\` A translation id to be translated.  
+  
+*@param* \`interpolateParams\` An object hash for dynamic value interpolation.  
+  
+*@param* \`interpolationId\` The id of the interpolation algorithm to use.  
+  
+*@param* \`forceLanguage\` Ignore the current language and force a language-specific translation.  
+  
+*@param* \`sanitizeStrategy\` Specify a policy to clean up translated content to prevent cross-site scripting attacks."
+`;
+
+exports[`Hover inline html hover component attr 1`] = `
+"
+\`\`\`typescript
+(property) attrTitle: string
+\`\`\`
+bindings config: \\"?@attrTitle\\""
+`;
+
+exports[`Hover inline html hover component name 1`] = `
+"
+\`\`\`typescript
+(component) bazQux
+bindings: {
+    baz: \\"<\\" // number
+    qux: \\"&?\\"
+    title: \\"?@attrTitle\\" // string
+}
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover directive attr 1`] = `
+"
+\`\`\`typescript
+(attribute of [numberCheck]) max: any
+\`\`\`
+scope configs: \\"?<\\""
+`;
+
+exports[`Hover inline html hover directive name 1`] = `
+"
+\`\`\`typescript
+(directive) numberCheck
+restrict: \\"A\\"
+require: \\"ngModel\\"
+scope: {
+    min: \\"?<\\"
+    max: \\"?<\\"
+    canNaN: \\"?<allowNan\\"
+}
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover filter 1`] = `
+"
+\`\`\`typescript
+(filter) status(input: Status, step: number): any
+\`\`\`
+"
+`;
+
+exports[`Hover inline html hover ng-* 1`] = `
+"
+\`\`\`typescript
+(directive) ngModal
+\`\`\`
+Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngModal)."
+`;
+
+exports[`Hover inline html hover type 1`] = `
+"
+\`\`\`typescript
+(property) disabledDrag: boolean | undefined
+\`\`\`
+"
+`;
+
+exports[`Hover ng-* show hover info on "ng-if" 1`] = `
+"
+\`\`\`typescript
+(directive) ngIf
+\`\`\`
+Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
+`;
+
+exports[`Hover type show hover info on "(ctl.obj.)arr" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) obj: {
+    txt: string;
+    arr: {
+        id: number;
+        name: string;
+    }
+    [];
+}
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "(ctrl.)bar" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) bar: number
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "ctl" (controller html) 1`] = `
+"
+\`\`\`typescript
+(class) ctl: P1Controller
+\`\`\`
+"
+`;
+
+exports[`Hover type show hover info on "ctrl" (component html) 1`] = `
+"
+\`\`\`typescript
+(class) ctrl: BarFooController
+\`\`\`
+"
+`;

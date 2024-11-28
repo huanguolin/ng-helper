@@ -1,18 +1,11 @@
 {
+    "extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"module": "CommonJS",
-		"target": "ES2022",
-		"lib": [
-			"ES2022"
-		],
-		"sourceMap": true,
-		"rootDir": "./src",
-		"strict": true, /* enable all strict type-checking options */
-		"esModuleInterop": true,
-		"noEmit": true
+        "types": ["fs-extra", "node", "vscode"]
 	},
 	"exclude": [
 		"node_modules",
-		"dist"
+		"dist",
+		"tests" /* tests 下有自己的 tsconfig.json */
 	]
 }

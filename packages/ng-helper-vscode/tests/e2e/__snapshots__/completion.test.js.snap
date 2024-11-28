@@ -1,0 +1,1678 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Completion component name/attr get completion info of component attr 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: number
+bindings config: \\"<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "bar=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "bar",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: string
+bindings config: \\"@\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "foo=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "foo",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: boolean | undefined
+bindings config: \\"?<attrDisabled\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "attr-disabled=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "attr-disabled",
+    "preselect": undefined,
+    "sortText": "02",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion component name/attr get completion info of component name 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<bar-foo | ></bar-foo>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "bar-foo$0></bar-foo>",
+    },
+    "kind": "Property",
+    "label": "bar-foo",
+    "preselect": undefined,
+    "sortText": "bar-foo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<best-xyz | ></best-xyz>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "best-xyz$0></best-xyz>",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "best-xyz",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<common-panel | >
+    <panel-body></panel-body>
+</common-panel>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "common-panel$0>
+    <panel-body></panel-body>
+</common-panel>",
+    },
+    "kind": "Property",
+    "label": "common-panel",
+    "preselect": undefined,
+    "sortText": "common-panel",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<drag-source> | </drag-source>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "drag-source>$0</drag-source>",
+    },
+    "kind": "Property",
+    "label": "drag-source",
+    "preselect": undefined,
+    "sortText": "drag-source",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion component name/attr get completion info of component name 2`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<bar-foo | ></bar-foo>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "<bar-foo$0></bar-foo>",
+    },
+    "kind": "Property",
+    "label": "bar-foo",
+    "preselect": undefined,
+    "sortText": "bar-foo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<best-xyz | ></best-xyz>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "<best-xyz$0></best-xyz>",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "best-xyz",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<common-panel | >
+    <panel-body></panel-body>
+</common-panel>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "<common-panel$0>
+    <panel-body></panel-body>
+</common-panel>",
+    },
+    "kind": "Property",
+    "label": "common-panel",
+    "preselect": undefined,
+    "sortText": "common-panel",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<drag-source> | </drag-source>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "<drag-source>$0</drag-source>",
+    },
+    "kind": "Property",
+    "label": "drag-source",
+    "preselect": undefined,
+    "sortText": "drag-source",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion directive name/attr get completion info of directive attr 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: string
+bindings config: \\"?@\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "x=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "x",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "y=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "y",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: <expression>
+bindings config: \\"?&\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "z=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "z",
+    "preselect": undefined,
+    "sortText": "02",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?=all\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "all=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "all",
+    "preselect": undefined,
+    "sortText": "03",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion directive name/attr get completion info of directive attr 2`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "max=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "max",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<allowNan\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "allow-nan=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "allow-nan",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion directive name/attr get completion info of directive name 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(directive)",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "best-xyz$0",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(directive)",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "number-check$0",
+    },
+    "kind": "Property",
+    "label": "number-check",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion filter get completion info of filter 1`] = `
+Array [
+  Object {
+    "detail": "(filter) f1(input: number): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "f1",
+    "kind": "Function",
+    "label": "f1",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) status(input: Status, step: number): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "status :\${1:step}",
+    },
+    "kind": "Function",
+    "label": "status",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) f2(input: any): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "f2",
+    "kind": "Function",
+    "label": "f2",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) currency(input: number, symbol?: string, fractionSize?: number): str...  ",
+    "documentation": "Formats a number as a currency (ie $1,234.56).",
+    "filterText": undefined,
+    "insertText": "currency",
+    "kind": "Function",
+    "label": "currency",
+    "preselect": undefined,
+    "sortText": "currency",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) date(input: Date | number | string, format?: string, timezone?: stri...  ",
+    "documentation": "Formats date to a string based on the requested format.",
+    "filterText": undefined,
+    "insertText": "date",
+    "kind": "Function",
+    "label": "date",
+    "preselect": undefined,
+    "sortText": "date",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) filter(input: Array, expression: string | Object | function, compara...  ",
+    "documentation": "Selects a subset of items from array and returns it as a new array.",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "filter :\${0:expression}",
+    },
+    "kind": "Function",
+    "label": "filter",
+    "preselect": undefined,
+    "sortText": "filter",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) json(input: any, spacing?: number): string...  ",
+    "documentation": "Convert a JavaScript object into JSON string.",
+    "filterText": undefined,
+    "insertText": "json",
+    "kind": "Function",
+    "label": "json",
+    "preselect": undefined,
+    "sortText": "json",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) limitTo(input: Array | ArrayLike | string | number, limit: string | ...  ",
+    "documentation": "Creates a new array or string containing only a specified number of elements. ",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "limitTo :\${0:limit}",
+    },
+    "kind": "Function",
+    "label": "limitTo",
+    "preselect": undefined,
+    "sortText": "limitTo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) lowercase(input: string): string...  ",
+    "documentation": "Converts string to lowercase.",
+    "filterText": undefined,
+    "insertText": "lowercase",
+    "kind": "Function",
+    "label": "lowercase",
+    "preselect": undefined,
+    "sortText": "lowercase",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) number(input: number | string, fractionSize?: string | number): stri...  ",
+    "documentation": "Formats a number as text.",
+    "filterText": undefined,
+    "insertText": "number",
+    "kind": "Function",
+    "label": "number",
+    "preselect": undefined,
+    "sortText": "number",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) orderBy(input: Array, expression: string | function | Array, reverse...  ",
+    "documentation": "Orders an array by an expression.",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "orderBy :\${0:expression}",
+    },
+    "kind": "Function",
+    "label": "orderBy",
+    "preselect": undefined,
+    "sortText": "orderBy",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) translate(input: string, interpolateParams?: Object, interpolationId...  ",
+    "documentation": "Translates a given token into the selected language.",
+    "filterText": undefined,
+    "insertText": "translate",
+    "kind": "Function",
+    "label": "translate",
+    "preselect": undefined,
+    "sortText": "translate",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) uppercase(input: string): string...  ",
+    "documentation": "Converts string to uppercase.",
+    "filterText": undefined,
+    "insertText": "uppercase",
+    "kind": "Function",
+    "label": "uppercase",
+    "preselect": undefined,
+    "sortText": "uppercase",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html component attr 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: number
+bindings config: \\"<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "bar=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "bar",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: string
+bindings config: \\"@\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "foo=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "foo",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "type: boolean | undefined
+bindings config: \\"?<attrDisabled\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "attr-disabled=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "attr-disabled",
+    "preselect": undefined,
+    "sortText": "02",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html component name 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<bar-foo | ></bar-foo>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "bar-foo$0></bar-foo>",
+    },
+    "kind": "Property",
+    "label": "bar-foo",
+    "preselect": undefined,
+    "sortText": "bar-foo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<baz-qux | ></baz-qux>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "baz-qux$0></baz-qux>",
+    },
+    "kind": "Property",
+    "label": "baz-qux",
+    "preselect": undefined,
+    "sortText": "baz-qux",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<best-xyz | ></best-xyz>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "best-xyz$0></best-xyz>",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "best-xyz",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<common-panel | >
+    <panel-body></panel-body>
+</common-panel>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "common-panel$0>
+    <panel-body></panel-body>
+</common-panel>",
+    },
+    "kind": "Property",
+    "label": "common-panel",
+    "preselect": undefined,
+    "sortText": "common-panel",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<drag-source> | </drag-source>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "drag-source>$0</drag-source>",
+    },
+    "kind": "Property",
+    "label": "drag-source",
+    "preselect": undefined,
+    "sortText": "drag-source",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html directive attr 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: string
+bindings config: \\"?@\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "x=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "x",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?<\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "y=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "y",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: <expression>
+bindings config: \\"?&\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "z=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "z",
+    "preselect": undefined,
+    "sortText": "02",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(attribute of directive)
+type: any
+bindings config: \\"?=all\\"",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "all=\\"$1\\"$0",
+    },
+    "kind": "Field",
+    "label": "all",
+    "preselect": undefined,
+    "sortText": "03",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html directive name 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(directive)",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "best-xyz$0",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "(directive)",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "number-check$0",
+    },
+    "kind": "Property",
+    "label": "number-check",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html filter 1`] = `
+Array [
+  Object {
+    "detail": "(filter) f1(input: number): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "f1",
+    "kind": "Function",
+    "label": "f1",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) status(input: Status, step: number): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "status :\${1:step}",
+    },
+    "kind": "Function",
+    "label": "status",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) f2(input: any): any",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "f2",
+    "kind": "Function",
+    "label": "f2",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) currency(input: number, symbol?: string, fractionSize?: number): str...  ",
+    "documentation": "Formats a number as a currency (ie $1,234.56).",
+    "filterText": undefined,
+    "insertText": "currency",
+    "kind": "Function",
+    "label": "currency",
+    "preselect": undefined,
+    "sortText": "currency",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) date(input: Date | number | string, format?: string, timezone?: stri...  ",
+    "documentation": "Formats date to a string based on the requested format.",
+    "filterText": undefined,
+    "insertText": "date",
+    "kind": "Function",
+    "label": "date",
+    "preselect": undefined,
+    "sortText": "date",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) filter(input: Array, expression: string | Object | function, compara...  ",
+    "documentation": "Selects a subset of items from array and returns it as a new array.",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "filter :\${0:expression}",
+    },
+    "kind": "Function",
+    "label": "filter",
+    "preselect": undefined,
+    "sortText": "filter",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) json(input: any, spacing?: number): string...  ",
+    "documentation": "Convert a JavaScript object into JSON string.",
+    "filterText": undefined,
+    "insertText": "json",
+    "kind": "Function",
+    "label": "json",
+    "preselect": undefined,
+    "sortText": "json",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) limitTo(input: Array | ArrayLike | string | number, limit: string | ...  ",
+    "documentation": "Creates a new array or string containing only a specified number of elements. ",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "limitTo :\${0:limit}",
+    },
+    "kind": "Function",
+    "label": "limitTo",
+    "preselect": undefined,
+    "sortText": "limitTo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) lowercase(input: string): string...  ",
+    "documentation": "Converts string to lowercase.",
+    "filterText": undefined,
+    "insertText": "lowercase",
+    "kind": "Function",
+    "label": "lowercase",
+    "preselect": undefined,
+    "sortText": "lowercase",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) number(input: number | string, fractionSize?: string | number): stri...  ",
+    "documentation": "Formats a number as text.",
+    "filterText": undefined,
+    "insertText": "number",
+    "kind": "Function",
+    "label": "number",
+    "preselect": undefined,
+    "sortText": "number",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) orderBy(input: Array, expression: string | function | Array, reverse...  ",
+    "documentation": "Orders an array by an expression.",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "orderBy :\${0:expression}",
+    },
+    "kind": "Function",
+    "label": "orderBy",
+    "preselect": undefined,
+    "sortText": "orderBy",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) translate(input: string, interpolateParams?: Object, interpolationId...  ",
+    "documentation": "Translates a given token into the selected language.",
+    "filterText": undefined,
+    "insertText": "translate",
+    "kind": "Function",
+    "label": "translate",
+    "preselect": undefined,
+    "sortText": "translate",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(filter) uppercase(input: string): string...  ",
+    "documentation": "Converts string to uppercase.",
+    "filterText": undefined,
+    "insertText": "uppercase",
+    "kind": "Function",
+    "label": "uppercase",
+    "preselect": undefined,
+    "sortText": "uppercase",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html ng-* 1`] = `
+Array [
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-if=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-if ",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html type 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "ctrl",
+    "kind": "Property",
+    "label": "ctrl",
+    "preselect": undefined,
+    "sortText": "0",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion inline html type 2`] = `
+Array [
+  Object {
+    "detail": "(property) dragSourceEle: Element | null",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "dragSourceEle",
+    "kind": "Field",
+    "label": "dragSourceEle",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) disabledDrag: boolean | undefined",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "disabledDrag",
+    "kind": "Field",
+    "label": "disabledDrag",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) dropToEleSelector: string",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "dropToEleSelector",
+    "kind": "Field",
+    "label": "dropToEleSelector",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(method) onDragDrop: (p: { dragDropTarget: DragDropTarget; }) => void",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "onDragDrop$1(\${2:p})",
+    },
+    "kind": "Method",
+    "label": "onDragDrop",
+    "preselect": undefined,
+    "sortText": "003",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) num: number",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "num",
+    "kind": "Field",
+    "label": "num",
+    "preselect": undefined,
+    "sortText": "004",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion ng-* get completion info of "ng-*" 1`] = `
+Array [
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-click=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-click ",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-if=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-if ",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-model=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-model ",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-class=\\"{'\${1:class-name}': \${0:expression}}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-class map",
+    "preselect": undefined,
+    "sortText": "003",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-class=\\"[\${0:classNameVar}]\\"",
+    },
+    "kind": "Property",
+    "label": "ng-class array",
+    "preselect": undefined,
+    "sortText": "004",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-class=\\"\${0:classNamesVar}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-class ",
+    "preselect": undefined,
+    "sortText": "005",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-disabled=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-disabled ",
+    "preselect": undefined,
+    "sortText": "006",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-show=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-show ",
+    "preselect": undefined,
+    "sortText": "007",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-repeat=\\"\${0:item} in \${1:items} track by \${2:\\\\$index}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-repeat array",
+    "preselect": undefined,
+    "sortText": "008",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-repeat=\\"(\${2:key}, \${0:value}) in \${1:myObject}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-repeat object",
+    "preselect": undefined,
+    "sortText": "009",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-init=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-init ",
+    "preselect": undefined,
+    "sortText": "010",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-controller=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-controller ",
+    "preselect": undefined,
+    "sortText": "011",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-options=\\"\${3:item.name} for \${2:item} in \${1:items} track by \${0:item.id}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-options ",
+    "preselect": undefined,
+    "sortText": "012",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-change=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-change ",
+    "preselect": undefined,
+    "sortText": "013",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-pattern=\\"/\${0}/\\"",
+    },
+    "kind": "Property",
+    "label": "ng-pattern ",
+    "preselect": undefined,
+    "sortText": "014",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-bind=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-bind ",
+    "preselect": undefined,
+    "sortText": "015",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-required=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-required ",
+    "preselect": undefined,
+    "sortText": "016",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-maxlength=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-maxlength ",
+    "preselect": undefined,
+    "sortText": "017",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-hide=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-hide ",
+    "preselect": undefined,
+    "sortText": "018",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-style=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-style ",
+    "preselect": undefined,
+    "sortText": "019",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-dblclick=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-dblclick ",
+    "preselect": undefined,
+    "sortText": "020",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-submit=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-submit ",
+    "preselect": undefined,
+    "sortText": "021",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-src=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-src ",
+    "preselect": undefined,
+    "sortText": "022",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-href=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-href ",
+    "preselect": undefined,
+    "sortText": "023",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-checked=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-checked ",
+    "preselect": undefined,
+    "sortText": "024",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-include=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-include ",
+    "preselect": undefined,
+    "sortText": "025",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "ng-cloak ",
+    "kind": "Property",
+    "label": "ng-cloak ",
+    "preselect": undefined,
+    "sortText": "026",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-transclude=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-transclude ",
+    "preselect": undefined,
+    "sortText": "027",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-app=\\"angular.Module\\"",
+    },
+    "kind": "Property",
+    "label": "ng-app ",
+    "preselect": undefined,
+    "sortText": "028",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-value=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-value ",
+    "preselect": undefined,
+    "sortText": "029",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-blur=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-blur ",
+    "preselect": undefined,
+    "sortText": "030",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-keypress=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-keypress ",
+    "preselect": undefined,
+    "sortText": "031",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-selected=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-selected ",
+    "preselect": undefined,
+    "sortText": "032",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-readonly=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-readonly ",
+    "preselect": undefined,
+    "sortText": "033",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-keydown=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-keydown ",
+    "preselect": undefined,
+    "sortText": "034",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-form=\\"\${0:string}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-form ",
+    "preselect": undefined,
+    "sortText": "035",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-mouseover=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-mouseover ",
+    "preselect": undefined,
+    "sortText": "036",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-mouseleave=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-mouseleave ",
+    "preselect": undefined,
+    "sortText": "037",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": undefined,
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "ng-mouseenter=\\"\${0:expression}\\"",
+    },
+    "kind": "Property",
+    "label": "ng-mouseenter ",
+    "preselect": undefined,
+    "sortText": "038",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion transclude get completion info with transclude 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<panel-title> | </panel-title>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "panel-title>$0</panel-title>",
+    },
+    "kind": "Property",
+    "label": "panel-title",
+    "preselect": undefined,
+    "sortText": "00",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<panel-body> | </panel-body>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "panel-body>$0</panel-body>",
+    },
+    "kind": "Property",
+    "label": "panel-body",
+    "preselect": undefined,
+    "sortText": "01",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<bar-foo | ></bar-foo>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "bar-foo$0></bar-foo>",
+    },
+    "kind": "Property",
+    "label": "bar-foo",
+    "preselect": undefined,
+    "sortText": "bar-foo",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<best-xyz | ></best-xyz>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "best-xyz$0></best-xyz>",
+    },
+    "kind": "Property",
+    "label": "best-xyz",
+    "preselect": undefined,
+    "sortText": "best-xyz",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "<drag-source> | </drag-source>",
+    "filterText": undefined,
+    "insertText": t {
+      "e": 1,
+      "value": "drag-source>$0</drag-source>",
+    },
+    "kind": "Property",
+    "label": "drag-source",
+    "preselect": undefined,
+    "sortText": "drag-source",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion type get completion info of "ctrl" (component html) 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "ctrl",
+    "kind": "Property",
+    "label": "ctrl",
+    "preselect": undefined,
+    "sortText": "0",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion type get completion info of "ctrl" (controller html) 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "ctrl",
+    "kind": "Property",
+    "label": "ctrl",
+    "preselect": undefined,
+    "sortText": "0",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion type get completion info of "ctrl.*" (component html) 1`] = `
+Array [
+  Object {
+    "detail": "(property) baz: number",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "baz",
+    "kind": "Field",
+    "label": "baz",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) title: string",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "title",
+    "kind": "Field",
+    "label": "title",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion type get completion info of "ctrl.obj.*" (controller html) 1`] = `
+Array [
+  Object {
+    "detail": "(property) txt: string",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "txt",
+    "kind": "Field",
+    "label": "txt",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) arr: { id: number; name: string; }[]",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "arr",
+    "kind": "Field",
+    "label": "arr",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": undefined,
+  },
+]
+`;

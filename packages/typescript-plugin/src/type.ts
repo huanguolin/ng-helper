@@ -1,5 +1,7 @@
-import { NgPluginConfiguration, type NgComponentDirectiveNamesInfo } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
+
+import { type NgCache } from './ngHelperServer/ngCache';
 
 export interface PluginCoreLogger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,12 +36,6 @@ export type SyntaxNodeInfoEx = SyntaxNodeInfo & {
     targetNode: ts.Node;
 };
 
-export type NgComponentTypeInfo = {
-    controllerAs: string;
-    controllerType?: ts.Type;
-    bindings: Map<string, string>;
-};
-
 export type ProjectInfo = {
     info: ts.server.PluginCreateInfo;
     modules: {
@@ -58,16 +54,9 @@ export type NgHelperServer = {
     getContext: GetContextFnViaFilePath;
     getCoreContext: GetCoreContextFnViaFilePath;
     isExtensionActivated: () => boolean;
-    getComponentDirectiveMap: (filePath: string) => Map<string, NgComponentDirectiveFileInfo> | undefined;
-    getTsCtrlMap: (filePath: string) => Map<string, NgTsCtrlFileInfo> | undefined;
+    getCache: (filePath: string) => NgCache | undefined;
 };
 
 export interface FileVersion {
     version: string;
-}
-
-export interface NgComponentDirectiveFileInfo extends NgComponentDirectiveNamesInfo, FileVersion {}
-
-export interface NgTsCtrlFileInfo extends FileVersion {
-    controllerName: string;
 }

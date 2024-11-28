@@ -1,12 +1,15 @@
 import os from 'node:os';
 
-import { getHtmlTagAt, isHtmlTagName } from '@ng-helper/shared/lib/html';
+import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
+import { isHtmlTagName } from '@ng-helper/shared/lib/html';
+import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
-import { TextDocument } from 'vscode';
+import { Range, TextDocument, Uri, type Position } from 'vscode';
 
-import { checkNgHelperServerRunning, getTsFiles, normalizePath } from '../utils';
+import { checkNgHelperServerRunning, getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
 export function isInlinedHtml(document: TextDocument): boolean {
     const fileName = document.fileName;
@@ -21,67 +24,12 @@ export function isComponentHtml(document: TextDocument): boolean {
     return fileName.endsWith('.component.html');
 }
 
-export function getHoveredTagNameOrAttr(document: TextDocument, cursorAt: number): NgElementHoverInfo | undefined {
-    const docText = document.getText();
-    const tag = getHtmlTagAt(docText, { at: cursorAt, isHover: true });
-    if (!tag) {
-        return;
+export function getControllerNameInfo(cursorAtContext: CursorAtContext[]): NgCtrlInfo | undefined {
+    const ngController = cursorAtContext.find((x) => x.kind === 'ng-controller');
+    if (ngController) {
+        const result: NgCtrlInfo = getNgCtrlInfo(ngController.value);
+        return result;
     }
-
-    const tagName = camelCase(tag.tagName);
-    const parentTagName = tag.parent?.tagName && camelCase(tag.parent?.tagName);
-    const attrNames = tag.attrs.sort((a, b) => a.name.start - b.name.start).map((x) => camelCase(x.name.text));
-
-    const hoverAtStartTagName = cursorAt > tag.start && cursorAt <= tag.start + tag.tagName.length;
-    const hoverAtEndTagName = tag.endTagStart !== undefined && cursorAt > tag.endTagStart + 1 && cursorAt < tag.end;
-    if (hoverAtStartTagName || hoverAtEndTagName) {
-        return {
-            type: 'tagName',
-            name: tagName,
-            tagName,
-            parentTagName,
-            attrNames,
-        };
-    }
-
-    const attr = tag.attrs.find((attr) => cursorAt >= attr.name.start && cursorAt < attr.name.start + attr.name.text.length);
-    if (attr) {
-        return {
-            type: 'attrName',
-            name: camelCase(attr.name.text),
-            tagName,
-            parentTagName,
-            attrNames,
-        };
-    }
-}
-
-export function getControllerNameInfoFromHtml(document: TextDocument): NgCtrlInfo | undefined {
-    if (isComponentHtml(document)) {
-        return;
-    }
-
-    const docText = document.getText();
-    const pos = docText.indexOf('ng-controller=');
-    if (pos < 0) {
-        return;
-    }
-
-    const tag = getHtmlTagAt(docText, { at: pos, isHover: true });
-    if (!tag) {
-        return;
-    }
-
-    const attrValue = tag.attrs.find((attr) => attr.name.text === 'ng-controller')?.value;
-    if (!attrValue) {
-        return;
-    }
-
-    const result: NgCtrlInfo = getNgCtrlInfo(attrValue.text);
-
-    console.log('getControllerNameFromHtml() find controller name info:', result);
-
-    return result;
 }
 
 export function getNgCtrlInfo(text: string): NgCtrlInfo {
@@ -99,7 +47,10 @@ export function getOriginalFileName(fileName: string): string {
     return originalPath;
 }
 
-export async function getCorrespondingTsFileName(document: TextDocument, searchKey?: string): Promise<string | undefined> {
+export async function getCorrespondingScriptFileName(
+    document: TextDocument,
+    searchKey?: string,
+): Promise<string | undefined> {
     if (isInlinedHtml(document)) {
         const originalPath = getOriginalFileName(document.fileName);
         let path = originalPath;
@@ -115,20 +66,28 @@ export async function getCorrespondingTsFileName(document: TextDocument, searchK
     if (isComponentHtml(document)) {
         // remove .html add .ts
         const tsFilePath = document.fileName.slice(0, -5) + '.ts';
-        return tsFilePath;
-    }
-
-    const tsFiles = await getTsFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
-    if (searchKey) {
-        const result = fuzzysort.go(searchKey, tsFiles, { limit: 1 });
-        if (result.length) {
-            const tsFilePath = result[0].target;
-            console.log('getCorrespondingTsFileName() fuzzy search result:', tsFilePath);
+        if (await isFileExistsOnWorkspace(Uri.file(tsFilePath))) {
             return tsFilePath;
+        }
+
+        // remove .html add .js
+        const jsFilePath = document.fileName.slice(0, -5) + '.js';
+        if (await isFileExistsOnWorkspace(Uri.file(jsFilePath))) {
+            return jsFilePath;
         }
     }
 
-    return tsFiles[0];
+    const scriptFiles = await getScriptFiles(document.fileName, { fallbackCnt: 4, limit: searchKey ? undefined : 1 });
+    if (searchKey) {
+        const result = fuzzysort.go(searchKey, scriptFiles, { limit: 1 });
+        if (result.length) {
+            const scriptFilePath = result[0].target;
+            console.log('getCorrespondingTsFileName() fuzzy search result:', scriptFilePath);
+            return scriptFilePath;
+        }
+    }
+
+    return scriptFiles[0];
 }
 
 /**
@@ -148,28 +107,92 @@ export function getComponentName(document: TextDocument): string | undefined {
     return kebabName ? camelCase(kebabName) : undefined;
 }
 
-export function isNgDirectiveAttr(attrName: string): boolean {
+export function isNgBuiltinDirective(attrName: string): boolean {
     return attrName.startsWith('ng-');
 }
 
-export function isNgCustomAttr(attrName: string): boolean {
-    return attrName.includes('-') && !attrName.startsWith('data-') && attrName !== 'accept-charset';
+export function isNgUserCustomAttr(attrName: string): boolean {
+    return (
+        !isNgBuiltinDirective(attrName) &&
+        attrName.includes('-') &&
+        !attrName.startsWith('data-') &&
+        attrName !== 'accept-charset'
+    );
+}
+
+export const BUILTIN_FILTER_NAMES = [
+    'currency',
+    'date',
+    'filter',
+    'json',
+    'limitTo',
+    'lowercase',
+    'number',
+    'orderBy',
+    'uppercase',
+    'translate',
+] as const;
+export type BuiltinFilterNames = (typeof BUILTIN_FILTER_NAMES)[number];
+export function isBuiltinFilter(filterName: string): boolean {
+    return BUILTIN_FILTER_NAMES.includes(filterName as BuiltinFilterNames);
 }
 
 export function isValidIdentifier(text: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z\d_$]*$/.test(text);
 }
 
+export function isValidIdentifierChar(char: string): boolean {
+    return /^[a-zA-Z\d_$]*$/.test(char);
+}
+
+export function isHoverValidIdentifierChar(document: TextDocument, position: Position): boolean {
+    const ch = getCursorAtChar(document, position);
+    return isValidIdentifierChar(ch);
+}
+
+export function getCursorAtChar(document: TextDocument, position: Position): string {
+    return document.getText(new Range(position, position.translate(0, 1)));
+}
+
 export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
 }
 
-export async function checkServiceAndGetTsFilePath(document: TextDocument, port: number): Promise<string | undefined> {
-    const tsFilePath = (await getCorrespondingTsFileName(document))!;
+export async function checkServiceAndGetScriptFilePath(
+    document: TextDocument,
+    port: number,
+): Promise<string | undefined> {
+    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
-    if (!(await checkNgHelperServerRunning(tsFilePath, port))) {
+    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return;
     }
 
-    return tsFilePath;
+    return scriptFilePath;
+}
+
+export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHoverInfo {
+    const { type } = cursorAtInfo;
+    if (type !== 'tagName' && type !== 'attrName') {
+        throw new Error('Only "tagName" or "attrName" can convert!');
+    }
+
+    return {
+        type,
+        name: camelCase(type === 'attrName' ? cursorAtInfo.cursorAtAttrName : cursorAtInfo.tagName),
+        tagName: camelCase(cursorAtInfo.tagName),
+        attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
+        parentTagName: cursorAtInfo.parentTagName ? camelCase(cursorAtInfo.parentTagName) : undefined,
+    };
+}
+
+let cnt = 0;
+export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
+    const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
+    cnt++;
+    const label = `getMinNgSyntaxInfo()#${cnt}`;
+    console.time(label);
+    const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    console.timeEnd(label);
+    return minNgSyntaxInfo;
 }

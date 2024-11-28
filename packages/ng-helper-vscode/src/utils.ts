@@ -1,6 +1,8 @@
 import { normalize } from 'node:path';
 
-import { window, workspace, Uri, FileType } from 'vscode';
+import { cursorAt } from '@ng-helper/shared/lib/cursorAt';
+import type { Cursor } from '@ng-helper/shared/lib/html';
+import { window, workspace, Uri, FileType, TextDocument, type Position } from 'vscode';
 
 import { checkNgHelperServerRunningApi } from './service/api';
 
@@ -22,32 +24,32 @@ export async function checkNgHelperServerRunning(filePath: string, port: number)
 }
 
 export async function triggerTsServerByProject(filePath: string) {
-    let tsFilePath = filePath;
+    let scriptFilePath = filePath;
 
-    if (!tsFilePath.endsWith('.ts')) {
-        tsFilePath = (await getOneTsFile(filePath)) ?? '';
+    if (!scriptFilePath.endsWith('.ts') && !scriptFilePath.endsWith('.js')) {
+        scriptFilePath = (await getOneScriptFile(filePath)) ?? '';
     }
 
-    if (!(await isFileExistsOnWorkspace(Uri.file(tsFilePath)))) {
-        const path = await getOneTsFile(filePath);
+    if (!(await isFileExistsOnWorkspace(Uri.file(scriptFilePath)))) {
+        const path = await getOneScriptFile(filePath);
         if (!path) {
             return;
         }
-        tsFilePath = path;
+        scriptFilePath = path;
     }
 
-    const selection = await window.showErrorMessage(
-        "To access features like auto-completion, you need to open a TypeScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
+    const selection = await window.showWarningMessage(
+        "To access features like auto-completion, you need to open a TypeScript/JavaScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
         'OK',
     );
     if (selection === 'OK') {
-        // 目前只能通过打开 ts 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
-        const document = await workspace.openTextDocument(Uri.file(tsFilePath));
+        // 目前只能通过打开 ts/js 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
+        const document = await workspace.openTextDocument(Uri.file(scriptFilePath));
         await window.showTextDocument(document);
     }
 
-    async function getOneTsFile(filePath: string): Promise<string | undefined> {
-        const files = await getTsFiles(filePath, { limit: 1 });
+    async function getOneScriptFile(filePath: string): Promise<string | undefined> {
+        const files = await getScriptFiles(filePath, { limit: 1 });
         return files[0];
     }
 }
@@ -63,20 +65,20 @@ export async function isFileExistsOnWorkspace(fileUri: Uri): Promise<boolean> {
     }
 }
 
-export async function getTsFiles(
+export async function getScriptFiles(
     filePath: string,
     options?: {
         fallbackCnt?: number;
         limit?: number;
     },
 ): Promise<string[]> {
-    return getFiles(filePath, { suffix: '.ts', ...options });
+    return await getFiles(filePath, { suffix: ['.ts', '.js'], ...options });
 }
 
 export async function getFiles(
     filePath: string,
     options?: {
-        suffix?: string;
+        suffix?: string[];
         predicate?: (filePath: string) => boolean;
         excludePaths?: string[];
         fallbackCnt?: number;
@@ -107,7 +109,7 @@ export async function getFiles(
 export async function listFiles(
     dirPath: string,
     options: {
-        suffix?: string;
+        suffix?: string[];
         predicate?: (filePath: string) => boolean;
         excludePaths?: string[];
         limit?: number;
@@ -137,7 +139,7 @@ export async function listFiles(
         }
 
         if (fileType === FileType.File) {
-            if (options.suffix && !name.endsWith(options.suffix)) {
+            if (options.suffix && !options.suffix.some((suffix) => name.endsWith(suffix))) {
                 continue;
             }
 
@@ -199,4 +201,12 @@ export function normalizePath(filePath: string): string {
 
 export function uniq<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
+}
+
+export function intersect<T>(arr1: T[], arr2: T[]): T[] {
+    return arr1.filter((x) => arr2.includes(x));
+}
+
+export function buildCursor(document: TextDocument, position: Position, isHover = true): Cursor {
+    return cursorAt(document.offsetAt(position), isHover);
 }

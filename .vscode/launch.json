@@ -20,6 +20,22 @@
 				// enable tsserver log
 				"TSS_LOG": "-logToFile true -file ${workspaceFolder}/tsserver-logs/tsserver.log -level info"
 			}
+		},
+		{
+			"name": "E2E Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"${workspaceFolder}/packages/ng-helper-vscode/tests/fixtures",
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/ng-helper-vscode",
+				"--extensionTestsPath=${workspaceFolder}/packages/ng-helper-vscode/tests/dist/testRunner.js",
+				"--disable-extensions"
+			],
+			"outFiles": [
+				"${workspaceFolder}/packages/ng-helper-vscode/dist/**/*.js",
+				"${workspaceFolder}/packages/ng-helper-vscode/tests/dist/**/*.js"
+			]
 		}
 	]
 }

@@ -1,0 +1,353 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Definition component name/attr get definition info on component attr 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 8,
+        "line": 17,
+      },
+      Object {
+        "character": 29,
+        "line": 17,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/baz-qux/baz-qux.component.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition component name/attr get definition info on component name 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 43,
+        "line": 12,
+      },
+      Object {
+        "character": 51,
+        "line": 12,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/baz-qux/baz-qux.component.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition directive name/attr get definition info on directive attr 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 9,
+      },
+      Object {
+        "character": 37,
+        "line": 9,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/directives/number-check.directive.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition directive name/attr get definition info on directive name 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 43,
+        "line": 1,
+      },
+      Object {
+        "character": 56,
+        "line": 1,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/directives/number-check.directive.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition filter get definition info on "f2" 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 12,
+        "line": 2,
+      },
+      Object {
+        "character": 16,
+        "line": 2,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f2.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition filter get definition info on "status" 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html component attr 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 8,
+        "line": 17,
+      },
+      Object {
+        "character": 29,
+        "line": 17,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/baz-qux/baz-qux.component.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html component name 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 43,
+        "line": 12,
+      },
+      Object {
+        "character": 51,
+        "line": 12,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/baz-qux/baz-qux.component.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html directive attr 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 26,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/directives/number-check.directive.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html directive name 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 43,
+        "line": 1,
+      },
+      Object {
+        "character": 56,
+        "line": 1,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/directives/number-check.directive.js",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html filter 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition inline html type 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 8,
+        "line": 19,
+      },
+      Object {
+        "character": 31,
+        "line": 19,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/drag-source/drag-source.component.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition type get definition info on "(ctl.obj.)arr" (controller html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 8,
+        "line": 10,
+      },
+      Object {
+        "character": 10,
+        "line": 17,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/pages/p1/p1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition type get definition info on "(ctrl.)bar" (component html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 8,
+        "line": 11,
+      },
+      Object {
+        "character": 21,
+        "line": 11,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/bar-foo/bar-foo.component.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition type get definition info on "ctl" (controller html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 10,
+        "line": 1,
+      },
+      Object {
+        "character": 22,
+        "line": 1,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/pages/p1/p1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition type get definition info on "ctrl" (component html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 10,
+        "line": 3,
+      },
+      Object {
+        "character": 26,
+        "line": 3,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/bar-foo/bar-foo.component.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;

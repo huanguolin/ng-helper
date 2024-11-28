@@ -1,10 +1,22 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
+import type { Parameter } from '../ngHelperServer/ngCache';
 import { PluginContext, FileVersion, type CorePluginContext } from '../type';
 
-export function createTmpSourceFile(ctx: PluginContext, codeText: string, name: string = 'tmp', setParentNodes?: boolean): ts.SourceFile {
-    return ctx.ts.createSourceFile(`ng-helper///${name}.ts`, codeText, ctx.ts.ScriptTarget.ES5, setParentNodes, ctx.ts.ScriptKind.JS);
+export function createTmpSourceFile(
+    ctx: PluginContext,
+    codeText: string,
+    name: string = 'tmp',
+    setParentNodes?: boolean,
+): ts.SourceFile {
+    return ctx.ts.createSourceFile(
+        `ng-helper///${name}.ts`,
+        codeText,
+        ctx.ts.ScriptTarget.ES5,
+        setParentNodes,
+        ctx.ts.ScriptKind.JS,
+    );
 }
 
 export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
@@ -16,32 +28,6 @@ export function getPropertyType(ctx: PluginContext, type: ts.Type, propertyName:
     //         return createUnionType(ctx, list);
     //     }
     // }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getPropertyTypeViaSymbol(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
-    const symbol = type.getSymbol();
-    if (!symbol) {
-        return;
-    }
-
-    const members = symbol.members;
-    if (!members) {
-        return;
-    }
-
-    const targetMemberSymbol = Array.from(members.values()).find((x) => x.getName() === propertyName);
-    if (!targetMemberSymbol || !targetMemberSymbol.valueDeclaration) {
-        return;
-    }
-
-    // 排除非公开的
-    const modifiers = ctx.ts.getCombinedModifierFlags(targetMemberSymbol.valueDeclaration);
-    if (modifiers & ctx.ts.ModifierFlags.NonPublicAccessibilityModifier) {
-        return;
-    }
-
-    return ctx.typeChecker.getTypeOfSymbolAtLocation(targetMemberSymbol, targetMemberSymbol.valueDeclaration);
 }
 
 function getPropertyTypeViaType(ctx: PluginContext, type: ts.Type, propertyName: string): ts.Type | undefined {
@@ -82,24 +68,6 @@ export function getPublicMembersTypeInfoOfType(ctx: PluginContext, type: ts.Type
     return getPublicMembersTypeInfoViaType(ctx, type);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getPublicMembersTypeInfoViaSymbol(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
-    const symbol = type.getSymbol();
-    if (!symbol) {
-        return;
-    }
-
-    const members = symbol.members;
-    if (!members) {
-        return;
-    }
-
-    const result = Array.from(members.values())
-        .map((x) => buildTypeInfo(ctx, x))
-        .filter((x) => !!x) as NgTypeInfo[];
-    return result;
-}
-
 function getPublicMembersTypeInfoViaType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
     const result = type
         .getApparentProperties()
@@ -133,6 +101,7 @@ function buildTypeInfo(ctx: PluginContext, memberSymbol: ts.Symbol): NgTypeInfo 
             typeString: ctx.typeChecker.typeToString(memberType),
             document: getSymbolDocument(ctx, memberSymbol),
             isFunction: false,
+            isFilter: false,
         };
         const signatures = memberType.getCallSignatures();
         if (signatures.length > 0) {
@@ -172,7 +141,11 @@ export function findClassDeclaration(ctx: PluginContext, node: ts.Node): ts.Clas
     return node.forEachChild((child: ts.Node) => findClassDeclaration(ctx, child));
 }
 
-export function getNodeAtPosition(ctx: PluginContext, position: number, sourceFile?: ts.SourceFile): ts.Node | undefined {
+export function getNodeAtPosition(
+    ctx: PluginContext,
+    position: number,
+    sourceFile?: ts.SourceFile,
+): ts.Node | undefined {
     sourceFile ??= ctx.sourceFile;
 
     let foundNode: ts.Node | undefined;
@@ -197,24 +170,38 @@ export function getLeftmostAccessExpression(ctx: PluginContext, expr: ts.Express
 }
 
 export function isAccessExpression(ctx: PluginContext, node: ts.Node): node is ts.AccessExpression {
-    return node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression || node.kind === ctx.ts.SyntaxKind.ElementAccessExpression;
+    return (
+        node.kind === ctx.ts.SyntaxKind.PropertyAccessExpression ||
+        node.kind === ctx.ts.SyntaxKind.ElementAccessExpression
+    );
 }
 
 export function getSourceFileVersion(sourceFile: ts.SourceFile): string {
     return (sourceFile as unknown as FileVersion).version;
 }
 
-export function getObjLiteral(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression): Record<string, string> {
+export function getObjLiteral(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+): Record<string, string> {
     const obj: Record<string, string> = {};
     for (const p of objLiteral.properties) {
-        if (coreCtx.ts.isPropertyAssignment(p) && coreCtx.ts.isIdentifier(p.name) && coreCtx.ts.isStringLiteralLike(p.initializer)) {
+        if (
+            coreCtx.ts.isPropertyAssignment(p) &&
+            coreCtx.ts.isIdentifier(p.name) &&
+            coreCtx.ts.isStringLiteralLike(p.initializer)
+        ) {
             obj[p.name.text] = p.initializer.text;
         }
     }
     return obj;
 }
 
-export function getPropValueByName(coreCtx: CorePluginContext, objLiteral: ts.ObjectLiteralExpression, propName: string): ts.Expression | undefined {
+export function getPropValueByName(
+    coreCtx: CorePluginContext,
+    objLiteral: ts.ObjectLiteralExpression,
+    propName: string,
+): ts.Expression | undefined {
     const prop = getPropByName(coreCtx, objLiteral, propName);
     return prop?.initializer;
 }
@@ -232,5 +219,11 @@ export function getProp(
     objLiteral: ts.ObjectLiteralExpression,
     predicate: (p: ts.PropertyAssignment) => boolean,
 ): ts.PropertyAssignment | undefined {
-    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as ts.PropertyAssignment | undefined;
+    return objLiteral.properties.find((p) => coreCtx.ts.isPropertyAssignment(p) && predicate(p)) as
+        | ts.PropertyAssignment
+        | undefined;
+}
+
+export function formatParameters(params: Parameter[]): string {
+    return params.map((p) => p.name + (p.type ? `: ${p.type}` : '')).join(', ');
 }

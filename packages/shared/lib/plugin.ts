@@ -11,6 +11,7 @@ export interface NgTypeInfo {
     document: string;
     optional?: boolean;
     isFunction: boolean;
+    isFilter?: boolean;
     paramNames?: string[];
 }
 
@@ -104,6 +105,18 @@ export interface NgListComponentsStringAttrsRequest extends NgRequest {
     componentNames: string[];
 }
 
+export interface NgListDirectivesStringAttrsRequest extends NgRequest {
+    maybeDirectiveNames: string[];
+}
+
+export interface NgControllerNameDefinitionRequest extends NgRequest {
+    controllerName: string;
+}
+
+export interface NgFilterNameDefinitionRequest extends NgRequest {
+    filterName: string;
+}
+
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;
@@ -112,23 +125,6 @@ export interface NgHoverInfo {
 export interface NgComponentNameInfo {
     componentName: string;
     transclude?: boolean | Record<string, string>;
-}
-
-export interface NgDirectiveNameInfo {
-    directiveName: string;
-    /**
-     * E - Element name (default): <my-directive></my-directive>
-     * A - Attribute (default): <div my-directive="exp"></div>
-     * C - Class: <div class="my-directive: exp;"></div>
-     * M - Comment: <!-- directive: my-directive exp -->
-     */
-    restrict: string;
-    transclude?: boolean | Record<string, string>;
-}
-
-export interface NgComponentDirectiveNamesInfo {
-    components: NgComponentNameInfo[];
-    directives: NgDirectiveNameInfo[];
 }
 
 export interface NgDefinitionInfo {
@@ -144,3 +140,4 @@ export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefine
 export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
 export type NgDirectiveCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentsStringAttrsResponse = Record<string, string[]> | undefined;
+export type NgDirectivesStringAttrsResponse = NgComponentsStringAttrsResponse;

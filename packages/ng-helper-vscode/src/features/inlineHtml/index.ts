@@ -1,3 +1,6 @@
+import os from 'os';
+
+import { SPACE } from '@ng-helper/shared/lib/html';
 import {
     Range,
     Uri,
@@ -12,6 +15,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
+import { triggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
 
@@ -72,7 +76,11 @@ function requestForwardHover(context: ExtensionContext) {
                     }
 
                     const vDocUri = prepareVirtualDocument(document, vDocText);
-                    const info = await commands.executeCommand<Hover[]>('vscode.executeHoverProvider', vDocUri, position);
+                    const info = await commands.executeCommand<Hover[]>(
+                        'vscode.executeHoverProvider',
+                        vDocUri,
+                        position,
+                    );
                     if (info && info.length) {
                         return info[0];
                     }
@@ -97,7 +105,11 @@ function requestForwardDefinition(context: ExtensionContext) {
                     }
 
                     const vDocUri = prepareVirtualDocument(document, vDocText);
-                    const info = await commands.executeCommand<Definition | undefined>('vscode.executeDefinitionProvider', vDocUri, position);
+                    const info = await commands.executeCommand<Definition | undefined>(
+                        'vscode.executeDefinitionProvider',
+                        vDocUri,
+                        position,
+                    );
                     return info;
                 },
             },
@@ -129,9 +141,7 @@ function requestForwardCompletion(context: ExtensionContext) {
                     return info;
                 },
             },
-            '.', // for ng data binding
-            '<', // for html tag start
-            ' ', // for html tag attr
+            ...triggerChars,
         ),
     );
 }
@@ -203,11 +213,11 @@ function resolveVirtualDocText(document: TextDocument, position?: Position): str
 function getVirtualDocText(document: TextDocument, ranges: Range[]): string {
     const text = document.getText();
     let content = text
-        .split('\n')
+        .split(os.EOL)
         .map((line) => {
-            return ' '.repeat(line.length);
+            return SPACE.repeat(line.length);
         })
-        .join('\n');
+        .join(os.EOL);
 
     for (const range of ranges) {
         const start = document.offsetAt(range.start);

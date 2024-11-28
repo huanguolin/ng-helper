@@ -1,0 +1,5 @@
+{
+    "componentStyleFileExt": "scss",
+    "componentScriptFileExt": "ts",
+    "injectionCheckMode": "ignore_case_word_match"
+}

@@ -21,7 +21,13 @@ import {
 
 import { getConstructor, getStaticPublicInjectionField, isAngularFile } from './utils';
 
-export function overrideGetSemanticDiagnostics({ proxy, info }: { proxy: tsserver.LanguageService; info: tsserver.server.PluginCreateInfo }) {
+export function overrideGetSemanticDiagnostics({
+    proxy,
+    info,
+}: {
+    proxy: tsserver.LanguageService;
+    info: tsserver.server.PluginCreateInfo;
+}) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
         const checkMode = ngHelperServer.getConfig()?.injectionCheckMode;
@@ -138,7 +144,11 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
         logger.info('enter checkClass().');
 
         const staticInjectField = getStaticPublicInjectionField(ctx, classNode);
-        if (!staticInjectField || !staticInjectField.initializer || !ctx.ts.isArrayLiteralExpression(staticInjectField.initializer)) {
+        if (
+            !staticInjectField ||
+            !staticInjectField.initializer ||
+            !ctx.ts.isArrayLiteralExpression(staticInjectField.initializer)
+        ) {
             return;
         }
 
@@ -202,7 +212,12 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
         injectionArr: ts.Expression[] | ts.NodeArray<ts.Expression>,
         paramArr: ts.ParameterDeclaration[] | ts.NodeArray<ts.ParameterDeclaration>,
     ) {
-        logger.info('enter checkMatch(), injectionArr.length:', injectionArr.length, 'paramArr.length:', paramArr.length);
+        logger.info(
+            'enter checkMatch(), injectionArr.length:',
+            injectionArr.length,
+            'paramArr.length:',
+            paramArr.length,
+        );
 
         if (injectionArr.length === 0 && paramArr.length === 0) {
             return;
@@ -266,7 +281,9 @@ function diagnoseInjection(ctx: PluginContext, checkMode: InjectionCheckMode): t
         }
     }
 
-    function buildDiagnostic(input: Omit<ts.Diagnostic, 'category' | 'code' | 'file' | 'messageText'> & { messageText?: string }): ts.Diagnostic {
+    function buildDiagnostic(
+        input: Omit<ts.Diagnostic, 'category' | 'code' | 'file' | 'messageText'> & { messageText?: string },
+    ): ts.Diagnostic {
         const messageText = input.messageText || `Injection element mismatch (mode: '${checkMode}').`;
         return {
             ...input,

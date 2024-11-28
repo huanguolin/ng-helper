@@ -1,0 +1,5 @@
+<div class="common-panel-header">
+    <div class="common-panel-title" ng-transclude="title">{{ctrl.title | translate}}</div>
+    <div class="common-panel-toolbar" ng-transclude="toolbar"></div>
+</div>
+<div class="common-panel-body" ng-class="{'body-with-padding': !ctrl.bodyNoPadding}" ng-transclude="body"></div>

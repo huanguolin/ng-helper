@@ -63,7 +63,11 @@ describe('getMinSyntaxNodeForHover()', () => {
         ['ctrl.a + ctrl.b', 'ctrl.a'.length - 1, 'ctrl.a'],
         ['ctrl.a || ctrl.b', 'ctrl.a || ctrl.b'.length - 1, 'ctrl.b'],
         ['ctrl.a && ctrl.b', 'c'.length - 1, 'ctrl'],
-        [`ctrl.notice.canDelete && ctrl.activeTab === 'content'`, 'ctrl.notice.canDelete && ctrl.active'.length, 'ctrl.activeTab'],
+        [
+            `ctrl.notice.canDelete && ctrl.activeTab === 'content'`,
+            'ctrl.notice.canDelete && ctrl.active'.length,
+            'ctrl.activeTab',
+        ],
         // 括号分组
         ['(ctrl.a + ctrl.b) / ctrl.c', '(ctrl'.length - 1, 'ctrl'],
         ['(ctrl.a + ctrl.b) / ctrl.c', '(ctrl.a + ctrl.b'.length - 1, 'ctrl.b'],

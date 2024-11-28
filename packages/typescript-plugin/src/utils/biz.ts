@@ -1,59 +1,52 @@
-import type { NgComponentDirectiveNamesInfo, NgDirectiveNameInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import type { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 
-import { getCtxOfCoreCtx } from '../ngHelperServer';
+import type { DirectiveInfo, NgCache } from '../ngHelperServer/ngCache';
+import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
 import type { CorePluginContext } from '../type';
 
-import { getObjLiteral, getPropValueByName } from './common';
-import { getDirectiveConfigNode, getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
+import { getTypeInfoOfDirectiveScope, isAttributeDirective } from './ng';
 
-export interface DirectiveFileInfo {
-    filePath: string;
-    directiveInfo: NgDirectiveNameInfo;
-}
+/**
+ * 查找匹配的指令（属性形式）
+ * @param cache 缓存
+ * @param attrNames 属性名数组
+ * @returns 匹配的指令数组
+ */
+export function findMatchedDirectives(cache: NgCache, attrNames: string[]): DirectiveInfo[] {
+    const matchedDirectives: DirectiveInfo[] = [];
 
-export function findMatchedDirectives(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>, attrNames: string[]): DirectiveFileInfo[] {
-    const matchedDirectives: DirectiveFileInfo[] = [];
-    const attrNamesSet = new Set(attrNames);
-    for (const [filePath, value] of componentDirectiveMap.entries()) {
-        for (const directive of value.directives) {
-            if (isAttributeDirective(directive) && attrNamesSet.has(directive.directiveName)) {
-                matchedDirectives.push({ filePath, directiveInfo: directive });
-            }
+    const directiveMap = cache.getDirectiveMap();
+    for (const attrName of attrNames) {
+        const directiveInfo = directiveMap.get(attrName);
+        if (directiveInfo && isAttributeDirective(directiveInfo)) {
+            matchedDirectives.push(directiveInfo);
         }
     }
     return matchedDirectives;
 }
 
-export function getDirectivesUsableAsAttributes(componentDirectiveMap: Map<string, NgComponentDirectiveNamesInfo>): DirectiveFileInfo[] {
-    const directives: DirectiveFileInfo[] = [];
-    for (const [filePath, value] of componentDirectiveMap.entries()) {
-        for (const directive of value.directives) {
-            if (isAttributeDirective(directive)) {
-                directives.push({ filePath, directiveInfo: directive });
-            }
+/**
+ * 获取所有可作为属性的指令
+ * @param cache 缓存
+ * @returns 指令数组
+ */
+export function getDirectivesUsableAsAttributes(cache: NgCache): DirectiveInfo[] {
+    const directives: DirectiveInfo[] = [];
+    for (const value of cache.getDirectiveMap().values()) {
+        if (isAttributeDirective(value)) {
+            directives.push(value);
         }
     }
     return directives;
 }
 
-export function getTypeInfosFromDirectiveScope(coreCtx: CorePluginContext, directiveFileInfo: DirectiveFileInfo): NgTypeInfo[] | undefined {
-    const { filePath, directiveInfo } = directiveFileInfo;
-    const ctx = getCtxOfCoreCtx(coreCtx, filePath);
+export function getTypeInfosFromDirectiveScope(
+    coreCtx: CorePluginContext,
+    directiveInfo: DirectiveInfo,
+): NgTypeInfo[] | undefined {
+    const ctx = getCtxOfCoreCtx(coreCtx, directiveInfo.filePath);
     if (!ctx) {
         return;
     }
-
-    const directiveConfigNode = getDirectiveConfigNode(ctx, directiveInfo.directiveName);
-    if (!directiveConfigNode) {
-        return;
-    }
-
-    const scopePropertyValue = getPropValueByName(ctx, directiveConfigNode, 'scope');
-    if (!scopePropertyValue || !ctx.ts.isObjectLiteralExpression(scopePropertyValue)) {
-        return;
-    }
-
-    const obj = getObjLiteral(ctx, scopePropertyValue);
-    const map = new Map<string, string>(Object.entries(obj));
-    return getTypeInfoOfDirectiveScope(ctx, map);
+    return getTypeInfoOfDirectiveScope(ctx, directiveInfo.scope);
 }

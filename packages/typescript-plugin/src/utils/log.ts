@@ -4,7 +4,10 @@ import { PluginCoreLogger, PluginLogger } from '../type';
 
 const LOG_PREFIX = '[@ng-helper]';
 
-export function buildLogger(ts: typeof import('typescript/lib/tsserverlibrary'), info: ts.server.PluginCreateInfo): PluginLogger {
+export function buildLogger(
+    ts: typeof import('typescript/lib/tsserverlibrary'),
+    info: ts.server.PluginCreateInfo,
+): PluginLogger {
     const originLogger = info.project.projectService.logger;
 
     return { ...buildCoreLogger(), prefix: (p: string) => buildCoreLogger(p) };
