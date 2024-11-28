@@ -8,21 +8,21 @@ ng-helper 是提升 Angular.js 开发效率的助手，特别是配合 TypeScrip
 
 ## Features
 
-- [x] `ng-*` 指令自动补全
-- [x] 自定义 directive 标签/属性: 自动补全, hover 提示, go to definition
-- [x] 自定义 component 标签/属性: 自动补全, hover 信息提示, go to definition
-- [x] ✨🆕 自定义 filter: 自动补全, hover 信息提示, go to definition
-- [x] html 语法高亮，且支持 inline-html(包含语法高亮、自动补全、hover提示, go to definition)
-- [x] 数据绑定（需要 `TypeScript`）: 自动补全, hover 类型提示, go to definition
-- [x] 依赖注入匹配校验
+- [x] `ng-*` 指令自动补全 (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/builtin-directives-demo.gif" target="_blank">see demo</a>)
+- [x] 自定义 directive 标签/属性: 自动补全, hover 提示, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/directives-demo.gif" target="_blank">see demo</a>)
+- [x] 自定义 component 标签/属性: 自动补全, hover 信息提示, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/components-demo.gif" target="_blank">see demo</a>)
+- [x] ✨🆕 自定义 filter: 自动补全, hover 信息提示, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/filters-demo.gif" target="_blank">see demo</a>)
+- [x] html 语法高亮，且支持 inline-html(包含语法高亮、自动补全、hover提示, go to definition) (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif" target="_blank">see demo</a>)
+- [x] 数据绑定（需要 `TypeScript`）: 自动补全, hover 类型提示, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif" target="_blank">see demo</a>)
+- [x] 依赖注入匹配校验 (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif" target="_blank">see demo</a>)
   - [x] `TypeScript` 代码
   - [x] `JavaScript` 代码
 
-> 实用小功能
-- [x] 从 'templateUrl' 跳转到对应的 HTML
-- [x] ✨🆕 从 'controller' 跳转到对应的实现文件
-- [x] ✨🆕 点击搜索 `directive`/`component` 在哪里使用
-- [x] 右键菜单创建 component
+> 实用小工具
+- [x] 从 'templateUrl' 跳转到对应的 HTML (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif" target="_blank">see demo</a>)
+- [x] ✨🆕 从 'controller' 跳转到对应的实现文件 (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif" target="_blank">see demo</a>)
+- [x] ✨🆕 点击搜索 `directive`/`component` 在哪里使用(<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif" target="_blank">see demo</a>)
+- [x] 右键菜单创建 component (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif" target="_blank">see demo</a>)
 
 
 ## Requirements
