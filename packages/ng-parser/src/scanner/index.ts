@@ -114,7 +114,11 @@ export class Scanner {
     }
 
     private getKeyword(value: string): TokenKind | undefined {
-        return keywordMap[value];
+        const k = keywordMap[value];
+        // fix bug: value = 'toString', return a function.
+        if (isNumberType(k)) {
+            return k;
+        }
     }
 
     private isIdentifierContinue(ch: string): boolean {

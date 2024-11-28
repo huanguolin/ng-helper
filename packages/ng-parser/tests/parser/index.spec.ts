@@ -215,6 +215,12 @@ describe('Parser', () => {
     });
 
     describe('call expression', () => {
+        it(`fix bug: value = 'toString', get wrong token kind, cause infinite loop.`, () => {
+            const program = parse('a.toString()');
+            checkNoErrorAndLocations(program);
+            compareAstUseSExpr(program, '(a.toString)');
+        });
+
         it.each([
             ['a()', '(a)'],
             ['foo(a = 1)', '(foo (= a 1))'],
