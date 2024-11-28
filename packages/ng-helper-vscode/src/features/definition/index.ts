@@ -42,7 +42,6 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
-let cnt = 0;
 export function registerDefinition(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
@@ -51,12 +50,8 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                 position: Position,
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
-                return timeCost('provideDefinition', async () => {
-                    cnt++;
-                    const label = `getCursorAtInfo()#${cnt}`;
-                    console.time(label);
+                return await timeCost('provideDefinition', async () => {
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
-                    console.timeEnd(label);
 
                     switch (cursorAtInfo.type) {
                         case 'endTag':
@@ -68,12 +63,12 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                             if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
                                 return;
                             }
-                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
                         case 'tagName':
-                            return handleTagNameOrAttrName(cursorAtInfo, document, port, token);
+                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
                         case 'attrValue':
                         case 'template':
-                            return handleTemplateOrAttrValue(document, position, cursorAtInfo, port, token);
+                            return await handleTemplateOrAttrValue(document, position, cursorAtInfo, port, token);
                     }
                 });
             },
@@ -127,11 +122,11 @@ async function handleTemplateOrAttrValue(
         return;
     }
     if (isComponentHtml(document)) {
-        return handleComponentType(document, cursorAtInfo, port, token);
+        return await handleComponentType(document, cursorAtInfo, port, token);
     }
     const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
     if (ctrlInfo) {
-        return handleControllerType(ctrlInfo, document, cursorAtInfo, port, token);
+        return await handleControllerType(ctrlInfo, document, cursorAtInfo, port, token);
     }
 }
 

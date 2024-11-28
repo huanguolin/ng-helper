@@ -27,9 +27,9 @@ export function registerLink(context: ExtensionContext, port: number) {
                 ): Promise<MyLink | undefined> {
                     switch (link.type) {
                         case 'templateUrl':
-                            return resolveTemplateUrlLink(link);
+                            return await resolveTemplateUrlLink(link);
                         case 'controllerName':
-                            return resolveControllerNameLink(link, token, port);
+                            return await resolveControllerNameLink(link, token, port);
                     }
                 },
             },

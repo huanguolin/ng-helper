@@ -61,15 +61,9 @@ export function registerCompletion(context: ExtensionContext, port: number) {
     );
 }
 
-let cnt = 0;
 export async function completion({ document, position, vscodeCancelToken, context, port }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
-
-    cnt++;
-    const label = `getCursorAtInfo()#${cnt}`;
-    console.time(label);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
-    console.timeEnd(label);
 
     const obj = { document, cursor, port, vscodeCancelToken, context };
     switch (cursorAtInfo.type) {

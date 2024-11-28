@@ -53,12 +53,7 @@ function providerSemantic(context: ExtensionContext, port: number) {
                         return;
                     }
 
-                    console.log('>>> inline html semantic');
-                    try {
-                        return await htmlSemanticProvider({ document, port, token, noServiceRunningCheck: true });
-                    } finally {
-                        console.log('<<< inline html semantic');
-                    }
+                    return await htmlSemanticProvider({ document, port, token, noServiceRunningCheck: true });
                 },
             },
             legend,

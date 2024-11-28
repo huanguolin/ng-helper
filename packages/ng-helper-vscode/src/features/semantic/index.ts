@@ -37,12 +37,8 @@ export function registerSemantic(context: ExtensionContext, port: number) {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
                 // log 记录的太多了，暂时不要 timeCost
                 // return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
-                console.log('>>> html semantic');
-                try {
-                    return htmlSemanticProvider({ document, port, token });
-                } finally {
-                    console.log('<<< html semantic');
-                }
+
+                return htmlSemanticProvider({ document, port, token });
             },
         },
         legend,

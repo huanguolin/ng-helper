@@ -72,7 +72,7 @@ export async function getScriptFiles(
         limit?: number;
     },
 ): Promise<string[]> {
-    return getFiles(filePath, { suffix: ['.ts', '.js'], ...options });
+    return await getFiles(filePath, { suffix: ['.ts', '.js'], ...options });
 }
 
 export async function getFiles(
