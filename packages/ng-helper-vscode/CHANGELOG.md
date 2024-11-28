@@ -4,6 +4,14 @@ All notable changes to the "ng-helper" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [v0.7.0](https://github.com/huanguolin/ng-helper/compare/v0.6.0...v0.7.0) (2024-11-28)
+
+### Feature
+- Support filters: auto-completion, hover hints, go to definition.
+- Jump from 'controller' name to the implement `js`/`ts` file.
+- Click to search for 'directive'/'component' where to use.
+
+
 ## [v0.6.0](https://github.com/huanguolin/ng-helper/compare/v0.5.0...v0.6.0) (2024-10-01)
 
 ### Feature
