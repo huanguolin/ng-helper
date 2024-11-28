@@ -11,7 +11,7 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 ## Features
 
-- [x] `ng-*` directive auto-completion
+- [x] `ng-*` directive auto-completion ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/main/resources/builtin-drectives-demo.gif))
 - [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition
 - [x] Custom component tags/attributes: auto-completion, hover hints, go to definition
 - [x] ✨🆕 Custom filter: auto-completion, hover hints, go to definition
