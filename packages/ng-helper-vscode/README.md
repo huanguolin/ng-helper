@@ -14,17 +14,18 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 - [x] `ng-*` directive auto-completion
 - [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition
 - [x] Custom component tags/attributes: auto-completion, hover hints, go to definition
-- [ ] Custom filter: auto-completion, hover hints, go to definition
+- [x] ✨🆕 Custom filter: auto-completion, hover hints, go to definition
 - [x] HTML syntax highlighting, supporting inline HTML (including syntax highlighting, auto-completion, hover hints, Go to definition)
-- [x] Jump from 'templateUrl' to the corresponding HTML
-- [x] Right-click menu to create components
+- [x] Data binding (Require `TypeScript`): auto-completion, hover type hints, go to definition
 - [x] Dependency injection matching validation
   - [x] `TypeScript` code
   - [x] `JavaScript` code
 
-> The following features require `TypeScript` support:
-- [x] Data binding: auto-completion, hover type hints, go to definition
-
+> Useful utilities features:
+- [x] Jump from 'templateUrl' to the corresponding HTML
+- [x] ✨🆕 Jump from 'controller' to the implement `js`/`ts` file
+- [x] ✨🆕 Click to search for 'directive'/'component' where to use
+- [x] Right-click menu to create components
 
 ## Requirements
 
