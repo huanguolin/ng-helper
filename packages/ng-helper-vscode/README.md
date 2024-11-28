@@ -11,21 +11,21 @@ ng-helper enhances the efficiency of Angular.js development, especially when use
 
 ## Features
 
-- [x] `ng-*` directive auto-completion (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/builtin-directives-demo.gif" target="_blank">see demo</a>)
-- [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/directives-demo.gif" target="_blank">see demo</a>)
-- [x] Custom component tags/attributes: auto-completion, hover hints, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/components-demo.gif" target="_blank">see demo</a>)
-- [x] ✨🆕 Custom filter: auto-completion, hover hints, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/filters-demo.gif" target="_blank">see demo</a>)
-- [x] HTML syntax highlighting, supporting inline HTML (including syntax highlighting,auto-completion, hover hints, Go to definition) (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif" target="_blank">see demo</a>)
-- [x] Data binding (Require `TypeScript`): auto-completion, hover type hints, go to definition (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif" target="_blank">see demo</a>)
-- [x] Dependency injection matching validation (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif" target="_blank">see demo</a>)
+- [x] `ng-*` directive auto-completion ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/builtin-directives-demo.gif))
+- [x] Custom directive tags/attributes: auto-completion, hover hints, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/directives-demo.gif))
+- [x] Custom component tags/attributes: auto-completion, hover hints, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/components-demo.gif))
+- [x] ✨🆕 Custom filter: auto-completion, hover hints, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/filters-demo.gif))
+- [x] HTML syntax highlighting, supporting inline HTML (including syntax highlighting,auto-completion, hover hints, Go to definition) ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif))
+- [x] Data binding (Require `TypeScript`): auto-completion, hover type hints, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
+- [x] Dependency injection matching validation ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif))
   - [x] `TypeScript` code
   - [x] `JavaScript` code
 
 > Useful utilities features:
-- [x] Jump from 'templateUrl' to the corresponding HTML (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif" target="_blank">see demo</a>)
-- [x] ✨🆕 Jump from 'controller' to the implement `js`/`ts` file (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif" target="_blank">see demo</a>)
-- [x] ✨🆕 Click to search for 'directive'/'component' where to use (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif" target="_blank">see demo</a>)
-- [x] Right-click menu to create components (<a href="https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif" target="_blank">see demo</a>)
+- [x] Jump from 'templateUrl' to the corresponding HTML ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif))
+- [x] ✨🆕 Jump from 'controller' to the implement `js`/`ts` file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
+- [x] ✨🆕 Click to search for 'directive'/'component' where to use ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
+- [x] Right-click menu to create components ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif))
 
 ## Requirements
 
