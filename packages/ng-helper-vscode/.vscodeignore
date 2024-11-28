@@ -7,6 +7,7 @@ tsconfig.json
 esbuild.js
 babel.config.js
 jest.config.js
+tests/**
 
 node_modules/**
 !node_modules/@ng-helper/typescript-plugin/package.json
