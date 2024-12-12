@@ -2,7 +2,11 @@
 
 All notable changes to the "ng-helper" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [v0.7.1](https://github.com/huanguolin/ng-helper/compare/v0.7.0...v0.7.1) (2024-12-12)
+
+### Fixed
+- Fix the working area of the filter hover/definition is smaller than it's completion.
+
 
 ## [v0.7.0](https://github.com/huanguolin/ng-helper/compare/v0.6.0...v0.7.0) (2024-11-28)
 
