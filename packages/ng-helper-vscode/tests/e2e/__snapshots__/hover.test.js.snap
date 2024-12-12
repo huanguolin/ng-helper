@@ -44,6 +44,14 @@ scope: {
 "
 `;
 
+exports[`Hover filter show hover info on "status" (not component/controller html) 1`] = `
+"
+\`\`\`typescript
+(filter) status(input: Status, step: number): any
+\`\`\`
+"
+`;
+
 exports[`Hover filter show hover info on "status" 1`] = `
 "
 \`\`\`typescript

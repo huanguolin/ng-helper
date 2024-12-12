@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import {
     APP_PAGES_P2_HTML_PATH,
+    APP_PAGES_P4_HTML_PATH,
     BAZ_QUX_COMPONENT_HTML_PATH,
     BEST_XYZ_DIRECTIVE_JS_PATH,
     COMPLETION_COMMAND,
@@ -145,6 +146,15 @@ describe('Completion', () => {
             await testCompletion({
                 filePath: BAZ_QUX_COMPONENT_HTML_PATH,
                 position: new vscode.Position(20, 11),
+                ignoreIsIncomplete: true,
+                itemsFilter: (item) => item.detail?.startsWith('(filter)') ?? false,
+            });
+        });
+
+        it('get completion info of filter (not component/controller html)', async () => {
+            await testCompletion({
+                filePath: APP_PAGES_P4_HTML_PATH,
+                position: new vscode.Position(5, 19),
                 ignoreIsIncomplete: true,
                 itemsFilter: (item) => item.detail?.startsWith('(filter)') ?? false,
             });
