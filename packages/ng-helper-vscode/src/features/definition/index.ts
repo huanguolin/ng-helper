@@ -5,7 +5,7 @@ import {
     type CursorAtTagNameInfo,
     type CursorAtTemplateInfo,
 } from '@ng-helper/shared/lib/cursorAt';
-import type { NgCtrlInfo, NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
+import type { NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import {
     Location,
@@ -116,26 +116,12 @@ async function handleTemplateOrAttrValue(
     position: Position,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     port: number,
-    token: CancellationToken,
+    vscodeCancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
     }
-    if (isComponentHtml(document)) {
-        return await handleComponentType(document, cursorAtInfo, port, token);
-    }
-    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-    if (ctrlInfo) {
-        return await handleControllerType(ctrlInfo, document, cursorAtInfo, port, token);
-    }
-}
 
-async function handleComponentType(
-    document: TextDocument,
-    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    port: number,
-    vscodeCancelToken: CancellationToken,
-): Promise<Definition | undefined> {
     const definitionInfo = await onTypeHover({
         document,
         cursorAtInfo,
@@ -147,12 +133,29 @@ async function handleComponentType(
                 filterName,
                 scriptFilePath,
             }),
-        onHoverType: (scriptFilePath, contextString, cursorAt) =>
-            getComponentTypeDefinitionApi({
-                port,
-                vscodeCancelToken,
-                info: { fileName: scriptFilePath, contextString, cursorAt },
-            }),
+        onHoverType: async (scriptFilePath, contextString, cursorAt) => {
+            if (isComponentHtml(document)) {
+                return await getComponentTypeDefinitionApi({
+                    port,
+                    vscodeCancelToken,
+                    info: { fileName: scriptFilePath, contextString, cursorAt },
+                });
+            }
+            const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+            if (ctrlInfo) {
+                return await (ctrlInfo.controllerAs
+                    ? getControllerTypeDefinitionApi({
+                          port,
+                          vscodeCancelToken: vscodeCancelToken,
+                          info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+                      })
+                    : getControllerNameDefinitionApi({
+                          port,
+                          vscodeCancelToken: vscodeCancelToken,
+                          info: { fileName: scriptFilePath, controllerName: ctrlInfo.controllerName },
+                      }));
+            }
+        },
     });
     return await buildDefinition(definitionInfo);
 }
@@ -177,40 +180,6 @@ async function handleFilterName({
             info: { fileName: scriptFilePath, filterName },
         });
     }
-}
-
-async function handleControllerType(
-    ctrlInfo: NgCtrlInfo,
-    document: TextDocument,
-    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    port: number,
-    vscodeCancelToken: CancellationToken,
-): Promise<Definition | undefined> {
-    const definitionInfo = await onTypeHover({
-        document,
-        cursorAtInfo,
-        port,
-        onHoverFilterName: (filterName, scriptFilePath) =>
-            handleFilterName({
-                port,
-                vscodeCancelToken,
-                filterName,
-                scriptFilePath,
-            }),
-        onHoverType: (scriptFilePath, contextString, cursorAt) =>
-            ctrlInfo.controllerAs
-                ? getControllerTypeDefinitionApi({
-                      port,
-                      vscodeCancelToken: vscodeCancelToken,
-                      info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
-                  })
-                : getControllerNameDefinitionApi({
-                      port,
-                      vscodeCancelToken: vscodeCancelToken,
-                      info: { fileName: scriptFilePath, controllerName: ctrlInfo.controllerName },
-                  }),
-    });
-    return await buildDefinition(definitionInfo);
 }
 
 async function buildDefinition(definitionInfo: NgDefinitionInfo | undefined): Promise<Definition | undefined> {
