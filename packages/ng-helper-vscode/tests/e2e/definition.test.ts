@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import {
     APP_PAGES_P1_HTML_PATH,
+    APP_PAGES_P4_HTML_PATH,
     BAR_FOO_COMPONENT_HTML_PATH,
     DEFINITION_COMMAND,
     DRAG_SOURCE_COMPONENT_TS_PATH,
@@ -64,6 +65,11 @@ describe('Definition', () => {
         // js
         it('get definition info on "f2"', async () => {
             await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 86));
+        });
+
+        // in not component/controller html
+        it('get definition info on "status" (not component/controller html)', async () => {
+            await testDefinition(APP_PAGES_P4_HTML_PATH, new vscode.Position(3, 21));
         });
     });
 

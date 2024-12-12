@@ -52,3 +52,6 @@ export const APP_PAGES_P2_HTML_PATH = join(APP_PAGES_P2_DIR, 'p2.html');
 // p3
 export const APP_PAGES_P3_DIR = join(APP_PAGES_DIR, 'p3');
 export const APP_PAGES_P3_HTML_PATH = join(APP_PAGES_P3_DIR, 'p3.html');
+// p4
+export const APP_PAGES_P4_DIR = join(APP_PAGES_DIR, 'p4');
+export const APP_PAGES_P4_HTML_PATH = join(APP_PAGES_P4_DIR, 'p4.html');

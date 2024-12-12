@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import {
     APP_PAGES_P1_HTML_PATH,
+    APP_PAGES_P4_HTML_PATH,
     BAR_FOO_COMPONENT_HTML_PATH,
     DRAG_SOURCE_COMPONENT_TS_PATH,
     HOVER_COMMAND,
@@ -70,6 +71,11 @@ describe('Hover', () => {
         // custom
         it('show hover info on "status"', async () => {
             await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(1, 81));
+        });
+
+        // in not component/controller html
+        it('show hover info on "status" (not component/controller html)', async () => {
+            await testHover(APP_PAGES_P4_HTML_PATH, new vscode.Position(3, 21));
         });
     });
 

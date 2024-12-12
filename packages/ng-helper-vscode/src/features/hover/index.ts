@@ -5,7 +5,7 @@ import {
     type CursorAtTagNameInfo,
     type CursorAtTemplateInfo,
 } from '@ng-helper/shared/lib/cursorAt';
-import { NgHoverInfo, type NgCtrlInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
+import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
@@ -91,19 +91,44 @@ async function handleTemplateOrAttrValue(
     document: TextDocument,
     position: Position,
     port: number,
-    token: CancellationToken,
+    vscodeCancelToken: CancellationToken,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
 ): Promise<Hover | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
     }
-    if (isComponentHtml(document)) {
-        return await handleComponentType(document, cursorAtInfo, port, token);
-    }
-    const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-    if (ctrlInfo && ctrlInfo.controllerAs) {
-        return await handleControllerType(ctrlInfo, document, cursorAtInfo, port, token);
-    }
+
+    const info = await onTypeHover({
+        document,
+        cursorAtInfo,
+        port,
+        onHoverFilterName: (filterName, scriptFilePath) =>
+            handleFilterName({
+                port,
+                vscodeCancelToken,
+                filterName,
+                scriptFilePath,
+            }),
+        onHoverType: async (scriptFilePath, contextString, cursorAt) => {
+            if (isComponentHtml(document)) {
+                return await getComponentTypeHoverApi({
+                    port,
+                    vscodeCancelToken,
+                    info: { fileName: scriptFilePath, contextString, cursorAt },
+                });
+            }
+
+            const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
+            if (ctrlInfo && ctrlInfo.controllerAs) {
+                return await getControllerTypeHoverApi({
+                    port,
+                    vscodeCancelToken: vscodeCancelToken,
+                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+                });
+            }
+        },
+    });
+    return buildHoverResult(info);
 }
 
 async function getComponentHover(
@@ -136,33 +161,6 @@ async function getDirectiveHover(
     return buildHoverResult(res);
 }
 
-async function handleComponentType(
-    document: TextDocument,
-    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    port: number,
-    vscodeCancelToken: CancellationToken,
-): Promise<Hover | undefined> {
-    const info = await onTypeHover({
-        document,
-        cursorAtInfo,
-        port,
-        onHoverFilterName: (filterName, scriptFilePath) =>
-            handleFilterName({
-                port,
-                vscodeCancelToken,
-                filterName,
-                scriptFilePath,
-            }),
-        onHoverType: (scriptFilePath, contextString, cursorAt) =>
-            getComponentTypeHoverApi({
-                port,
-                vscodeCancelToken,
-                info: { fileName: scriptFilePath, contextString, cursorAt },
-            }),
-    });
-    return buildHoverResult(info);
-}
-
 async function handleFilterName({
     filterName,
     scriptFilePath,
@@ -183,34 +181,6 @@ async function handleFilterName({
             info: { fileName: scriptFilePath, contextString: filterName, cursorAt: 0 },
         });
     }
-}
-
-async function handleControllerType(
-    ctrlInfo: NgCtrlInfo,
-    document: TextDocument,
-    cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    port: number,
-    vscodeCancelToken: CancellationToken,
-): Promise<Hover | undefined> {
-    const info = await onTypeHover({
-        document,
-        cursorAtInfo,
-        port,
-        onHoverFilterName: (filterName, scriptFilePath) =>
-            handleFilterName({
-                port,
-                vscodeCancelToken,
-                filterName,
-                scriptFilePath,
-            }),
-        onHoverType: (scriptFilePath, contextString, cursorAt) =>
-            getControllerTypeHoverApi({
-                port,
-                vscodeCancelToken: vscodeCancelToken,
-                info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
-            }),
-    });
-    return buildHoverResult(info);
 }
 
 function buildHoverResult(res: NgHoverInfo | undefined): Hover | undefined {

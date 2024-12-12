@@ -110,6 +110,28 @@ Array [
 ]
 `;
 
+exports[`Definition filter get definition info on "status" (not component/controller html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 8,
+      },
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/filters/f1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
 exports[`Definition filter get definition info on "status" 1`] = `
 Array [
   Object {
