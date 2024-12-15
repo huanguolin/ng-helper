@@ -207,6 +207,26 @@ describe('getCursorAtInfo()', () => {
                 relativeCursorAt: at - 132,
             });
         });
+
+        it('should collect same level context', () => {
+            const html = `<div ng-controller="MainCtrl as ctrl" ng-init="ctrl.init()"></div>`;
+            const result = getCursorAtInfo(html, cursor(html.lastIndexOf('ctrl.')));
+            expect(result).toEqual({
+                type: 'attrValue',
+                tagName: 'div',
+                attrNames: ['ng-controller', 'ng-init'],
+                parentTagName: undefined,
+                attrValue: 'ctrl.init()',
+                attrName: 'ng-init',
+                context: [
+                    {
+                        kind: 'ng-controller',
+                        value: 'MainCtrl as ctrl',
+                    },
+                ],
+                relativeCursorAt: 0,
+            });
+        });
     });
 
     describe('text related', () => {

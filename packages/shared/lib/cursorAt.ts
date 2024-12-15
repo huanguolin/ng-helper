@@ -320,10 +320,10 @@ function getTagInfo(element: Element): TagInfo {
 const contextNgAttrNames = ['ng-repeat', 'ng-options', 'ng-controller'];
 function getContext(node: TextNode | Element): CursorAtContext[] {
     const ctxs: CursorAtContext[] = [];
-    pushCtx(node.parentNode);
+    pushCtx(node);
     return ctxs;
 
-    function pushCtx(node: ParentNode | null) {
+    function pushCtx(node: TextNode | Element | ParentNode | null) {
         if (!node) {
             return;
         }
