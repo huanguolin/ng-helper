@@ -25,6 +25,7 @@ import {
     isAngularRunNode,
     isAngularConfigNode,
     getAngularDefineFunctionExpression,
+    isAngularConstantRegisterNode,
 } from '../../src/utils/ng';
 import { prepareTestContext } from '../helper';
 
@@ -405,6 +406,21 @@ describe('isAngularProviderRegisterNode()', () => {
     ])('should return %s for %s', (expression, expected) => {
         const node = findNode(ctx, expression);
         expect(isAngularProviderRegisterNode(ctx, node)).toBe(expected);
+    });
+});
+
+describe('isAngularConstantRegisterNode()', () => {
+    const ctx = prepareTestContext(`
+        angular.module('myModule').constant('pi', 3.1415926);
+        angular.module('myModule').constant({ pi: 3.1415926});
+    `);
+
+    it.each([
+        ["angular.module('myModule').constant('pi', 3.1415926)", true],
+        ["angular.module('myModule').constant({ pi: 3.1415926})", false],
+    ])('should return %s for %s', (expression, expected) => {
+        const node = findNode(ctx, expression);
+        expect(isAngularConstantRegisterNode(ctx, node)).toBe(expected);
     });
 });
 

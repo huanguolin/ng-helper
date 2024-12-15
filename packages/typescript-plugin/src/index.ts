@@ -1,6 +1,7 @@
 import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript/lib/tsserverlibrary';
 
+import { overrideGetDefinitionAtPosition } from './definition';
 import { overrideGetSemanticDiagnostics } from './diagnostic';
 import { ngHelperServer } from './ngHelperServer';
 
@@ -15,6 +16,7 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
             const proxy: ts.LanguageService = buildProxy(info);
 
             overrideGetSemanticDiagnostics({ proxy, info });
+            overrideGetDefinitionAtPosition({ proxy, info });
 
             // dispose
             proxy.dispose = () => {

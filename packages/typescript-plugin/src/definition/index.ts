@@ -8,15 +8,18 @@ import {
     type NgTypeDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
+import type { DefinitionInfoAndBoundSpan } from 'typescript';
+import type tsserver from 'typescript/lib/tsserverlibrary';
 
 import { resolveCtrlCtx } from '../completion';
+import { isAngularFile } from '../diagnostic/utils';
 import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
 import { ngHelperServer } from '../ngHelperServer';
 import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
 import { CorePluginContext, type PluginContext } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
-import { typeToString } from '../utils/common';
-import { getBindingName, getComponentControllerType, getControllerType } from '../utils/ng';
+import { getNodeAtPosition, typeToString } from '../utils/common';
+import { getBindingName, getComponentControllerType, getControllerType, isDtsFile } from '../utils/ng';
 
 /**
  * 获取指令(作为属性使用时)定义信息
@@ -377,4 +380,83 @@ export function getFilterNameDefinitionInfo(
         filePath: filter.filePath,
         ...filter.location,
     };
+}
+
+export function overrideGetDefinitionAtPosition({
+    proxy,
+    info,
+}: {
+    proxy: tsserver.LanguageService;
+    info: tsserver.server.PluginCreateInfo;
+}) {
+    proxy.getDefinitionAndBoundSpan = (fileName: string, position: number) => {
+        const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position);
+        if (prior || isDtsFile(fileName) || !ngHelperServer.isExtensionActivated()) {
+            return prior;
+        }
+
+        const ctx = ngHelperServer.getContext(fileName);
+        if (!ctx || !isAngularFile(ctx)) {
+            return;
+        }
+
+        try {
+            return serviceDefinition(ctx, position);
+        } catch (error) {
+            ctx.logger.error('serviceDefinition():', (error as Error).message, (error as Error).stack);
+        }
+    };
+}
+
+function serviceDefinition(ctx: PluginContext, position: number): DefinitionInfoAndBoundSpan | undefined {
+    const logger = ctx.logger.prefix('serviceDefinition()');
+    const node = getNodeAtPosition(ctx, position);
+    if (node && isDependencyInjectionString(node)) {
+        const serviceName = node.text;
+        const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+        if (!cache) {
+            logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
+            return;
+        }
+
+        const serviceMap = cache.getServiceMap();
+        const service = serviceMap.get(serviceName);
+        logger.info('service:', service);
+        if (!service) {
+            return;
+        }
+
+        const start = node.getStart(ctx.sourceFile);
+        return {
+            definitions: [
+                {
+                    textSpan: {
+                        start: service.location.start,
+                        length: service.location.end - service.location.start,
+                    },
+                    fileName: service.filePath,
+                    // 下面几个不知道怎么填，就暂时使用下面的值
+                    kind: ctx.ts.ScriptElementKind.string,
+                    name: serviceName,
+                    containerKind: ctx.ts.ScriptElementKind.string,
+                    containerName: '',
+                },
+            ],
+            textSpan: {
+                start,
+                length: node.getEnd() - start,
+            },
+        };
+    }
+
+    function isDependencyInjectionString(node: ts.Node): node is ts.StringLiteral {
+        // 现在这个判断虽然简陋，但是支持 js/ts, 而且足够简单。
+        // 至于在一些不是字符串注入的地方也会有效果，暂不考虑处理。因为用户一般不会这样用。
+        return (
+            ctx.ts.isStringLiteral(node) &&
+            node.parent &&
+            ctx.ts.isArrayLiteralExpression(node.parent) && // 匹配数组注入语法
+            node.parent.elements.includes(node)
+        );
+    }
 }

@@ -70,11 +70,17 @@ export function isAngularProviderRegisterNode(ctx: PluginContext, node: ts.Node)
     return isAngularRegisterNode(ctx, node, 'provider', 'arrayOrFunction');
 }
 
+export function isAngularConstantRegisterNode(ctx: PluginContext, node: ts.Node): node is ts.CallExpression {
+    // only support: constant<T>(name: string, value: T): IModule;
+    // not support: constant(object: Object): IModule;
+    return isAngularRegisterNode(ctx, node, 'constant', 'any');
+}
+
 function isAngularRegisterNode(
     ctx: PluginContext,
     node: ts.Node,
     registerName: string,
-    configType: 'arrayOrFunction' | 'object',
+    configType: 'arrayOrFunction' | 'object' | 'any',
 ): node is ts.CallExpression {
     if (
         ctx.ts.isCallExpression(node) &&
@@ -88,6 +94,8 @@ function isAngularRegisterNode(
             return isInjectableNode(ctx, node.arguments[1]);
         } else if (configType === 'object') {
             return ctx.ts.isObjectLiteralExpression(node.arguments[1]);
+        } else if (configType === 'any') {
+            return true;
         }
     }
     return false;
