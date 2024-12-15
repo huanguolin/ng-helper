@@ -135,6 +135,58 @@ function getNgDirectiveConfigList(): Array<[string, BuiltinConfig[]]> {
         ['ng-mouseover', []],
         ['ng-mouseleave', []],
         ['ng-mouseenter', []],
+        ['ng-bind-html', []],
+        ['ng-bind-template', [defaultNgConfigStr]],
+        ['ng-class-even', []],
+        ['ng-class-odd', []],
+        ['ng-copy', []],
+        [
+            'ng-csp',
+            [
+                {
+                    name: '',
+                },
+            ],
+        ],
+        ['ng-cut', []],
+        ['ng-focus', []],
+        ['ng-keyup', []],
+        ['ng-jq', [defaultNgConfigStr]],
+        ['ng-list', [defaultNgConfigStr]],
+        ['ng-minlength', []],
+        [
+            'ng-model-options',
+            [
+                {
+                    name: '',
+                    snippet: "{ updateOn: '${1:default}', debounce: ${2:200}, allowInvalid: ${0:false} }",
+                },
+            ],
+        ],
+        ['ng-mousedown', []],
+        ['ng-mousemove', []],
+        ['ng-mouseup', []],
+        [
+            'ng-non-bindable',
+            [
+                {
+                    name: '',
+                },
+            ],
+        ],
+        ['ng-open', []],
+        ['ng-paste', []],
+        [
+            'ng-pluralize',
+            [
+                {
+                    name: 'count=" " when=" "',
+                },
+            ],
+        ],
+        ['ng-ref', [defaultNgConfigStr]],
+        ['ng-srcset', [defaultNgConfigStr]],
+        ['ng-switch', []],
     ];
 }
 
