@@ -24,7 +24,6 @@ import { timeCost } from '../../debug';
 import {
     getComponentNameOrAttrNameDefinitionApi,
     getComponentTypeDefinitionApi,
-    getControllerNameDefinitionApi,
     getControllerTypeDefinitionApi,
     getDirectiveDefinitionApi,
     getFilterNameDefinitionApi,
@@ -143,17 +142,11 @@ async function handleTemplateOrAttrValue(
             }
             const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
             if (ctrlInfo) {
-                return await (ctrlInfo.controllerAs
-                    ? getControllerTypeDefinitionApi({
-                          port,
-                          vscodeCancelToken: vscodeCancelToken,
-                          info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
-                      })
-                    : getControllerNameDefinitionApi({
-                          port,
-                          vscodeCancelToken: vscodeCancelToken,
-                          info: { fileName: scriptFilePath, controllerName: ctrlInfo.controllerName },
-                      }));
+                return await getControllerTypeDefinitionApi({
+                    port,
+                    vscodeCancelToken: vscodeCancelToken,
+                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+                });
             }
         },
     });

@@ -119,7 +119,7 @@ async function handleTemplateOrAttrValue(
             }
 
             const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-            if (ctrlInfo && ctrlInfo.controllerAs) {
+            if (ctrlInfo) {
                 return await getControllerTypeHoverApi({
                     port,
                     vscodeCancelToken: vscodeCancelToken,

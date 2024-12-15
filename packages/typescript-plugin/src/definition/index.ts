@@ -272,19 +272,17 @@ export function getControllerTypeDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = coreCtx.logger.prefix('getControllerTypeDefinitionInfo()');
 
-    if (!controllerAs) {
-        return;
-    }
-
     const ctx = resolveCtrlCtx(coreCtx, fileName, controllerName);
     if (!ctx) {
         logger.info('ctx not found!');
         return;
     }
 
-    const controllerType = getControllerType(ctx);
-    if (!controllerType) {
-        logger.info('controllerType not found!');
+    if (!controllerAs) {
+        if (contextString === controllerName) {
+            return getControllerNameDefinitionInfo(ctx, { fileName, controllerName });
+        }
+        logger.info('controllerAs not found!');
         return;
     }
 
@@ -297,10 +295,12 @@ export function getControllerTypeDefinitionInfo(
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
+    // 这里判断 minPrefix !== controllerName，是处理当 hover 在 ng-controller="X as ctrl" 的 X 上时。
     if ((!minPrefix.startsWith(controllerAs) && minPrefix !== controllerName) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
+    // 处理当 hover 在 ng-controller="X as ctrl" 的 X 上时。
     if (minPrefix === controllerName) {
         controllerAs = controllerName;
     }
@@ -309,6 +309,16 @@ export function getControllerTypeDefinitionInfo(
     const propDeep = minPrefix.split('.').length;
     logger.info('propDeep:', propDeep);
     if (propDeep > 2) {
+        return;
+    }
+
+    const controllerType = getControllerType(ctx);
+    if (!controllerType) {
+        // hover 在根节点上
+        if (propDeep === 1 && targetNode.text === controllerAs) {
+            return getControllerNameDefinitionInfo(ctx, { fileName, controllerName });
+        }
+        logger.info('controllerType not found!');
         return;
     }
 
@@ -324,7 +334,7 @@ export function getControllerTypeDefinitionInfo(
 export function getControllerNameDefinitionInfo(
     ctx: PluginContext,
     { fileName, controllerName }: NgControllerNameDefinitionRequest,
-): NgDefinitionResponse | undefined {
+): NgDefinitionResponse {
     const logger = ctx.logger.prefix('getControllerNameDefinitionInfo()');
 
     const cache = ngHelperServer.getCache(fileName);
@@ -348,7 +358,7 @@ export function getControllerNameDefinitionInfo(
 export function getFilterNameDefinitionInfo(
     coreCtx: CorePluginContext,
     { fileName, filterName }: NgFilterNameDefinitionRequest,
-): NgDefinitionResponse | undefined {
+): NgDefinitionResponse {
     const logger = coreCtx.logger.prefix('getFilterNameDefinitionInfo()');
 
     const cache = ngHelperServer.getCache(fileName);

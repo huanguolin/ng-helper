@@ -293,20 +293,17 @@ export function getControllerTypeHoverInfo(
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getControllerHoverType()');
 
-    if (!controllerAs) {
-        logger.info('controllerAs not found!');
-        return;
-    }
-
     const ctx = resolveCtrlCtx(coreCtx, fileName, controllerName);
     if (!ctx) {
         logger.info('ctx not found!');
         return;
     }
 
-    const controllerType = getControllerType(ctx);
-    if (!controllerType) {
-        logger.info('controllerType not found!');
+    if (!controllerAs) {
+        if (contextString === controllerName) {
+            return getControllerNameHoverInfo(ctx, controllerName);
+        }
+        logger.info('controllerAs not found!');
         return;
     }
 
@@ -319,12 +316,24 @@ export function getControllerTypeHoverInfo(
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
+    // 这里判断 minPrefix !== controllerName，是处理当 hover 在 ng-controller="X as ctrl" 的 X 上时。
     if ((!minPrefix.startsWith(controllerAs) && minPrefix !== controllerName) || !ctx.ts.isIdentifier(targetNode)) {
         return;
     }
 
+    // 处理当 hover 在 ng-controller="X as ctrl" 的 X 上时。
     if (minPrefix === controllerName) {
         controllerAs = controllerName;
+    }
+
+    const controllerType = getControllerType(ctx);
+    if (!controllerType) {
+        // hover 在根节点上
+        if (targetNode.text === controllerAs) {
+            return getControllerNameHoverInfo(ctx, controllerName);
+        }
+        logger.info('controllerType not found!');
+        return;
     }
 
     return getHoverInfoOfType({
@@ -335,6 +344,27 @@ export function getControllerTypeHoverInfo(
         targetNode,
         minSyntaxSourceFile: sourceFile,
     });
+}
+
+function getControllerNameHoverInfo(ctx: PluginContext, controllerName: string): NgHoverResponse {
+    const logger = ctx.logger.prefix('getControllerNameHoverInfo()');
+
+    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    if (!cache) {
+        logger.info(`cache not found for file(${ctx.sourceFile.fileName})!`);
+        return;
+    }
+
+    const controllerInfo = cache.getControllerMap().get(controllerName);
+    if (!controllerInfo) {
+        logger.info(`controllerInfo not found for controllerName(${controllerName})!`);
+        return;
+    }
+
+    return {
+        formattedTypeString: `(controller) ${controllerName}: any`,
+        document: '',
+    };
 }
 
 function getHoverInfoOfType({
