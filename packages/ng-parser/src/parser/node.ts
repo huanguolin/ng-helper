@@ -331,3 +331,33 @@ export class GroupExpression extends NormalExpression {
         return visitor.visitGroupExpression(this);
     }
 }
+
+/**
+ * special program for ng-repeat.
+ */
+export class NgRepeatProgram extends Node {
+    readonly source: string;
+    readonly errors: NgParseError[];
+    readonly item: Identifier;
+    readonly expression: Expression;
+    readonly as?: Identifier;
+    readonly trackBy?: Identifier;
+
+    constructor(
+        source: string,
+        errors: NgParseError[],
+        config: { item: Identifier; expression: Expression; as?: Identifier; trackBy?: Identifier },
+    ) {
+        super(SyntaxKind.Program, { start: 0, end: 1 });
+        this.source = source;
+        this.errors = errors;
+        this.item = config.item;
+        this.expression = config.expression;
+        this.as = config.as;
+        this.trackBy = config.trackBy;
+    }
+
+    accept<R>(): R {
+        throw new Error('NgRepeatProgram is not needed to be implemented.');
+    }
+}

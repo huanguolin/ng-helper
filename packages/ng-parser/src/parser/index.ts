@@ -53,6 +53,7 @@ import {
 } from './node';
 
 const EXPR_KEYWORDS = ['true', 'false', 'null', 'undefined'];
+// const NG_REPEAT_KEYWORDS = [...EXPR_KEYWORDS, 'as', 'in', 'track', 'by'];
 
 export class Parser {
     private scanner = new Scanner();
