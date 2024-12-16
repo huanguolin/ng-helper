@@ -87,7 +87,7 @@ describe('Scanner', () => {
         });
 
         it('should return EOF token', () => {
-            scanner.initialize('');
+            scanner.initialize('', []);
             const token = scanner.scan();
             expect(token.kind).toBe(TokenKind.EOF);
         });
@@ -95,7 +95,7 @@ describe('Scanner', () => {
         describe('invalid characters', () => {
             it.each(['@', '`', '~', '#', '^', '&'])('should report invalid characters: %s', (ch) => {
                 const errors: NgParseError[] = [];
-                scanner.initialize(ch, (error) => errors.push(error));
+                scanner.initialize(ch, [], (error) => errors.push(error));
                 scanner.scan();
 
                 expect(errors.length).toBe(1);
@@ -105,7 +105,7 @@ describe('Scanner', () => {
 
             it('should not report invalid characters in strings', () => {
                 const errors: NgParseError[] = [];
-                scanner.initialize('"@`~#^&"', (error) => errors.push(error));
+                scanner.initialize('"@`~#^&"', [], (error) => errors.push(error));
                 const tokens = scanAll(scanner);
                 expect(errors.length).toBe(0);
                 expect(tokens.length).toBe(1);
@@ -115,7 +115,7 @@ describe('Scanner', () => {
 
             it('should continue scanning after invalid characters', () => {
                 const errors: NgParseError[] = [];
-                scanner.initialize('123@`~||#^&"str"', (error) => errors.push(error));
+                scanner.initialize('123@`~||#^&"str"', [], (error) => errors.push(error));
                 const tokens = scanAll(scanner);
 
                 expect(errors.length).toBe(6);
@@ -145,7 +145,7 @@ describe('Scanner', () => {
                 ['_$abc', '_$abc'],
                 ['$abc1', '$abc1'],
             ])('should scan identifier: %s => %s', (input, output) => {
-                scanner.initialize(input);
+                scanner.initialize(input, []);
                 const token = scanner.scan();
 
                 expect(token.kind).toBe(TokenKind.Identifier);
@@ -157,7 +157,7 @@ describe('Scanner', () => {
                 ['𠮷abc', 'abc', 0],
             ])('should scan identifier with multi-byte characters: %s => %s', (input, output, errorAt) => {
                 const errors: NgParseError[] = [];
-                scanner.initialize(input, (error) => errors.push(error));
+                scanner.initialize(input, [], (error) => errors.push(error));
                 const token = scanAll(scanner)[0];
 
                 expect(token.kind).toBe(TokenKind.Identifier);
@@ -169,15 +169,20 @@ describe('Scanner', () => {
                 expect(errors[0].end).toBe(errorAt + 2);
             });
 
-            it.each([
-                ['undefined', TokenKind.Undefined],
-                ['null', TokenKind.Null],
-                ['true', TokenKind.True],
-                ['false', TokenKind.False],
-            ])('should recognize keywords: %s => %s', (input, tokenKind) => {
-                const tokens = scanAll(scanner, input);
-                expect(tokens[0].kind).toEqual(tokenKind);
+            it.each(['undefined', 'null', 'true', 'false', 'as', 'in'])('should recognize keywords: %s', (input) => {
+                const tokens = scanAll(scanner, input, ['undefined', 'null', 'true', 'false', 'as', 'in']);
+                expect(tokens[0].kind).toEqual(TokenKind.Keyword);
+                expect(tokens[0].value).toEqual(input);
             });
+
+            it.each(['undefined', 'null', 'true', 'false', 'as', 'in'])(
+                'should not recognize keywords: %s',
+                (input) => {
+                    const tokens = scanAll(scanner, input);
+                    expect(tokens[0].kind).toEqual(TokenKind.Identifier);
+                    expect(tokens[0].value).toEqual(input);
+                },
+            );
 
             it('should tokenize identifiers with spaces around dots the same as without spaces', () => {
                 const spaces = scanAll(scanner, 'foo. bar . baz')
@@ -229,7 +234,7 @@ describe('Scanner', () => {
                 ['10E+abc', 4],
             ])('should report digit expected: %s at %s', (input, at) => {
                 const errors: NgParseError[] = [];
-                scanner.initialize(input, (error) => errors.push(error));
+                scanner.initialize(input, [], (error) => errors.push(error));
                 scanner.scan();
 
                 expect(errors.length).toBe(1);
@@ -281,7 +286,7 @@ describe('Scanner', () => {
             it('should report unterminated string', () => {
                 const errors: NgParseError[] = [];
                 const input = '"unclosed';
-                scanner.initialize(input, (error) => errors.push(error));
+                scanner.initialize(input, [], (error) => errors.push(error));
                 const token = scanner.scan();
 
                 expect(token.kind).toBe(TokenKind.String);
@@ -295,7 +300,7 @@ describe('Scanner', () => {
 
             it('should report unexpected end of text', () => {
                 const errors: NgParseError[] = [];
-                scanner.initialize('"invalid\\', (error) => errors.push(error));
+                scanner.initialize('"invalid\\', [], (error) => errors.push(error));
                 const token = scanner.scan();
 
                 expect(token.kind).toBe(TokenKind.String);
@@ -317,7 +322,7 @@ describe('Scanner', () => {
                 ['"\\uDDDm"', 6],
             ])('should report hexadecimal digit expected: %s at %s', (input, at) => {
                 const errors: NgParseError[] = [];
-                scanner.initialize(input, (error) => errors.push(error));
+                scanner.initialize(input, [], (error) => errors.push(error));
                 const token = scanner.scan();
 
                 expect(token.kind).toBe(TokenKind.String);
@@ -392,7 +397,7 @@ describe('Scanner', () => {
 
     describe('lookAhead()', () => {
         it('should return preview result without affecting scanner position', () => {
-            scanner.initialize('123 456');
+            scanner.initialize('123 456', []);
 
             // Look ahead to get first token
             const firstToken = scanner.lookAhead(() => scanner.scan());
@@ -406,7 +411,7 @@ describe('Scanner', () => {
         });
 
         it('should support multiple tokens look ahead', () => {
-            scanner.initialize('123 456');
+            scanner.initialize('123 456', []);
 
             // Look ahead multiple tokens
             const tokens = scanner.lookAhead(() => {
@@ -427,7 +432,7 @@ describe('Scanner', () => {
 
         it('should off error report in look ahead', () => {
             const errors: NgParseError[] = [];
-            scanner.initialize('123 @#$ 456', (error) => errors.push(error));
+            scanner.initialize('123 @#$ 456', [], (error) => errors.push(error));
 
             // Look ahead through invalid characters
             const result = scanner.lookAhead(() => {
@@ -450,9 +455,9 @@ describe('Scanner', () => {
 });
 
 // Helper function to scan all tokens
-function scanAll(scanner: Scanner, input?: string) {
+function scanAll(scanner: Scanner, input?: string, keywords?: string[]) {
     if (input) {
-        scanner.initialize(input);
+        scanner.initialize(input, keywords ?? []);
     }
 
     const tokens = [];

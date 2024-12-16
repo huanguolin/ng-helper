@@ -52,6 +52,8 @@ import {
     Literal,
 } from './node';
 
+const EXPR_KEYWORDS = ['true', 'false', 'null', 'undefined'];
+
 export class Parser {
     private scanner = new Scanner();
     private errors: NgParseError[] = [];
@@ -62,7 +64,7 @@ export class Parser {
     parse(sourceText: string): Program {
         this.errors = [];
         this.sourceText = sourceText;
-        this.scanner.initialize(sourceText, this.reportError.bind(this));
+        this.scanner.initialize(sourceText, EXPR_KEYWORDS, this.reportError.bind(this));
 
         this.nextToken();
 
@@ -344,9 +346,9 @@ export class Parser {
                 );
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
-                // `undefined`, `true`, `false`, `null` also can used as identifiers(e.g.: 'foo.null')
+                // keywords also can used as identifiers(e.g.: 'foo.null')
                 const name = this.consume<IdentifierToken>(
-                    [TokenKind.Identifier, TokenKind.True, TokenKind.False, TokenKind.Null, TokenKind.Undefined],
+                    [TokenKind.Identifier, TokenKind.Keyword],
                     ErrorMessage.Identifier_expected,
                 );
                 primary = new PropertyAccessExpression(primary, token, name);
@@ -368,16 +370,7 @@ export class Parser {
             return this.parseObjectLiteralExpression();
         } else if (this.expect(TokenKind.Identifier)) {
             return new Identifier(this.previousToken as IdentifierToken);
-        } else if (
-            this.expect(
-                TokenKind.String,
-                TokenKind.Number,
-                TokenKind.True,
-                TokenKind.False,
-                TokenKind.Null,
-                TokenKind.Undefined,
-            )
-        ) {
+        } else if (this.expect(TokenKind.String, TokenKind.Number, TokenKind.Keyword)) {
             return new Literal(this.previousToken as LiteralToken);
         } else {
             this.reportErrorAtCurrentToken(ErrorMessage.Expression_expected);

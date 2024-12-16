@@ -92,10 +92,6 @@ describe('Token', () => {
             { kind: TokenKind.RightBrace, expected: '}' },
             { kind: TokenKind.LeftBracket, expected: '[' },
             { kind: TokenKind.RightBracket, expected: ']' },
-            { kind: TokenKind.True, expected: 'true' },
-            { kind: TokenKind.False, expected: 'false' },
-            { kind: TokenKind.Undefined, expected: 'undefined' },
-            { kind: TokenKind.Null, expected: 'null' },
         ])('should return operator sign for %s', ({ kind, expected }) => {
             const token = new Token({ kind, start: 0, end: 1 });
             expect(token.toString()).toBe(expected);
@@ -113,8 +109,45 @@ describe('Token', () => {
     });
 
     describe('shouldHaveValue()', () => {
-        it.each([TokenKind.String, TokenKind.Number, TokenKind.Identifier])('should return true for %s', (kind) => {
-            expect(Token.shouldHaveValue(kind)).toBe(true);
+        it.each([TokenKind.String, TokenKind.Number, TokenKind.Keyword, TokenKind.Identifier])(
+            'should return true for %s',
+            (kind) => {
+                expect(Token.shouldHaveValue(kind)).toBe(true);
+            },
+        );
+
+        it.each([
+            TokenKind.Plus,
+            TokenKind.Minus,
+            TokenKind.Multiply,
+            TokenKind.Divide,
+            TokenKind.Modulo,
+            TokenKind.And,
+            TokenKind.Or,
+            TokenKind.Not,
+            TokenKind.StrictEqual,
+            TokenKind.Equal,
+            TokenKind.StrictNotEqual,
+            TokenKind.NotEqual,
+            TokenKind.GreaterThan,
+            TokenKind.GreaterThanOrEqual,
+            TokenKind.LessThan,
+            TokenKind.LessThanOrEqual,
+            TokenKind.Assign,
+            TokenKind.Pipe,
+            TokenKind.Semicolon,
+            TokenKind.Comma,
+            TokenKind.Dot,
+            TokenKind.Colon,
+            TokenKind.Question,
+            TokenKind.LeftParen,
+            TokenKind.RightParen,
+            TokenKind.LeftBrace,
+            TokenKind.RightBrace,
+            TokenKind.LeftBracket,
+            TokenKind.RightBracket,
+        ])('should return false for %s', (kind) => {
+            expect(Token.shouldHaveValue(kind)).toBe(false);
         });
     });
 });

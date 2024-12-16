@@ -3,14 +3,9 @@
 import { ErrorReporter, TokenKind, type ErrorHandler } from '../types';
 import { noop } from '../utils';
 
-import { kindToKeywordMap, kindToSignMap, Token } from './token';
+import { kindToSignMap, Token } from './token';
 
 const signToKindMap = Object.entries(kindToSignMap).reduce(
-    (s, [k, v]) => Object.assign(s, { [v]: Number(k) }),
-    {} as Record<string, TokenKind>,
-);
-
-const keywordMap = Object.entries(kindToKeywordMap).reduce(
     (s, [k, v]) => Object.assign(s, { [v]: Number(k) }),
     {} as Record<string, TokenKind>,
 );
@@ -18,11 +13,13 @@ const keywordMap = Object.entries(kindToKeywordMap).reduce(
 export class Scanner {
     private sourceText = '';
     private pos = 0;
+    private keywords: string[] = [];
     private onError: ErrorHandler = noop;
 
-    initialize(sourceText: string, onError?: ErrorHandler) {
+    initialize(sourceText: string, keywords: string[], onError?: ErrorHandler) {
         this.sourceText = sourceText;
         this.pos = 0;
+        this.keywords = keywords;
         if (onError) {
             this.onError = onError;
         }
@@ -108,17 +105,13 @@ export class Scanner {
         }
         const value = this.sourceText.substring(start, this.pos);
         return this.createToken({
-            kind: this.getKeyword(value) ?? TokenKind.Identifier,
+            kind: this.isKeyword(value) ? TokenKind.Keyword : TokenKind.Identifier,
             value,
         });
     }
 
-    private getKeyword(value: string): TokenKind | undefined {
-        const k = keywordMap[value];
-        // fix bug: value = 'toString', return a function.
-        if (isNumberType(k)) {
-            return k;
-        }
+    private isKeyword(value: string): boolean {
+        return this.keywords.includes(value);
     }
 
     private isIdentifierContinue(ch: string): boolean {

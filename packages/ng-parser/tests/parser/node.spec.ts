@@ -236,7 +236,7 @@ describe('AssignExpression', () => {
 
 describe('ConditionalExpression', () => {
     it('should have correct kind and store properties', () => {
-        const condition = new Literal(createToken(TokenKind.True));
+        const condition = new Literal(createToken(TokenKind.Keyword, { value: 'true' }));
         const questionToken = createToken<QuestionToken>(TokenKind.Question);
         const whenTrue = new Literal(createToken(TokenKind.Number, { value: '1' }));
         const colonToken = createToken<ColonToken>(TokenKind.Colon);
@@ -252,7 +252,7 @@ describe('ConditionalExpression', () => {
 
     it('should accept visitor', () => {
         const conditional = new ConditionalExpression(
-            new Literal(createToken(TokenKind.True)),
+            new Literal(createToken(TokenKind.Keyword, { value: 'true' })),
             createToken<QuestionToken>(TokenKind.Question),
             new Literal(createToken(TokenKind.Number, { value: '1' })),
             createToken<ColonToken>(TokenKind.Colon),
@@ -291,7 +291,7 @@ describe('BinaryExpression', () => {
 describe('UnaryExpression', () => {
     it('should have correct kind and store properties', () => {
         const operator = createToken<UnaryOperatorToken>(TokenKind.Not);
-        const operand = new Literal(createToken(TokenKind.True));
+        const operand = new Literal(createToken(TokenKind.Keyword, { value: 'true' }));
 
         const unary = new UnaryExpression(operator, operand);
 
@@ -303,7 +303,7 @@ describe('UnaryExpression', () => {
     it('should accept visitor', () => {
         const unary = new UnaryExpression(
             createToken<UnaryOperatorToken>(TokenKind.Not),
-            new Literal(createToken(TokenKind.True)),
+            new Literal(createToken(TokenKind.Keyword, { value: 'true' })),
         );
         const result = unary.accept(visitor);
         expect(result).toBe(unary);
@@ -516,7 +516,7 @@ describe('PropertyAssignment', () => {
     });
 
     it('should throw error for invalid literal property types', () => {
-        const property = new Literal(createToken(TokenKind.True));
+        const property = new Literal(createToken(TokenKind.Keyword, { value: 'true' }));
         const value = new Literal(createToken(TokenKind.Number, { value: '42' }));
 
         expect(() => new PropertyAssignment(property, value)).toThrow('Expect string/number literal');

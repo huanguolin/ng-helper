@@ -152,22 +152,6 @@ export enum TokenKind {
      */
     RightBracket,
     /**
-     * 'true'
-     */
-    True,
-    /**
-     * 'false'
-     */
-    False,
-    /**
-     * 'null'
-     */
-    Null,
-    /**
-     * 'undefined'
-     */
-    Undefined,
-    /**
      * String
      * "xyz"
      * 'xyz'
@@ -182,6 +166,11 @@ export enum TokenKind {
      */
     Number,
     /**
+     * Keyword
+     * like: true/false/null/undefined
+     */
+    Keyword,
+    /**
      * Identifier
      * x
      * xyz
@@ -193,9 +182,8 @@ export enum TokenKind {
     EOF,
 }
 
-export type KeywordTokenKind = TokenKind.True | TokenKind.False | TokenKind.Null | TokenKind.Undefined;
-export type PropertyNameTokenKind = KeywordTokenKind | TokenKind.Identifier;
-export type LiteralTokenKind = KeywordTokenKind | TokenKind.String | TokenKind.Number;
+export type PropertyNameTokenKind = TokenKind.Keyword | TokenKind.Identifier;
+export type LiteralTokenKind = TokenKind.Keyword | TokenKind.String | TokenKind.Number;
 export type MultiplicativeOperator = TokenKind.Multiply | TokenKind.Divide | TokenKind.Modulo;
 export type AdditiveOperator = TokenKind.Plus | TokenKind.Minus;
 export type UnaryOperator = TokenKind.Plus | TokenKind.Minus | TokenKind.Not;
