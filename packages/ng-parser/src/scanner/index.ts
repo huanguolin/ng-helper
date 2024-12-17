@@ -13,15 +13,26 @@ const signToKindMap = Object.entries(kindToSignMap).reduce(
 export class Scanner {
     private sourceText = '';
     private pos = 0;
+    private end = 0;
     private keywords: string[] = [];
     private onError: ErrorHandler = noop;
 
     initialize(sourceText: string, keywords: string[], onError?: ErrorHandler) {
         this.sourceText = sourceText;
         this.pos = 0;
+        this.end = sourceText.length;
         this.keywords = keywords;
         if (onError) {
             this.onError = onError;
+        }
+    }
+
+    setScanRange({ start, end }: { start?: number; end?: number }) {
+        if (typeof start === 'number' && start >= 0) {
+            this.pos = start;
+        }
+        if (typeof end === 'number' && end >= 0) {
+            this.end = end;
         }
     }
 
@@ -270,6 +281,9 @@ export class Scanner {
     }
 
     private at(n: number): string {
+        if (n >= this.end) {
+            return '';
+        }
         return this.sourceText.charAt(n);
     }
 
@@ -290,7 +304,7 @@ export class Scanner {
     }
 
     private isEnd(): boolean {
-        return this.pos >= this.sourceText.length;
+        return this.pos >= this.end;
     }
 
     private isWhitespace(ch: string): boolean {
