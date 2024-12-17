@@ -594,16 +594,103 @@ describe('Parser', () => {
 
         describe('error-tolerant', () => {
             it.each([
+                // array
                 ['in items', '(ngRepeat (itemValue $$) (items items))', err('Ident', 0, 2)],
                 ['item in', '(ngRepeat (itemValue item) (items $$))', err('Expr', 7, 7)],
                 ['item in ctrl.', '(ngRepeat (itemValue item) (items ctrl.$$))', err('Ident', 13, 13)],
-                // TODO: fix this
-                // [
-                //     'item in ctrl. track by item.id',
-                //     '(ngRepeat (itemValue item) (items ctrl.$$) (trackBy item.id))',
-                //     err('Ident', 14, 18),
-                // ],
-            ])('error-tolerant: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+                [
+                    'item ctrl.',
+                    '(ngRepeat (itemValue item) (items ctrl.$$))',
+                    err('Keyword', 5, 9),
+                    err('Ident', 10, 10),
+                ],
+                [
+                    'item in ctrl. track by item.id',
+                    '(ngRepeat (itemValue item) (items ctrl.$$) (trackBy item.id))',
+                    err('Ident', 13, 13), // 这个 error location 和别的地方不一样, 因为里面有 scan range 的设置
+                ],
+                [
+                    'item in ctrl. track by item.',
+                    '(ngRepeat (itemValue item) (items ctrl.$$) (trackBy item.$$))',
+                    err('Ident', 13, 13), // 同上
+                    err('Ident', 28, 28), // 同上
+                ],
+                [
+                    'item in ctrl.items track by',
+                    '(ngRepeat (itemValue item) (items ctrl.items) (trackBy $$))',
+                    err('Expr', 27, 27),
+                ],
+                ['item in ctrl.items track', '(ngRepeat (itemValue item) (items ctrl.items))', err('Keyword', 24, 24)],
+                [
+                    'item in ctrl. | f1 : ctrl. track by item.id',
+                    '(ngRepeat (itemValue item) (items (filter f1| ctrl.$$ ctrl.$$)) (trackBy item.id))',
+                    err('Ident', 14, 15),
+                    err('Ident', 26, 26), // 同上
+                ],
+                [
+                    'item in ctrl. | f1 : ctrl. as track by item.id',
+                    '(ngRepeat (itemValue item) (items (filter f1| ctrl.$$ ctrl.$$)) (as $$) (trackBy item.id))',
+                    err('Ident', 14, 15),
+                    err('Ident', 26, 26), // 同上
+                    err('Ident', 30, 35), // 同上
+                ],
+            ])('array: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+                const program = parser.parseNgRepeat(input);
+                compareAstUseSExpr(program, expected);
+                checkErrorAndLocations(program, ...errors);
+            });
+
+            it.each([
+                ['() in items', '(ngRepeat (itemKey $$) (itemValue $$) (items items))', err('Ident', 1, 2)],
+                ['(key) in items', '(ngRepeat (itemKey key) (itemValue $$) (items items))', err(',', 4, 5)],
+                ['(,value) in items', '(ngRepeat (itemKey $$) (itemValue value) (items items))', err('Ident', 1, 2)],
+                ['(key, value) in', '(ngRepeat (itemKey key) (itemValue value) (items $$))', err('Expr', 15, 15)],
+                [
+                    '(key, value) in ctrl.',
+                    '(ngRepeat (itemKey key) (itemValue value) (items ctrl.$$))',
+                    err('Ident', 21, 21),
+                ],
+                [
+                    '(key, value) in ctrl. track by key',
+                    '(ngRepeat (itemKey key) (itemValue value) (items ctrl.$$) (trackBy key))',
+                    err('Ident', 21, 21), // 这个 error location 和别的地方不一样, 因为里面有 scan range 的设置
+                ],
+                [
+                    '(key, value) in ctrl. track by value.',
+                    '(ngRepeat (itemKey key) (itemValue value) (items ctrl.$$) (trackBy value.$$))',
+                    err('Ident', 21, 21), // 同上
+                    err('Ident', 37, 37),
+                ],
+                [
+                    '(k,v) in ctrl.items track by',
+                    '(ngRepeat (itemKey k) (itemValue v) (items ctrl.items) (trackBy $$))',
+                    err('Expr', 28, 28),
+                ],
+                [
+                    '(k,v) in ctrl.items track',
+                    '(ngRepeat (itemKey k) (itemValue v) (items ctrl.items))',
+                    err('Keyword', 25, 25),
+                ],
+                [
+                    '( in ctrl.items track',
+                    '(ngRepeat (itemKey $$) (itemValue $$) (items ctrl.items))',
+                    err('Ident', 2, 4),
+                    err('Keyword', 21, 21),
+                ],
+                [
+                    '(key, value) in ctrl. | f1 : ctrl. track by value.id',
+                    '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| ctrl.$$ ctrl.$$)) (trackBy value.id))',
+                    err('Ident', 22, 23),
+                    err('Ident', 34, 34), // 同上
+                ],
+                [
+                    '(key, value) in ctrl. | f1 : ctrl. as track by value.id',
+                    '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| ctrl.$$ ctrl.$$)) (as $$) (trackBy value.id))',
+                    err('Ident', 22, 23),
+                    err('Ident', 34, 34), // 同上
+                    err('Ident', 38, 43),
+                ],
+            ])('object: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
                 const program = parser.parseNgRepeat(input);
                 compareAstUseSExpr(program, expected);
                 checkErrorAndLocations(program, ...errors);

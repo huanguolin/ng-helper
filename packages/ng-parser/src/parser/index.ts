@@ -84,6 +84,8 @@ export class Parser {
     }
 
     parseNgRepeat(sourceText: string): NgRepeatProgram {
+        // official code: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L101
+
         this.errors = [];
         this.sourceText = sourceText;
         this.scanner.initialize(sourceText, NG_REPEAT_KEYWORDS, this.reportError.bind(this));
@@ -106,10 +108,25 @@ export class Parser {
 
         const inKeyword = this.consume<KeywordToken>(TokenKind.Keyword, ErrorMessage.Keyword_expected);
         if (inKeyword.value !== 'in') {
-            this.reportErrorAt(ErrorMessage.InKeyword_expected, inKeyword);
+            this.reportErrorAt(ErrorMessage.InKeyword_expected, inKeyword.start >= 0 ? inKeyword : this.token());
         }
 
+        const asIndex = this.sourceText.search(/\sas(\s|$)/);
+        const trackByIndex = this.sourceText.search(/\strack(\s|$)/);
+        const asOrTrackByIndex = asIndex !== -1 ? asIndex : trackByIndex;
+        // set scan range to exclude 'as' or 'track by' to avoid 'ctrl. as'(get ctrl.as) or 'ctrl. track'(get ctrl.track)
+        if (asOrTrackByIndex !== -1) {
+            this.scanner.setScanRange({ end: asOrTrackByIndex });
+        }
+
+        // parse items expression
         const items = this.parseExpression();
+
+        // restore scan range
+        if (asOrTrackByIndex !== -1) {
+            this.scanner.setScanRange({ end: this.sourceText.length });
+            this.nextToken();
+        }
 
         let as: IdentifierToken | undefined;
         let trackBy: Expression | undefined;
@@ -126,7 +143,10 @@ export class Parser {
                 if (byKeyword.value === 'by') {
                     trackBy = this.parseExpression();
                 } else {
-                    this.reportErrorAt(ErrorMessage.ByKeyword_expected, byKeyword);
+                    this.reportErrorAt(
+                        ErrorMessage.ByKeyword_expected,
+                        byKeyword.start >= 0 ? byKeyword : this.token(),
+                    );
                 }
             }
         }
