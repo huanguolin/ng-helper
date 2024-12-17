@@ -555,13 +555,83 @@ describe('Parser', () => {
             checkErrorAndLocations(program, ...errors);
         });
     });
+
+    describe('ngRepeat', () => {
+        it.each([
+            // empty
+            ['', ''],
+            // array
+            ['item in items', '(ngRepeat (itemValue item) (items items))'],
+            ['item in ctrl.items', '(ngRepeat (itemValue item) (items ctrl.items))'],
+            ['item in items track by item.id', '(ngRepeat (itemValue item) (items items) (trackBy item.id))'],
+            ['item in items | f1', '(ngRepeat (itemValue item) (items (filter f1| items)))'],
+            ['item in items | f1 as result', '(ngRepeat (itemValue item) (items (filter f1| items)) (as result))'],
+            [
+                'item in items | f1: x as result track by $index',
+                '(ngRepeat (itemValue item) (items (filter f1| items x)) (as result) (trackBy $index))',
+            ],
+            // object
+            ['(key, value) in items', '(ngRepeat (itemKey key) (itemValue value) (items items))'],
+            ['(key, value) in ctrl.items', '(ngRepeat (itemKey key) (itemValue value) (items ctrl.items))'],
+            [
+                '(key, value) in items track by key',
+                '(ngRepeat (itemKey key) (itemValue value) (items items) (trackBy key))',
+            ],
+            ['(key, value) in items | f1', '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)))'],
+            [
+                '(key, value) in items | f1 as result',
+                '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)) (as result))',
+            ],
+            [
+                '(key, value) in items | f1: x as result track by $index',
+                '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items x)) (as result) (trackBy $index))',
+            ],
+        ])('parse: %s', (input, expected) => {
+            const program = parser.parseNgRepeat(input);
+            checkNoErrorAndLocations(program);
+            compareAstUseSExpr(program, expected);
+        });
+
+        describe('error-tolerant', () => {
+            it.each([
+                ['in items', '(ngRepeat (itemValue $$) (items items))', err('Ident', 0, 2)],
+                ['item in', '(ngRepeat (itemValue item) (items $$))', err('Expr', 7, 7)],
+                ['item in ctrl.', '(ngRepeat (itemValue item) (items ctrl.$$))', err('Ident', 13, 13)],
+                // TODO: fix this
+                // [
+                //     'item in ctrl. track by item.id',
+                //     '(ngRepeat (itemValue item) (items ctrl.$$) (trackBy item.id))',
+                //     err('Ident', 14, 18),
+                // ],
+            ])('error-tolerant: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+                const program = parser.parseNgRepeat(input);
+                compareAstUseSExpr(program, expected);
+                checkErrorAndLocations(program, ...errors);
+            });
+        });
+    });
 });
 
 /**
  * create error
  */
 function err(
-    key: ':' | ';' | '}' | ']' | ')' | 'Expr' | 'Ident' | 'PropAssign' | 'NotAssign' | 'UnterminatedStr' | '@',
+    key:
+        | ':'
+        | ','
+        | ';'
+        | '}'
+        | ']'
+        | ')'
+        | 'Expr'
+        | 'Ident'
+        | 'PropAssign'
+        | 'NotAssign'
+        | 'UnterminatedStr'
+        | '@'
+        | 'Keyword'
+        | 'InKeyword'
+        | 'ByKeyword',
     start: number,
     end: number,
 ): ErrorInfo {
@@ -582,6 +652,9 @@ function err(
         case ';':
             msg = ErrorMessage.Semicolon_expected;
             break;
+        case ',':
+            msg = ErrorMessage.Comma_expected;
+            break;
         case 'Expr':
             msg = ErrorMessage.Expression_expected;
             break;
@@ -599,6 +672,15 @@ function err(
             break;
         case '@':
             msg = 'Unexpected character: @' as ErrorMessageType;
+            break;
+        case 'ByKeyword':
+            msg = ErrorMessage.ByKeyword_expected;
+            break;
+        case 'InKeyword':
+            msg = ErrorMessage.InKeyword_expected;
+            break;
+        case 'Keyword':
+            msg = ErrorMessage.Keyword_expected;
             break;
     }
     return [msg, start, end];
