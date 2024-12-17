@@ -4,6 +4,112 @@ import { ErrorReporter, TokenKind, type NgParseError } from '../../src/types';
 describe('Scanner', () => {
     const scanner = new Scanner();
 
+    describe('setScanRange()', () => {
+        /**
+         * 注意在测试中使用了 scanner['pos'] 和 scanner['end'] 来访问私有属性，
+         * 这在 TypeScript 的测试中是常见的做法。
+         */
+        it('should set both start and end positions', () => {
+            scanner.setScanRange({ start: 2, end: 8 });
+            expect(scanner['pos']).toBe(2);
+            expect(scanner['end']).toBe(8);
+        });
+
+        it('should only set start position when end is not provided', () => {
+            const originalEnd = scanner['end'];
+            scanner.setScanRange({ start: 3 });
+            expect(scanner['pos']).toBe(3);
+            expect(scanner['end']).toBe(originalEnd);
+        });
+
+        it('should only set end position when start is not provided', () => {
+            const originalPos = scanner['pos'];
+            scanner.setScanRange({ end: 5 });
+            expect(scanner['pos']).toBe(originalPos);
+            expect(scanner['end']).toBe(5);
+        });
+
+        it('should ignore negative values', () => {
+            const originalPos = scanner['pos'];
+            const originalEnd = scanner['end'];
+            scanner.setScanRange({ start: -1, end: -2 });
+            expect(scanner['pos']).toBe(originalPos);
+            expect(scanner['end']).toBe(originalEnd);
+        });
+
+        it('should not change positions when no values provided', () => {
+            const originalPos = scanner['pos'];
+            const originalEnd = scanner['end'];
+            scanner.setScanRange({});
+            expect(scanner['pos']).toBe(originalPos);
+            expect(scanner['end']).toBe(originalEnd);
+        });
+
+        describe('should affect scan', () => {
+            it('end early', () => {
+                scanner.initialize('123 abc', []);
+                scanner.setScanRange({ end: 3 });
+
+                let token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Number);
+                expect(token.value).toBe('123');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.EOF);
+            });
+
+            it('start by offset', () => {
+                scanner.initialize('123 abc', []);
+                scanner.setScanRange({ start: 2 });
+
+                let token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Number);
+                expect(token.value).toBe('3');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Identifier);
+                expect(token.value).toBe('abc');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.EOF);
+            });
+
+            it('by range', () => {
+                scanner.initialize('123 abc', []);
+                scanner.setScanRange({ start: 2, end: 5 });
+
+                let token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Number);
+                expect(token.value).toBe('3');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Identifier);
+                expect(token.value).toBe('a');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.EOF);
+            });
+
+            it('can re-scan', () => {
+                const tokens = scanAll(scanner, '123 abc');
+                expect(tokens.length).toBe(2); // scanAll exclude EOF
+
+                scanner.setScanRange({ start: 2, end: 5 });
+
+                let token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Number);
+                expect(token.value).toBe('3');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.Identifier);
+                expect(token.value).toBe('a');
+
+                token = scanner.scan();
+                expect(token.kind).toBe(TokenKind.EOF);
+            });
+        });
+    });
+
     describe('scan()', () => {
         it('should tokenize a string', function () {
             const tokens = scanAll(scanner, 'a.bc[22]+1.3|f:\'a\\\'c\':"d\\"e"');
