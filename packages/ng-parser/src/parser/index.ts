@@ -12,6 +12,7 @@ import {
     type ColonToken,
     type DotToken,
     type IdentifierToken,
+    type KeywordToken,
     type LeftBraceToken,
     type LeftBracketToken,
     type LeftParenToken,
@@ -29,6 +30,7 @@ import {
 } from '../types';
 
 import { ErrorMessage, type ErrorMessageType } from './errorMessage';
+import { NgRepeatProgram } from './ngRepeatNode';
 import {
     Program,
     ExpressionStatement,
@@ -53,7 +55,7 @@ import {
 } from './node';
 
 const EXPR_KEYWORDS = ['true', 'false', 'null', 'undefined'];
-// const NG_REPEAT_KEYWORDS = [...EXPR_KEYWORDS, 'as', 'in', 'track', 'by'];
+const NG_REPEAT_KEYWORDS = [...EXPR_KEYWORDS, 'in', 'as', 'track', 'by'];
 
 export class Parser {
     private scanner = new Scanner();
@@ -78,7 +80,57 @@ export class Parser {
             }
         }
 
-        return new Program(sourceText, statements, this.errors);
+        return new Program(sourceText, this.errors, statements);
+    }
+
+    parseNgRepeat(sourceText: string): NgRepeatProgram {
+        this.errors = [];
+        this.sourceText = sourceText;
+        this.scanner.initialize(sourceText, NG_REPEAT_KEYWORDS, this.reportError.bind(this));
+
+        this.nextToken();
+        if (this.isEnd()) {
+            return new NgRepeatProgram(sourceText, this.errors);
+        }
+
+        let itemKey: IdentifierToken | undefined;
+        let itemValue: IdentifierToken | undefined;
+        if (this.expect(TokenKind.LeftParen)) {
+            itemKey = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+            this.consume(TokenKind.Comma, ErrorMessage.Comma_expected);
+            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+            this.consume(TokenKind.RightParen, ErrorMessage.RightParen_expected);
+        } else {
+            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+        }
+
+        const inKeyword = this.consume<KeywordToken>(TokenKind.Keyword, ErrorMessage.Keyword_expected);
+        if (inKeyword.value !== 'in') {
+            this.reportErrorAt(ErrorMessage.InKeyword_expected, inKeyword);
+        }
+
+        const items = this.parseExpression();
+
+        let as: IdentifierToken | undefined;
+        let trackBy: Expression | undefined;
+        if (!this.isEnd()) {
+            let keyword = this.expect<KeywordToken>(TokenKind.Keyword);
+
+            if (keyword && keyword.value === 'as') {
+                as = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+                keyword = this.expect<KeywordToken>(TokenKind.Keyword);
+            }
+
+            if (keyword && keyword.value === 'track') {
+                const byKeyword = this.consume(TokenKind.Keyword, ErrorMessage.Keyword_expected);
+                if (byKeyword.value === 'by') {
+                    trackBy = this.parseExpression();
+                } else {
+                    this.reportErrorAt(ErrorMessage.ByKeyword_expected, byKeyword);
+                }
+            }
+        }
+        return new NgRepeatProgram(sourceText, this.errors, { itemKey, itemValue, items, as, trackBy });
     }
 
     private isUnExpectedTokenOfExpressionStart(): boolean {

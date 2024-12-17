@@ -8,6 +8,11 @@ export const ErrorMessage = {
     RightBracket_expected: `']' expected`,
     Property_assign_expected: `Property assignment expected`,
     Cannot_assign: `Can not assign a value to a non left-hand-value`,
+    // only for ngRepeat
+    Comma_expected: `',' expected`,
+    Keyword_expected: `Keyword expected`,
+    InKeyword_expected: `'in' keyword expected`,
+    ByKeyword_expected: `'by' keyword expected`,
 } as const;
 
 export type ErrorMessageType = (typeof ErrorMessage)[keyof typeof ErrorMessage];

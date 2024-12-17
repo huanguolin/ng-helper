@@ -1,3 +1,4 @@
+import type { NgRepeatProgram } from '../../src/parser/ngRepeatNode';
 import {
     Program,
     ExpressionStatement,
@@ -40,8 +41,8 @@ import {
     type INodeVisitor,
 } from '../../src/types';
 
-class TestVisitor implements INodeVisitor<Node> {
-    visitProgram(node: Program): Node {
+export class TestVisitor implements INodeVisitor<Node, Program | NgRepeatProgram> {
+    visitProgram(node: Program | NgRepeatProgram): Node {
         return node;
     }
     visitExpressionStatement(node: ExpressionStatement): Node {
@@ -133,7 +134,7 @@ describe('Program', () => {
     it('should correctly initialize with statements and errors', () => {
         const identifier = new Identifier(createToken(TokenKind.Identifier, { value: 'test', end: 4 }));
         const statement = new ExpressionStatement(identifier, createToken(TokenKind.Semicolon, { start: 4, end: 5 }));
-        const program = new Program('test;', [statement], []);
+        const program = new Program('test;', [], [statement]);
 
         expect(program.source).toBe('test;');
         expect(program.statements).toHaveLength(1);
@@ -148,7 +149,7 @@ describe('Program', () => {
     it('should accept visitor', () => {
         const identifier = new Identifier(createToken(TokenKind.Identifier, { value: 'test', end: 4 }));
         const statement = new ExpressionStatement(identifier, createToken(TokenKind.Semicolon, { start: 4, end: 5 }));
-        const program = new Program('test', [statement], []);
+        const program = new Program('test', [], [statement]);
         const result = program.accept(visitor);
         expect(result).toBe(program);
     });

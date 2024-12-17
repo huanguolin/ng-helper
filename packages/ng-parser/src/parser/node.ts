@@ -24,7 +24,7 @@ import { SyntaxKind, NodeFlags, TokenKind } from '../types';
 
 import { resolveLocation } from './utils';
 
-export abstract class Node implements Location {
+export abstract class Node<P = Program> implements Location {
     readonly kind: SyntaxKind;
     readonly start: number;
     readonly end: number;
@@ -46,7 +46,7 @@ export abstract class Node implements Location {
         return Boolean(this.flags & flags);
     }
 
-    abstract accept<R>(visitor: INodeVisitor<R>): R;
+    abstract accept<R>(visitor: INodeVisitor<R, P>): R;
 }
 
 export abstract class Expression extends Node {
@@ -61,18 +61,18 @@ export abstract class LeftHandExpression extends NormalExpression {
 
 export class Program extends Node {
     readonly source: string;
-    readonly statements: ExpressionStatement[];
     readonly errors: NgParseError[];
+    readonly statements: ExpressionStatement[];
 
-    constructor(source: string, statements: ExpressionStatement[], errors: NgParseError[]) {
+    constructor(source: string, errors: NgParseError[], statements: ExpressionStatement[]) {
         if (statements.length === 0) {
             super(SyntaxKind.Program, { start: 0, end: 1 });
         } else {
             super(SyntaxKind.Program, ...statements);
         }
         this.source = source;
-        this.statements = statements;
         this.errors = errors;
+        this.statements = statements;
     }
 
     accept<R>(visitor: INodeVisitor<R>): R {
@@ -329,35 +329,5 @@ export class GroupExpression extends NormalExpression {
 
     accept<R>(visitor: INodeVisitor<R>): R {
         return visitor.visitGroupExpression(this);
-    }
-}
-
-/**
- * special program for ng-repeat.
- */
-export class NgRepeatProgram extends Node {
-    readonly source: string;
-    readonly errors: NgParseError[];
-    readonly item: Identifier;
-    readonly expression: Expression;
-    readonly as?: Identifier;
-    readonly trackBy?: Identifier;
-
-    constructor(
-        source: string,
-        errors: NgParseError[],
-        config: { item: Identifier; expression: Expression; as?: Identifier; trackBy?: Identifier },
-    ) {
-        super(SyntaxKind.Program, { start: 0, end: 1 });
-        this.source = source;
-        this.errors = errors;
-        this.item = config.item;
-        this.expression = config.expression;
-        this.as = config.as;
-        this.trackBy = config.trackBy;
-    }
-
-    accept<R>(): R {
-        throw new Error('NgRepeatProgram is not needed to be implemented.');
     }
 }

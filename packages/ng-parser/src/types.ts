@@ -205,6 +205,7 @@ export interface PunctuationToken<TKind extends TokenKind> extends Token {
     readonly kind: TKind;
 }
 
+export type KeywordToken = PunctuationToken<TokenKind.Keyword>;
 export type IdentifierToken = PunctuationToken<TokenKind.Identifier>;
 export type DotToken = PunctuationToken<TokenKind.Dot>;
 export type SemicolonToken = PunctuationToken<TokenKind.Semicolon>;
@@ -262,8 +263,8 @@ export enum NodeFlags {
     LeftHandExpression = 1 << 2,
 }
 
-export interface INodeVisitor<R> {
-    visitProgram: (node: Program) => R;
+export interface INodeVisitor<R, P = Program> {
+    visitProgram: (node: P) => R;
     visitExpressionStatement: (node: ExpressionStatement) => R;
     visitFilterExpression: (node: FilterExpression) => R;
     visitAssignExpression: (node: AssignExpression) => R;
