@@ -30,6 +30,7 @@ import {
 } from '../types';
 
 import { ErrorMessage, type ErrorMessageType } from './errorMessage';
+import { NgControllerProgram } from './ngControllerNode';
 import { NgRepeatProgram } from './ngRepeatNode';
 import {
     Program,
@@ -56,6 +57,7 @@ import {
 
 const EXPR_KEYWORDS = ['true', 'false', 'null', 'undefined'];
 const NG_REPEAT_KEYWORDS = [...EXPR_KEYWORDS, 'in', 'as', 'track', 'by'];
+const NG_CONTROLLER_KEYWORDS = ['as'];
 
 export class Parser {
     private scanner = new Scanner();
@@ -81,6 +83,31 @@ export class Parser {
         }
 
         return new Program(sourceText, this.errors, statements);
+    }
+
+    parseNgController(sourceText: string): NgControllerProgram {
+        this.errors = [];
+        this.sourceText = sourceText;
+        this.scanner.initialize(sourceText, NG_CONTROLLER_KEYWORDS, this.reportError.bind(this));
+
+        this.nextToken();
+        if (this.isEnd()) {
+            return new NgControllerProgram(sourceText, this.errors);
+        }
+
+        const controllerName = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+
+        let as: IdentifierToken | undefined;
+        const asKeyword = this.expect<KeywordToken>(TokenKind.Keyword);
+        if (asKeyword && asKeyword.value === 'as') {
+            as = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+        }
+
+        if (!this.isEnd()) {
+            this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
+        }
+
+        return new NgControllerProgram(sourceText, this.errors, { controllerName, as });
     }
 
     parseNgRepeat(sourceText: string): NgRepeatProgram {
@@ -148,6 +175,14 @@ export class Parser {
                         byKeyword.start >= 0 ? byKeyword : this.token(),
                     );
                 }
+            }
+
+            if (keyword && keyword.value === 'by') {
+                this.reportErrorAt(ErrorMessage.Unexpected_token, keyword);
+            }
+
+            if (!this.isEnd()) {
+                this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
             }
         }
         return new NgRepeatProgram(sourceText, this.errors, { itemKey, itemValue, items, as, trackBy });

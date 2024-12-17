@@ -1,4 +1,3 @@
-import type { NgRepeatProgram } from '../../src/parser/ngRepeatNode';
 import {
     Program,
     ExpressionStatement,
@@ -18,7 +17,6 @@ import {
     type NormalExpression,
     PropertyAssignment,
     ElementAccess,
-    type Node,
 } from '../../src/parser/node';
 import { Token } from '../../src/scanner/token';
 import {
@@ -38,64 +36,8 @@ import {
     type RightParenToken,
     type LeftBraceToken,
     type RightBraceToken,
-    type INodeVisitor,
 } from '../../src/types';
-
-export class TestVisitor implements INodeVisitor<Node, Program | NgRepeatProgram> {
-    visitProgram(node: Program | NgRepeatProgram): Node {
-        return node;
-    }
-    visitExpressionStatement(node: ExpressionStatement): Node {
-        return node;
-    }
-    visitFilterExpression(node: FilterExpression): Node {
-        return node;
-    }
-    visitAssignExpression(node: AssignExpression): Node {
-        return node;
-    }
-    visitConditionalExpression(node: ConditionalExpression): Node {
-        return node;
-    }
-    visitBinaryExpression(node: BinaryExpression): Node {
-        return node;
-    }
-    visitUnaryExpression(node: UnaryExpression): Node {
-        return node;
-    }
-    visitCallExpression(node: CallExpression): Node {
-        return node;
-    }
-    visitArrayLiteralExpression(node: ArrayLiteralExpression): Node {
-        return node;
-    }
-    visitObjectLiteralExpression(node: ObjectLiteralExpression): Node {
-        return node;
-    }
-    visitPropertyAccessExpression(node: PropertyAccessExpression): Node {
-        return node;
-    }
-    visitElementAccessExpression(node: ElementAccessExpression): Node {
-        return node;
-    }
-    visitGroupExpression(node: GroupExpression): Node {
-        return node;
-    }
-    visitPropertyAssignment(node: PropertyAssignment): Node {
-        return node;
-    }
-    visitElementAccess(node: ElementAccess): Node {
-        return node;
-    }
-    visitIdentifier(node: Identifier): Node {
-        return node;
-    }
-    visitLiteral(node: Literal): Node {
-        return node;
-    }
-}
-
-const visitor = new TestVisitor();
+import { visitor } from '../testUtils';
 
 describe('Node', () => {
     // 由于 Node 是抽象类，我们使用 Identifier 来测试基础功能
