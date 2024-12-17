@@ -13,6 +13,8 @@ export const ErrorMessage = {
     Keyword_expected: `Keyword expected`,
     InKeyword_expected: `'in' keyword expected`,
     ByKeyword_expected: `'by' keyword expected`,
+    // only for ngRepeat/ngController
+    Unexpected_token: `Unexpected token`,
 } as const;
 
 export type ErrorMessageType = (typeof ErrorMessage)[keyof typeof ErrorMessage];

@@ -556,7 +556,7 @@ describe('Parser', () => {
         });
     });
 
-    describe('ngRepeat', () => {
+    describe('parseNgRepeat()', () => {
         it.each([
             // empty
             ['', ''],
@@ -594,7 +594,16 @@ describe('Parser', () => {
 
         describe('error-tolerant', () => {
             it.each([
-                // array
+                ['item in items by', '(ngRepeat (itemValue item) (items items))', err('Unexpected', 14, 16)],
+                ['item in items xx', '(ngRepeat (itemValue item) (items items))', err('Unexpected', 14, 16)],
+            ])('common: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+                const program = parser.parseNgRepeat(input);
+                compareAstUseSExpr(program, expected);
+                checkErrorAndLocations(program, ...errors);
+            });
+
+            // array
+            it.each([
                 ['in items', '(ngRepeat (itemValue $$) (items items))', err('Ident', 0, 2)],
                 ['item in', '(ngRepeat (itemValue item) (items $$))', err('Expr', 7, 7)],
                 ['item in ctrl.', '(ngRepeat (itemValue item) (items ctrl.$$))', err('Ident', 13, 13)],
@@ -640,6 +649,7 @@ describe('Parser', () => {
                 checkErrorAndLocations(program, ...errors);
             });
 
+            // object
             it.each([
                 ['() in items', '(ngRepeat (itemKey $$) (itemValue $$) (items items))', err('Ident', 1, 2)],
                 ['(key) in items', '(ngRepeat (itemKey key) (itemValue $$) (items items))', err(',', 4, 5)],
@@ -697,6 +707,28 @@ describe('Parser', () => {
             });
         });
     });
+
+    describe('parseNgController()', () => {
+        it.each([
+            ['XController', '(ngController XController)'],
+            ['XController as alias', '(ngController XController (as alias))'],
+        ])('parse: %s', (input, expected) => {
+            const program = parser.parseNgController(input);
+            checkNoErrorAndLocations(program);
+            compareAstUseSExpr(program, expected);
+        });
+
+        it.each([
+            ['XController as', '(ngController XController (as $$))', err('Ident', 14, 14)],
+            ['as alias', '(ngController $$ (as alias))', err('Ident', 0, 2)],
+            ['as', '(ngController $$ (as $$))', err('Ident', 0, 2), err('Ident', 2, 2)],
+            ['XController ctrl', '(ngController XController)', err('Unexpected', 12, 16)],
+        ])('error-tolerant: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
+            const program = parser.parseNgController(input);
+            compareAstUseSExpr(program, expected);
+            checkErrorAndLocations(program, ...errors);
+        });
+    });
 });
 
 /**
@@ -718,7 +750,8 @@ function err(
         | '@'
         | 'Keyword'
         | 'InKeyword'
-        | 'ByKeyword',
+        | 'ByKeyword'
+        | 'Unexpected',
     start: number,
     end: number,
 ): ErrorInfo {
@@ -768,6 +801,9 @@ function err(
             break;
         case 'Keyword':
             msg = ErrorMessage.Keyword_expected;
+            break;
+        case 'Unexpected':
+            msg = ErrorMessage.Unexpected_token;
             break;
     }
     return [msg, start, end];

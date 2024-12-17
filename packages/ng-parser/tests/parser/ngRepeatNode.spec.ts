@@ -2,8 +2,7 @@ import { NgRepeatProgram } from '../../src/parser/ngRepeatNode';
 import { Identifier } from '../../src/parser/node';
 import { Token } from '../../src/scanner/token';
 import { SyntaxKind, TokenKind, type IdentifierToken } from '../../src/types';
-
-import { TestVisitor } from './node.spec';
+import { visitor } from '../testUtils';
 
 describe('NgRepeatProgram', () => {
     it('should correctly initialize with config', () => {
@@ -62,7 +61,7 @@ describe('NgRepeatProgram', () => {
 
     it('should accept visitor', () => {
         const program = new NgRepeatProgram('', []);
-        const result = program.accept(new TestVisitor());
+        const result = program.accept(visitor);
         expect(result).toBe(program);
     });
 });

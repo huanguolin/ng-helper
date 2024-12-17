@@ -1,4 +1,5 @@
 import type { ErrorMessageType } from '../src/parser/errorMessage';
+import { NgControllerProgram } from '../src/parser/ngControllerNode';
 import { NgRepeatProgram } from '../src/parser/ngRepeatNode';
 import type {
     Program,
@@ -26,12 +27,14 @@ import { type INodeVisitor, type Location, TokenKind } from '../src/types';
 
 const MISSING_IDENTIFIER = '$$';
 
-export class SExpr implements INodeVisitor<string, Program | NgRepeatProgram> {
-    toString(node: Program | NgRepeatProgram): string {
+type Programs = Program | NgRepeatProgram | NgControllerProgram;
+
+export class SExpr implements INodeVisitor<string, Programs> {
+    toString(node: Programs): string {
         return node.accept(this);
     }
 
-    visitProgram(node: Program | NgRepeatProgram): string {
+    visitProgram(node: Programs): string {
         if (node instanceof NgRepeatProgram) {
             if (!node.config) {
                 return '';
@@ -44,6 +47,14 @@ export class SExpr implements INodeVisitor<string, Program | NgRepeatProgram> {
             const trackByStr = trackBy ? `(trackBy ${trackBy.accept(this)})` : '';
             const s = [itemKeyStr, itemValueStr, itemsStr, asStr, trackByStr].filter(Boolean).join(' ');
             return `(ngRepeat ${s})`;
+        } else if (node instanceof NgControllerProgram) {
+            if (!node.config) {
+                return '';
+            }
+            const { controllerName, as } = node.config;
+            const asStr = as ? `(as ${as.value || MISSING_IDENTIFIER})` : '';
+            const s = [controllerName.value || MISSING_IDENTIFIER, asStr].filter(Boolean).join(' ');
+            return `(ngController ${s})`;
         }
         return node.statements.map((stmt) => stmt.accept(this)).join(';');
     }
@@ -106,16 +117,16 @@ export class SExpr implements INodeVisitor<string, Program | NgRepeatProgram> {
     }
 }
 
-export class LocationValidator implements INodeVisitor<boolean, Program | NgRepeatProgram> {
+export class LocationValidator implements INodeVisitor<boolean, Programs> {
     private strict = true;
-    validate(node: Program | NgRepeatProgram, strict = true): boolean {
+    validate(node: Programs, strict = true): boolean {
         this.strict = strict;
         return node.accept(this);
     }
 
     private compareToChildren(
-        parent: Node<Program | NgRepeatProgram>,
-        childNodes: Node<Program | NgRepeatProgram>[],
+        parent: Node<Programs>,
+        childNodes: Node<Programs>[],
         childTokens: Token[] = [],
     ): boolean {
         if (!this.checkLocations(parent, ...childTokens, ...childNodes)) {
@@ -140,7 +151,7 @@ export class LocationValidator implements INodeVisitor<boolean, Program | NgRepe
         return nodes.every((node) => node.start >= 0 && node.end >= 0 && node.end >= node.start);
     }
 
-    visitProgram(node: Program | NgRepeatProgram): boolean {
+    visitProgram(node: Programs): boolean {
         if (node.start < 0 || (node.source.length > 0 && node.end > node.source.length)) {
             return false;
         }
@@ -151,9 +162,15 @@ export class LocationValidator implements INodeVisitor<boolean, Program | NgRepe
             const config = node.config;
             return this.compareToChildren(
                 node,
-                [config.items, config.trackBy].filter(Boolean) as Node<Program | NgRepeatProgram>[],
+                [config.items, config.trackBy].filter(Boolean) as Node<Programs>[],
                 [config.itemKey, config.itemValue, config.as].filter(Boolean) as Token[],
             );
+        } else if (node instanceof NgControllerProgram) {
+            if (!node.config) {
+                return true;
+            }
+            const config = node.config;
+            return this.compareToChildren(node, [], [config.controllerName, config.as].filter(Boolean) as Token[]);
         }
         return this.compareToChildren(node, node.statements);
     }
@@ -207,20 +224,76 @@ export class LocationValidator implements INodeVisitor<boolean, Program | NgRepe
     }
 }
 
+export class TestVisitor implements INodeVisitor<Node, Programs> {
+    visitProgram(node: Programs): Node {
+        return node;
+    }
+    visitExpressionStatement(node: ExpressionStatement): Node {
+        return node;
+    }
+    visitFilterExpression(node: FilterExpression): Node {
+        return node;
+    }
+    visitAssignExpression(node: AssignExpression): Node {
+        return node;
+    }
+    visitConditionalExpression(node: ConditionalExpression): Node {
+        return node;
+    }
+    visitBinaryExpression(node: BinaryExpression): Node {
+        return node;
+    }
+    visitUnaryExpression(node: UnaryExpression): Node {
+        return node;
+    }
+    visitCallExpression(node: CallExpression): Node {
+        return node;
+    }
+    visitArrayLiteralExpression(node: ArrayLiteralExpression): Node {
+        return node;
+    }
+    visitObjectLiteralExpression(node: ObjectLiteralExpression): Node {
+        return node;
+    }
+    visitPropertyAccessExpression(node: PropertyAccessExpression): Node {
+        return node;
+    }
+    visitElementAccessExpression(node: ElementAccessExpression): Node {
+        return node;
+    }
+    visitGroupExpression(node: GroupExpression): Node {
+        return node;
+    }
+    visitPropertyAssignment(node: PropertyAssignment): Node {
+        return node;
+    }
+    visitElementAccess(node: ElementAccess): Node {
+        return node;
+    }
+    visitIdentifier(node: Identifier): Node {
+        return node;
+    }
+    visitLiteral(node: Literal): Node {
+        return node;
+    }
+}
+
 export type ErrorInfo = [ErrorMessageType, number, number];
 
 const sExpr = new SExpr();
 const locationValidator = new LocationValidator();
 
-export function compareAstUseSExpr(program: Program | NgRepeatProgram, expected: string) {
+export const visitor = new TestVisitor();
+
+export function compareAstUseSExpr(program: Programs, expected: string) {
     expect(sExpr.toString(program)).toBe(expected);
 }
 
-export function checkNoErrorAndLocations(program: Program | NgRepeatProgram) {
+export function checkNoErrorAndLocations(program: Programs) {
     checkErrorAndLocations(program);
 }
 
-export function checkErrorAndLocations(program: Program | NgRepeatProgram, ...errors: ErrorInfo[]) {
+export function checkErrorAndLocations(program: Programs, ...errors: ErrorInfo[]) {
     expect(locationValidator.validate(program, errors.length === 0)).toBe(true);
     expect(program.errors).toHaveLength(errors.length);
     program.errors.forEach((error, index) => {
