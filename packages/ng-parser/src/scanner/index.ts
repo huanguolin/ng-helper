@@ -281,7 +281,7 @@ export class Scanner {
     }
 
     private at(n: number): string {
-        if (n >= this.end) {
+        if (this.isEnd(n)) {
             return '';
         }
         return this.sourceText.charAt(n);
@@ -303,8 +303,8 @@ export class Scanner {
         return ch1;
     }
 
-    private isEnd(): boolean {
-        return this.pos >= this.end;
+    private isEnd(n?: number): boolean {
+        return (n ?? this.pos) >= this.end;
     }
 
     private isWhitespace(ch: string): boolean {
