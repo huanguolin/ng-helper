@@ -22,7 +22,7 @@ export interface CursorAtContext {
     /**
      * 具有上下文能力的指令名字。
      */
-    kind: 'ng-controller' | 'ng-repeat' | 'ng-options';
+    kind: 'ng-controller' | 'ng-repeat';
     /**
      * 对应的属性值。
      */
@@ -74,7 +74,7 @@ export interface CursorAtAttrValueInfo extends TagInfo {
     type: 'attrValue';
     attrValue: string;
     /**
-     * 有时候需要这个，比如 ng-repeat/ng-options/ng-controller
+     * 有时候需要这个，比如 ng-repeat/ng-controller
      */
     attrName: string;
     /**
@@ -317,7 +317,7 @@ function getTagInfo(element: Element): TagInfo {
     };
 }
 
-const contextNgAttrNames = ['ng-repeat', 'ng-options', 'ng-controller'];
+const contextNgAttrNames = ['ng-repeat', 'ng-controller'];
 function getContext(node: TextNode | Element): CursorAtContext[] {
     const ctxs: CursorAtContext[] = [];
     pushCtx(node);
