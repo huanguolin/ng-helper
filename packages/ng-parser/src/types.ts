@@ -1,3 +1,5 @@
+import type { NgControllerProgram } from './parser/ngControllerNode';
+import type { NgRepeatProgram } from './parser/ngRepeatNode';
 import type {
     Program,
     ExpressionStatement,
@@ -282,3 +284,13 @@ export interface INodeVisitor<R, P = Program> {
     visitLiteral: (node: Literal) => R;
     visitGroupExpression: (node: GroupExpression) => R;
 }
+
+export type Programs = Program | NgRepeatProgram | NgControllerProgram;
+
+export type NgAttrName = 'ng-repeat' | 'ng-controller';
+
+export type ProgramResult<T extends NgAttrName> = T extends 'ng-repeat'
+    ? NgRepeatProgram
+    : T extends 'ng-controller'
+      ? NgControllerProgram
+      : Program;
