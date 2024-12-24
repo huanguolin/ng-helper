@@ -1,47 +1,150 @@
-import { ngParse } from '@ng-helper/ng-parser';
-import type {
-    ArrayLiteralExpression,
-    AssignExpression,
-    BinaryExpression,
-    CallExpression,
-    ConditionalExpression,
-    ElementAccess,
-    ElementAccessExpression,
-    ExpressionStatement,
-    FilterExpression,
-    GroupExpression,
-    Identifier,
-    Literal,
-    ObjectLiteralExpression,
+import { NgControllerProgram } from '@ng-helper/ng-parser/src/parser/ngControllerNode';
+import { NgRepeatProgram } from '@ng-helper/ng-parser/src/parser/ngRepeatNode';
+import {
     Program,
-    PropertyAccessExpression,
-    PropertyAssignment,
-    UnaryExpression,
+    type ArrayLiteralExpression,
+    type AssignExpression,
+    type BinaryExpression,
+    type CallExpression,
+    type ConditionalExpression,
+    type ElementAccess,
+    type ElementAccessExpression,
+    type ExpressionStatement,
+    type FilterExpression,
+    type GroupExpression,
+    type Identifier,
+    type Literal,
+    type ObjectLiteralExpression,
+    type PropertyAccessExpression,
+    type PropertyAssignment,
+    type UnaryExpression,
 } from '@ng-helper/ng-parser/src/parser/node';
-import { INodeVisitor, SyntaxKind, type Location } from '@ng-helper/ng-parser/src/types';
+import {
+    INodeVisitor,
+    SyntaxKind,
+    type Location,
+    type NgAttrName,
+    type Programs,
+} from '@ng-helper/ng-parser/src/types';
+
+import { ngParse } from './ngParse';
 
 type MinNgSyntaxNode = Literal | PropertyAccessExpression | FilterExpression | Identifier;
 export type MinNgSyntaxType = 'none' | 'literal' | 'propertyAccess' | 'filterName' | 'identifier';
-export interface MinNgSyntaxInfo {
+
+export interface BaseMinNgSyntaxInfo {
     type: MinNgSyntaxType;
     value: string;
+    attrName?: NgAttrName;
 }
 
-class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined> {
+export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
+    attrName?: undefined;
+}
+
+export interface NgRepeatMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
+    attrName: 'ng-repeat';
+    nodeName: 'itemValue' | 'itemKey' | 'items' | 'as' | 'trackBy';
+}
+
+export interface NgControllerMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
+    attrName: 'ng-controller';
+    nodeName: 'controllerName' | 'as';
+}
+
+export type MinNgSyntaxInfo = NormalMinNgSyntaxInfo | NgRepeatMinNgSyntaxInfo | NgControllerMinNgSyntaxInfo;
+
+class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Program> {
     private cursorAt = 0;
 
-    getCursorAtMinSyntax(program: Program, cursorAt: number): MinNgSyntaxInfo {
+    getCursorAtMinSyntax(program: Programs, cursorAt: number): MinNgSyntaxInfo {
         if (cursorAt < 0 || cursorAt >= program.source.length) {
             return { type: 'none', value: '' };
         }
 
         this.cursorAt = cursorAt;
-        const node = this.visitProgram(program);
+
+        if (program instanceof NgRepeatProgram) {
+            return this.getNgRepeatMinNgSyntaxInfo(program);
+        } else if (program instanceof NgControllerProgram) {
+            return this.getNgControllerMinNgSyntaxInfo(program);
+        }
+
+        const node = program.accept(this);
+        return this.getMinNgSyntaxInfoFromNode(node, program);
+    }
+
+    private getNgRepeatMinNgSyntaxInfo(program: NgRepeatProgram): MinNgSyntaxInfo {
+        if (program.config) {
+            if (this.isAt(program.config.itemValue)) {
+                return {
+                    type: 'identifier',
+                    value: this.getNodeText(program, program.config.itemValue),
+                    attrName: 'ng-repeat',
+                    nodeName: 'itemValue',
+                };
+            } else if (program.config.itemKey && this.isAt(program.config.itemKey)) {
+                return {
+                    type: 'identifier',
+                    value: this.getNodeText(program, program.config.itemKey),
+                    attrName: 'ng-repeat',
+                    nodeName: 'itemKey',
+                };
+            } else if (this.isAt(program.config.items)) {
+                const node = program.config.items.accept(this);
+                const result = this.getMinNgSyntaxInfoFromNode(node, program) as NgRepeatMinNgSyntaxInfo;
+                if (result.type !== 'none') {
+                    result.attrName = 'ng-repeat';
+                    result.nodeName = 'items';
+                }
+                return result;
+            } else if (program.config.as && this.isAt(program.config.as)) {
+                return {
+                    type: 'identifier',
+                    value: this.getNodeText(program, program.config.as),
+                    attrName: 'ng-repeat',
+                    nodeName: 'as',
+                };
+            } else if (program.config.trackBy && this.isAt(program.config.trackBy)) {
+                const node = program.config.trackBy.accept(this);
+                const result = this.getMinNgSyntaxInfoFromNode(node, program) as NgRepeatMinNgSyntaxInfo;
+                if (result.type !== 'none') {
+                    result.attrName = 'ng-repeat';
+                    result.nodeName = 'trackBy';
+                }
+                return result;
+            }
+        }
+        return { type: 'none', value: '' };
+    }
+
+    private getNgControllerMinNgSyntaxInfo(program: NgControllerProgram): MinNgSyntaxInfo {
+        if (program.config) {
+            if (this.isAt(program.config.controllerName)) {
+                return {
+                    type: 'identifier',
+                    value: this.getNodeText(program, program.config.controllerName),
+                    attrName: 'ng-controller',
+                    nodeName: 'controllerName',
+                };
+            } else if (program.config.as && this.isAt(program.config.as)) {
+                return {
+                    type: 'identifier',
+                    value: this.getNodeText(program, program.config.as),
+                    attrName: 'ng-controller',
+                    nodeName: 'as',
+                };
+            }
+        }
+        return { type: 'none', value: '' };
+    }
+
+    private getMinNgSyntaxInfoFromNode(node: MinNgSyntaxNode | undefined, program: Programs): MinNgSyntaxInfo {
         const result: MinNgSyntaxInfo = { type: 'none', value: '' };
         if (node) {
             if (node.is<FilterExpression>(SyntaxKind.FilterExpression)) {
                 result.type = 'filterName';
-                result.value = program.source.slice(node.name.start, node.name.end);
+                result.value = this.getNodeText(program, node.name);
             } else {
                 if (node.is<PropertyAccessExpression>(SyntaxKind.PropertyAccessExpression)) {
                     result.type = 'propertyAccess';
@@ -50,10 +153,14 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined> {
                 } else {
                     result.type = 'literal';
                 }
-                result.value = program.source.slice(node.start, node.end);
+                result.value = this.getNodeText(program, node);
             }
         }
         return result;
+    }
+
+    private getNodeText(program: Programs, node: Location): string {
+        return program.source.slice(node.start, node.end);
     }
 
     private isAt(node: Location): boolean {
@@ -228,13 +335,16 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined> {
 
 const minNgSyntaxVisitor = new MinNgSyntaxVisitor();
 
-export function getMinNgSyntaxInfo(ngExprStr: string, cursorAt: number): MinNgSyntaxInfo {
+export function getMinNgSyntaxInfo(
+    ngExprStr: string,
+    cursorAt: number,
+    attrName?: 'ng-repeat' | 'ng-controller',
+): MinNgSyntaxInfo {
     if (!ngExprStr || typeof ngExprStr !== 'string') {
         return { type: 'none', value: '' };
     }
 
-    // TODO: 增加缓存提高效率
-    const program = ngParse(ngExprStr);
+    const program = ngParse(ngExprStr, attrName);
 
     return minNgSyntaxVisitor.getCursorAtMinSyntax(program, cursorAt);
 }

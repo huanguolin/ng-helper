@@ -2,7 +2,6 @@ import type { ErrorMessageType } from '../src/parser/errorMessage';
 import { NgControllerProgram } from '../src/parser/ngControllerNode';
 import { NgRepeatProgram } from '../src/parser/ngRepeatNode';
 import type {
-    Program,
     ExpressionStatement,
     FilterExpression,
     BinaryExpression,
@@ -23,11 +22,9 @@ import type {
 } from '../src/parser/node';
 import { resolveLocation } from '../src/parser/utils';
 import { Token } from '../src/scanner/token';
-import { type INodeVisitor, type Location, TokenKind } from '../src/types';
+import { type INodeVisitor, type Location, type Programs, TokenKind } from '../src/types';
 
 const MISSING_IDENTIFIER = '$$';
-
-type Programs = Program | NgRepeatProgram | NgControllerProgram;
 
 export class SExpr implements INodeVisitor<string, Programs> {
     toString(node: Programs): string {
