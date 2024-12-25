@@ -1,3 +1,4 @@
+import type { NgAttrName } from '@ng-helper/ng-parser/src/types';
 import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
 import type {
@@ -22,7 +23,7 @@ export interface CursorAtContext {
     /**
      * 具有上下文能力的指令名字。
      */
-    kind: 'ng-controller' | 'ng-repeat';
+    kind: NgAttrName;
     /**
      * 对应的属性值。
      */
