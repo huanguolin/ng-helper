@@ -1,4 +1,4 @@
-import { getMinNgSyntaxInfo } from '../lib/minNgSyntax';
+import { getMinNgSyntaxInfo, NgRepeatMinNgSyntaxInfo } from '../lib/minNgSyntax';
 
 describe('getMinNgSyntaxInfo', () => {
     it.each([
@@ -181,6 +181,32 @@ describe('getMinNgSyntaxInfo', () => {
         ['x = ctrl.d.; ctrl.a = ctrl.b.c;', 9, 'ctrl.d', 'propertyAccess'],
     ])('test for hover: %s', (expr, cursorAt, expectedValue, expectedType) => {
         testSyntax(expr, cursorAt, expectedValue, expectedType as 'none' | 'literal' | 'propertyAccess' | 'filterName');
+    });
+
+    // NgRepeat tests
+    it.each([
+        ['item in items', 0, 'item', 'identifier', 'itemValue'],
+        ['item in items', 9, 'items', 'identifier', 'items'],
+        ['item in items track by item.id', 29, 'item.id', 'propertyAccess', 'trackBy'],
+        ['item in items as alias', 20, 'alias', 'identifier', 'as'],
+    ])('test ng-repeat attributes: %s', (expr, cursorAt, expectedValue, expectedType, expectedNodeName) => {
+        const result = getMinNgSyntaxInfo(expr, cursorAt, 'ng-repeat');
+        expect(result.type).toBe(expectedType);
+        expect(result.value).toBe(expectedValue);
+        expect(result.attrName).toBe('ng-repeat');
+        expect((result as NgRepeatMinNgSyntaxInfo).nodeName).toBe(expectedNodeName);
+    });
+
+    // NgController tests
+    it.each([
+        ['MyController as ctrl', 0, 'MyController', 'identifier', 'controllerName'],
+        ['MyController as ctrl', 19, 'ctrl', 'identifier', 'as'],
+    ])('test ng-controller attributes: %s', (expr, cursorAt, expectedValue, expectedType, expectedNodeName) => {
+        const result = getMinNgSyntaxInfo(expr, cursorAt, 'ng-controller');
+        expect(result.type).toBe(expectedType);
+        expect(result.value).toBe(expectedValue);
+        expect(result.attrName).toBe('ng-controller');
+        expect((result as NgRepeatMinNgSyntaxInfo).nodeName).toBe(expectedNodeName);
     });
 });
 
