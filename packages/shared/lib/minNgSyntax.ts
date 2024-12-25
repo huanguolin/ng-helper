@@ -44,6 +44,10 @@ export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
 
 export interface NgRepeatMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
     attrName: 'ng-repeat';
+    /**
+     * items, trackBy 用于自动补全。
+     * 除了 as 其他都能用于 hover/definition。
+     */
     nodeName: 'itemValue' | 'itemKey' | 'items' | 'as' | 'trackBy';
 }
 
