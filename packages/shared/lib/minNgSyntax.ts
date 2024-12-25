@@ -42,18 +42,22 @@ export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
     attrName?: undefined;
 }
 
+export type NgRepeatChildNodeName = 'itemValue' | 'itemKey' | 'items' | 'as' | 'trackBy';
+
 export interface NgRepeatMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
     attrName: 'ng-repeat';
     /**
      * items, trackBy 用于自动补全。
      * 除了 as 其他都能用于 hover/definition。
      */
-    nodeName: 'itemValue' | 'itemKey' | 'items' | 'as' | 'trackBy';
+    nodeName: NgRepeatChildNodeName;
 }
+
+export type NgControllerChildNodeName = 'controllerName' | 'as';
 
 export interface NgControllerMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
     attrName: 'ng-controller';
-    nodeName: 'controllerName' | 'as';
+    nodeName: NgControllerChildNodeName;
 }
 
 export type MinNgSyntaxInfo = NormalMinNgSyntaxInfo | NgRepeatMinNgSyntaxInfo | NgControllerMinNgSyntaxInfo;
