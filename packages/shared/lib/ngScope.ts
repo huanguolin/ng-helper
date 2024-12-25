@@ -44,12 +44,18 @@ function getNgControllerScope(contextStr: string): NgScopeVar[] {
 function getNgRepeatScope(contextStr: string): NgScopeVar[] {
     const result: NgScopeVar[] = [];
     const p = ngParse(contextStr, 'ng-repeat');
+
     if (p.config?.itemKey?.value) {
         result.push({ kind: 'itemKey', name: p.config.itemKey.value });
-    } else if (p.config?.itemValue?.value) {
+    }
+
+    if (p.config?.itemValue?.value) {
         result.push({ kind: 'itemValue', name: p.config.itemValue.value });
-    } else if (p.config?.as?.value) {
+    }
+
+    if (p.config?.as?.value) {
         result.push({ kind: 'as', name: p.config.as.value });
     }
+
     return result;
 }
