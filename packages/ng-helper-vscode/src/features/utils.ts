@@ -4,6 +4,7 @@ import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/sha
 import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
+import { getNgScopes } from '@ng-helper/shared/lib/ngScope';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
@@ -192,7 +193,34 @@ export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtT
     cnt++;
     const label = `getMinNgSyntaxInfo()#${cnt}`;
     console.time(label);
-    const minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    let minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    minNgSyntaxInfo = reshapeMinNgSyntaxInfo(minNgSyntaxInfo, cursorAtInfo.context);
     console.timeEnd(label);
     return minNgSyntaxInfo;
+}
+
+function reshapeMinNgSyntaxInfo({ type, value }: MinNgSyntaxInfo, context: CursorAtContext[]): MinNgSyntaxInfo {
+    if (type !== 'identifier' && type !== 'propertyAccess') {
+        return { type, value };
+    }
+
+    const scopes = getNgScopes(context);
+    for (const scope of scopes) {
+        if (scope.kind === 'ng-repeat' && scope.vars.length > 0) {
+            for (const scopeVar of scope.vars) {
+                if (type === 'identifier' && value === scopeVar.name) {
+                    if (scopeVar.replaceTo) {
+                        return { type, value: scopeVar.replaceTo };
+                    }
+                    return { type, value };
+                } else if (type === 'propertyAccess' && value.startsWith(scopeVar.name + '.')) {
+                    if (scopeVar.replaceTo) {
+                        return { type, value: value.replace(scopeVar.name, scopeVar.replaceTo) };
+                    }
+                    return { type, value };
+                }
+            }
+        }
+    }
+    return { type, value };
 }

@@ -1,4 +1,5 @@
-import type { NgAttrName } from '@ng-helper/ng-parser/src/types';
+import { type Identifier, type PropertyAccessExpression } from '@ng-helper/ng-parser/src/parser/node';
+import { SyntaxKind, type NgAttrName } from '@ng-helper/ng-parser/src/types';
 
 import type { CursorAtContext } from './cursorAt';
 import { ngParse } from './ngParse';
@@ -6,6 +7,7 @@ import { ngParse } from './ngParse';
 export interface NgScopeVar {
     kind: 'key' | 'value' | 'item' | 'as';
     name: string;
+    replaceTo?: string;
 }
 
 export interface NgScope {
@@ -61,7 +63,22 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
     }
 
     if (p.config?.itemValue?.value) {
-        result.push({ kind: p.config.mode === 'array' ? 'item' : 'value', name: p.config.itemValue.value });
+        const isArray = p.config.mode === 'array';
+        const scopeVar: NgScopeVar = {
+            kind: isArray ? 'item' : 'value',
+            name: p.config.itemValue.value,
+        };
+        // 目前只考虑数组的情况
+        if (isArray) {
+            const arrayExpr = p.config.items;
+            const exprStr = contextStr.slice(arrayExpr.start, arrayExpr.end);
+            scopeVar.replaceTo =
+                arrayExpr.is<PropertyAccessExpression>(SyntaxKind.PropertyAccessExpression) ||
+                arrayExpr.is<Identifier>(SyntaxKind.Identifier)
+                    ? `${exprStr}.0`
+                    : `(${exprStr}).0`;
+        }
+        result.push(scopeVar);
     }
 
     if (p.config?.as?.value) {
