@@ -75,8 +75,8 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
             scopeVar.replaceTo =
                 arrayExpr.is<PropertyAccessExpression>(SyntaxKind.PropertyAccessExpression) ||
                 arrayExpr.is<Identifier>(SyntaxKind.Identifier)
-                    ? `${exprStr}.0`
-                    : `(${exprStr}).0`;
+                    ? `${exprStr}[0]`
+                    : `(${exprStr})[0]`;
         }
         result.push(scopeVar);
     }
