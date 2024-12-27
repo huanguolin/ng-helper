@@ -27,8 +27,8 @@ describe('getNgScopes()', () => {
             {
                 kind: 'ng-repeat',
                 vars: [
-                    { kind: 'itemKey', name: 'k' },
-                    { kind: 'itemValue', name: 'v' },
+                    { kind: 'key', name: 'k' },
+                    { kind: 'value', name: 'v' },
                     { kind: 'as', name: 'list' },
                 ],
             },
@@ -43,7 +43,7 @@ describe('getNgScopes()', () => {
             {
                 kind: 'ng-repeat',
                 vars: [
-                    { kind: 'itemValue', name: 'item' },
+                    { kind: 'item', name: 'item' },
                     { kind: 'as', name: 'list' },
                 ],
             },
@@ -64,9 +64,53 @@ describe('getNgScopes()', () => {
             },
             {
                 kind: 'ng-repeat',
-                vars: [{ kind: 'itemValue', name: 'item' }],
+                vars: [{ kind: 'item', name: 'item' }],
             },
         ];
         expect(result).toEqual(expected);
+    });
+
+    it('should handle invalid ng-repeat syntax', () => {
+        const context: CursorAtContext[] = [{ kind: 'ng-repeat', value: 'invalid syntax' }];
+        const result = getNgScopes(context);
+        expect(result).toEqual([
+            {
+                kind: 'ng-repeat',
+                vars: [],
+            },
+        ]);
+    });
+
+    it('should handle invalid ng-controller syntax', () => {
+        const context: CursorAtContext[] = [{ kind: 'ng-controller', value: 'invalid syntax' }];
+        const result = getNgScopes(context);
+        expect(result).toEqual([
+            {
+                kind: 'ng-controller',
+                vars: [],
+            },
+        ]);
+    });
+
+    it('should handle empty ng-controller value', () => {
+        const context: CursorAtContext[] = [{ kind: 'ng-controller', value: '' }];
+        const result = getNgScopes(context);
+        expect(result).toEqual([
+            {
+                kind: 'ng-controller',
+                vars: [],
+            },
+        ]);
+    });
+
+    it('should handle ng-repeat with track by', () => {
+        const context: CursorAtContext[] = [{ kind: 'ng-repeat', value: 'item in items track by item.id' }];
+        const result = getNgScopes(context);
+        expect(result).toEqual([
+            {
+                kind: 'ng-repeat',
+                vars: [{ kind: 'item', name: 'item' }],
+            },
+        ]);
     });
 });
