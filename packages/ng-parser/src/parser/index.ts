@@ -66,12 +66,147 @@ export class Parser {
     private previousToken?: Token;
     private currentToken!: Token;
 
-    parse(sourceText: string): Program {
+    private initializeParser(sourceText: string, keywords: string[]) {
         this.errors = [];
         this.sourceText = sourceText;
-        this.scanner.initialize(sourceText, EXPR_KEYWORDS, this.reportError.bind(this));
-
+        this.scanner.initialize(sourceText, keywords, this.reportError.bind(this));
         this.nextToken();
+    }
+
+    // #region parse ng-controller
+    parseNgController(sourceText: string): NgControllerProgram {
+        this.initializeParser(sourceText, NG_CONTROLLER_KEYWORDS);
+
+        if (this.isEnd()) {
+            return new NgControllerProgram(sourceText, this.errors);
+        }
+
+        const config = this.parseNgControllerConfig();
+
+        if (!this.isEnd()) {
+            this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
+        }
+
+        return new NgControllerProgram(sourceText, this.errors, config);
+    }
+
+    private parseNgControllerConfig() {
+        const controllerName = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+        const as = this.parseAsClause();
+        return { controllerName, as };
+    }
+
+    private parseAsClause(): IdentifierToken | undefined {
+        const asKeyword = this.expect<KeywordToken>(TokenKind.Keyword);
+        if (asKeyword && asKeyword.value === 'as') {
+            return this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+        }
+        return undefined;
+    }
+    // #endregion parse ng-controller
+
+    // #region parse ng-repeat
+    parseNgRepeat(sourceText: string): NgRepeatProgram {
+        this.initializeParser(sourceText, NG_REPEAT_KEYWORDS);
+
+        if (this.isEnd()) {
+            return new NgRepeatProgram(sourceText, this.errors);
+        }
+
+        // official code: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L101
+        const { itemKey, itemValue } = this.parseItemDeclaration();
+        this.parseInKeyword();
+        const items = this.parseItemsExpression();
+        const { as, trackBy } = this.parseAsAndTrackBy();
+
+        return new NgRepeatProgram(sourceText, this.errors, { itemKey, itemValue, items, as, trackBy });
+    }
+
+    private parseItemDeclaration() {
+        let itemKey: IdentifierToken | undefined;
+        let itemValue: IdentifierToken | undefined;
+
+        if (this.expect(TokenKind.LeftParen)) {
+            itemKey = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+            this.consume(TokenKind.Comma, ErrorMessage.Comma_expected);
+            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+            this.consume(TokenKind.RightParen, ErrorMessage.RightParen_expected);
+        } else {
+            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+        }
+
+        return { itemKey, itemValue };
+    }
+
+    private parseInKeyword() {
+        const inKeyword = this.consume<KeywordToken>(TokenKind.Keyword, ErrorMessage.Keyword_expected);
+        if (inKeyword.value !== 'in') {
+            this.reportErrorAt(ErrorMessage.InKeyword_expected, inKeyword.start >= 0 ? inKeyword : this.token());
+        }
+    }
+
+    private parseItemsExpression() {
+        const asOrTrackByIndex = this.findAsOrTrackByIndex();
+
+        if (asOrTrackByIndex !== -1) {
+            this.scanner.setScanRange({ end: asOrTrackByIndex });
+        }
+
+        const items = this.parseExpression();
+
+        if (asOrTrackByIndex !== -1) {
+            this.scanner.setScanRange({ end: this.sourceText.length });
+            this.nextToken();
+        }
+
+        return items;
+    }
+
+    private findAsOrTrackByIndex() {
+        const asIndex = this.sourceText.search(/\sas(\s|$)/);
+        const trackByIndex = this.sourceText.search(/\strack(\s|$)/);
+        return asIndex !== -1 ? asIndex : trackByIndex;
+    }
+
+    private parseAsAndTrackBy() {
+        let as: IdentifierToken | undefined;
+        let trackBy: Expression | undefined;
+
+        if (!this.isEnd()) {
+            let keyword = this.expect<KeywordToken>(TokenKind.Keyword);
+
+            if (keyword?.value === 'as') {
+                as = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
+                keyword = this.expect<KeywordToken>(TokenKind.Keyword);
+            }
+
+            if (keyword?.value === 'track') {
+                trackBy = this.parseTrackBy();
+            } else if (keyword?.value === 'by') {
+                this.reportErrorAt(ErrorMessage.Unexpected_token, keyword);
+            }
+
+            if (!this.isEnd()) {
+                this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
+            }
+        }
+
+        return { as, trackBy };
+    }
+
+    private parseTrackBy() {
+        const byKeyword = this.consume(TokenKind.Keyword, ErrorMessage.Keyword_expected);
+        if (byKeyword.value === 'by') {
+            return this.parseExpression();
+        }
+
+        this.reportErrorAt(ErrorMessage.ByKeyword_expected, byKeyword.start >= 0 ? byKeyword : this.token());
+        return undefined;
+    }
+    // #endregion parse ng-repeat
+
+    parse(sourceText: string): Program {
+        this.initializeParser(sourceText, EXPR_KEYWORDS);
 
         const statements: ExpressionStatement[] = [];
         while (!this.isEnd()) {
@@ -83,109 +218,6 @@ export class Parser {
         }
 
         return new Program(sourceText, this.errors, statements);
-    }
-
-    parseNgController(sourceText: string): NgControllerProgram {
-        this.errors = [];
-        this.sourceText = sourceText;
-        this.scanner.initialize(sourceText, NG_CONTROLLER_KEYWORDS, this.reportError.bind(this));
-
-        this.nextToken();
-        if (this.isEnd()) {
-            return new NgControllerProgram(sourceText, this.errors);
-        }
-
-        const controllerName = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-
-        let as: IdentifierToken | undefined;
-        const asKeyword = this.expect<KeywordToken>(TokenKind.Keyword);
-        if (asKeyword && asKeyword.value === 'as') {
-            as = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-        }
-
-        if (!this.isEnd()) {
-            this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
-        }
-
-        return new NgControllerProgram(sourceText, this.errors, { controllerName, as });
-    }
-
-    parseNgRepeat(sourceText: string): NgRepeatProgram {
-        // official code: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L101
-
-        this.errors = [];
-        this.sourceText = sourceText;
-        this.scanner.initialize(sourceText, NG_REPEAT_KEYWORDS, this.reportError.bind(this));
-
-        this.nextToken();
-        if (this.isEnd()) {
-            return new NgRepeatProgram(sourceText, this.errors);
-        }
-
-        let itemKey: IdentifierToken | undefined;
-        let itemValue: IdentifierToken | undefined;
-        if (this.expect(TokenKind.LeftParen)) {
-            itemKey = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-            this.consume(TokenKind.Comma, ErrorMessage.Comma_expected);
-            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-            this.consume(TokenKind.RightParen, ErrorMessage.RightParen_expected);
-        } else {
-            itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-        }
-
-        const inKeyword = this.consume<KeywordToken>(TokenKind.Keyword, ErrorMessage.Keyword_expected);
-        if (inKeyword.value !== 'in') {
-            this.reportErrorAt(ErrorMessage.InKeyword_expected, inKeyword.start >= 0 ? inKeyword : this.token());
-        }
-
-        const asIndex = this.sourceText.search(/\sas(\s|$)/);
-        const trackByIndex = this.sourceText.search(/\strack(\s|$)/);
-        const asOrTrackByIndex = asIndex !== -1 ? asIndex : trackByIndex;
-        // set scan range to exclude 'as' or 'track by' to avoid 'ctrl. as'(get ctrl.as) or 'ctrl. track'(get ctrl.track)
-        if (asOrTrackByIndex !== -1) {
-            this.scanner.setScanRange({ end: asOrTrackByIndex });
-        }
-
-        // parse items expression
-        const items = this.parseExpression();
-
-        // restore scan range
-        if (asOrTrackByIndex !== -1) {
-            this.scanner.setScanRange({ end: this.sourceText.length });
-            this.nextToken();
-        }
-
-        let as: IdentifierToken | undefined;
-        let trackBy: Expression | undefined;
-        if (!this.isEnd()) {
-            let keyword = this.expect<KeywordToken>(TokenKind.Keyword);
-
-            if (keyword && keyword.value === 'as') {
-                as = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
-                keyword = this.expect<KeywordToken>(TokenKind.Keyword);
-            }
-
-            if (keyword && keyword.value === 'track') {
-                const byKeyword = this.consume(TokenKind.Keyword, ErrorMessage.Keyword_expected);
-                if (byKeyword.value === 'by') {
-                    trackBy = this.parseExpression();
-                } else {
-                    this.reportErrorAt(
-                        ErrorMessage.ByKeyword_expected,
-                        byKeyword.start >= 0 ? byKeyword : this.token(),
-                    );
-                }
-            }
-
-            if (keyword && keyword.value === 'by') {
-                this.reportErrorAt(ErrorMessage.Unexpected_token, keyword);
-            }
-
-            if (!this.isEnd()) {
-                this.reportErrorAtCurrentToken(ErrorMessage.Unexpected_token);
-            }
-        }
-        return new NgRepeatProgram(sourceText, this.errors, { itemKey, itemValue, items, as, trackBy });
     }
 
     private isUnExpectedTokenOfExpressionStart(): boolean {
