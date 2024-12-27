@@ -9,9 +9,10 @@ describe('NgRepeatProgram', () => {
         const itemValue = createIdentifierToken('item');
         const items = new Identifier(createIdentifierToken('array'));
         const config = {
+            mode: 'array',
             itemValue,
             items,
-        };
+        } as const;
 
         const program = new NgRepeatProgram('item in array', [], config);
 
@@ -31,12 +32,13 @@ describe('NgRepeatProgram', () => {
         const trackBy = new Identifier(createIdentifierToken('trackFn'));
 
         const config = {
+            mode: 'object',
             itemKey,
             itemValue,
             items,
             as,
             trackBy,
-        };
+        } as const;
 
         const program = new NgRepeatProgram('(key, value) in obj as alias track by trackFn', [], config);
 

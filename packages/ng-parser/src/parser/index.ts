@@ -114,19 +114,21 @@ export class Parser {
         }
 
         // official code: https://github.com/angular/angular.js/blob/d8f77817eb5c98dec5317bc3756d1ea1812bcfbe/src/ng/parse.js#L101
-        const { itemKey, itemValue } = this.parseItemDeclaration();
+        const { mode, itemKey, itemValue } = this.parseItemDeclaration();
         this.parseInKeyword();
         const items = this.parseItemsExpression();
         const { as, trackBy } = this.parseAsAndTrackBy();
 
-        return new NgRepeatProgram(sourceText, this.errors, { itemKey, itemValue, items, as, trackBy });
+        return new NgRepeatProgram(sourceText, this.errors, { mode, itemKey, itemValue, items, as, trackBy });
     }
 
     private parseItemDeclaration() {
+        let mode: 'array' | 'object' = 'array';
         let itemKey: IdentifierToken | undefined;
         let itemValue: IdentifierToken | undefined;
 
         if (this.expect(TokenKind.LeftParen)) {
+            mode = 'object';
             itemKey = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
             this.consume(TokenKind.Comma, ErrorMessage.Comma_expected);
             itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
@@ -135,7 +137,7 @@ export class Parser {
             itemValue = this.consume<IdentifierToken>(TokenKind.Identifier, ErrorMessage.Identifier_expected);
         }
 
-        return { itemKey, itemValue };
+        return { itemKey, itemValue, mode };
     }
 
     private parseInKeyword() {

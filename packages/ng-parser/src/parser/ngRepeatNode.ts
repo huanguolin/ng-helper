@@ -5,6 +5,7 @@ import type { Expression } from './node';
 import { Node } from './node';
 
 interface NgRepeatConfig {
+    mode: 'array' | 'object';
     itemKey?: IdentifierToken;
     itemValue: IdentifierToken;
     /**
