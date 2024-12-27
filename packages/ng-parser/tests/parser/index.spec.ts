@@ -557,39 +557,56 @@ describe('Parser', () => {
     });
 
     describe('parseNgRepeat()', () => {
-        it.each([
-            // empty
-            ['', ''],
-            // array
-            ['item in items', '(ngRepeat (itemValue item) (items items))'],
-            ['item in ctrl.items', '(ngRepeat (itemValue item) (items ctrl.items))'],
-            ['item in items track by item.id', '(ngRepeat (itemValue item) (items items) (trackBy item.id))'],
-            ['item in items | f1', '(ngRepeat (itemValue item) (items (filter f1| items)))'],
-            ['item in items | f1 as result', '(ngRepeat (itemValue item) (items (filter f1| items)) (as result))'],
-            [
-                'item in items | f1: x as result track by $index',
-                '(ngRepeat (itemValue item) (items (filter f1| items x)) (as result) (trackBy $index))',
-            ],
-            // object
-            ['(key, value) in items', '(ngRepeat (itemKey key) (itemValue value) (items items))'],
-            ['(key, value) in ctrl.items', '(ngRepeat (itemKey key) (itemValue value) (items ctrl.items))'],
-            [
-                '(key, value) in items track by key',
-                '(ngRepeat (itemKey key) (itemValue value) (items items) (trackBy key))',
-            ],
-            ['(key, value) in items | f1', '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)))'],
-            [
-                '(key, value) in items | f1 as result',
-                '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)) (as result))',
-            ],
-            [
-                '(key, value) in items | f1: x as result track by $index',
-                '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items x)) (as result) (trackBy $index))',
-            ],
-        ])('parse: %s', (input, expected) => {
-            const program = parser.parseNgRepeat(input);
-            checkNoErrorAndLocations(program);
-            compareAstUseSExpr(program, expected);
+        describe('empty', () => {
+            it('should parse empty input', () => {
+                const program = parser.parseNgRepeat('');
+                checkNoErrorAndLocations(program);
+                compareAstUseSExpr(program, '');
+            });
+        });
+
+        describe('array', () => {
+            it.each([
+                ['item in items', '(ngRepeat (itemValue item) (items items))'],
+                ['item in ctrl.items', '(ngRepeat (itemValue item) (items ctrl.items))'],
+                ['item in items track by item.id', '(ngRepeat (itemValue item) (items items) (trackBy item.id))'],
+                ['item in items | f1', '(ngRepeat (itemValue item) (items (filter f1| items)))'],
+                ['item in items | f1 as result', '(ngRepeat (itemValue item) (items (filter f1| items)) (as result))'],
+                [
+                    'item in items | f1: x as result track by $index',
+                    '(ngRepeat (itemValue item) (items (filter f1| items x)) (as result) (trackBy $index))',
+                ],
+            ])('parse: %s', (input, expected) => {
+                const program = parser.parseNgRepeat(input);
+                expect(program.config?.mode).toBe('array');
+                checkNoErrorAndLocations(program);
+                compareAstUseSExpr(program, expected);
+            });
+        });
+
+        describe('object', () => {
+            it.each([
+                ['(key, value) in items', '(ngRepeat (itemKey key) (itemValue value) (items items))'],
+                ['(key, value) in ctrl.items', '(ngRepeat (itemKey key) (itemValue value) (items ctrl.items))'],
+                [
+                    '(key, value) in items track by key',
+                    '(ngRepeat (itemKey key) (itemValue value) (items items) (trackBy key))',
+                ],
+                ['(key, value) in items | f1', '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)))'],
+                [
+                    '(key, value) in items | f1 as result',
+                    '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items)) (as result))',
+                ],
+                [
+                    '(key, value) in items | f1: x as result track by $index',
+                    '(ngRepeat (itemKey key) (itemValue value) (items (filter f1| items x)) (as result) (trackBy $index))',
+                ],
+            ])('parse: %s', (input, expected) => {
+                const program = parser.parseNgRepeat(input);
+                expect(program.config?.mode).toBe('object');
+                checkNoErrorAndLocations(program);
+                compareAstUseSExpr(program, expected);
+            });
         });
 
         describe('error-tolerant', () => {
@@ -645,6 +662,7 @@ describe('Parser', () => {
                 ],
             ])('array: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
                 const program = parser.parseNgRepeat(input);
+                expect(program.config?.mode).toBe('array');
                 compareAstUseSExpr(program, expected);
                 checkErrorAndLocations(program, ...errors);
             });
@@ -702,6 +720,7 @@ describe('Parser', () => {
                 ],
             ])('object: %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
                 const program = parser.parseNgRepeat(input);
+                expect(program.config?.mode).toBe('object');
                 compareAstUseSExpr(program, expected);
                 checkErrorAndLocations(program, ...errors);
             });
