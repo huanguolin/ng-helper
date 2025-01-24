@@ -43,7 +43,7 @@ describe('getNgScopes()', () => {
             {
                 kind: 'ng-repeat',
                 vars: [
-                    { kind: 'item', name: 'item' },
+                    { kind: 'item', name: 'item', replaceTo: '(items | f1)[0]' },
                     { kind: 'as', name: 'list' },
                 ],
             },
@@ -64,7 +64,7 @@ describe('getNgScopes()', () => {
             },
             {
                 kind: 'ng-repeat',
-                vars: [{ kind: 'item', name: 'item' }],
+                vars: [{ kind: 'item', name: 'item', replaceTo: 'items[0]' }],
             },
         ];
         expect(result).toEqual(expected);
@@ -109,7 +109,7 @@ describe('getNgScopes()', () => {
         expect(result).toEqual([
             {
                 kind: 'ng-repeat',
-                vars: [{ kind: 'item', name: 'item' }],
+                vars: [{ kind: 'item', name: 'item', replaceTo: 'items[0]' }],
             },
         ]);
     });
