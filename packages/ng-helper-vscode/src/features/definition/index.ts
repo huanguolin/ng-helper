@@ -20,6 +20,7 @@ import {
     CancellationToken,
 } from 'vscode';
 
+import { timeoutWithMeasure } from '../../asyncUtils';
 import {
     getComponentNameOrAttrNameDefinitionApi,
     getComponentTypeDefinitionApi,
@@ -27,7 +28,6 @@ import {
     getDirectiveDefinitionApi,
     getFilterNameDefinitionApi,
 } from '../../service/api';
-import { timeoutWithMeasure } from '../../timeout';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {

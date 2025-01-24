@@ -18,8 +18,8 @@ import {
     type CancellationToken,
 } from 'vscode';
 
+import { timeoutWithMeasure } from '../../asyncUtils';
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
-import { timeoutWithMeasure } from '../../timeout';
 import { intersect, uniq } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,

@@ -10,7 +10,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
-import { timeoutWithMeasure } from '../../timeout';
+import { timeoutWithMeasure } from '../../asyncUtils';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 

@@ -9,6 +9,7 @@ import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plug
 import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
+import { timeoutWithMeasure } from '../../asyncUtils';
 import {
     getComponentNameOrAttrNameHoverApi,
     getComponentTypeHoverApi,
@@ -16,7 +17,6 @@ import {
     getDirectiveHoverApi,
     getFilterNameHoverApi,
 } from '../../service/api';
-import { timeoutWithMeasure } from '../../timeout';
 import { buildCursor } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,
