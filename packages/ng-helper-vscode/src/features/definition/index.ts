@@ -20,7 +20,6 @@ import {
     CancellationToken,
 } from 'vscode';
 
-import { timeCost } from '../../debug';
 import {
     getComponentNameOrAttrNameDefinitionApi,
     getComponentTypeDefinitionApi,
@@ -28,6 +27,7 @@ import {
     getDirectiveDefinitionApi,
     getFilterNameDefinitionApi,
 } from '../../service/api';
+import { timeoutWithMeasure } from '../../timeout';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {
@@ -49,7 +49,7 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                 position: Position,
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
-                return await timeCost('provideDefinition', async () => {
+                return await timeoutWithMeasure('provideDefinition', async () => {
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
 
                     switch (cursorAtInfo.type) {

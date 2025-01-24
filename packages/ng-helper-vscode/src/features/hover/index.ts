@@ -9,7 +9,6 @@ import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plug
 import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
-import { timeCost } from '../../debug';
 import {
     getComponentNameOrAttrNameHoverApi,
     getComponentTypeHoverApi,
@@ -17,6 +16,7 @@ import {
     getDirectiveHoverApi,
     getFilterNameHoverApi,
 } from '../../service/api';
+import { timeoutWithMeasure } from '../../timeout';
 import { buildCursor } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,
@@ -36,7 +36,7 @@ export function registerHover(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
-                return await timeCost('provideHover', async () => {
+                return await timeoutWithMeasure('provideHover', async () => {
                     const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
 
                     switch (cursorAtInfo.type) {
