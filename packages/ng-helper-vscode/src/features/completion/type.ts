@@ -10,6 +10,7 @@ import {
     TextDocument,
 } from 'vscode';
 
+import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
 import {
     getComponentControllerAsApi,
@@ -42,6 +43,9 @@ export async function templateOrAttrValueCompletion({
     CompletionList<CompletionItem> | undefined
 > {
     const { type, value } = getContextString(cursorAtInfo);
+
+    checkCancellation(vscodeCancelToken);
+
     const isPropAccessTriggerChar = context.triggerCharacter === '.';
     const isUndefinedTriggerChar = typeof context.triggerCharacter === 'undefined';
 
@@ -114,6 +118,8 @@ async function getTypeCompletionQuery({
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return;
     }
+
+    checkCancellation(vscodeCancelToken);
 
     const res = ctrlInfo
         ? await getControllerTypeCompletionApi({
@@ -205,9 +211,13 @@ async function getComponentControllerAsCompletion(
 ) {
     const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
+    checkCancellation(vscodeCancelToken);
+
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return;
     }
+
+    checkCancellation(vscodeCancelToken);
 
     const res = await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
     if (res) {
@@ -234,6 +244,8 @@ async function getFilterNameCompletion({
     if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
         return new CompletionList(builtinList, false);
     }
+
+    checkCancellation(vscodeCancelToken);
 
     const res = await getFilterNameCompletionApi({ port, vscodeCancelToken, info: { fileName: scriptFilePath } });
     if (res) {

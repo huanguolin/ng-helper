@@ -10,7 +10,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
-import { timeoutWithMeasure } from '../../asyncUtils';
+import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -44,15 +44,19 @@ export function registerCompletion(context: ExtensionContext, port: number) {
         languages.registerCompletionItemProvider(
             'html',
             {
-                provideCompletionItems(document, position, vscodeCancelToken, context) {
-                    return timeoutWithMeasure('provideCompletion', () =>
-                        completion({
-                            document,
-                            position,
-                            vscodeCancelToken,
-                            context,
-                            port,
-                        }),
+                provideCompletionItems(document, position, token, context) {
+                    const cancelTokenSource = createCancellationTokenSource(token);
+                    return withTimeoutAndMeasure(
+                        'provideCompletion',
+                        () =>
+                            completion({
+                                document,
+                                position,
+                                vscodeCancelToken: cancelTokenSource.token,
+                                context,
+                                port,
+                            }),
+                        { cancelTokenSource },
                     );
                 },
             },
@@ -64,6 +68,8 @@ export function registerCompletion(context: ExtensionContext, port: number) {
 export async function completion({ document, position, vscodeCancelToken, context, port }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
+
+    checkCancellation(vscodeCancelToken);
 
     const obj = { document, cursor, port, vscodeCancelToken, context };
     switch (cursorAtInfo.type) {

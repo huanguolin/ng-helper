@@ -20,7 +20,7 @@ import {
     CancellationToken,
 } from 'vscode';
 
-import { timeoutWithMeasure } from '../../asyncUtils';
+import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import {
     getComponentNameOrAttrNameDefinitionApi,
     getComponentTypeDefinitionApi,
@@ -49,27 +49,52 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                 position: Position,
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
-                return await timeoutWithMeasure('provideDefinition', async () => {
-                    const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                const cancelTokenSource = createCancellationTokenSource(token);
+                return await withTimeoutAndMeasure(
+                    'provideDefinition',
+                    async () => {
+                        const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
 
-                    switch (cursorAtInfo.type) {
-                        case 'endTag':
-                        case 'startTag':
-                        case 'text':
-                            // do nothing
-                            return;
-                        case 'attrName':
-                            if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
+                        checkCancellation(cancelTokenSource.token);
+
+                        switch (cursorAtInfo.type) {
+                            case 'endTag':
+                            case 'startTag':
+                            case 'text':
+                                // do nothing
                                 return;
-                            }
-                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
-                        case 'tagName':
-                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
-                        case 'attrValue':
-                        case 'template':
-                            return await handleTemplateOrAttrValue(document, position, cursorAtInfo, port, token);
-                    }
-                });
+
+                            case 'attrName':
+                                if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
+                                    return;
+                                }
+                                return await handleTagNameOrAttrName(
+                                    cursorAtInfo,
+                                    document,
+                                    port,
+                                    cancelTokenSource.token,
+                                );
+                            case 'tagName':
+                                return await handleTagNameOrAttrName(
+                                    cursorAtInfo,
+                                    document,
+                                    port,
+                                    cancelTokenSource.token,
+                                );
+
+                            case 'attrValue':
+                            case 'template':
+                                return await handleTemplateOrAttrValue(
+                                    document,
+                                    position,
+                                    cursorAtInfo,
+                                    port,
+                                    cancelTokenSource.token,
+                                );
+                        }
+                    },
+                    { cancelTokenSource },
+                );
             },
         }),
     );

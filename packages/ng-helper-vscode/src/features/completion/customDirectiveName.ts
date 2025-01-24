@@ -2,6 +2,7 @@ import type { CursorAtAttrNameInfo, CursorAtStartTagInfo } from '@ng-helper/shar
 import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
+import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
 import { getDirectiveCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
@@ -26,6 +27,8 @@ export async function customDirectiveNameCompletion({
         if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
             return;
         }
+
+        checkCancellation(vscodeCancelToken);
 
         return await handleDirectiveName({
             relatedScriptFile,

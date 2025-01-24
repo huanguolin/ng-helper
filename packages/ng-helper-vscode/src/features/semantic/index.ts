@@ -18,7 +18,7 @@ import {
     type CancellationToken,
 } from 'vscode';
 
-import { timeoutWithMeasure } from '../../asyncUtils';
+import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
 import { intersect, uniq } from '../../utils';
 import {
@@ -36,9 +36,15 @@ export function registerSemantic(context: ExtensionContext, port: number) {
         'html',
         {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
-                return timeoutWithMeasure('provideSemantic', () => htmlSemanticProvider({ document, port, token }), {
-                    silent: true,
-                });
+                const cancelTokenSource = createCancellationTokenSource(token);
+                return withTimeoutAndMeasure(
+                    'provideSemantic',
+                    () => htmlSemanticProvider({ document, port, token: cancelTokenSource.token }),
+                    {
+                        cancelTokenSource,
+                        silent: true,
+                    },
+                );
             },
         },
         legend,
@@ -66,6 +72,8 @@ export async function htmlSemanticProvider({
         return;
     }
 
+    checkCancellation(token);
+
     const scriptFilePath = noServiceRunningCheck
         ? (await getCorrespondingScriptFileName(document))!
         : await checkServiceAndGetScriptFilePath(document, port);
@@ -73,6 +81,8 @@ export async function htmlSemanticProvider({
         console.warn('scriptFilePath not found or tsserver not running!');
         return;
     }
+
+    checkCancellation(token);
 
     const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName)));
     const maybeDirectiveNames = uniq(
@@ -121,6 +131,8 @@ export async function htmlSemanticProvider({
     }
 
     await Promise.all(promiseArr);
+
+    checkCancellation(token);
 
     return tokensBuilder.build();
 }

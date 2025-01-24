@@ -9,7 +9,7 @@ import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plug
 import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
-import { timeoutWithMeasure } from '../../asyncUtils';
+import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import {
     getComponentNameOrAttrNameHoverApi,
     getComponentTypeHoverApi,
@@ -36,27 +36,50 @@ export function registerHover(context: ExtensionContext, port: number): void {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
-                return await timeoutWithMeasure('provideHover', async () => {
-                    const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                const cancelTokenSource = createCancellationTokenSource(token);
+                return await withTimeoutAndMeasure(
+                    'provideHover',
+                    async () => {
+                        const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                        checkCancellation(cancelTokenSource.token);
+                        switch (cursorAtInfo.type) {
+                            case 'endTag':
+                            case 'startTag':
+                            case 'text':
+                                // do nothing
+                                return;
 
-                    switch (cursorAtInfo.type) {
-                        case 'endTag':
-                        case 'startTag':
-                        case 'text':
-                            // do nothing
-                            return;
-                        case 'attrName':
-                            if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
-                                return handleBuiltinDirective(cursorAtInfo.cursorAtAttrName);
-                            }
-                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
-                        case 'tagName':
-                            return await handleTagNameOrAttrName(cursorAtInfo, document, port, token);
-                        case 'attrValue':
-                        case 'template':
-                            return await handleTemplateOrAttrValue(document, position, port, token, cursorAtInfo);
-                    }
-                });
+                            case 'attrName':
+                                if (isNgBuiltinDirective(cursorAtInfo.cursorAtAttrName)) {
+                                    return handleBuiltinDirective(cursorAtInfo.cursorAtAttrName);
+                                }
+                                return await handleTagNameOrAttrName(
+                                    cursorAtInfo,
+                                    document,
+                                    port,
+                                    cancelTokenSource.token,
+                                );
+                            case 'tagName':
+                                return await handleTagNameOrAttrName(
+                                    cursorAtInfo,
+                                    document,
+                                    port,
+                                    cancelTokenSource.token,
+                                );
+
+                            case 'attrValue':
+                            case 'template':
+                                return await handleTemplateOrAttrValue(
+                                    document,
+                                    position,
+                                    port,
+                                    cancelTokenSource.token,
+                                    cursorAtInfo,
+                                );
+                        }
+                    },
+                    { cancelTokenSource },
+                );
             },
         }),
     );
@@ -73,6 +96,9 @@ async function handleTagNameOrAttrName(
         if (!scriptFilePath) {
             return;
         }
+
+        checkCancellation(token);
+
         const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
         return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
     }
@@ -98,18 +124,24 @@ async function handleTemplateOrAttrValue(
         return;
     }
 
+    checkCancellation(vscodeCancelToken);
+
     const info = await onTypeHover({
         document,
         cursorAtInfo,
         port,
-        onHoverFilterName: (filterName, scriptFilePath) =>
-            handleFilterName({
+        onHoverFilterName: async (filterName, scriptFilePath) => {
+            checkCancellation(vscodeCancelToken);
+            return await handleFilterName({
                 port,
                 vscodeCancelToken,
                 filterName,
                 scriptFilePath,
-            }),
+            });
+        },
         onHoverType: async (scriptFilePath, contextString, cursorAt) => {
+            checkCancellation(vscodeCancelToken);
+
             if (isComponentHtml(document)) {
                 return await getComponentTypeHoverApi({
                     port,
@@ -137,6 +169,8 @@ async function getComponentHover(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
+    checkCancellation(token);
+
     hoverInfo.attrNames = []; // component query currently doesn't need all attribute names
     const res = await getComponentNameOrAttrNameHoverApi({
         port,
@@ -152,6 +186,8 @@ async function getDirectiveHover(
     port: number,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
+    checkCancellation(token);
+
     const cursorAtAttrName = hoverInfo.name;
     const res = await getDirectiveHoverApi({
         port,
@@ -172,6 +208,8 @@ async function handleFilterName({
     port: number;
     vscodeCancelToken: CancellationToken;
 }): Promise<NgHoverInfo | undefined> {
+    checkCancellation(vscodeCancelToken);
+
     if (isBuiltinFilter(filterName)) {
         return genBuiltinFilterHoverInfo(filterName);
     } else if (scriptFilePath) {
