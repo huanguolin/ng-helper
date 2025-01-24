@@ -10,7 +10,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
-import { timeCost } from '../../debug';
+import { timeoutWithMeasure } from '../../timeout';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -45,7 +45,7 @@ export function registerCompletion(context: ExtensionContext, port: number) {
             'html',
             {
                 provideCompletionItems(document, position, vscodeCancelToken, context) {
-                    return timeCost('provideCompletion', () =>
+                    return timeoutWithMeasure('provideCompletion', () =>
                         completion({
                             document,
                             position,

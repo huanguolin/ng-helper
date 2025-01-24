@@ -19,6 +19,7 @@ import {
 } from 'vscode';
 
 import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
+import { timeoutWithMeasure } from '../../timeout';
 import { intersect, uniq } from '../../utils';
 import {
     checkServiceAndGetScriptFilePath,
@@ -35,10 +36,9 @@ export function registerSemantic(context: ExtensionContext, port: number) {
         'html',
         {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
-                // log 记录的太多了，暂时不要 timeCost
-                // return timeCost('provideSemantic', () => htmlSemanticProvider({ document, port, token }));
-
-                return htmlSemanticProvider({ document, port, token });
+                return timeoutWithMeasure('provideSemantic', () => htmlSemanticProvider({ document, port, token }), {
+                    silent: true,
+                });
             },
         },
         legend,
