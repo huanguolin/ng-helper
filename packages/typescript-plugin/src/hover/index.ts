@@ -13,7 +13,7 @@ import { getNodeType, getExpressionSyntaxNode } from '../completion/utils';
 import { ngHelperServer } from '../ngHelperServer';
 import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
-import { CorePluginContext, PluginContext } from '../type';
+import { CorePluginContext, PluginContext, type SyntaxNodeInfo } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { formatParameters, getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
 import {
@@ -229,7 +229,7 @@ function formatTransclude(transclude: DirectiveInfo['transclude']) {
 
 export function getComponentTypeHoverInfo(
     ctx: PluginContext,
-    { contextString, cursorAt }: NgHoverRequest,
+    { contextString, cursorAt, hoverPropName }: NgHoverRequest,
 ): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
 
@@ -261,6 +261,11 @@ export function getComponentTypeHoverInfo(
         return;
     }
 
+    // ng-repeat 的数组项
+    if (cursorAt < 0 && hoverPropName) {
+        return getHoverInfoOfArrayItem({ ctx, minSyntax: minSyntax, hoverPropName, componentName });
+    }
+
     const { sourceFile, minNode, targetNode } = minSyntax;
     const minPrefix = minNode.getText(sourceFile);
     logger.info('minPrefix:', minPrefix, 'targetNode:', targetNode.getText(sourceFile));
@@ -289,7 +294,7 @@ export function getComponentTypeHoverInfo(
 
 export function getControllerTypeHoverInfo(
     coreCtx: CorePluginContext,
-    { fileName, controllerName, controllerAs, contextString, cursorAt }: NgCtrlHoverRequest,
+    { fileName, controllerName, controllerAs, contextString, cursorAt, hoverPropName }: NgCtrlHoverRequest,
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getControllerHoverType()');
 
@@ -311,6 +316,11 @@ export function getControllerTypeHoverInfo(
     if (!minSyntax) {
         logger.info('minSyntax not found!');
         return;
+    }
+
+    // ng-repeat 的数组项
+    if (cursorAt < 0 && hoverPropName) {
+        return getHoverInfoOfArrayItem({ ctx, minSyntax: minSyntax, hoverPropName });
     }
 
     const { sourceFile, minNode, targetNode } = minSyntax;
@@ -365,6 +375,30 @@ function getControllerNameHoverInfo(ctx: PluginContext, controllerName: string):
         formattedTypeString: `(controller) ${controllerName}: any`,
         document: '',
     };
+}
+
+function getHoverInfoOfArrayItem({
+    ctx,
+    componentName,
+    minSyntax,
+    hoverPropName,
+}: {
+    ctx: PluginContext;
+    minSyntax: SyntaxNodeInfo;
+    hoverPropName: string;
+    componentName?: string;
+}): NgHoverResponse {
+    const controllerType = componentName ? getComponentControllerType(ctx, componentName) : getControllerType(ctx);
+    if (!controllerType) {
+        return;
+    }
+
+    const type = getNodeType(ctx, controllerType, minSyntax);
+    if (!type) {
+        return;
+    }
+
+    return buildHoverInfo({ ctx, targetType: type, name: hoverPropName });
 }
 
 function getHoverInfoOfType({

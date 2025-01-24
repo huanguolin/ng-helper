@@ -210,7 +210,7 @@ function reshapeMinNgSyntaxInfo({ type, value }: MinNgSyntaxInfo, context: Curso
             for (const scopeVar of scope.vars) {
                 if (type === 'identifier' && value === scopeVar.name) {
                     if (scopeVar.replaceTo) {
-                        return { type, value: scopeVar.replaceTo };
+                        return { type, value: scopeVar.replaceTo, cursorAt: -1, hoverPropName: value };
                     }
                     return { type, value };
                 } else if (type === 'propertyAccess' && value.startsWith(scopeVar.name + '.')) {

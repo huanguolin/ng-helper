@@ -59,6 +59,11 @@ export interface NgDirectiveCompletionRequest extends NgRequest {
 export interface NgHoverRequest extends NgRequest {
     contextString: string;
     cursorAt: number;
+    /**
+     * 如果 hover 的是 ng-repeat 的数组项，则需要指定该项的属性名。此时 cursorAt 为 -1。
+     * 举例：{ contextString: 'ctrl.items[0]', hoverPropName: 'item', cursorAt: -1 }
+     */
+    hoverPropName?: string;
 }
 
 export interface NgElementHoverInfo {

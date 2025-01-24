@@ -36,6 +36,16 @@ export interface BaseMinNgSyntaxInfo {
     type: MinNgSyntaxType;
     value: string;
     attrName?: NgAttrName;
+    /**
+     * -1 用于处理 ng-repeat 的子项 item，被替换为 `items[0]`。
+     * 此时光标的位置不是最后一个字符，需要后续特殊考虑。
+     */
+    cursorAt?: -1;
+    /**
+     * 如果 hover 的是 ng-repeat 的子项 item，则需要指定该项的属性名。
+     * 此时 cursorAt 为 -1。
+     */
+    hoverPropName?: string;
 }
 
 export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {

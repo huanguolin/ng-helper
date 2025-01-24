@@ -10,7 +10,12 @@ import {
 } from '../utils';
 
 type OnHoverFilterName<T> = (filterName: string, scriptFilePath?: string) => Promise<T | undefined>;
-type OnHoverType<T> = (scriptFilePath: string, contextString: string, cursorAt: number) => Promise<T | undefined>;
+type OnHoverType<T> = (
+    scriptFilePath: string,
+    contextString: string,
+    cursorAt: number,
+    hoverPropName?: string,
+) => Promise<T | undefined>;
 
 export async function onTypeHover<T>({
     document,
@@ -32,25 +37,25 @@ export async function onTypeHover<T>({
             // do nothing
             return;
         case 'filterName':
-            return await checkAndCallHandler(contextString.value, true);
+            return await checkAndCallHandler(true);
         case 'identifier':
         case 'propertyAccess':
-            return await checkAndCallHandler(contextString.value);
+            return await checkAndCallHandler();
     }
 
-    async function checkAndCallHandler(contextString: string, isFilterName?: boolean) {
-        if (!contextString) {
+    async function checkAndCallHandler(isFilterName?: boolean) {
+        if (!contextString.value) {
             return;
         }
 
         if (isFilterName) {
             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
-            return await onHoverFilterName(contextString, scriptFilePath);
+            return await onHoverFilterName(contextString.value, scriptFilePath);
         }
 
-        // 这里简单起见，直接取最后一个字符的位置。
+        // 如果没有返回 cursorAt 信息，直接取最后一个字符的位置。
         // 只要 getMinNgSyntaxInfo 没有问题，这里的处理就没问题。
-        const cursorAt = contextString.length - 1;
+        const cursorAt = contextString.cursorAt ?? contextString.value.length - 1;
 
         const isTemplateValue = cursorAtInfo.type === 'template';
         const isAttrValueAndCompletable =
@@ -61,7 +66,7 @@ export async function onTypeHover<T>({
         if (isTemplateValue || isAttrValueAndCompletable) {
             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
             if (scriptFilePath) {
-                return await onHoverType(scriptFilePath, contextString, cursorAt);
+                return await onHoverType(scriptFilePath, contextString.value, cursorAt, contextString.hoverPropName);
             }
         }
     }
