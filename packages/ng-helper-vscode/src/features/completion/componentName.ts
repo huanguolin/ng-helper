@@ -4,6 +4,7 @@ import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
 import { CompletionItem, CompletionList, SnippetString } from 'vscode';
 
+import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
 import { getComponentNameCompletionApi } from '../../service/api';
 import { checkNgHelperServerRunning } from '../../utils';
@@ -33,6 +34,8 @@ export async function componentNameCompletion({
             return;
         }
 
+        checkCancellation(vscodeCancelToken);
+
         let list = await getComponentNameCompletionApi({
             port,
             info: { fileName: relatedScriptFile },
@@ -41,6 +44,8 @@ export async function componentNameCompletion({
         if (!list || !list.length) {
             return;
         }
+
+        checkCancellation(vscodeCancelToken);
 
         const currentComponentName = getComponentName(document);
         if (currentComponentName) {
