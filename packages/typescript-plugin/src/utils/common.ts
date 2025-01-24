@@ -148,6 +148,11 @@ export function getNodeAtPosition(
 ): ts.Node | undefined {
     sourceFile ??= ctx.sourceFile;
 
+    // 处理 ng-repeat 的特殊情况，返回的是如 `items[0]` 这样的结果。
+    if (position < 0 && ctx.ts.isExpressionStatement(sourceFile.statements[0])) {
+        return sourceFile.statements[0].expression;
+    }
+
     let foundNode: ts.Node | undefined;
 
     find(sourceFile);

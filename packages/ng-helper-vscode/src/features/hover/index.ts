@@ -139,14 +139,14 @@ async function handleTemplateOrAttrValue(
                 scriptFilePath,
             });
         },
-        onHoverType: async (scriptFilePath, contextString, cursorAt) => {
+        onHoverType: async (scriptFilePath, contextString, cursorAt, hoverPropName) => {
             checkCancellation(vscodeCancelToken);
 
             if (isComponentHtml(document)) {
                 return await getComponentTypeHoverApi({
                     port,
                     vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt },
+                    info: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName },
                 });
             }
 
@@ -155,7 +155,7 @@ async function handleTemplateOrAttrValue(
                 return await getControllerTypeHoverApi({
                     port,
                     vscodeCancelToken: vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+                    info: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName, ...ctrlInfo },
                 });
             }
         },
