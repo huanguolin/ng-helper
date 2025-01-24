@@ -32,6 +32,7 @@ export async function withTimeoutAndMeasure<T>(
 
     if (!silent) {
         console.groupCollapsed(`[timeoutWithMeasure] ${label}()#${cnt}`);
+        console.log(`${label}()#${cnt} start...`);
     }
     try {
         return await Promise.race([cb(), createTimeoutPromise(timeout, cancelTokenSource)]);
@@ -46,6 +47,7 @@ export async function withTimeoutAndMeasure<T>(
             }
         }
         if (!silent) {
+            console.log(`${label}()#${cnt} end.`);
             console.groupEnd();
         }
     }
