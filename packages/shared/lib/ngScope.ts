@@ -77,6 +77,10 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
                 arrayExpr.is<Identifier>(SyntaxKind.Identifier)
                     ? `${exprStr}[0]`
                     : `(${exprStr})[0]`;
+            // $first, $middle, $last, $even, $odd
+            ['$first', '$middle', '$last', '$even', '$odd'].forEach((name) => {
+                result.push({ kind: 'item', name, replaceTo: scopeVar.replaceTo });
+            });
         }
         result.push(scopeVar);
     }
