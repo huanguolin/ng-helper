@@ -159,6 +159,10 @@ async function handleTemplateOrAttrValue(
                 });
             }
         },
+        onHoverLocalType: (hoverPropName, typeString) => ({
+            formattedTypeString: `(property) ${hoverPropName}: ${typeString}`,
+            document: '',
+        }),
     });
     return buildHoverResult(info);
 }

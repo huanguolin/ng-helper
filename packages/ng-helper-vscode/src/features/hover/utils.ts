@@ -16,6 +16,7 @@ type OnHoverType<T> = (
     cursorAt: number,
     hoverPropName?: string,
 ) => Promise<T | undefined>;
+type OnHoverLocalType<T> = (hoverPropName: string, typeString: string) => T | undefined;
 
 export async function onTypeHover<T>({
     document,
@@ -23,12 +24,14 @@ export async function onTypeHover<T>({
     port,
     onHoverFilterName,
     onHoverType,
+    onHoverLocalType,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
     port: number;
     onHoverFilterName: OnHoverFilterName<T>;
     onHoverType: OnHoverType<T>;
+    onHoverLocalType?: OnHoverLocalType<T>;
 }): Promise<T | undefined> {
     const contextString = getContextString(cursorAtInfo);
     switch (contextString.type) {
@@ -51,6 +54,10 @@ export async function onTypeHover<T>({
         if (isFilterName) {
             const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
             return await onHoverFilterName(contextString.value, scriptFilePath);
+        }
+
+        if (onHoverLocalType && contextString.typeString) {
+            return onHoverLocalType(contextString.value, contextString.typeString);
         }
 
         // 如果没有返回 cursorAt 信息，直接取最后一个字符的位置。
