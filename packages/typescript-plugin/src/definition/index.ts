@@ -12,11 +12,12 @@ import type { DefinitionInfoAndBoundSpan } from 'typescript';
 import type tsserver from 'typescript/lib/tsserverlibrary';
 
 import { resolveCtrlCtx } from '../completion';
+import { getExpressionSyntaxNode, getNodeType } from '../completion/utils';
 import { isAngularFile } from '../diagnostic/utils';
 import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
 import { ngHelperServer } from '../ngHelperServer';
 import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
-import { CorePluginContext, type PluginContext } from '../type';
+import { CorePluginContext, type PluginContext, type SyntaxNodeInfoEx } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getNodeAtPosition, typeToString } from '../utils/common';
 import { getBindingName, getComponentControllerType, getControllerType, isDtsFile } from '../utils/ng';
@@ -178,28 +179,23 @@ export function getComponentTypeDefinitionInfo(
         return;
     }
 
-    // 目前仅支持 ctrl.x 的情况, 不支持 ctrl.x.y 的情况
-    const propDeep = minPrefix.split('.').length;
-    logger.info('propDeep:', propDeep);
-    if (propDeep > 2) {
-        return;
-    }
-
     if (controllerType) {
-        const hoverInfo = getTypeDefinitionInfo({
+        const hoverInfo = getDefinitionInfoViaType({
             ctx,
             controllerType,
+            minSyntaxNode: minSyntax,
             controllerAs: componentInfo.controllerAs.value,
-            targetNode,
-            propDeep,
         });
         if (hoverInfo) {
             return hoverInfo;
         }
     }
 
+    const propertyPath = minPrefix.split('.');
+    logger.info('propertyPath length:', propertyPath.length);
+
     // hover 在根节点上
-    if (propDeep === 1 && targetNode.text === componentInfo.controllerAs.value) {
+    if (propertyPath.length === 1 && targetNode.text === componentInfo.controllerAs.value) {
         if (componentInfo.controllerAs.location) {
             return {
                 filePath: ctx.sourceFile.fileName,
@@ -222,24 +218,23 @@ export function getComponentTypeDefinitionInfo(
     }
 }
 
-function getTypeDefinitionInfo({
+function getDefinitionInfoViaType({
     ctx,
     controllerType,
     controllerAs,
-    targetNode,
-    propDeep,
+    minSyntaxNode,
 }: {
     ctx: PluginContext;
     controllerType: ts.Type;
     controllerAs: string;
-    targetNode: ts.Identifier;
-    propDeep: number;
-}) {
-    const classDeclaration = controllerType.symbol.declarations![0] as ts.ClassDeclaration;
+    minSyntaxNode: SyntaxNodeInfoEx;
+}): NgDefinitionResponse | undefined {
+    const { sourceFile, minNode, targetNode } = minSyntaxNode;
+    const propertyPath = minNode.getText(sourceFile).split('.');
 
-    // hover 在根节点上
-    if (propDeep === 1 && targetNode.text === controllerAs) {
-        ctx.logger.info('targetType:', typeToString(ctx, controllerType));
+    // Case 1: Hover on controller alias (root level)
+    if (propertyPath.length === 1 && targetNode.getText() === controllerAs) {
+        const classDeclaration = controllerType.symbol.declarations![0] as ts.ClassDeclaration;
         return {
             filePath: ctx.sourceFile.fileName,
             start: classDeclaration.name!.getStart(ctx.sourceFile),
@@ -247,19 +242,24 @@ function getTypeDefinitionInfo({
         };
     }
 
-    if (propDeep === 2) {
-        const prop = classDeclaration.members.find(
-            (m) =>
-                (ctx.ts.isPropertyDeclaration(m) || ctx.ts.isMethodDeclaration(m)) &&
-                m.name.getText() === targetNode.text,
-        );
-        if (prop) {
-            return {
-                filePath: ctx.sourceFile.fileName,
-                start: prop.getStart(ctx.sourceFile),
-                end: prop.getEnd(),
-            };
-        }
+    // Case 2: Hover on property chain
+    const prefixContextString = sourceFile.getText().slice(0, targetNode.getStart(sourceFile));
+    const prefixMinSyntaxNode = getExpressionSyntaxNode(ctx, prefixContextString)!;
+    const parentType = getNodeType(ctx, controllerType, prefixMinSyntaxNode);
+
+    if (!parentType) {
+        return;
+    }
+
+    const property = parentType.getProperty(minSyntaxNode.targetNode.getText());
+
+    if (property && property.declarations) {
+        const declaration = property.declarations[0];
+        return {
+            filePath: declaration.getSourceFile().fileName,
+            start: declaration.getStart(ctx.sourceFile),
+            end: declaration.getEnd(),
+        };
     }
 }
 
@@ -308,30 +308,24 @@ export function getControllerTypeDefinitionInfo(
         controllerAs = controllerName;
     }
 
-    // 目前仅支持 ctrl.x 的情况, 不支持 ctrl.x.y 的情况
-    const propDeep = minPrefix.split('.').length;
-    logger.info('propDeep:', propDeep);
-    if (propDeep > 2) {
-        return;
-    }
-
     const controllerType = getControllerType(ctx);
-    if (!controllerType) {
-        // hover 在根节点上
-        if (propDeep === 1 && targetNode.text === controllerAs) {
-            return getControllerNameDefinitionInfo(ctx, { fileName, controllerName });
-        }
-        logger.info('controllerType not found!');
-        return;
+    if (controllerType) {
+        return getDefinitionInfoViaType({
+            ctx,
+            controllerType,
+            minSyntaxNode: minSyntax,
+            controllerAs,
+        });
     }
+    logger.info('controllerType not found!');
 
-    return getTypeDefinitionInfo({
-        ctx,
-        controllerType,
-        controllerAs,
-        targetNode,
-        propDeep,
-    });
+    const propertyPath = minPrefix.split('.');
+    logger.info('propertyPath length:', propertyPath.length);
+
+    // hover 在根节点上
+    if (propertyPath.length === 1 && targetNode.text === controllerAs) {
+        return getControllerNameDefinitionInfo(ctx, { fileName, controllerName });
+    }
 }
 
 export function getControllerNameDefinitionInfo(
