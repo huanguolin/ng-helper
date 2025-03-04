@@ -8,6 +8,7 @@ export interface NgScopeVar {
     kind: 'key' | 'value' | 'item' | 'as';
     name: string;
     replaceTo?: string;
+    typeString?: string;
 }
 
 export interface NgScope {
@@ -81,6 +82,8 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
             ['$first', '$middle', '$last', '$even', '$odd'].forEach((name) => {
                 result.push({ kind: 'item', name, replaceTo: scopeVar.replaceTo });
             });
+            // $index
+            result.push({ kind: 'item', name: '$index', typeString: 'number' });
         }
         result.push(scopeVar);
     }

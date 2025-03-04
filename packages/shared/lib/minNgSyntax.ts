@@ -46,6 +46,10 @@ export interface BaseMinNgSyntaxInfo {
      * 此时 cursorAt 为 -1。
      */
     hoverPropName?: string;
+    /**
+     * ng-repeat 的 $index 的 类型信息。
+     */
+    typeString?: string;
 }
 
 export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {
