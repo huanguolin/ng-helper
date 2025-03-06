@@ -50,6 +50,10 @@ export interface BaseMinNgSyntaxInfo {
      * ng-repeat 的 $index 的 类型信息。
      */
     typeString?: string;
+    /**
+     * 存放 ng-repeat 的 itemKey/itemValue/as 的定义位置。
+     */
+    location?: Location;
 }
 
 export interface NormalMinNgSyntaxInfo extends BaseMinNgSyntaxInfo {

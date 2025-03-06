@@ -1,4 +1,5 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import type { MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import type { TextDocument } from 'vscode';
 
 import {
@@ -16,9 +17,10 @@ type OnHoverType<T> = (
     cursorAt: number,
     hoverPropName?: string,
 ) => Promise<T | undefined>;
-type OnHoverLocalType<T> = (hoverPropName: string, typeString: string) => T | undefined;
+type OnHoverLocalType<T> = (locationNgSyntaxInfo: MinNgSyntaxInfo) => T | undefined;
 
 export async function onTypeHover<T>({
+    type,
     document,
     cursorAtInfo,
     port,
@@ -26,6 +28,7 @@ export async function onTypeHover<T>({
     onHoverType,
     onHoverLocalType,
 }: {
+    type: 'hover' | 'definition';
     document: TextDocument;
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
     port: number;
@@ -56,8 +59,11 @@ export async function onTypeHover<T>({
             return await onHoverFilterName(contextString.value, scriptFilePath);
         }
 
-        if (onHoverLocalType && contextString.typeString) {
-            return onHoverLocalType(contextString.value, contextString.typeString);
+        // typeString 给 hover 用。
+        // location 给 definition 用。
+        if (onHoverLocalType && (type === 'hover' ? contextString.typeString : contextString.location)) {
+            console.log('onHoverLocalType: ', contextString);
+            return onHoverLocalType(contextString);
         }
 
         // 如果没有返回 cursorAt 信息，直接取最后一个字符的位置。

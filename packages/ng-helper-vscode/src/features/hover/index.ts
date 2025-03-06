@@ -127,6 +127,7 @@ async function handleTemplateOrAttrValue(
     checkCancellation(vscodeCancelToken);
 
     const info = await onTypeHover({
+        type: 'hover',
         document,
         cursorAtInfo,
         port,
@@ -159,8 +160,8 @@ async function handleTemplateOrAttrValue(
                 });
             }
         },
-        onHoverLocalType: (hoverPropName, typeString) => ({
-            formattedTypeString: `(property) ${hoverPropName}: ${typeString}`,
+        onHoverLocalType: ({ value, typeString }) => ({
+            formattedTypeString: `(property) ${value}: ${typeString}`,
             document: '',
         }),
     });

@@ -147,6 +147,7 @@ async function handleTemplateOrAttrValue(
     }
 
     const definitionInfo = await onTypeHover({
+        type: 'definition',
         document,
         cursorAtInfo,
         port,
@@ -174,6 +175,10 @@ async function handleTemplateOrAttrValue(
                 });
             }
         },
+        onHoverLocalType: ({ location }) => ({
+            filePath: document.fileName,
+            ...location!,
+        }),
     });
     return await buildDefinition(definitionInfo);
 }

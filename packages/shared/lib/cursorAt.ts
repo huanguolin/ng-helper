@@ -28,6 +28,10 @@ export interface CursorAtContext {
      * 对应的属性值。
      */
     value: string;
+    /**
+     * 起始位置。
+     */
+    startAt: number;
 }
 
 interface TagInfo {
@@ -180,7 +184,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         return {
             type: 'template',
             template: template.text,
-            context: targetNode ? getContext(targetNode) : [],
+            context: targetNode ? getContext(targetNode, htmlText) : [],
             relativeCursorAt: cursorAt - template.start,
         };
     }
@@ -191,7 +195,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
             type: 'text',
             parentTagName: p?.tagName,
             siblingTagNames: p ? p.childNodes.filter(isElement).map((x) => x.tagName) : [],
-            context: p ? getContext(p) : [],
+            context: p ? getContext(p, htmlText) : [],
         };
     }
 
@@ -206,7 +210,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
                 return {
                     type: 'attrName',
                     cursorAtAttrName: attr.name,
-                    context: getContext(element),
+                    context: getContext(element, htmlText),
                     attrLocations: getAttrLocations(element),
                     ...getTagInfo(element),
                 };
@@ -220,7 +224,7 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
                     type: 'attrValue',
                     attrName: attr.name,
                     attrValue: attr.value,
-                    context: getContext(targetNode),
+                    context: getContext(targetNode, htmlText),
                     relativeCursorAt: cursorAt - attrValueStart!,
                     ...getTagInfo(element),
                 };
@@ -242,15 +246,15 @@ export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo 
         };
     }
 
-    return getStartTagInfo(element);
+    return getStartTagInfo(element, htmlText);
 }
 
-function getStartTagInfo(element: Element): CursorAtStartTagInfo {
+function getStartTagInfo(element: Element, htmlText: string): CursorAtStartTagInfo {
     return {
         type: 'startTag',
         start: element.sourceCodeLocation!.startOffset,
         end: (element.sourceCodeLocation!.startTag ?? element.sourceCodeLocation!).endOffset,
-        context: getContext(element),
+        context: getContext(element, htmlText),
         attrLocations: getAttrLocations(element),
         ...getTagInfo(element),
     };
@@ -319,7 +323,7 @@ function getTagInfo(element: Element): TagInfo {
 }
 
 const contextNgAttrNames = ['ng-repeat', 'ng-controller'];
-function getContext(node: TextNode | Element): CursorAtContext[] {
+function getContext(node: TextNode | Element, htmlText: string): CursorAtContext[] {
     const ctxs: CursorAtContext[] = [];
     pushCtx(node);
     return ctxs;
@@ -330,9 +334,17 @@ function getContext(node: TextNode | Element): CursorAtContext[] {
         }
 
         if (isElement(node)) {
+            const attrLocationMap = node.sourceCodeLocation!.attrs!;
             const ctxNgAttrs = node.attrs
                 .filter((x) => contextNgAttrNames.includes(x.name))
-                .map((x) => ({ kind: x.name, value: x.value }) as CursorAtContext);
+                .map(
+                    (x) =>
+                        ({
+                            kind: x.name,
+                            value: x.value,
+                            startAt: getAttrValueStart(x, attrLocationMap[x.name], htmlText)!,
+                        }) as CursorAtContext,
+                );
             ctxs.push(...ctxNgAttrs);
         }
 

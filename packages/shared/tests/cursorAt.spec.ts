@@ -169,6 +169,7 @@ describe('getCursorAtInfo()', () => {
                     {
                         kind: 'ng-repeat',
                         value: 'item in items',
+                        startAt: 16,
                     },
                 ],
                 relativeCursorAt: at - 39,
@@ -198,10 +199,12 @@ describe('getCursorAtInfo()', () => {
                     {
                         kind: 'ng-repeat',
                         value: 'item in items',
+                        startAt: 84,
                     },
                     {
                         kind: 'ng-controller',
                         value: 'MainCtrl',
+                        startAt: 37,
                     },
                 ],
                 relativeCursorAt: at - 132,
@@ -222,6 +225,7 @@ describe('getCursorAtInfo()', () => {
                     {
                         kind: 'ng-controller',
                         value: 'MainCtrl as ctrl',
+                        startAt: 20,
                     },
                 ],
                 relativeCursorAt: 0,
