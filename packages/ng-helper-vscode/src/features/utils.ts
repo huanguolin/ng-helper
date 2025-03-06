@@ -200,8 +200,10 @@ export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtT
 }
 
 function reshapeMinNgSyntaxInfo({ type, value }: MinNgSyntaxInfo, context: CursorAtContext[]): MinNgSyntaxInfo {
+    const result: MinNgSyntaxInfo = { type, value };
+
     if (type !== 'identifier' && type !== 'propertyAccess') {
-        return { type, value };
+        return result;
     }
 
     const scopes = getNgScopes(context);
@@ -210,19 +212,28 @@ function reshapeMinNgSyntaxInfo({ type, value }: MinNgSyntaxInfo, context: Curso
             for (const scopeVar of scope.vars) {
                 if (type === 'identifier' && value === scopeVar.name) {
                     if (scopeVar.replaceTo) {
-                        return { type, value: scopeVar.replaceTo, cursorAt: -1, hoverPropName: value };
-                    } else if (scopeVar.typeString) {
-                        return { type, value, typeString: scopeVar.typeString };
+                        result.value = scopeVar.replaceTo;
+                        result.cursorAt = -1;
+                        result.hoverPropName = value;
                     }
-                    return { type, value };
+
+                    if (scopeVar.typeString) {
+                        result.typeString = scopeVar.typeString;
+                    }
+
+                    if (scopeVar.location) {
+                        result.location = scopeVar.location;
+                    }
+
+                    return result;
                 } else if (type === 'propertyAccess' && value.startsWith(scopeVar.name + '.')) {
                     if (scopeVar.replaceTo) {
-                        return { type, value: value.replace(scopeVar.name, scopeVar.replaceTo) };
+                        result.value = value.replace(scopeVar.name, scopeVar.replaceTo);
                     }
-                    return { type, value };
+                    return result;
                 }
             }
         }
     }
-    return { type, value };
+    return result;
 }

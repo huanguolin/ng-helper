@@ -1,5 +1,5 @@
 import { type Identifier, type PropertyAccessExpression } from '@ng-helper/ng-parser/src/parser/node';
-import { SyntaxKind, type NgAttrName } from '@ng-helper/ng-parser/src/types';
+import { SyntaxKind, type Location, type NgAttrName } from '@ng-helper/ng-parser/src/types';
 
 import type { CursorAtContext } from './cursorAt';
 import { ngParse } from './ngParse';
@@ -9,6 +9,7 @@ export interface NgScopeVar {
     name: string;
     replaceTo?: string;
     typeString?: string;
+    location?: Location;
 }
 
 export interface NgScope {
@@ -27,7 +28,7 @@ export function getNgScopes(context: CursorAtContext[]) {
         } else if (ctx.kind === 'ng-repeat') {
             scopes.push({
                 kind: ctx.kind,
-                vars: getNgRepeatScope(ctx.value),
+                vars: getNgRepeatScope(ctx),
             });
         }
     }
@@ -50,7 +51,7 @@ function getNgControllerScope(contextStr: string): NgScopeVar[] {
     return result;
 }
 
-function getNgRepeatScope(contextStr: string): NgScopeVar[] {
+function getNgRepeatScope({ value: contextStr, startAt }: CursorAtContext): NgScopeVar[] {
     const result: NgScopeVar[] = [];
     const p = ngParse(contextStr, 'ng-repeat');
 
@@ -60,7 +61,11 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
     }
 
     if (p.config?.itemKey?.value) {
-        result.push({ kind: 'key', name: p.config.itemKey.value });
+        result.push({
+            kind: 'key',
+            name: p.config.itemKey.value,
+            location: getLocation(startAt, p.config.itemKey),
+        });
     }
 
     if (p.config?.itemValue?.value) {
@@ -68,6 +73,7 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
         const scopeVar: NgScopeVar = {
             kind: isArray ? 'item' : 'value',
             name: p.config.itemValue.value,
+            location: getLocation(startAt, p.config.itemValue),
         };
         // 目前只考虑数组的情况
         if (isArray) {
@@ -89,8 +95,19 @@ function getNgRepeatScope(contextStr: string): NgScopeVar[] {
     }
 
     if (p.config?.as?.value) {
-        result.push({ kind: 'as', name: p.config.as.value });
+        result.push({
+            kind: 'as',
+            name: p.config.as.value,
+            location: getLocation(startAt, p.config.as),
+        });
     }
 
     return result;
+}
+
+function getLocation(startAt: number, location: Location): Location {
+    return {
+        start: startAt + location.start,
+        end: startAt + location.end,
+    };
 }
