@@ -1,5 +1,6 @@
-import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
+import type { CursorAtAttrValueInfo, CursorAtContext, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import { SPACE } from '@ng-helper/shared/lib/html';
+import { getNgScopes } from '@ng-helper/shared/lib/ngScope';
 import { NgCtrlInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import {
     CancellationToken,
@@ -66,7 +67,20 @@ export async function templateOrAttrValueCompletion({
             });
         } else if (type === 'identifier') {
             // ctrl 输入第一个字符 c 后，便成为 'identifier' 状态。
-            return await getCtrlCompletion({ document, cursorAtInfo, port, vscodeCancelToken });
+            // 其他的类似 ng-repeat 的 item/$index/$first 等，也是 'identifier' 状态。
+            const result = getLocalVarsCompletion(cursorAtInfo.context);
+            if (isComponentHtml(document)) {
+                const ctrlItemList = await getComponentCtrlAsCompletion({
+                    document,
+                    cursorAtInfo,
+                    port,
+                    vscodeCancelToken,
+                });
+                if (ctrlItemList) {
+                    result.items.push(...ctrlItemList.items);
+                }
+            }
+            return result;
         }
     }
 }
@@ -172,7 +186,7 @@ function buildCompletionList(res: NgTypeInfo[]) {
     return new CompletionList(items, false);
 }
 
-async function getCtrlCompletion({
+async function getComponentCtrlAsCompletion({
     document,
     cursorAtInfo,
     port,
@@ -182,26 +196,29 @@ async function getCtrlCompletion({
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
     port: number;
     vscodeCancelToken: CancellationToken;
-}) {
-    if (isComponentHtml(document)) {
-        if (cursorAtInfo.type === 'template') {
-            return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
-        } else if (
-            isComponentTagName(cursorAtInfo.tagName) ||
-            isNgBuiltinDirective(cursorAtInfo.attrName) ||
-            isNgUserCustomAttr(cursorAtInfo.attrName)
-        ) {
-            return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
-        }
-    } else {
-        const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
-        if (ctrlInfo && ctrlInfo.controllerAs) {
-            const item = new CompletionItem(ctrlInfo.controllerAs, CompletionItemKind.Property);
-            item.sortText = '0';
-            item.detail = EXT_MARK;
-            return new CompletionList([item], false);
-        }
+}): Promise<CompletionList<CompletionItem> | undefined> {
+    if (cursorAtInfo.type === 'template') {
+        return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+    } else if (
+        isComponentTagName(cursorAtInfo.tagName) ||
+        isNgBuiltinDirective(cursorAtInfo.attrName) ||
+        isNgUserCustomAttr(cursorAtInfo.attrName)
+    ) {
+        return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
     }
+}
+
+function getLocalVarsCompletion(context: CursorAtContext[]): CompletionList<CompletionItem> {
+    const scopes = getNgScopes(context);
+    const items = scopes.flatMap((s, i) =>
+        s.vars.map((v, j) => {
+            const item = new CompletionItem(v.name, CompletionItemKind.Property);
+            item.sortText = (i + j).toString().padStart(3, '0');
+            item.detail = s.kind;
+            return item;
+        }),
+    );
+    return new CompletionList(items, false);
 }
 
 async function getComponentControllerAsCompletion(
