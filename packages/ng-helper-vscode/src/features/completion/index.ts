@@ -81,7 +81,7 @@ export async function completion({ document, position, vscodeCancelToken, contex
             return await componentNameCompletion({ ...obj, cursorAtInfo });
         case 'attrValue':
         case 'template':
-            return await templateOrAttrValueCompletion({ ...obj, cursorAtInfo });
+            return await templateOrAttrValueCompletion({ ...obj, cursorAtInfo, position });
 
         // 指令名字补全触发条件: 输入字符。
         // 组件和指令属性补全触发条件: 输入空格或者输入字符。

@@ -7,8 +7,10 @@ import {
     CompletionItem,
     CompletionItemKind,
     CompletionList,
+    Range,
     SnippetString,
     TextDocument,
+    type Position,
 } from 'vscode';
 
 import { checkCancellation } from '../../asyncUtils';
@@ -36,11 +38,12 @@ import type { CompletionParamObj } from '.';
 
 export async function templateOrAttrValueCompletion({
     document,
+    position,
     port,
     vscodeCancelToken,
     cursorAtInfo,
     context,
-}: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo>): Promise<
+}: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo> & { position: Position }): Promise<
     CompletionList<CompletionItem> | undefined
 > {
     const { type, value } = getContextString(cursorAtInfo);
@@ -68,19 +71,19 @@ export async function templateOrAttrValueCompletion({
         } else if (type === 'identifier') {
             // ctrl 输入第一个字符 c 后，便成为 'identifier' 状态。
             // 其他的类似 ng-repeat 的 item/$index/$first 等，也是 'identifier' 状态。
-            const result = getLocalVarsCompletion(cursorAtInfo.context);
+            const items = getLocalVarsCompletion(cursorAtInfo.context);
             if (isComponentHtml(document)) {
-                const ctrlItemList = await getComponentCtrlAsCompletion({
+                const ctrlAsItem = await getComponentCtrlAsCompletion({
                     document,
                     cursorAtInfo,
                     port,
                     vscodeCancelToken,
                 });
-                if (ctrlItemList) {
-                    result.items.push(...ctrlItemList.items);
+                if (ctrlAsItem) {
+                    items.push(ctrlAsItem);
                 }
             }
-            return result;
+            return buildLocalVarsCompletion(items, position);
         }
     }
 }
@@ -196,28 +199,52 @@ async function getComponentCtrlAsCompletion({
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
     port: number;
     vscodeCancelToken: CancellationToken;
-}): Promise<CompletionList<CompletionItem> | undefined> {
+}): Promise<CompletionItem | undefined> {
+    let ctrlAs: string | undefined;
     if (cursorAtInfo.type === 'template') {
-        return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
     } else if (
         isComponentTagName(cursorAtInfo.tagName) ||
         isNgBuiltinDirective(cursorAtInfo.attrName) ||
         isNgUserCustomAttr(cursorAtInfo.attrName)
     ) {
-        return await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
     }
+
+    if (!ctrlAs) {
+        return;
+    }
+
+    const item = new CompletionItem(ctrlAs, CompletionItemKind.Property);
+    item.filterText = ctrlAs;
+    item.detail = EXT_MARK;
+    item.documentation = 'Controller As';
+    return item;
 }
 
-function getLocalVarsCompletion(context: CursorAtContext[]): CompletionList<CompletionItem> {
+function getLocalVarsCompletion(context: CursorAtContext[]): CompletionItem[] {
     const scopes = getNgScopes(context);
-    const items = scopes.flatMap((s, i) =>
-        s.vars.map((v, j) => {
+    return scopes.flatMap((s) =>
+        s.vars.map((v) => {
             const item = new CompletionItem(v.name, CompletionItemKind.Property);
-            item.sortText = (i + j).toString().padStart(3, '0');
-            item.detail = s.kind;
+            item.filterText = v.name;
+            item.detail = EXT_MARK;
+            item.documentation = `${s.kind} scope`;
             return item;
         }),
     );
+}
+
+function buildLocalVarsCompletion(items: CompletionItem[], position: Position): CompletionList<CompletionItem> {
+    items.forEach((x, i) => {
+        if (x.filterText?.startsWith('$')) {
+            // 默认的 range 是 CurrentWord, 默认没有包含 $ 字符，
+            // 所以这里调整一下，把它含进去。否则确认补全后会多出来一个 $ 字符。
+            x.range = new Range(position.translate(0, -1), position);
+        }
+        x.sortText = i.toString().padStart(3, '0');
+    });
+
     return new CompletionList(items, false);
 }
 
@@ -225,7 +252,7 @@ async function getComponentControllerAsCompletion(
     document: TextDocument,
     port: number,
     vscodeCancelToken: CancellationToken,
-) {
+): Promise<string | undefined> {
     const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
 
     checkCancellation(vscodeCancelToken);
@@ -236,14 +263,7 @@ async function getComponentControllerAsCompletion(
 
     checkCancellation(vscodeCancelToken);
 
-    const res = await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
-    if (res) {
-        const item = new CompletionItem(res);
-        // 往前排
-        item.sortText = '0';
-        item.detail = EXT_MARK;
-        return new CompletionList([item], false);
-    }
+    return await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
 }
 
 async function getFilterNameCompletion({
