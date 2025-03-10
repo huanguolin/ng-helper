@@ -7,6 +7,7 @@ import {
     typeToString,
     getTypeArguments,
     getNumberLiteralType,
+    createUnionType,
 } from '../utils/common';
 
 /**
@@ -116,8 +117,8 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
             if (Number.isInteger(index)) {
                 return tupleElementTypes[index!];
             } else {
-                // TODO 返回元组所有元素类型的 union
-                return;
+                // 返回元组所有元素类型的 union
+                return createUnionType(ctx, tupleElementTypes);
             }
         }
 

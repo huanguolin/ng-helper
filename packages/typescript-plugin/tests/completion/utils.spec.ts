@@ -70,8 +70,7 @@ describe('getNodeType()', () => {
         ['ctrl.t[0].', 'number'],
         ['ctrl.t[1].', 'string'],
         // arrayLike
-        // TODO fix next line
-        // ['ctrl.t[ctrl.b.c.d].', 'number | string'],
+        ['ctrl.t[ctrl.b.c.d].', 'string | number'],
         ['ctrl.arrLike.', 'MyArrayLike<string>'],
         ['ctrl.arrLike.length', 'number'],
         ['ctrl.arrLike[0].', 'string'],
