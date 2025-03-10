@@ -1,7 +1,13 @@
 import type ts from 'typescript';
 
 import { PluginContext, SyntaxNodeInfo } from '../type';
-import { getPropertyType, createTmpSourceFile, typeToString } from '../utils/common';
+import {
+    getPropertyType,
+    createTmpSourceFile,
+    typeToString,
+    getTypeArguments,
+    getNumberLiteralType,
+} from '../utils/common';
 
 /**
  * 依据起始类型（根类型）和最小语法节点，获取用于补全的类型。
@@ -106,7 +112,7 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
 
         // tuple
         if (ctx.typeChecker.isTupleType(nodeType)) {
-            const tupleElementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+            const tupleElementTypes = getTypeArguments(ctx, nodeType as ts.TypeReference);
             if (Number.isInteger(index)) {
                 return tupleElementTypes[index!];
             } else {
@@ -117,7 +123,7 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
 
         // array like
         if (ctx.typeChecker.isArrayLikeType(nodeType)) {
-            const elementTypes = ctx.typeChecker.getTypeArguments(nodeType as ts.TypeReference);
+            const elementTypes = getTypeArguments(ctx, nodeType as ts.TypeReference);
             return elementTypes[0];
         }
 
@@ -146,13 +152,13 @@ export function getNodeType(ctx: PluginContext, rootType: ts.Type, minSyntaxNode
 
 function getLiteralType(ctx: PluginContext, expr: ts.LiteralExpression): ts.Type | undefined {
     if (ctx.ts.isNumericLiteral(expr)) {
-        return ctx.typeChecker.getNumberLiteralType(Number.parseInt(expr.text, 10));
+        return getNumberLiteralType(ctx, Number.parseInt(expr.text, 10));
     } else if (ctx.ts.isStringLiteral(expr)) {
         return ctx.typeChecker.getStringLiteralType(expr.text);
     } else if (expr.kind === ctx.ts.SyntaxKind.TrueKeyword) {
         return ctx.typeChecker.getTrueType();
     } else if (expr.kind === ctx.ts.SyntaxKind.FalseKeyword) {
-        return ctx.typeChecker.getTrueType();
+        return ctx.typeChecker.getFalseType();
     } else if (expr.kind === ctx.ts.SyntaxKind.NullKeyword) {
         return ctx.typeChecker.getNullType();
     } else if (expr.kind === ctx.ts.SyntaxKind.UndefinedKeyword) {

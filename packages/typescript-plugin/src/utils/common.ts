@@ -133,6 +133,128 @@ export function isCommaListExpression(ctx: PluginContext, node: ts.Node): node i
     return false;
 }
 
+/**
+ * 兼容 TS 3.5.3 的 getTypeArguments 实现
+ * (getTypeArguments 似乎是 3.7 版本引入的，https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#37-api-changes)
+ */
+export function getTypeArguments(ctx: PluginContext, typeRef: ts.TypeReference): readonly ts.Type[] {
+    if (typeof ctx.typeChecker.getTypeArguments === 'function') {
+        return ctx.typeChecker.getTypeArguments(typeRef);
+    }
+
+    // 尝试使用不同的方式获取类型参数
+
+    // 1. 直接从 typeRef 获取类型参数（内部API，但在 TS 3.5.3 可能存在）
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const typeRefAny = typeRef as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeRefAny.typeArguments && Array.isArray(typeRefAny.typeArguments)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return typeRefAny.typeArguments as ts.Type[];
+    }
+
+    // 2. 通过 target 获取类型参数
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeRefAny.target && typeRefAny.target.typeArguments && Array.isArray(typeRefAny.target.typeArguments)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return typeRefAny.target.typeArguments as ts.Type[];
+    }
+
+    // 3. 处理元组类型
+    if (ctx.typeChecker.isTupleType(typeRef)) {
+        try {
+            // 尝试获取元组的元素类型
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const tupleTypesAny = (typeRef as any).tupleTypes;
+            if (tupleTypesAny && Array.isArray(tupleTypesAny)) {
+                return tupleTypesAny as ts.Type[];
+            }
+        } catch (e) {
+            // 忽略错误，继续尝试其他方法
+        }
+    }
+
+    // 4. 处理数组类型
+    if (ctx.typeChecker.isArrayLikeType(typeRef)) {
+        try {
+            // 尝试使用 TypeChecker 的非公开方法获取数组元素类型
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+            const checker = ctx.typeChecker as any;
+            let elementType: ts.Type | undefined;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (typeof checker.getElementTypeOfArrayType === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                elementType = checker.getElementTypeOfArrayType(typeRef) as ts.Type;
+            }
+
+            // 备选方案：通过索引访问类型获取元素类型
+            if (!elementType) {
+                elementType = typeRef.getNumberIndexType();
+            }
+
+            if (elementType) {
+                return [elementType];
+            }
+        } catch (e) {
+            // 忽略错误
+        }
+    }
+
+    // 如果上述所有方法都失败，返回空数组
+    return [];
+}
+
+/**
+ * 兼容 TS 3.5.3 的 getNumberLiteralType 实现
+ * (getNumberLiteralType 似乎是 5.1 版本引入的, 这个是自己测试出来的)
+ */
+export function getNumberLiteralType(ctx: PluginContext, numValue: number): ts.Type | undefined {
+    // Check if getNumberLiteralType exists in the TypeChecker
+    if (typeof ctx.typeChecker.getNumberLiteralType === 'function') {
+        return ctx.typeChecker.getNumberLiteralType(numValue);
+    } else {
+        // Fallback for older TypeScript versions
+
+        // Define interfaces for internal TypeScript APIs to avoid 'any'
+        interface InternalTypeChecker extends ts.TypeChecker {
+            createLiteralType?(value: number): ts.Type;
+            createFreshLiteralType?(value: number): ts.Type;
+        }
+
+        const internalChecker = ctx.typeChecker as InternalTypeChecker;
+
+        // Option 1: Use createLiteralType if available
+        if (typeof internalChecker.createLiteralType === 'function') {
+            return internalChecker.createLiteralType(numValue);
+        }
+
+        // Option 2: Create fresh numeric literal type
+        if (typeof internalChecker.createFreshLiteralType === 'function') {
+            return internalChecker.createFreshLiteralType(numValue);
+        }
+
+        // Option 3: Get the type from a literal node by creating a temporary syntax tree
+        // Instead of using createNumericLiteral which might not be available,
+        // create a synthetic source file with the numeric literal
+        const tempSourceFile = createTmpSourceFile(ctx, String(numValue), 'temp_for_getNumberLiteralType', true);
+
+        // The first token in the source file should be our numeric literal
+        if (
+            tempSourceFile.statements.length > 0 &&
+            tempSourceFile.statements[0].kind === ctx.ts.SyntaxKind.ExpressionStatement
+        ) {
+            const exprStatement = tempSourceFile.statements[0] as ts.ExpressionStatement;
+            if (ctx.ts.isNumericLiteral(exprStatement.expression)) {
+                return ctx.typeChecker.getTypeAtLocation(exprStatement.expression);
+            }
+        }
+
+        // Fallback to default number type if all else fails
+        return ctx.typeChecker.getNumberType();
+    }
+}
+
 export function findClassDeclaration(ctx: PluginContext, node: ts.Node): ts.ClassDeclaration | undefined {
     if (ctx.ts.isClassDeclaration(node)) {
         return node;
