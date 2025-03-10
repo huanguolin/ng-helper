@@ -354,3 +354,54 @@ export function getProp(
 export function formatParameters(params: Parameter[]): string {
     return params.map((p) => p.name + (p.type ? `: ${p.type}` : '')).join(', ');
 }
+
+/**
+ * 模拟 TypeScript 的 getUnionType 功能
+ * 对于 TS 3.5.3 这类没有该方法的版本，提供一个兼容实现
+ */
+export function createUnionType(ctx: PluginContext, types: readonly ts.Type[]): ts.Type | undefined {
+    if (types.length === 0) {
+        return undefined;
+    }
+
+    if (types.length === 1) {
+        return types[0];
+    }
+
+    // 1. 如果 TypeChecker 已经有 getUnionType，直接使用
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const typeChecker = ctx.typeChecker as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeof typeChecker.getUnionType === 'function') {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+            const unionType = typeChecker.getUnionType(types);
+            if (unionType) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                return unionType as ts.Type;
+            }
+        } catch (e) {
+            // 忽略错误
+        }
+    }
+
+    // 2. 尝试使用内部 API
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const tsLib = ctx.ts as any;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (typeof tsLib.getUnionType === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+            const unionType = tsLib.getUnionType(types);
+            if (unionType) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                return unionType as ts.Type;
+            }
+        }
+    } catch (e) {
+        // 忽略错误
+    }
+
+    // 如果上述方法都失败，返回 undefined, 不能返回误导用户的类型
+    return undefined;
+}
