@@ -51,7 +51,7 @@ export function getComponentControllerAs(ctx: PluginContext): string | undefined
 }
 
 export function getComponentTypeCompletions(ctx: PluginContext, prefix: string): NgTypeCompletionResponse {
-    const logger = ctx.logger.prefix('getComponentCompletions()');
+    const logger = ctx.logger.prefix('getComponentTypeCompletions()');
 
     const minSyntaxNode = getExpressionSyntaxNode(ctx, prefix);
     const minPrefix = minSyntaxNode?.minNode.getText(minSyntaxNode?.sourceFile);
