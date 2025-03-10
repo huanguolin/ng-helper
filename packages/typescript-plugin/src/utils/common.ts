@@ -65,7 +65,57 @@ export function getSymbolDocument(ctx: PluginContext, symbol: ts.Symbol): string
 }
 
 export function getPublicMembersTypeInfoOfType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
+    // 处理联合类型
+    if (type.isUnion()) {
+        return getPublicMembersTypeInfoViaUnionType(ctx, type);
+    }
+
     return getPublicMembersTypeInfoViaType(ctx, type);
+}
+
+function getPublicMembersTypeInfoViaUnionType(ctx: PluginContext, unionType: ts.UnionType): NgTypeInfo[] | undefined {
+    // Get properties for each member of the union
+    const memberPropertiesArray = unionType.types.map((t) => {
+        const properties = getPublicMembersTypeInfoViaType(ctx, t);
+        return properties || [];
+    });
+
+    if (memberPropertiesArray.length === 0) {
+        return [];
+    }
+
+    // Create a map to track common properties
+    const commonPropsMap = new Map<string, NgTypeInfo>();
+
+    // Start with all properties from the first type
+    const firstTypeProps = memberPropertiesArray[0];
+    firstTypeProps.forEach((prop) => {
+        commonPropsMap.set(prop.name, prop);
+    });
+
+    // For each subsequent type, keep only properties that exist in all types
+    for (let i = 1; i < memberPropertiesArray.length; i++) {
+        const currentTypeProps = memberPropertiesArray[i];
+        const currentPropNames = new Set(currentTypeProps.map((p) => p.name));
+
+        // Remove properties not found in current type
+        for (const key of commonPropsMap.keys()) {
+            if (currentPropNames.has(key)) {
+                // TODO 如果类型一样，不用更新 typeString, 否则应该是两个类型的联合
+                // 做这个时候考虑把 getPublicMembersTypeInfoViaType/getPublicMembersTypeInfoViaUnionType
+                // 简化成返回类型数组，而不是 NgTypeInfo 数组，这样联合类型的 typeString 就能正确合并。
+            } else {
+                commonPropsMap.delete(key);
+            }
+        }
+
+        // If no common properties remain, return empty array
+        if (commonPropsMap.size === 0) {
+            return [];
+        }
+    }
+
+    return Array.from(commonPropsMap.values());
 }
 
 function getPublicMembersTypeInfoViaType(ctx: PluginContext, type: ts.Type): NgTypeInfo[] | undefined {
