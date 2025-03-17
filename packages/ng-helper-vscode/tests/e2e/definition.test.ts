@@ -52,7 +52,29 @@ describe('Definition', () => {
         });
 
         it('get definition info on "(ctl.obj.)arr" (controller html)', async () => {
-            await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 33));
+            await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 38));
+        });
+    });
+
+    describe('ng-repeat', () => {
+        // 括号里的是补充信息，点击在 item 上
+        it('get definition info on "item(.name)" (component html)', async () => {
+            await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 15));
+        });
+
+        // 括号里的是补充信息，点击在 name 上
+        it('get definition info on "($first.)name" (component html)', async () => {
+            await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 48));
+        });
+
+        // 括号里的是补充信息，点击在 item 上
+        it('get definition info on "item(.name)" (controller html)', async () => {
+            await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(3, 19));
+        });
+
+        // 括号里的是补充信息，点击在 name 上
+        it('get definition info on "($first.)name" (controller html)', async () => {
+            await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(3, 52));
         });
     });
 
