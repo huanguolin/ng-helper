@@ -286,17 +286,105 @@ Array [
 ]
 `;
 
+exports[`Definition ng-repeat get definition info on "($first.)name" (component html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 25,
+        "line": 18,
+      },
+      Object {
+        "character": 39,
+        "line": 18,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/bar-foo/bar-foo.component.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition ng-repeat get definition info on "($first.)name" (controller html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 25,
+        "line": 13,
+      },
+      Object {
+        "character": 39,
+        "line": 13,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/pages/p1/p1.ts",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition ng-repeat get definition info on "item(.name)" (component html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 16,
+        "line": 3,
+      },
+      Object {
+        "character": 20,
+        "line": 3,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/components/bar-foo/bar-foo.component.html",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
+exports[`Definition ng-repeat get definition info on "item(.name)" (controller html) 1`] = `
+Array [
+  Object {
+    "range": Array [
+      Object {
+        "character": 20,
+        "line": 2,
+      },
+      Object {
+        "character": 24,
+        "line": 2,
+      },
+    ],
+    "uri": Object {
+      "$mid": 1,
+      "path": "/tests/fixtures/app/pages/p1/p1.html",
+      "scheme": "file",
+    },
+  },
+]
+`;
+
 exports[`Definition type get definition info on "(ctl.obj.)arr" (controller html) 1`] = `
 Array [
   Object {
     "range": Array [
       Object {
-        "character": 8,
-        "line": 10,
+        "character": 12,
+        "line": 12,
       },
       Object {
-        "character": 10,
-        "line": 17,
+        "character": 13,
+        "line": 16,
       },
     ],
     "uri": Object {
