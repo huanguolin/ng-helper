@@ -141,6 +141,25 @@ describe('Completion', () => {
         });
     });
 
+    describe('ng-repeat', () => {
+        it('get completion info of ng-repeat scope (component html)', async () => {
+            await testCompletion({
+                filePath: BAZ_QUX_COMPONENT_HTML_PATH, // 这里是 component html
+                position: new vscode.Position(23, 13),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
+                // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
+            });
+        });
+        it('get completion info of ng-repeat scope (controller html)', async () => {
+            await testCompletion({
+                filePath: APP_PAGES_P2_HTML_PATH, // 这里是 controller html
+                position: new vscode.Position(7, 17),
+                itemsFilter: (item) => item.detail === '[ng-helper]',
+                // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
+            });
+        });
+    });
+
     describe('filter', () => {
         it('get completion info of filter', async () => {
             await testCompletion({

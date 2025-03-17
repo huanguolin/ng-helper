@@ -6,11 +6,11 @@ Array [
     "range": Array [
       Object {
         "character": 8,
-        "line": 17,
+        "line": 25,
       },
       Object {
         "character": 29,
-        "line": 17,
+        "line": 25,
       },
     ],
     "uri": Object {
@@ -28,11 +28,11 @@ Array [
     "range": Array [
       Object {
         "character": 43,
-        "line": 12,
+        "line": 20,
       },
       Object {
         "character": 51,
-        "line": 12,
+        "line": 20,
       },
     ],
     "uri": Object {
@@ -160,11 +160,11 @@ Array [
     "range": Array [
       Object {
         "character": 8,
-        "line": 17,
+        "line": 25,
       },
       Object {
         "character": 29,
-        "line": 17,
+        "line": 25,
       },
     ],
     "uri": Object {
@@ -182,11 +182,11 @@ Array [
     "range": Array [
       Object {
         "character": 43,
-        "line": 12,
+        "line": 20,
       },
       Object {
         "character": 51,
-        "line": 12,
+        "line": 20,
       },
     ],
     "uri": Object {
