@@ -157,6 +157,82 @@ exports[`Hover ng-* show hover info on "ng-if" 1`] = `
 Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/ngIf)."
 `;
 
+exports[`Hover ng-repeat show hover info on "$first(.name)" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) $first: {
+    id: number;
+    name: string;
+}
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "$first(.name)" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) $first: {
+    id: number;
+    name: string;
+}
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "$index" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) $index: number
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "$index" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) $index: number
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "(item.)name" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) name: string
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "(item.)name" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) name: string
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "item (in ctl.obj.arr)" (controller html) 1`] = `
+"
+\`\`\`typescript
+(property) item: {
+    id: number;
+    name: string;
+}
+\`\`\`
+"
+`;
+
+exports[`Hover ng-repeat show hover info on "item(.name)" (component html) 1`] = `
+"
+\`\`\`typescript
+(property) item: {
+    id: number;
+    name: string;
+}
+\`\`\`
+"
+`;
+
 exports[`Hover type show hover info on "(ctl.obj.)arr" (controller html) 1`] = `
 "
 \`\`\`typescript

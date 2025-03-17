@@ -49,6 +49,7 @@ describe('Hover', () => {
             await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 14));
         });
 
+        // 括号里的是补充信息，hover 在 bar 上
         it('show hover info on "(ctrl.)bar" (component html)', async () => {
             await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 18));
         });
@@ -57,8 +58,49 @@ describe('Hover', () => {
             await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(1, 12));
         });
 
+        // 括号里的是补充信息，hover 在 arr 上
         it('show hover info on "(ctl.obj.)arr" (controller html)', async () => {
             await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 33));
+        });
+    });
+
+    describe('ng-repeat', () => {
+        // 括号里的是补充信息，hover 在 item 上
+        it('show hover info on "item (in ctl.obj.arr)" (controller html)', async () => {
+            await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 22));
+        });
+
+        // 括号里的是补充信息，hover 在 name 上
+        it('show hover info on "(item.)name" (controller html)', async () => {
+            await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(3, 24));
+        });
+
+        it('show hover info on "$index" (controller html)', async () => {
+            await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(3, 32));
+        });
+
+        // 括号里的是补充信息，hover 在 $first 上
+        it('show hover info on "$first(.name)" (controller html)', async () => {
+            await testHover(APP_PAGES_P1_HTML_PATH, new vscode.Position(3, 46));
+        });
+
+        // 括号里的是补充信息，hover 在 item 上
+        it('show hover info on "item(.name)" (component html)', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 15));
+        });
+
+        // 括号里的是补充信息，hover 在 name 上
+        it('show hover info on "(item.)name" (component html)', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 19));
+        });
+
+        it('show hover info on "$index" (component html)', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 28));
+        });
+
+        // 括号里的是补充信息，hover 在 $first 上
+        it('show hover info on "$first(.name)" (component html)', async () => {
+            await testHover(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(4, 43));
         });
     });
 
