@@ -43,6 +43,7 @@ describe('Definition', () => {
             await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 14));
         });
 
+        // 括号里的是补充信息，点击在 bar 上
         it('get definition info on "(ctrl.)bar" (component html)', async () => {
             await testDefinition(BAR_FOO_COMPONENT_HTML_PATH, new vscode.Position(2, 18));
         });
@@ -51,6 +52,7 @@ describe('Definition', () => {
             await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(1, 12));
         });
 
+        // 括号里的是补充信息，点击在 arr 上
         it('get definition info on "(ctl.obj.)arr" (controller html)', async () => {
             await testDefinition(APP_PAGES_P1_HTML_PATH, new vscode.Position(2, 38));
         });
