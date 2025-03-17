@@ -1989,6 +1989,348 @@ Array [
 ]
 `;
 
+exports[`Completion ng-repeat get completion info of ng-repeat scope (component html) 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$first",
+    "kind": "Property",
+    "label": "$first",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$first",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$middle",
+    "kind": "Property",
+    "label": "$middle",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$middle",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$last",
+    "kind": "Property",
+    "label": "$last",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$last",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$even",
+    "kind": "Property",
+    "label": "$even",
+    "preselect": undefined,
+    "sortText": "003",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$even",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$odd",
+    "kind": "Property",
+    "label": "$odd",
+    "preselect": undefined,
+    "sortText": "004",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$odd",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$index",
+    "kind": "Property",
+    "label": "$index",
+    "preselect": undefined,
+    "sortText": "005",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$index",
+      "range": Array [
+        Object {
+          "character": 12,
+          "line": 23,
+        },
+        Object {
+          "character": 13,
+          "line": 23,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "item",
+    "kind": "Property",
+    "label": "item",
+    "preselect": undefined,
+    "sortText": "006",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "Controller As",
+    "filterText": undefined,
+    "insertText": "ctrl",
+    "kind": "Property",
+    "label": "ctrl",
+    "preselect": undefined,
+    "sortText": "007",
+    "textEdit": undefined,
+  },
+]
+`;
+
+exports[`Completion ng-repeat get completion info of ng-repeat scope (controller html) 1`] = `
+Array [
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$first",
+    "kind": "Property",
+    "label": "$first",
+    "preselect": undefined,
+    "sortText": "000",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$first",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$middle",
+    "kind": "Property",
+    "label": "$middle",
+    "preselect": undefined,
+    "sortText": "001",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$middle",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$last",
+    "kind": "Property",
+    "label": "$last",
+    "preselect": undefined,
+    "sortText": "002",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$last",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$even",
+    "kind": "Property",
+    "label": "$even",
+    "preselect": undefined,
+    "sortText": "003",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$even",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$odd",
+    "kind": "Property",
+    "label": "$odd",
+    "preselect": undefined,
+    "sortText": "004",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$odd",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "$index",
+    "kind": "Property",
+    "label": "$index",
+    "preselect": undefined,
+    "sortText": "005",
+    "textEdit": Object {
+      "newEol": undefined,
+      "newText": "$index",
+      "range": Array [
+        Object {
+          "character": 16,
+          "line": 7,
+        },
+        Object {
+          "character": 17,
+          "line": 7,
+        },
+      ],
+    },
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-repeat scope",
+    "filterText": undefined,
+    "insertText": "item",
+    "kind": "Property",
+    "label": "item",
+    "preselect": undefined,
+    "sortText": "006",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "[ng-helper]",
+    "documentation": "ng-controller scope",
+    "filterText": undefined,
+    "insertText": "ctrl",
+    "kind": "Property",
+    "label": "ctrl",
+    "preselect": undefined,
+    "sortText": "007",
+    "textEdit": undefined,
+  },
+]
+`;
+
 exports[`Completion transclude get completion info with transclude 1`] = `
 Array [
   Object {
@@ -2118,6 +2460,17 @@ Array [
     "label": "title",
     "preselect": undefined,
     "sortText": "001",
+    "textEdit": undefined,
+  },
+  Object {
+    "detail": "(property) obj: { txt: string; arr: { id: number; name: string; }[]; }",
+    "documentation": undefined,
+    "filterText": undefined,
+    "insertText": "obj",
+    "kind": "Field",
+    "label": "obj",
+    "preselect": undefined,
+    "sortText": "002",
     "textEdit": undefined,
   },
 ]

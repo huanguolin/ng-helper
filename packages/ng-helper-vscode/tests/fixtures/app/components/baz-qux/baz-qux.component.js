@@ -7,6 +7,14 @@ class BazQuxController {
     ) {
         this.baz = 100;
         this.title = 'some title'; // default value
+        this.obj = {
+            txt: 'txt string',
+            arr: [
+                { id: 1, name: 'item-1' },
+                { id: 3, name: 'item-2' },
+                { id: 5, name: 'item-3' },
+            ],
+        };
     }
 }
 
