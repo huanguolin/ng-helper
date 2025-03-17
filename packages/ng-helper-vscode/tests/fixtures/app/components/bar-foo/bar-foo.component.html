@@ -1,3 +1,6 @@
 <baz-qux attr-title="bar-foo" baz="ctrl.bar"></baz-qux>
 <div number-check allow-nan="true" min="-10" max="100" ng-modal="ctrl.bar | status | f2"></div>
 <div ng-if="ctrl.bar > 50">{{ctrl.foo | translate}}</div>
+<div ng-repeat="item in ctrl.obj.arr">
+    <span>{{item.name}}({{$index}})-{{$first.name}}</span>
+</div>
