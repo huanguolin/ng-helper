@@ -374,3 +374,7 @@ export function getMinNgSyntaxInfo(
 
     return minNgSyntaxVisitor.getCursorAtMinSyntax(program, cursorAt);
 }
+
+export function isAttrHasScope(attrName?: string): attrName is 'ng-repeat' | 'ng-controller' {
+    return attrName === 'ng-repeat' || attrName === 'ng-controller';
+}

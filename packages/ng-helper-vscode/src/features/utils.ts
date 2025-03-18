@@ -3,7 +3,7 @@ import os from 'node:os';
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { isHtmlTagName } from '@ng-helper/shared/lib/html';
-import { getMinNgSyntaxInfo, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
+import { getMinNgSyntaxInfo, isAttrHasScope, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import { getNgScopes } from '@ng-helper/shared/lib/ngScope';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
@@ -189,11 +189,17 @@ export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHover
 
 let cnt = 0;
 export function getContextString(cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo): MinNgSyntaxInfo {
-    const sourceText = cursorAtInfo.type === 'template' ? cursorAtInfo.template : cursorAtInfo.attrValue;
+    const isAttrValue = cursorAtInfo.type === 'attrValue';
+    const sourceText = isAttrValue ? cursorAtInfo.attrValue : cursorAtInfo.template;
+    const attrName = isAttrValue ? cursorAtInfo.attrName : undefined;
     cnt++;
     const label = `getMinNgSyntaxInfo()#${cnt}`;
     console.time(label);
-    let minNgSyntaxInfo = getMinNgSyntaxInfo(sourceText, cursorAtInfo.relativeCursorAt);
+    let minNgSyntaxInfo = getMinNgSyntaxInfo(
+        sourceText,
+        cursorAtInfo.relativeCursorAt,
+        isAttrValue && isAttrHasScope(attrName) ? attrName : undefined,
+    );
     minNgSyntaxInfo = reshapeMinNgSyntaxInfo(minNgSyntaxInfo, cursorAtInfo.context);
     console.timeEnd(label);
     return minNgSyntaxInfo;
