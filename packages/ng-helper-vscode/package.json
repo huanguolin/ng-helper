@@ -1,7 +1,7 @@
 {
   "name": "ng-helper",
-  "displayName": "Angular.js Helper",
-  "description": "The Perfect Assistant for Angular.js with TypeScript Development.",
+  "displayName": "Angular.js(1.x) Language Service",
+  "description": "Angular.js(1.x) Language Service.",
   "icon": "resources/icon.png",
   "author": {
     "name": "Alvin Huang",
