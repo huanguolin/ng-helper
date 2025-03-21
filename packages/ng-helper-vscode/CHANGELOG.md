@@ -2,6 +2,16 @@
 
 All notable changes to the "ng-helper" extension will be documented in this file.
 
+## [v0.8.0](https://github.com/huanguolin/ng-helper/compare/v0.7.1...v0.8.0) (2025-03-21)
+
+### Feature
+- Support auto-completion, hover info, and go to definition for `ng-repeat`.
+- Enhanced go to definition capability - previously only supported first level data binding jumps, now there's no limitation.
+- Custom services can jump to implementation files by their names.
+- HTML can jump to controller implementation files via controller name (TypeScript independent).
+- Built-in `ng-*` directives completed.
+
+
 ## [v0.7.1](https://github.com/huanguolin/ng-helper/compare/v0.7.0...v0.7.1) (2024-12-12)
 
 ### Fixed
