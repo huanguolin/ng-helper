@@ -5,6 +5,7 @@ import { registerCodeLens } from './features/codeLens';
 import { registerCommand } from './features/command';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
+import { registerDiagnostic } from './features/diagnostic';
 import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
 import { registerLink } from './features/link';
@@ -50,6 +51,9 @@ export async function activate(vscodeContext: ExtensionContext) {
 
     // semantic
     registerSemantic(ngContext);
+
+    // diagnostic
+    registerDiagnostic(context, config.port);
 
     // code lens
     registerCodeLens(ngContext);
