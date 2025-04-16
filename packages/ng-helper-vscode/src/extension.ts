@@ -9,6 +9,7 @@ import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
 import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
+import { registerStatusBar } from './features/statusBar';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -24,6 +25,9 @@ export async function activate(context: ExtensionContext) {
 
     // command
     context.subscriptions.push(createComponentCommand(config.componentStyleFileExt, config.componentScriptFileExt));
+
+    // status bar
+    registerStatusBar(context);
 
     // completion
     registerCompletion(context, config.port);
