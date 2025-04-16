@@ -2,7 +2,7 @@ import { ExtensionContext } from 'vscode';
 
 import { activateExt } from './activate';
 import { registerCodeLens } from './features/codeLens';
-import { createComponentCommand } from './features/command/createComponent';
+import { registerCommand } from './features/command';
 import { registerCompletion } from './features/completion';
 import { registerDefinition } from './features/definition';
 import { registerHover } from './features/hover';
@@ -24,7 +24,7 @@ export async function activate(context: ExtensionContext) {
     console.log('======= "ng-helper" is now active ========');
 
     // command
-    context.subscriptions.push(createComponentCommand(config.componentStyleFileExt, config.componentScriptFileExt));
+    registerCommand(context, config);
 
     // status bar
     registerStatusBar(context);
