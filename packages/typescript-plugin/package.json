@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@ng-helper/shared": "^0.0.1",
-    "express": "^4.17.3"
+    "express": "^4.17.3",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",
@@ -25,11 +26,12 @@
     "@types/jest": "^29.5.12",
     "@types/node": "18.x",
     "@types/vscode": "^1.90.0",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "esbuild": "^0.21.4",
     "eslint": "^8.57.0",
-    "typescript": "~5.4.5",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "typescript": "~5.4.5"
   }
 }

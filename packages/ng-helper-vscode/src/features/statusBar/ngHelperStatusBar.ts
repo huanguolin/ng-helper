@@ -1,14 +1,21 @@
 import { StatusBarAlignment, window } from 'vscode';
 
-export function ngHelperStatusBar() {
+import { RpcServerStatus, type RpcServer } from '../../service/rpcServer';
+
+export function ngHelperStatusBar(rpcServer: RpcServer) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
+
     lostConnection();
     statusBarItem.show();
 
-    // TODO: 依据实际状态来设置状态栏
-    setTimeout(connecting, 3000);
-
-    setTimeout(ready, 6000);
+    rpcServer.onStatusChange((status) => {
+        console.log('ng-helper status:', status);
+        if (status === RpcServerStatus.Ready) {
+            ready();
+        } else if (status === RpcServerStatus.Disconnected) {
+            lostConnection();
+        }
+    });
 
     return statusBarItem;
 
@@ -24,9 +31,9 @@ export function ngHelperStatusBar() {
         statusBarItem.color = '#FFF';
     }
 
-    function connecting() {
-        statusBarItem.text = '$(sync~spin) Connecting';
-        statusBarItem.tooltip = '[ng-helper] Connecting to tsserver...';
-        statusBarItem.color = '#FFF';
-    }
+    // function connecting() {
+    //     statusBarItem.text = '$(sync~spin) Connecting';
+    //     statusBarItem.tooltip = '[ng-helper] Connecting to tsserver...';
+    //     statusBarItem.color = '#FFF';
+    // }
 }
