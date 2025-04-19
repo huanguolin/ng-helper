@@ -10,6 +10,7 @@ import { supportInlineHtml } from './features/inlineHtml';
 import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
 import { registerStatusBar } from './features/statusBar';
+import { RpcServer } from './service/rpcServer';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -23,11 +24,15 @@ export async function activate(context: ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('======= "ng-helper" is now active ========');
 
+    const rpcServer = new RpcServer(config.port + 1);
+    console.log('rpcServer listen on port: ', config.port + 1);
+    context.subscriptions.push(rpcServer);
+
     // command
     registerCommand(context, config);
 
     // status bar
-    registerStatusBar(context);
+    registerStatusBar(context, rpcServer);
 
     // completion
     registerCompletion(context, config.port);

@@ -388,4 +388,8 @@ export function isDtsFile(fileName: string): boolean {
     return fileName.endsWith('.d.ts');
 }
 
+export function isJsOrTsFile(fileName: string): boolean {
+    return fileName.endsWith('.js') || fileName.endsWith('.ts');
+}
+
 export const INDENT = SPACE.repeat(4);

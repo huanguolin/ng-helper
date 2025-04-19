@@ -1,20 +1,23 @@
 import * as http from 'http';
 
-import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration, type NgRequest } from '@ng-helper/shared/lib/plugin';
 import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
 
 import { CorePluginContext, GetCoreContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from '../type';
 import { buildLogger } from '../utils/log';
+import { isJsOrTsFile } from '../utils/ng';
 
 import { configApi } from './configApi';
 import { buildCache, type NgCache } from './ngCache';
+import { RpcClient } from './rpcClient';
 import { getCtxOfCoreCtx } from './utils';
 
 export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
+    const _rpcClient = new RpcClient(_resolveCtx);
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
 
@@ -31,6 +34,10 @@ function createNgHelperServer(): NgHelperServer {
         getCache,
     };
 
+    function _resolveCtx(ngRequest: NgRequest): CorePluginContext | PluginContext | undefined {
+        return isJsOrTsFile(ngRequest.fileName) ? getContext(ngRequest.fileName) : getCoreContext(ngRequest.fileName);
+    }
+
     function isExtensionActivated() {
         return !!_config?.port;
     }
@@ -43,6 +50,7 @@ function createNgHelperServer(): NgHelperServer {
         if (_config?.port !== cfg.port && cfg.port) {
             _httpServer?.close();
             _httpServer = _express.listen(cfg.port);
+            _rpcClient.updateNgConfig(cfg.port + 1);
         }
 
         _config = cfg;
@@ -90,6 +98,7 @@ function createNgHelperServer(): NgHelperServer {
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {
                     _httpServer?.close();
+                    _rpcClient.dispose();
                     initLogger.info('close http server.');
                 }
             }
