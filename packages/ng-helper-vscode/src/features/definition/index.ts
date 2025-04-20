@@ -21,18 +21,12 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import {
-    getComponentNameOrAttrNameDefinitionApi,
-    getComponentTypeDefinitionApi,
-    getControllerTypeDefinitionApi,
-    getDirectiveDefinitionApi,
-    getFilterNameDefinitionApi,
-} from '../../service/api';
+import type { TsService } from '../../service/tsService';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {
-    checkServiceAndGetScriptFilePath,
     getControllerNameInfo,
+    getCorrespondingScriptFileName,
     isBuiltinFilter,
     isComponentHtml,
     isComponentTagName,
@@ -41,7 +35,7 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
-export function registerDefinition(context: ExtensionContext, port: number): void {
+export function registerDefinition(context: ExtensionContext, tsService: TsService): void {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
             async provideDefinition(
@@ -71,14 +65,14 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                 );
                             case 'tagName':
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                 );
 
@@ -88,7 +82,7 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
                                     document,
                                     position,
                                     cursorAtInfo,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                 );
                         }
@@ -103,28 +97,26 @@ export function registerDefinition(context: ExtensionContext, port: number): voi
 async function handleTagNameOrAttrName(
     cursorAtInfo: CursorAtTagNameInfo | CursorAtAttrNameInfo,
     document: TextDocument,
-    port: number,
-    token: CancellationToken,
+    tsService: TsService,
+    cancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
-        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+        const scriptFilePath = await getCorrespondingScriptFileName(document);
         if (!scriptFilePath) {
             return;
         }
 
         if (isComponentTagName(cursorAtInfo.tagName)) {
-            const definitionInfo = await getComponentNameOrAttrNameDefinitionApi({
-                port,
-                vscodeCancelToken: token,
-                info: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
+            const definitionInfo = await tsService.getComponentNameOrAttrNameDefinitionApi({
+                cancelToken,
+                params: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
             });
             return await buildDefinition(definitionInfo);
         } else if (cursorAtInfo.type === 'attrName') {
             const cursorAtAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
-            const definitionInfo = await getDirectiveDefinitionApi({
-                port,
-                vscodeCancelToken: token,
-                info: {
+            const definitionInfo = await tsService.getDirectiveDefinitionApi({
+                cancelToken,
+                params: {
                     fileName: scriptFilePath,
                     attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
                     cursorAtAttrName,
@@ -139,8 +131,8 @@ async function handleTemplateOrAttrValue(
     document: TextDocument,
     position: Position,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    port: number,
-    vscodeCancelToken: CancellationToken,
+    tsService: TsService,
+    cancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
@@ -150,28 +142,25 @@ async function handleTemplateOrAttrValue(
         type: 'definition',
         document,
         cursorAtInfo,
-        port,
         onHoverFilterName: (filterName, scriptFilePath) =>
             handleFilterName({
-                port,
-                vscodeCancelToken,
+                tsService,
+                cancelToken: cancelToken,
                 filterName,
                 scriptFilePath,
             }),
         onHoverType: async (scriptFilePath, contextString, cursorAt) => {
             if (isComponentHtml(document)) {
-                return await getComponentTypeDefinitionApi({
-                    port,
-                    vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt },
+                return await tsService.getComponentTypeDefinitionApi({
+                    cancelToken,
+                    params: { fileName: scriptFilePath, contextString, cursorAt },
                 });
             }
             const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
             if (ctrlInfo) {
-                return await getControllerTypeDefinitionApi({
-                    port,
-                    vscodeCancelToken: vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
+                return await tsService.getControllerTypeDefinitionApi({
+                    cancelToken,
+                    params: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
                 });
             }
         },
@@ -186,21 +175,20 @@ async function handleTemplateOrAttrValue(
 async function handleFilterName({
     filterName,
     scriptFilePath,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     filterName: string;
     scriptFilePath?: string;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }): Promise<NgDefinitionInfo | undefined> {
     if (isBuiltinFilter(filterName)) {
         return;
     } else if (scriptFilePath) {
-        return await getFilterNameDefinitionApi({
-            port,
-            vscodeCancelToken,
-            info: { fileName: scriptFilePath, filterName },
+        return await tsService.getFilterNameDefinitionApi({
+            cancelToken,
+            params: { fileName: scriptFilePath, filterName },
         });
     }
 }

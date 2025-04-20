@@ -2,7 +2,7 @@ import type { InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
 import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
-import { configTsPluginConfiguration } from './service/config';
+import { configTsPluginConfiguration } from './service/configTsPlugin';
 import { getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt } from './utils';
 
 export async function activateExt(): Promise<NgHelperConfigWithPort | undefined> {

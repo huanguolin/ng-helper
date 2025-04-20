@@ -6,9 +6,10 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { CorePluginContext, GetCoreContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from '../type';
 import { buildLogger } from '../utils/log';
-import { isJsOrTsFile } from '../utils/ng';
 
+import { RpcRouter } from './RpcRouter';
 import { configApi } from './configApi';
+import { methodMapping } from './methodMapping';
 import { buildCache, type NgCache } from './ngCache';
 import { RpcClient } from './rpcClient';
 import { getCtxOfCoreCtx } from './utils';
@@ -17,7 +18,8 @@ export const ngHelperServer = createNgHelperServer();
 
 function createNgHelperServer(): NgHelperServer {
     const _express = initHttpServer();
-    const _rpcClient = new RpcClient(_resolveCtx);
+    const _rpcRequestHandler = new RpcRouter(_resolveCtx, methodMapping);
+    const _rpcClient = new RpcClient(_rpcRequestHandler);
     let _httpServer: http.Server | undefined;
     let _config: Partial<NgPluginConfiguration> | undefined;
 
@@ -34,8 +36,11 @@ function createNgHelperServer(): NgHelperServer {
         getCache,
     };
 
-    function _resolveCtx(ngRequest: NgRequest): CorePluginContext | PluginContext | undefined {
-        return isJsOrTsFile(ngRequest.fileName) ? getContext(ngRequest.fileName) : getCoreContext(ngRequest.fileName);
+    function _resolveCtx<T extends boolean>(
+        ngRequest: NgRequest,
+        isCoreCtx: T,
+    ): CorePluginContext | PluginContext | undefined {
+        return isCoreCtx ? getCoreContext(ngRequest.fileName) : getContext(ngRequest.fileName);
     }
 
     function isExtensionActivated() {

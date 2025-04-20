@@ -11,6 +11,7 @@ import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
 import { registerStatusBar } from './features/statusBar';
 import { RpcServer } from './service/rpcServer';
+import { TsService } from './service/tsService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -28,6 +29,8 @@ export async function activate(context: ExtensionContext) {
     console.log('rpcServer listen on port: ', config.port + 1);
     context.subscriptions.push(rpcServer);
 
+    const tsService = new TsService(rpcServer);
+
     // command
     registerCommand(context, config);
 
@@ -41,7 +44,7 @@ export async function activate(context: ExtensionContext) {
     registerHover(context, config.port);
 
     // definition
-    registerDefinition(context, config.port);
+    registerDefinition(context, tsService);
 
     // semantic
     registerSemantic(context, config.port);
