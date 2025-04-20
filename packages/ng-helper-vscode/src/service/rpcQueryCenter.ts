@@ -8,7 +8,7 @@ const TIMEOUT = 5000;
 export class RpcQueryCenter {
     private _id = 0;
     private _ws: WebSocket;
-    private _cbMap = new Map<string, (result: unknown) => void>();
+    private _cbMap = new Map<string, (result: string | undefined) => void>();
 
     constructor(ws: WebSocket) {
         this._ws = ws;
@@ -27,7 +27,7 @@ export class RpcQueryCenter {
                 const { requestId, success, result, error } = response.data;
                 const cb = this._cbMap.get(requestId);
                 if (cb) {
-                    cb(success ? result : undefined);
+                    cb(result);
                     this._cbMap.delete(requestId);
                 }
                 if (!success) {
@@ -52,33 +52,34 @@ export class RpcQueryCenter {
         });
         this._ws.send(rpcRequest);
 
-        cancelToken?.onCancellationRequested(() => {
-            this.removeCb(id);
-            console.log(`${apiName}() cancelled by vscode.`);
-        });
-
-        const result = await Promise.race([this.timeout(id), this.getQueryResult<TResult>(id)]);
+        const result = await Promise.race([this.timeoutOrCancel(id, cancelToken), this.getQueryResult<TResult>(id)]);
         return result;
     }
 
     private getQueryResult<TResult>(id: string): Promise<TResult> {
         return new Promise<TResult>((r) => {
-            this.addCb(id, (result: unknown) => {
-                r(result as TResult);
+            this.addCb(id, (result: string | undefined) => {
+                r((result ? JSON.parse(result) : undefined) as TResult);
             });
         });
     }
 
-    private timeout(id: string): Promise<undefined> {
-        return new Promise<undefined>((r) =>
-            setTimeout(() => {
+    private timeoutOrCancel(id: string, cancelToken?: CancellationToken): Promise<undefined> {
+        return new Promise<undefined>((_, reject) => {
+            const timeoutId = setTimeout(() => {
                 this.removeCb(id);
-                r(undefined);
-            }, TIMEOUT),
-        );
+                reject(new Error(`Rpc(#${id}) timeout(${TIMEOUT}ms)`));
+            }, TIMEOUT);
+            cancelToken?.onCancellationRequested(() => {
+                this.removeCb(id);
+                // 如果外面先取消，这里清除定时器，并直接 reject
+                clearTimeout(timeoutId);
+                reject(new Error(`Rpc(#${id}) query cancelled`));
+            });
+        });
     }
 
-    private addCb(id: string, cb: (result: unknown) => void) {
+    private addCb(id: string, cb: (result: string | undefined) => void) {
         this._cbMap.set(id, cb);
     }
 
