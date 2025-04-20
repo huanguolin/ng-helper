@@ -130,7 +130,6 @@ async function handleTemplateOrAttrValue(
         type: 'hover',
         document,
         cursorAtInfo,
-        port,
         onHoverFilterName: async (filterName, scriptFilePath) => {
             checkCancellation(vscodeCancelToken);
             return await handleFilterName({

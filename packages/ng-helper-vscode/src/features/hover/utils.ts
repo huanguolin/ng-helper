@@ -5,9 +5,9 @@ import type { TextDocument } from 'vscode';
 import {
     isComponentTagName,
     isNgBuiltinDirective,
-    checkServiceAndGetScriptFilePath,
     isNgUserCustomAttr,
     getContextString,
+    getCorrespondingScriptFileName,
 } from '../utils';
 
 type OnHoverFilterName<T> = (filterName: string, scriptFilePath?: string) => Promise<T | undefined>;
@@ -23,7 +23,6 @@ export async function onTypeHover<T>({
     type,
     document,
     cursorAtInfo,
-    port,
     onHoverFilterName,
     onHoverType,
     onHoverLocalType,
@@ -31,7 +30,6 @@ export async function onTypeHover<T>({
     type: 'hover' | 'definition';
     document: TextDocument;
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo;
-    port: number;
     onHoverFilterName: OnHoverFilterName<T>;
     onHoverType: OnHoverType<T>;
     onHoverLocalType?: OnHoverLocalType<T>;
@@ -55,7 +53,7 @@ export async function onTypeHover<T>({
         }
 
         if (isFilterName) {
-            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            const scriptFilePath = await getCorrespondingScriptFileName(document);
             return await onHoverFilterName(contextString.value, scriptFilePath);
         }
 
@@ -77,7 +75,7 @@ export async function onTypeHover<T>({
                 isNgBuiltinDirective(cursorAtInfo.attrName) ||
                 isNgUserCustomAttr(cursorAtInfo.attrName));
         if (isTemplateValue || isAttrValueAndCompletable) {
-            const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+            const scriptFilePath = await getCorrespondingScriptFileName(document);
             if (scriptFilePath) {
                 return await onHoverType(scriptFilePath, contextString.value, cursorAt, contextString.hoverPropName);
             }

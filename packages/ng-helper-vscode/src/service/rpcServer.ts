@@ -1,6 +1,11 @@
+import type { NgRequest } from '@ng-helper/shared/lib/plugin';
 import { parseRpcMessage, RPC_HEARTBEAT_INTERVAL, RpcServeType } from '@ng-helper/shared/lib/rpc';
-import { Disposable } from 'vscode';
+import { Disposable, type CancellationToken } from 'vscode';
 import WebSocket, { WebSocketServer } from 'ws';
+
+import { normalizePath } from '../utils';
+
+import { RpcQueryCenter } from './rpcQueryCenter';
 
 export enum RpcServerStatus {
     Disconnected = 0,
@@ -8,7 +13,7 @@ export enum RpcServerStatus {
     Ready = 2,
 }
 
-export interface Ws extends WebSocket {
+interface Ws extends WebSocket {
     serveType?: RpcServeType;
 }
 
@@ -16,11 +21,12 @@ export class RpcServer implements Disposable {
     private _wss: WebSocketServer;
     private _ws: Ws | null = null;
     private _isConnecting: boolean = false;
-    private _statusListener: ((status: RpcServerStatus) => void) | null = null;
+    private _statusListener?: (status: RpcServerStatus) => void;
     private _lastStatus?: RpcServerStatus;
+    private _rpcQueryCenter?: RpcQueryCenter;
 
-    constructor(private _port: number) {
-        this._wss = new WebSocketServer({ port: this._port });
+    constructor(port: number) {
+        this._wss = new WebSocketServer({ port });
         this.initServer();
     }
 
@@ -40,11 +46,30 @@ export class RpcServer implements Disposable {
         return RpcServerStatus.Disconnected;
     }
 
-    query() {
+    async query<TResult, TParams extends NgRequest = NgRequest>(
+        method: string,
+        params: TParams,
+        apiName: string,
+        cancelToken?: CancellationToken,
+    ): Promise<TResult | undefined> {
         if (this.status !== RpcServerStatus.Ready) {
-            throw new Error('TsService is not ready');
+            console.error('RpcServer is not ready, query failed.');
+            return;
         }
-        return this._ws;
+
+        params.fileName = normalizePath(params.fileName);
+
+        console.group(`[rpc] ${apiName}()`);
+        try {
+            console.debug(`${apiName}() request: `, params);
+            const result = await this._rpcQueryCenter?.query<TResult, TParams>(method, params, apiName, cancelToken);
+            console.debug(`${apiName}() result: `, result);
+            return result;
+        } catch (error) {
+            console.error(`${apiName}() failed: `, error);
+        } finally {
+            console.groupEnd();
+        }
     }
 
     dispose() {
@@ -82,6 +107,7 @@ export class RpcServer implements Disposable {
         this._ws?.terminate();
 
         this._ws = ws;
+        this.initOrUpdateRpcQueryCenter(ws);
         this.callStatusListener();
 
         this.handleWsHeartbeat(ws);
@@ -92,6 +118,14 @@ export class RpcServer implements Disposable {
         ws.on('close', () => {
             this.removeTargetWs();
         });
+    }
+
+    private initOrUpdateRpcQueryCenter(ws: Ws) {
+        if (this._rpcQueryCenter) {
+            this._rpcQueryCenter.updateWs(ws);
+        } else {
+            this._rpcQueryCenter = new RpcQueryCenter(ws);
+        }
     }
 
     private removeTargetWs() {

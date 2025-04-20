@@ -15,7 +15,7 @@ export interface RpcRequest {
 }
 
 export interface RpcError {
-    errorKey: 'NO_CONTEXT' | 'INTERNAL_ERROR';
+    errorKey: 'METHOD_NOT_FOUND' | 'PARSE_PARAMS_ERROR' | 'NO_CONTEXT' | 'INTERNAL_ERROR';
     errorMessage: string;
 }
 
