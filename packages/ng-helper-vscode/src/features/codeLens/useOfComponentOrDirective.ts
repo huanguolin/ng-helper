@@ -1,12 +1,14 @@
 import { kebabCase } from 'change-case';
 import { languages, TextDocument, CodeLens, Range } from 'vscode';
 
+import type { TsService } from '../../service/tsService';
+
 const STRING_REGEX = `(['"])(\\.|(?!\\1).)*?\\1`;
 const MATCH_DIRECTIVE = new RegExp(`\\.directive\\(\\s*${STRING_REGEX}`, 'g');
 const MATCH_COMPONENT = new RegExp(`\\.component\\(\\s*${STRING_REGEX}`, 'g');
 const MATCH_NAME = new RegExp(STRING_REGEX);
 
-export function searchUseOfComponentOrDirective(_: number) {
+export function searchUseOfComponentOrDirective(_tsService: TsService) {
     return languages.registerCodeLensProvider(['typescript', 'javascript'], {
         provideCodeLenses(document: TextDocument): CodeLens[] {
             const codeLenses: CodeLens[] = [];

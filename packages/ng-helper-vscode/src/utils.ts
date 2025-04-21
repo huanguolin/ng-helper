@@ -4,25 +4,6 @@ import { cursorAt } from '@ng-helper/shared/lib/cursorAt';
 import type { Cursor } from '@ng-helper/shared/lib/html';
 import { window, workspace, Uri, FileType, TextDocument, type Position } from 'vscode';
 
-import { checkNgHelperServerRunningApi } from './service/api';
-
-let tsRunning = false;
-export async function checkNgHelperServerRunning(filePath: string, port: number): Promise<boolean> {
-    if (tsRunning) {
-        return true;
-    }
-
-    tsRunning = await checkNgHelperServerRunningApi(port);
-    if (tsRunning) {
-        // Mark ts server running
-        tsRunning = true;
-        return true;
-    }
-
-    await triggerTsServerByProject(filePath);
-    return false;
-}
-
 export async function triggerTsServerByProject(filePath: string) {
     let scriptFilePath = filePath;
 

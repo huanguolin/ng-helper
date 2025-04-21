@@ -1,7 +1,7 @@
 import type { NgRequest } from '@ng-helper/shared/lib/plugin';
 import { parseRpcMessage, RPC_HEARTBEAT_INTERVAL, RpcServeType } from '@ng-helper/shared/lib/rpc';
 import { Disposable, type CancellationToken } from 'vscode';
-import WebSocket, { WebSocketServer } from 'ws';
+import WebSocket from 'ws';
 
 import { normalizePath } from '../utils';
 
@@ -18,7 +18,7 @@ interface Ws extends WebSocket {
 }
 
 export class RpcServer implements Disposable {
-    private _wss: WebSocketServer;
+    private _wss: WebSocket.Server;
     private _ws: Ws | null = null;
     private _isConnecting: boolean = false;
     private _statusListener?: (status: RpcServerStatus) => void;
@@ -26,7 +26,7 @@ export class RpcServer implements Disposable {
     private _rpcQueryCenter?: RpcQueryCenter;
 
     constructor(port: number) {
-        this._wss = new WebSocketServer({ port });
+        this._wss = new WebSocket.Server({ port });
         this.initServer();
     }
 

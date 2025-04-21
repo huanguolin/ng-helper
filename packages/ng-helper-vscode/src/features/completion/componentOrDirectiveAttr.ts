@@ -4,8 +4,7 @@ import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
 import { EXT_MARK } from '../../constants';
-import { getComponentAttrCompletionApi, getDirectiveCompletionApi } from '../../service/api';
-import { checkNgHelperServerRunning } from '../../utils';
+import type { TsService } from '../../service/tsService';
 import { getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -14,9 +13,9 @@ export async function componentOrDirectiveAttrCompletion({
     document,
     cursor,
     cursorAtInfo,
-    vscodeCancelToken,
+    cancelToken,
     context,
-    port,
+    tsService,
 }: CompletionParamObj<CursorAtStartTagInfo | CursorAtAttrNameInfo>) {
     // 属性补全触发方式有两种: 空格和输入字符。
     if (context.triggerCharacter === SPACE || typeof context.triggerCharacter === 'undefined') {
@@ -33,7 +32,7 @@ export async function componentOrDirectiveAttrCompletion({
                 document,
                 getControllerNameInfo(cursorAtInfo.context)?.controllerName,
             )) ?? document.fileName;
-        if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
+        if (!relatedScriptFile) {
             return;
         }
 
@@ -41,16 +40,16 @@ export async function componentOrDirectiveAttrCompletion({
             return await handleComponentAttr({
                 relatedScriptFile,
                 cursorAtInfo,
-                port,
-                vscodeCancelToken,
+                tsService,
+                cancelToken,
             });
         } else {
             return await handleDirectiveAttr({
                 relatedScriptFile,
                 cursorAtInfo,
                 cursor,
-                port,
-                vscodeCancelToken,
+                tsService,
+                cancelToken,
             });
         }
     }
@@ -59,18 +58,17 @@ export async function componentOrDirectiveAttrCompletion({
 async function handleComponentAttr({
     relatedScriptFile,
     cursorAtInfo,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }) {
-    let list = await getComponentAttrCompletionApi({
-        port,
-        info: { fileName: relatedScriptFile, componentName: camelCase(cursorAtInfo.tagName) },
-        vscodeCancelToken,
+    let list = await tsService.getComponentAttrCompletionApi({
+        params: { fileName: relatedScriptFile, componentName: camelCase(cursorAtInfo.tagName) },
+        cancelToken,
     });
     if (!list || !list.length) {
         return;
@@ -110,29 +108,28 @@ async function handleDirectiveAttr({
     relatedScriptFile,
     cursorAtInfo,
     cursor,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
     cursor: Cursor;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }) {
     const afterCursorAttrName =
         Object.entries(cursorAtInfo.attrLocations)
             .sort(([_a, locA], [_b, locB]) => locA.start - locB.start)
             .find(([_, loc]) => loc.start > cursor.at)?.[0] ?? '';
 
-    const list = await getDirectiveCompletionApi({
-        port,
-        info: {
+    const list = await tsService.getDirectiveCompletionApi({
+        params: {
             fileName: relatedScriptFile,
             attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
             afterCursorAttrName: camelCase(afterCursorAttrName),
             queryType: 'directiveAttr',
         },
-        vscodeCancelToken,
+        cancelToken,
     });
     if (!list || !list.length) {
         return;
