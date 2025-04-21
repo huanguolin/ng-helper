@@ -10,7 +10,7 @@ import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { Range, TextDocument, Uri, type Position } from 'vscode';
 
-import { checkNgHelperServerRunning, getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
+import { getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
 export function isInlinedHtml(document: TextDocument): boolean {
     const fileName = document.fileName;
@@ -157,19 +157,6 @@ export function getCursorAtChar(document: TextDocument, position: Position): str
 
 export function isComponentTagName(name: string): boolean {
     return name.includes('-') || !isHtmlTagName(name);
-}
-
-export async function checkServiceAndGetScriptFilePath(
-    document: TextDocument,
-    port: number,
-): Promise<string | undefined> {
-    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
-
-    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
-        return;
-    }
-
-    return scriptFilePath;
 }
 
 export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHoverInfo {

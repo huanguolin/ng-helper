@@ -1,5 +1,7 @@
 import { type ExtensionContext, languages, type TextDocument, type DocumentLink, type CancellationToken } from 'vscode';
 
+import type { TsService } from '../../service/tsService';
+
 import { findControllerNameLink, resolveControllerNameLink } from './controllerNameLink';
 import { findTemplateUrlLink, resolveTemplateUrlLink } from './templateUrlLink';
 
@@ -9,7 +11,7 @@ export type MyLink = DocumentLink & {
     url: string;
 };
 
-export function registerLink(context: ExtensionContext, port: number) {
+export function registerLink(context: ExtensionContext, tsService: TsService) {
     context.subscriptions.push(
         languages.registerDocumentLinkProvider(
             [
@@ -29,7 +31,7 @@ export function registerLink(context: ExtensionContext, port: number) {
                         case 'templateUrl':
                             return await resolveTemplateUrlLink(link);
                         case 'controllerName':
-                            return await resolveControllerNameLink(link, token, port);
+                            return await resolveControllerNameLink(link, token, tsService);
                     }
                 },
             },

@@ -1,6 +1,6 @@
 import { type TextDocument, Range, Uri, type CancellationToken } from 'vscode';
 
-import { getControllerNameDefinitionApi } from '../../service/api';
+import type { TsService } from '../../service/tsService';
 import { isFileExistsOnWorkspace } from '../../utils';
 
 import type { MyLink } from '.';
@@ -40,12 +40,11 @@ export function findControllerNameLink(text: string, document: TextDocument): My
 export async function resolveControllerNameLink(
     link: MyLink,
     token: CancellationToken,
-    port: number,
+    tsService: TsService,
 ): Promise<MyLink | undefined> {
-    const result = await getControllerNameDefinitionApi({
-        port,
-        vscodeCancelToken: token,
-        info: { fileName: link.fileName, controllerName: link.url },
+    const result = await tsService.getControllerNameDefinitionApi({
+        cancelToken: token,
+        params: { fileName: link.fileName, controllerName: link.url },
     });
 
     if (result && (await isFileExistsOnWorkspace(Uri.file(result.filePath)))) {

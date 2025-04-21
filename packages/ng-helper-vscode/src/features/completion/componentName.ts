@@ -6,8 +6,6 @@ import { CompletionItem, CompletionList, SnippetString } from 'vscode';
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import { getComponentNameCompletionApi } from '../../service/api';
-import { checkNgHelperServerRunning } from '../../utils';
 import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -15,9 +13,9 @@ import type { CompletionParamObj } from '.';
 export async function componentNameCompletion({
     document,
     cursorAtInfo,
-    vscodeCancelToken,
+    cancelToken,
     context,
-    port,
+    tsService,
 }: CompletionParamObj<CursorAtTextInfo>) {
     // working on: no triggerChar or triggerChar is '<'
     if (typeof context.triggerCharacter === 'undefined' || context.triggerCharacter === '<') {
@@ -30,22 +28,21 @@ export async function componentNameCompletion({
                 document,
                 getControllerNameInfo(cursorAtInfo.context)?.controllerName,
             )) ?? document.fileName;
-        if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
+        if (!relatedScriptFile) {
             return;
         }
 
-        checkCancellation(vscodeCancelToken);
+        checkCancellation(cancelToken);
 
-        let list = await getComponentNameCompletionApi({
-            port,
-            info: { fileName: relatedScriptFile },
-            vscodeCancelToken,
+        let list = await tsService.getComponentNameCompletionApi({
+            params: { fileName: relatedScriptFile },
+            cancelToken,
         });
         if (!list || !list.length) {
             return;
         }
 
-        checkCancellation(vscodeCancelToken);
+        checkCancellation(cancelToken);
 
         const currentComponentName = getComponentName(document);
         if (currentComponentName) {

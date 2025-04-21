@@ -4,8 +4,7 @@ import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } 
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import { getDirectiveCompletionApi } from '../../service/api';
-import { checkNgHelperServerRunning } from '../../utils';
+import type { TsService } from '../../service/tsService';
 import { getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -13,9 +12,9 @@ import type { CompletionParamObj } from '.';
 export async function customDirectiveNameCompletion({
     document,
     cursorAtInfo,
-    vscodeCancelToken,
+    cancelToken,
     context,
-    port,
+    tsService,
 }: CompletionParamObj<CursorAtAttrNameInfo>) {
     // 只走没有设置触发字符的那个分支。
     if (typeof context.triggerCharacter === 'undefined') {
@@ -24,17 +23,17 @@ export async function customDirectiveNameCompletion({
                 document,
                 getControllerNameInfo(cursorAtInfo.context)?.controllerName,
             )) ?? document.fileName;
-        if (!(await checkNgHelperServerRunning(relatedScriptFile, port))) {
+        if (!relatedScriptFile) {
             return;
         }
 
-        checkCancellation(vscodeCancelToken);
+        checkCancellation(cancelToken);
 
         return await handleDirectiveName({
             relatedScriptFile,
             cursorAtInfo,
-            port,
-            vscodeCancelToken,
+            tsService,
+            cancelToken,
         });
     }
 }
@@ -42,23 +41,22 @@ export async function customDirectiveNameCompletion({
 async function handleDirectiveName({
     relatedScriptFile,
     cursorAtInfo,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }) {
-    const list = await getDirectiveCompletionApi({
-        port,
-        info: {
+    const list = await tsService.getDirectiveCompletionApi({
+        params: {
             fileName: relatedScriptFile,
             attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
             afterCursorAttrName: '',
             queryType: 'directive',
         },
-        vscodeCancelToken,
+        cancelToken,
     });
     if (!list || !list.length) {
         return;

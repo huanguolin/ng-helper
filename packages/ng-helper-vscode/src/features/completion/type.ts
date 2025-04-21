@@ -15,13 +15,7 @@ import {
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import {
-    getComponentControllerAsApi,
-    getComponentTypeCompletionApi,
-    getControllerTypeCompletionApi,
-    getFilterNameCompletionApi,
-} from '../../service/api';
-import { checkNgHelperServerRunning } from '../../utils';
+import type { TsService } from '../../service/tsService';
 import {
     getContextString,
     getControllerNameInfo,
@@ -39,8 +33,8 @@ import type { CompletionParamObj } from '.';
 export async function templateOrAttrValueCompletion({
     document,
     position,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
     cursorAtInfo,
     context,
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo> & { position: Position }): Promise<
@@ -48,7 +42,7 @@ export async function templateOrAttrValueCompletion({
 > {
     const { type, value } = getContextString(cursorAtInfo);
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
     const isPropAccessTriggerChar = context.triggerCharacter === '.';
     const isUndefinedTriggerChar = typeof context.triggerCharacter === 'undefined';
@@ -58,15 +52,15 @@ export async function templateOrAttrValueCompletion({
             document,
             cursorAtInfo,
             contextString: value,
-            port,
-            vscodeCancelToken,
+            tsService,
+            cancelToken: cancelToken,
         });
     } else if (isUndefinedTriggerChar) {
         if (type === 'filterName') {
             return await getFilterNameCompletion({
                 document,
-                port,
-                vscodeCancelToken,
+                tsService,
+                cancelToken,
             });
         } else if (type === 'identifier') {
             // ctrl 输入第一个字符 c 后，便成为 'identifier' 状态。
@@ -76,8 +70,8 @@ export async function templateOrAttrValueCompletion({
                 const ctrlAsItem = await getComponentCtrlAsCompletion({
                     document,
                     cursorAtInfo,
-                    port,
-                    vscodeCancelToken,
+                    tsService,
+                    cancelToken,
                 });
                 if (ctrlAsItem) {
                     items.push(ctrlAsItem);
@@ -92,14 +86,14 @@ async function getTypeCompletion({
     document,
     cursorAtInfo,
     contextString,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
     contextString: string;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }) {
     const isComponent = isComponentHtml(document);
     const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
@@ -114,7 +108,7 @@ async function getTypeCompletion({
             isNgBuiltinDirective(cursorAtInfo.attrName) ||
             isNgUserCustomAttr(cursorAtInfo.attrName));
     if (isTemplateValue || isAttrValueAndCompletable) {
-        return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, port, vscodeCancelToken });
+        return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, tsService, cancelToken });
     }
 }
 
@@ -122,32 +116,30 @@ async function getTypeCompletionQuery({
     document,
     ctrlInfo,
     prefix,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     document: TextDocument;
     ctrlInfo?: NgCtrlInfo;
     prefix: string;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }) {
-    const scriptFilePath = (await getCorrespondingScriptFileName(document, ctrlInfo?.controllerName))!;
-    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
+    const scriptFilePath = await getCorrespondingScriptFileName(document, ctrlInfo?.controllerName);
+    if (!scriptFilePath) {
         return;
     }
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
     const res = ctrlInfo
-        ? await getControllerTypeCompletionApi({
-              vscodeCancelToken,
-              port,
-              info: { fileName: scriptFilePath, prefix, ...ctrlInfo },
+        ? await tsService.getControllerTypeCompletionApi({
+              cancelToken,
+              params: { fileName: scriptFilePath, prefix, ...ctrlInfo },
           })
-        : await getComponentTypeCompletionApi({
-              vscodeCancelToken,
-              port,
-              info: { fileName: scriptFilePath, prefix },
+        : await tsService.getComponentTypeCompletionApi({
+              cancelToken,
+              params: { fileName: scriptFilePath, prefix },
           });
     if (res) {
         return buildCompletionList(res);
@@ -192,23 +184,23 @@ function buildCompletionList(res: NgTypeInfo[]) {
 async function getComponentCtrlAsCompletion({
     document,
     cursorAtInfo,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }): Promise<CompletionItem | undefined> {
     let ctrlAs: string | undefined;
     if (cursorAtInfo.type === 'template') {
-        ctrlAs = await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, tsService, cancelToken);
     } else if (
         isComponentTagName(cursorAtInfo.tagName) ||
         isNgBuiltinDirective(cursorAtInfo.attrName) ||
         isNgUserCustomAttr(cursorAtInfo.attrName)
     ) {
-        ctrlAs = await getComponentControllerAsCompletion(document, port, vscodeCancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, tsService, cancelToken);
     }
 
     if (!ctrlAs) {
@@ -250,41 +242,42 @@ function buildLocalVarsCompletion(items: CompletionItem[], position: Position): 
 
 async function getComponentControllerAsCompletion(
     document: TextDocument,
-    port: number,
-    vscodeCancelToken: CancellationToken,
+    tsService: TsService,
+    cancelToken: CancellationToken,
 ): Promise<string | undefined> {
-    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
+    const scriptFilePath = await getCorrespondingScriptFileName(document);
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
-    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
+    if (!scriptFilePath) {
         return;
     }
 
-    checkCancellation(vscodeCancelToken);
-
-    return await getComponentControllerAsApi({ port, info: { fileName: scriptFilePath }, vscodeCancelToken });
+    return await tsService.getComponentControllerAsApi({
+        params: { fileName: scriptFilePath },
+        cancelToken,
+    });
 }
 
 async function getFilterNameCompletion({
     document,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     document: TextDocument;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }): Promise<CompletionList | undefined> {
     const builtinList = builtinFilterNameCompletion();
 
-    const scriptFilePath = (await getCorrespondingScriptFileName(document))!;
-    if (!(await checkNgHelperServerRunning(scriptFilePath, port))) {
+    const scriptFilePath = await getCorrespondingScriptFileName(document);
+    if (!scriptFilePath) {
         return new CompletionList(builtinList, false);
     }
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
-    const res = await getFilterNameCompletionApi({ port, vscodeCancelToken, info: { fileName: scriptFilePath } });
+    const res = await tsService.getFilterNameCompletionApi({ cancelToken, params: { fileName: scriptFilePath } });
     if (res) {
         const custom = buildCompletionList(res);
         return new CompletionList(builtinList.concat(custom.items), false);

@@ -11,6 +11,7 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
+import type { TsService } from '../../service/tsService';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -22,9 +23,9 @@ import { templateOrAttrValueCompletion } from './type';
 
 interface BaseCompletionParam {
     document: TextDocument;
-    vscodeCancelToken: CancellationToken;
+    cancelToken: CancellationToken;
     context: CompletionContext;
-    port: number;
+    tsService: TsService;
 }
 
 interface CompletionParam extends BaseCompletionParam {
@@ -39,7 +40,7 @@ export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefin
 
 export const triggerChars = [SPACE, '<', '.'];
 
-export function registerCompletion(context: ExtensionContext, port: number) {
+export function registerCompletion(context: ExtensionContext, tsService: TsService) {
     context.subscriptions.push(
         languages.registerCompletionItemProvider(
             'html',
@@ -52,9 +53,9 @@ export function registerCompletion(context: ExtensionContext, port: number) {
                             completion({
                                 document,
                                 position,
-                                vscodeCancelToken: cancelTokenSource.token,
+                                cancelToken: cancelTokenSource.token,
                                 context,
-                                port,
+                                tsService,
                             }),
                         { cancelTokenSource },
                     );
@@ -65,13 +66,13 @@ export function registerCompletion(context: ExtensionContext, port: number) {
     );
 }
 
-export async function completion({ document, position, vscodeCancelToken, context, port }: CompletionParam) {
+export async function completion({ document, position, cancelToken, context, tsService }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
-    const obj = { document, cursor, port, vscodeCancelToken, context };
+    const obj = { document, cursor, tsService, cancelToken, context };
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':

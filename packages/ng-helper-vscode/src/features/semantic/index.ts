@@ -19,29 +19,24 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import { listComponentsStringAttrs, listDirectivesStringAttrs } from '../../service/api';
+import type { TsService } from '../../service/tsService';
 import { intersect, uniq } from '../../utils';
-import {
-    checkServiceAndGetScriptFilePath,
-    getCorrespondingScriptFileName,
-    isComponentTagName,
-    isNgUserCustomAttr,
-} from '../utils';
+import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
 
-export function registerSemantic(context: ExtensionContext, port: number) {
+export function registerSemantic(context: ExtensionContext, tsService: TsService) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
             provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
-                const cancelTokenSource = createCancellationTokenSource(token);
+                const tokenSource = createCancellationTokenSource(token);
                 return withTimeoutAndMeasure(
                     'provideSemantic',
-                    () => htmlSemanticProvider({ document, port, token: cancelTokenSource.token }),
+                    () => htmlSemanticProvider({ document, tsService, token: tokenSource.token }),
                     {
-                        cancelTokenSource,
+                        cancelTokenSource: tokenSource,
                         silent: true,
                     },
                 );
@@ -55,14 +50,12 @@ export function registerSemantic(context: ExtensionContext, port: number) {
 
 export async function htmlSemanticProvider({
     document,
-    port,
+    tsService,
     token,
-    noServiceRunningCheck,
 }: {
     document: TextDocument;
-    port: number;
+    tsService: TsService;
     token: CancellationToken;
-    noServiceRunningCheck?: boolean;
 }) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
@@ -74,11 +67,9 @@ export async function htmlSemanticProvider({
 
     checkCancellation(token);
 
-    const scriptFilePath = noServiceRunningCheck
-        ? (await getCorrespondingScriptFileName(document))!
-        : await checkServiceAndGetScriptFilePath(document, port);
+    const scriptFilePath = await getCorrespondingScriptFileName(document);
     if (!scriptFilePath) {
-        console.warn('scriptFilePath not found or tsserver not running!');
+        console.warn('scriptFilePath not found!');
         return;
     }
 
@@ -94,10 +85,9 @@ export async function htmlSemanticProvider({
     if (componentNames.length) {
         promiseArr.push(
             (async () => {
-                const componentsStringAttrs = await listComponentsStringAttrs({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { componentNames, fileName: scriptFilePath },
+                const componentsStringAttrs = await tsService.listComponentsStringAttrs({
+                    cancelToken: token,
+                    params: { componentNames, fileName: scriptFilePath },
                 });
                 if (componentsStringAttrs) {
                     fillComponentSemanticTokens({
@@ -113,10 +103,9 @@ export async function htmlSemanticProvider({
     if (maybeDirectiveNames.length) {
         promiseArr.push(
             (async () => {
-                const directivesStringAttrs = await listDirectivesStringAttrs({
-                    port,
-                    vscodeCancelToken: token,
-                    info: { maybeDirectiveNames, fileName: scriptFilePath },
+                const directivesStringAttrs = await tsService.listDirectivesStringAttrs({
+                    cancelToken: token,
+                    params: { maybeDirectiveNames, fileName: scriptFilePath },
                 });
                 if (directivesStringAttrs) {
                     fillDirectiveSemanticTokens({

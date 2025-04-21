@@ -10,17 +10,11 @@ import { camelCase } from 'change-case';
 import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import {
-    getComponentNameOrAttrNameHoverApi,
-    getComponentTypeHoverApi,
-    getControllerTypeHoverApi,
-    getDirectiveHoverApi,
-    getFilterNameHoverApi,
-} from '../../service/api';
+import type { TsService } from '../../service/tsService';
 import { buildCursor } from '../../utils';
 import {
-    checkServiceAndGetScriptFilePath,
     getControllerNameInfo,
+    getCorrespondingScriptFileName,
     isBuiltinFilter,
     isComponentHtml,
     isComponentTagName,
@@ -32,7 +26,7 @@ import {
 import { genBuiltinFilterHoverInfo } from './builtin';
 import { onTypeHover } from './utils';
 
-export function registerHover(context: ExtensionContext, port: number): void {
+export function registerHover(context: ExtensionContext, tsService: TsService): void {
     context.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
@@ -56,14 +50,14 @@ export function registerHover(context: ExtensionContext, port: number): void {
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                 );
                             case 'tagName':
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                 );
 
@@ -72,7 +66,7 @@ export function registerHover(context: ExtensionContext, port: number): void {
                                 return await handleTemplateOrAttrValue(
                                     document,
                                     position,
-                                    port,
+                                    tsService,
                                     cancelTokenSource.token,
                                     cursorAtInfo,
                                 );
@@ -88,11 +82,11 @@ export function registerHover(context: ExtensionContext, port: number): void {
 async function handleTagNameOrAttrName(
     cursorAtInfo: CursorAtTagNameInfo | CursorAtAttrNameInfo,
     document: TextDocument,
-    port: number,
+    tsService: TsService,
     token: CancellationToken,
 ): Promise<Hover | undefined> {
     if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
-        const scriptFilePath = await checkServiceAndGetScriptFilePath(document, port);
+        const scriptFilePath = await getCorrespondingScriptFileName(document);
         if (!scriptFilePath) {
             return;
         }
@@ -100,7 +94,7 @@ async function handleTagNameOrAttrName(
         checkCancellation(token);
 
         const fn = isComponentTagName(cursorAtInfo.tagName) ? getComponentHover : getDirectiveHover;
-        return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), port, token);
+        return await fn(scriptFilePath, toNgElementHoverInfo(cursorAtInfo), tsService, token);
     }
     return undefined;
 }
@@ -116,46 +110,44 @@ function handleBuiltinDirective(cursorAtAttrName: string): Hover | undefined {
 async function handleTemplateOrAttrValue(
     document: TextDocument,
     position: Position,
-    port: number,
-    vscodeCancelToken: CancellationToken,
+    tsService: TsService,
+    cancelToken: CancellationToken,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
 ): Promise<Hover | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
     }
 
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
     const info = await onTypeHover({
         type: 'hover',
         document,
         cursorAtInfo,
         onHoverFilterName: async (filterName, scriptFilePath) => {
-            checkCancellation(vscodeCancelToken);
+            checkCancellation(cancelToken);
             return await handleFilterName({
-                port,
-                vscodeCancelToken,
+                tsService,
+                cancelToken: cancelToken,
                 filterName,
                 scriptFilePath,
             });
         },
         onHoverType: async (scriptFilePath, contextString, cursorAt, hoverPropName) => {
-            checkCancellation(vscodeCancelToken);
+            checkCancellation(cancelToken);
 
             if (isComponentHtml(document)) {
-                return await getComponentTypeHoverApi({
-                    port,
-                    vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName },
+                return await tsService.getComponentTypeHoverApi({
+                    cancelToken,
+                    params: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName },
                 });
             }
 
             const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
             if (ctrlInfo) {
-                return await getControllerTypeHoverApi({
-                    port,
-                    vscodeCancelToken: vscodeCancelToken,
-                    info: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName, ...ctrlInfo },
+                return await tsService.getControllerTypeHoverApi({
+                    cancelToken,
+                    params: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName, ...ctrlInfo },
                 });
             }
         },
@@ -170,16 +162,15 @@ async function handleTemplateOrAttrValue(
 async function getComponentHover(
     scriptFilePath: string,
     hoverInfo: NgElementHoverInfo,
-    port: number,
-    token: CancellationToken,
+    tsServer: TsService,
+    cancelToken: CancellationToken,
 ): Promise<Hover | undefined> {
-    checkCancellation(token);
+    checkCancellation(cancelToken);
 
     hoverInfo.attrNames = []; // component query currently doesn't need all attribute names
-    const res = await getComponentNameOrAttrNameHoverApi({
-        port,
-        vscodeCancelToken: token,
-        info: { fileName: scriptFilePath, hoverInfo: hoverInfo },
+    const res = await tsServer.getComponentNameOrAttrNameHoverApi({
+        cancelToken,
+        params: { fileName: scriptFilePath, hoverInfo: hoverInfo },
     });
     return buildHoverResult(res);
 }
@@ -187,16 +178,15 @@ async function getComponentHover(
 async function getDirectiveHover(
     scriptFilePath: string,
     hoverInfo: NgElementHoverInfo,
-    port: number,
-    token: CancellationToken,
+    tsService: TsService,
+    cancelToken: CancellationToken,
 ): Promise<Hover | undefined> {
-    checkCancellation(token);
+    checkCancellation(cancelToken);
 
     const cursorAtAttrName = hoverInfo.name;
-    const res = await getDirectiveHoverApi({
-        port,
-        vscodeCancelToken: token,
-        info: { fileName: scriptFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
+    const res = await tsService.getDirectiveHoverApi({
+        cancelToken,
+        params: { fileName: scriptFilePath, attrNames: hoverInfo.attrNames, cursorAtAttrName },
     });
     return buildHoverResult(res);
 }
@@ -204,23 +194,22 @@ async function getDirectiveHover(
 async function handleFilterName({
     filterName,
     scriptFilePath,
-    port,
-    vscodeCancelToken,
+    tsService,
+    cancelToken,
 }: {
     filterName: string;
     scriptFilePath?: string;
-    port: number;
-    vscodeCancelToken: CancellationToken;
+    tsService: TsService;
+    cancelToken: CancellationToken;
 }): Promise<NgHoverInfo | undefined> {
-    checkCancellation(vscodeCancelToken);
+    checkCancellation(cancelToken);
 
     if (isBuiltinFilter(filterName)) {
         return genBuiltinFilterHoverInfo(filterName);
     } else if (scriptFilePath) {
-        return await getFilterNameHoverApi({
-            port,
-            vscodeCancelToken,
-            info: { fileName: scriptFilePath, contextString: filterName, cursorAt: 0 },
+        return await tsService.getFilterNameHoverApi({
+            cancelToken,
+            params: { fileName: scriptFilePath, contextString: filterName, cursorAt: 0 },
         });
     }
 }

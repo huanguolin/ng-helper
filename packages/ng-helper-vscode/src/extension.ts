@@ -38,25 +38,25 @@ export async function activate(context: ExtensionContext) {
     registerStatusBar(context, rpcServer);
 
     // completion
-    registerCompletion(context, config.port);
+    registerCompletion(context, tsService);
 
     // hover
-    registerHover(context, config.port);
+    registerHover(context, tsService);
 
     // definition
     registerDefinition(context, tsService);
 
     // semantic
-    registerSemantic(context, config.port);
+    registerSemantic(context, tsService);
 
     // code lens
-    registerCodeLens(context, config.port);
+    registerCodeLens(context, tsService);
 
     // link
-    registerLink(context, config.port);
+    registerLink(context, tsService);
 
     // inline html
-    supportInlineHtml(context, config.port);
+    supportInlineHtml(context, tsService);
 }
 
 // This method is called when your extension is deactivated
