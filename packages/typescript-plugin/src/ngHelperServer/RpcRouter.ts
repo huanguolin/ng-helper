@@ -1,5 +1,5 @@
 import type { NgRequest } from '@ng-helper/shared/lib/plugin';
-import type { RpcRequest, RpcResponse } from '@ng-helper/shared/lib/rpc';
+import type { RpcErrorKey, RpcRequest, RpcResponse } from '@ng-helper/shared/lib/rpc';
 
 import type { CorePluginContext, PluginContext } from '../type';
 
@@ -22,11 +22,7 @@ export class RpcRouter implements RpcRequestHandler {
         try {
             return this.dispatchRequest(rpcRequest);
         } catch (error) {
-            return {
-                requestId: rpcRequest.id,
-                success: false,
-                error: { errorKey: 'INTERNAL_ERROR', errorMessage: JSON.stringify(error) },
-            };
+            return this.rpcError(rpcRequest.id, 'INTERNAL_ERROR', JSON.stringify(error));
         }
     }
 
@@ -35,29 +31,17 @@ export class RpcRouter implements RpcRequestHandler {
 
         const config = this.methodMapping[method];
         if (!config) {
-            return {
-                requestId: id,
-                success: false,
-                error: { errorKey: 'METHOD_NOT_FOUND', errorMessage: `Method not found: ${method}` },
-            };
+            return this.rpcError(id, 'METHOD_NOT_FOUND', `Method not found: ${method}`);
         }
 
         const ngRequest = this.parseNgRequest(params);
         if (!ngRequest) {
-            return {
-                requestId: id,
-                success: false,
-                error: { errorKey: 'PARSE_PARAMS_ERROR', errorMessage: `Failed to parse params: ${params}` },
-            };
+            return this.rpcError(id, 'PARSE_PARAMS_ERROR', `Failed to parse params: ${params}`);
         }
 
         const ctx = this.resolveCtx(ngRequest, config.isCoreCtx);
         if (!ctx) {
-            return {
-                requestId: id,
-                success: false,
-                error: { errorKey: 'NO_CONTEXT', errorMessage: `No context for "${method}"` },
-            };
+            return this.rpcError(id, 'NO_CONTEXT', `No context for "${method}"`);
         }
 
         ctx.logger.startGroup();
@@ -74,6 +58,17 @@ export class RpcRouter implements RpcRequestHandler {
         } finally {
             ctx.logger.endGroup();
         }
+    }
+
+    private rpcError(requestId: string, errorKey: RpcErrorKey, errorMessage: string): RpcResponse {
+        return {
+            requestId,
+            success: false,
+            error: {
+                errorKey,
+                errorMessage,
+            },
+        };
     }
 
     private parseNgRequest(params: string): NgRequest | null {

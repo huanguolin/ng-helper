@@ -2,7 +2,7 @@ export const RPC_HEARTBEAT_INTERVAL = 5000;
 
 export type RpcMessageType = 'request' | 'response' | 'auth';
 export type RpcServeType = 'srv' | 'hc';
-export type RpcErrorKey = 'NO_CONTEXT' | 'INTERNAL_ERROR';
+export type RpcErrorKey = 'METHOD_NOT_FOUND' | 'PARSE_PARAMS_ERROR' | 'NO_CONTEXT' | 'INTERNAL_ERROR';
 
 export interface RpcAuth {
     serveType: RpcServeType;
@@ -15,7 +15,7 @@ export interface RpcRequest {
 }
 
 export interface RpcError {
-    errorKey: 'METHOD_NOT_FOUND' | 'PARSE_PARAMS_ERROR' | 'NO_CONTEXT' | 'INTERNAL_ERROR';
+    errorKey: RpcErrorKey;
     errorMessage: string;
 }
 
