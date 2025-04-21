@@ -14,9 +14,14 @@ export interface RpcRequestHandler {
     handleRequest(rpcRequest: RpcRequest): RpcResponse;
 }
 
+const MIN_DELAY = 500;
+const MAX_DELAY = RPC_HEARTBEAT_INTERVAL;
+
 export class RpcClient {
     private _ws?: Ws;
     private _port?: number;
+    private _isDispose = false;
+    private _delay = MIN_DELAY;
 
     constructor(
         private _rpcRequestHandler: RpcRequestHandler,
@@ -32,6 +37,7 @@ export class RpcClient {
     }
 
     dispose(): void {
+        this._isDispose = true;
         this._ws?.terminate();
         this._ws = undefined;
     }
@@ -47,7 +53,7 @@ export class RpcClient {
 
         this._ws = new WebSocket(`ws://localhost:${port}`) as Ws;
         this.auth();
-        this.handleHeartbeat();
+        this.controlConnection();
         this.handleMessage();
         this.handleError();
     }
@@ -58,13 +64,31 @@ export class RpcClient {
         });
     }
 
-    private handleHeartbeat() {
+    private controlConnection() {
         this._ws?.once('open', () => this.heartbeat(this._ws!));
         this._ws?.on('ping', () => this.heartbeat(this._ws!));
         this._ws?.on('close', () => {
             clearTimeout(this._ws?.pingTimeout);
             this._ws = undefined;
+
+            if (this._isDispose) {
+                return;
+            }
+
+            this.reconnection();
         });
+    }
+
+    private reconnection() {
+        if (this._delay > MAX_DELAY) {
+            this._delay = MIN_DELAY;
+        } else {
+            this._delay *= 2;
+        }
+
+        setTimeout(() => {
+            this.createWs(this._port);
+        }, this._delay);
     }
 
     private heartbeat(ws: Ws) {
