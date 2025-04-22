@@ -3,7 +3,7 @@ import { packRpcMessage, parseRpcMessage } from '@ng-helper/shared/lib/rpc';
 import type { CancellationToken } from 'vscode';
 import type WebSocket from 'ws';
 
-const TIMEOUT = 5000;
+const RPC_TIMEOUT = 500;
 
 export class RpcQueryCenter {
     private _id = 0;
@@ -20,7 +20,6 @@ export class RpcQueryCenter {
         ws.on('message', (message) => {
             // eslint-disable-next-line @typescript-eslint/no-base-to-string
             const msgStr = message.toString('utf8');
-            console.log(`RpcQueryCenter: ws message: `, msgStr);
 
             const response = parseRpcMessage('response', msgStr);
             if (response) {
@@ -68,8 +67,8 @@ export class RpcQueryCenter {
         return new Promise<undefined>((_, reject) => {
             const timeoutId = setTimeout(() => {
                 this.removeCb(id);
-                reject(new Error(`Rpc(#${id}) timeout(${TIMEOUT}ms)`));
-            }, TIMEOUT);
+                reject(new Error(`Rpc(#${id}) timeout(${RPC_TIMEOUT}ms)`));
+            }, RPC_TIMEOUT);
             cancelToken?.onCancellationRequested(() => {
                 this.removeCb(id);
                 // 如果外面先取消，这里清除定时器，并直接 reject

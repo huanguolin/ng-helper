@@ -3,7 +3,8 @@ import { parseRpcMessage, RPC_HEARTBEAT_INTERVAL, RpcServeType } from '@ng-helpe
 import { Disposable, type CancellationToken } from 'vscode';
 import WebSocket from 'ws';
 
-import { normalizePath } from '../utils';
+import { log } from '../log';
+import { normalizePath, time } from '../utils';
 
 import { RpcQueryCenter } from './rpcQueryCenter';
 
@@ -53,7 +54,7 @@ export class RpcServer implements Disposable {
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
         if (this.status !== RpcServerStatus.Ready) {
-            console.error('RpcServer is not ready, query failed.');
+            this.logError('status is not ready, query failed.');
             return;
         }
 
@@ -61,12 +62,12 @@ export class RpcServer implements Disposable {
 
         console.group(`[rpc] ${apiName}()`);
         try {
-            console.debug(`${apiName}() request: `, params);
+            this.logInfo(`${apiName}() request: `, params);
             const result = await this._rpcQueryCenter?.query<TResult, TParams>(method, params, apiName, cancelToken);
-            console.debug(`${apiName}() result: `, result);
+            this.logInfo(`${apiName}() result: `, result);
             return result;
         } catch (error) {
-            console.error(`${apiName}() failed: `, error);
+            this.logError(`${apiName}() failed: `, error);
         } finally {
             console.groupEnd();
         }
@@ -78,22 +79,24 @@ export class RpcServer implements Disposable {
 
     private initServer() {
         this._wss.on('connection', (ws: Ws) => {
-            console.log(`RpcServer: new connect`);
+            this.logInfo(`new 'ws' connect`);
 
             ws.once('message', (message) => {
                 // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 const msgStr = message.toString('utf8');
-                console.log(`RpcServer: ws message: `, msgStr);
+                this.logDebug(`Received message: `, msgStr);
 
                 const msg = parseRpcMessage('auth', msgStr);
                 if (!msg || msg.data.serveType !== 'srv') {
-                    console.log(`RpcServer: invalid auth message: `, msgStr);
+                    this.logInfo(`invalid auth message: `, msgStr);
                     ws.terminate();
                     return;
                 }
+
                 // TODO: handle hc message
 
                 ws.serveType = msg.data.serveType;
+                this.logInfo(`new serve 'ws' to init`);
                 this.initTargetWs(ws);
             });
         });
@@ -113,7 +116,7 @@ export class RpcServer implements Disposable {
         this.handleWsHeartbeat(ws);
 
         ws.on('error', (error) => {
-            console.log(`RpcServer: ws error: `, error);
+            this.logError(error);
         });
         ws.on('close', () => {
             this.removeTargetWs();
@@ -122,13 +125,16 @@ export class RpcServer implements Disposable {
 
     private initOrUpdateRpcQueryCenter(ws: Ws) {
         if (this._rpcQueryCenter) {
+            this.logInfo(`update target ws`);
             this._rpcQueryCenter.updateWs(ws);
         } else {
+            this.logInfo(`new RpcQueryCenter`);
             this._rpcQueryCenter = new RpcQueryCenter(ws);
         }
     }
 
     private removeTargetWs() {
+        this.logInfo(`remove target ws`);
         this._ws?.terminate();
         this._ws = null;
         this.callStatusListener();
@@ -152,7 +158,7 @@ export class RpcServer implements Disposable {
 
         nextPing();
         ws.on('pong', () => {
-            console.log(`RpcServer: ws pong, `, Math.floor(Date.now() / 1000));
+            this.logDebug(`Received pong [${time()}]`);
             clearTimeout(pingTimeout);
             nextPing();
         });
@@ -160,10 +166,22 @@ export class RpcServer implements Disposable {
 
     private callStatusListener() {
         const currentStatus = this.status;
-        console.log(`TsService: callStatusListener() currentStatus: ${currentStatus}`);
         if (this._lastStatus !== currentStatus) {
+            this.logInfo(`Status changed from ${this._lastStatus} to ${currentStatus}`);
             this._statusListener?.(currentStatus);
         }
         this._lastStatus = currentStatus;
+    }
+
+    private logDebug(...args: unknown[]) {
+        log('D', `RpcServer(status: ${this.status}): `, ...args);
+    }
+
+    private logInfo(...args: unknown[]) {
+        log('I', `RpcServer(status: ${this.status}): `, ...args);
+    }
+
+    private logError(...args: unknown[]) {
+        log('E', `RpcServer(status: ${this.status}) Error: `, ...args);
     }
 }
