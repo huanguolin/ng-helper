@@ -191,3 +191,12 @@ export function intersect<T>(arr1: T[], arr2: T[]): T[] {
 export function buildCursor(document: TextDocument, position: Position, isHover = true): Cursor {
     return cursorAt(document.offsetAt(position), isHover);
 }
+
+export function time(): string {
+    const date = new Date();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${hours}:${minutes}:${seconds}`;
+}
