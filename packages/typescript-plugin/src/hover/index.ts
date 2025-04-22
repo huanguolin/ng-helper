@@ -10,9 +10,9 @@ import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getExpressionSyntaxNode } from '../completion/utils';
-import { ngHelperServer } from '../ngHelperServer';
-import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
-import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
+import { ngHelperTsService } from '../ngHelperTsService';
+import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
+import { getCtxOfCoreCtx } from '../ngHelperTsService/utils';
 import { CorePluginContext, PluginContext, type SyntaxNodeInfo } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { formatParameters, getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
@@ -39,7 +39,7 @@ export function getComponentNameOrAttrNameHoverInfo(
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getComponentNameOrAttrNameHoverInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${fileName}`);
         return;
@@ -233,7 +233,7 @@ export function getComponentTypeHoverInfo(
 ): NgHoverResponse {
     const logger = ctx.logger.prefix('getComponentHoverType()');
 
-    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
         return;
@@ -359,7 +359,7 @@ export function getControllerTypeHoverInfo(
 function getControllerNameHoverInfo(ctx: PluginContext, controllerName: string): NgHoverResponse {
     const logger = ctx.logger.prefix('getControllerNameHoverInfo()');
 
-    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
     if (!cache) {
         logger.info(`cache not found for file(${ctx.sourceFile.fileName})!`);
         return;
@@ -485,7 +485,7 @@ export function getDirectiveHoverInfo(
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getDirectiveHoverInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${fileName}`);
         return;
@@ -522,7 +522,7 @@ export function getFilterNameHoverInfo(
 ): NgHoverResponse {
     const logger = coreCtx.logger.prefix('getFilterNameHoverInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${fileName}`);
         return;

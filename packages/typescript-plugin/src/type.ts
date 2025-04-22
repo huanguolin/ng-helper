@@ -1,7 +1,7 @@
 import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { type NgCache } from './ngHelperServer/ngCache';
+import { type NgCache } from './ngHelperTsService/ngCache';
 
 export interface PluginCoreLogger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

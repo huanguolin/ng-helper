@@ -1,7 +1,7 @@
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import type { Parameter } from '../ngHelperServer/ngCache';
+import type { Parameter } from '../ngHelperTsService/ngCache';
 import { PluginContext, FileVersion, type CorePluginContext } from '../type';
 
 export function createTmpSourceFile(

@@ -2,7 +2,7 @@ import { SPACE } from '@ng-helper/shared/lib/html';
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import type { DirectiveInfo, Property } from '../ngHelperServer/ngCache';
+import type { DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
 import { PluginContext } from '../type';
 
 import { getPropValueByName, isTypeOfType } from './common';

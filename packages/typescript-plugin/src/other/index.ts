@@ -5,7 +5,7 @@ import type {
     NgListDirectivesStringAttrsRequest,
 } from '@ng-helper/shared/lib/plugin';
 
-import { ngHelperServer } from '../ngHelperServer';
+import { ngHelperTsService } from '../ngHelperTsService';
 import type { CorePluginContext } from '../type';
 import { getBindingName, isAttributeDirective, isStringBinding } from '../utils/ng';
 
@@ -16,7 +16,7 @@ export function getComponentsStringAttrsInfo(
 ): NgComponentsStringAttrsResponse {
     const logger = coreCtx.logger.prefix('getComponentsStringAttrsInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;
@@ -56,7 +56,7 @@ export function getDirectivesStringAttrsInfo(
 ): NgDirectivesStringAttrsResponse {
     const logger = coreCtx.logger.prefix('getDirectivesStringAttrsInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;

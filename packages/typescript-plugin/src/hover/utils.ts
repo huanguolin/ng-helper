@@ -1,7 +1,7 @@
 import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import type { NgCache, DirectiveInfo, ComponentInfo } from '../ngHelperServer/ngCache';
+import type { NgCache, DirectiveInfo, ComponentInfo } from '../ngHelperTsService/ngCache';
 import { PluginContext, SyntaxNodeInfoEx } from '../type';
 import { createTmpSourceFile, getNodeAtPosition, getSymbolDocument, typeToString } from '../utils/common';
 import { isElementDirective } from '../utils/ng';

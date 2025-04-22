@@ -1,7 +1,7 @@
 import type { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import { DirectiveInfo, type Property } from '../../src/ngHelperServer/ngCache';
+import { DirectiveInfo, type Property } from '../../src/ngHelperTsService/ngCache';
 import { PluginContext } from '../../src/type';
 import {
     isAttributeDirective,

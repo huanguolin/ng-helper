@@ -9,9 +9,9 @@ import {
     type NgRequest,
 } from '@ng-helper/shared/lib/plugin';
 
-import { ngHelperServer } from '../ngHelperServer';
-import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperServer/ngCache';
-import { getCtxOfCoreCtx } from '../ngHelperServer/utils';
+import { ngHelperTsService } from '../ngHelperTsService';
+import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
+import { getCtxOfCoreCtx } from '../ngHelperTsService/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';
 import { formatParameters, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
@@ -27,7 +27,7 @@ import { getExpressionSyntaxNode, getNodeType } from './utils';
 
 export function getComponentControllerAs(ctx: PluginContext): string | undefined {
     const logger = ctx.logger.prefix('getComponentControllerAs()');
-    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
     if (!cache) {
         logger.info(`cache not found for file(${ctx.sourceFile.fileName})!`);
         return;
@@ -60,7 +60,7 @@ export function getComponentTypeCompletions(ctx: PluginContext, prefix: string):
         return;
     }
 
-    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
         return;
@@ -157,7 +157,7 @@ export function getComponentNameCompletions(
 ): NgComponentNameCompletionResponse {
     const logger = coreCtx.logger.prefix('getComponentNameCompletions()');
 
-    const cache = ngHelperServer.getCache(filePath);
+    const cache = ngHelperTsService.getCache(filePath);
     if (!cache) {
         logger.info(`cache not found for file(${filePath})!`);
         return;
@@ -192,7 +192,7 @@ export function getComponentAttrCompletions(
 ): NgComponentAttrCompletionResponse {
     const logger = coreCtx.logger.prefix('getComponentAttrCompletions()');
 
-    const cache = ngHelperServer.getCache(filePath);
+    const cache = ngHelperTsService.getCache(filePath);
     if (!cache) {
         logger.info(`cache not found for file(${filePath})!`);
         return;
@@ -271,7 +271,7 @@ export function resolveCtrlCtx(
 ): PluginContext | undefined {
     const logger = coreCtx.logger.prefix('resolveCtrlCtx()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;
@@ -304,7 +304,7 @@ export function getDirectiveCompletions(
 ): NgDirectiveCompletionResponse {
     const logger = coreCtx.logger.prefix('getDirectiveCompletions()');
 
-    const cache = ngHelperServer.getCache(info.fileName);
+    const cache = ngHelperTsService.getCache(info.fileName);
     if (!cache) {
         logger.info(`cache not found for file(${info.fileName})!`);
         return;
@@ -362,7 +362,7 @@ function findClosestMatchedDirective(
 export function getFilterNameCompletions(coreCtx: CorePluginContext, info: NgRequest): NgTypeCompletionResponse {
     const logger = coreCtx.logger.prefix('getFilterNameCompletions()');
 
-    const cache = ngHelperServer.getCache(info.fileName);
+    const cache = ngHelperTsService.getCache(info.fileName);
     if (!cache) {
         logger.info(`cache not found for file(${info.fileName})!`);
         return;

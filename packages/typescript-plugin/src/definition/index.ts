@@ -15,8 +15,8 @@ import { resolveCtrlCtx } from '../completion';
 import { getExpressionSyntaxNode, getNodeType } from '../completion/utils';
 import { isAngularFile } from '../diagnostic/utils';
 import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
-import { ngHelperServer } from '../ngHelperServer';
-import type { ComponentInfo, DirectiveInfo } from '../ngHelperServer/ngCache';
+import { ngHelperTsService } from '../ngHelperTsService';
+import type { ComponentInfo, DirectiveInfo } from '../ngHelperTsService/ngCache';
 import { CorePluginContext, type PluginContext, type SyntaxNodeInfoEx } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getNodeAtPosition, typeToString } from '../utils/common';
@@ -34,7 +34,7 @@ export function getDirectiveDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = coreCtx.logger.prefix('getDirectiveDefinitionInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;
@@ -83,7 +83,7 @@ export function getComponentNameOrAttrNameDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = coreCtx.logger.prefix('getComponentNameOrAttrNameDefinitionInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;
@@ -144,7 +144,7 @@ export function getComponentTypeDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = ctx.logger.prefix('getComponentTypeDefinitionInfo()');
 
-    const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+    const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
         return;
@@ -334,7 +334,7 @@ export function getControllerNameDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = ctx.logger.prefix('getControllerNameDefinitionInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found for file(${fileName})!`);
         return;
@@ -358,7 +358,7 @@ export function getFilterNameDefinitionInfo(
 ): NgDefinitionResponse {
     const logger = coreCtx.logger.prefix('getFilterNameDefinitionInfo()');
 
-    const cache = ngHelperServer.getCache(fileName);
+    const cache = ngHelperTsService.getCache(fileName);
     if (!cache) {
         logger.info(`cache not found! fileName: ${fileName}`);
         return;
@@ -385,11 +385,11 @@ export function overrideGetDefinitionAtPosition({
 }) {
     proxy.getDefinitionAndBoundSpan = (fileName: string, position: number) => {
         const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position);
-        if (prior || isDtsFile(fileName) || !ngHelperServer.isExtensionActivated()) {
+        if (prior || isDtsFile(fileName) || !ngHelperTsService.isExtensionActivated()) {
             return prior;
         }
 
-        const ctx = ngHelperServer.getContext(fileName);
+        const ctx = ngHelperTsService.getContext(fileName);
         if (!ctx || !isAngularFile(ctx)) {
             return;
         }
@@ -407,7 +407,7 @@ function serviceDefinition(ctx: PluginContext, position: number): DefinitionInfo
     const node = getNodeAtPosition(ctx, position);
     if (node && isDependencyInjectionString(node)) {
         const serviceName = node.text;
-        const cache = ngHelperServer.getCache(ctx.sourceFile.fileName);
+        const cache = ngHelperTsService.getCache(ctx.sourceFile.fileName);
         if (!cache) {
             logger.info(`cache not found! fileName: ${ctx.sourceFile.fileName}`);
             return;
