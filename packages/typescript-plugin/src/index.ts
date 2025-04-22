@@ -3,14 +3,14 @@ import type ts from 'typescript/lib/tsserverlibrary';
 
 import { overrideGetDefinitionAtPosition } from './definition';
 import { overrideGetSemanticDiagnostics } from './diagnostic';
-import { ngHelperServer } from './ngHelperServer';
+import { ngHelperTsService } from './ngHelperTsService';
 
 export = init;
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }): ts.server.PluginModule {
     return {
         create(info: ts.server.PluginCreateInfo) {
-            const removeProject = ngHelperServer.addProject({ info, modules });
+            const removeProject = ngHelperTsService.addProject({ info, modules });
 
             // Set up decorator object
             const proxy: ts.LanguageService = buildProxy(info);
@@ -27,7 +27,7 @@ function init(modules: { typescript: typeof import('typescript/lib/tsserverlibra
             return proxy;
         },
         onConfigurationChanged(config: NgPluginConfiguration) {
-            ngHelperServer.updateConfig(config);
+            ngHelperTsService.updateConfig(config);
         },
     };
 }

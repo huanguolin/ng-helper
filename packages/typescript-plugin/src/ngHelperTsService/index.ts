@@ -1,26 +1,19 @@
-import * as http from 'http';
-
 import { NgPluginConfiguration, type NgRequest } from '@ng-helper/shared/lib/plugin';
-import express from 'express';
 import type ts from 'typescript/lib/tsserverlibrary';
 
 import { CorePluginContext, GetCoreContextFn, NgHelperServer, PluginContext, PluginLogger, ProjectInfo } from '../type';
 import { buildLogger } from '../utils/log';
 
 import { RpcRouter } from './RpcRouter';
-import { configApi } from './configApi';
 import { methodMapping } from './methodMapping';
 import { buildCache, type NgCache } from './ngCache';
 import { RpcClient } from './rpcClient';
 import { getCtxOfCoreCtx } from './utils';
 
-export const ngHelperServer = createNgHelperServer();
+export const ngHelperTsService = createNgHelperTsService();
 
-function createNgHelperServer(): NgHelperServer {
-    const _express = initHttpServer();
-    const _rpcRequestHandler = new RpcRouter(_resolveCtx, methodMapping);
-    const _rpcClient = new RpcClient(_rpcRequestHandler);
-    let _httpServer: http.Server | undefined;
+function createNgHelperTsService(): NgHelperServer {
+    const _rpcClient = new RpcClient(new RpcRouter(_resolveCtx, methodMapping));
     let _config: Partial<NgPluginConfiguration> | undefined;
 
     const _getContextMap = new Map<string, GetCoreContextFn>();
@@ -53,9 +46,7 @@ function createNgHelperServer(): NgHelperServer {
 
     function updateConfig(cfg: Partial<NgPluginConfiguration>) {
         if (_config?.port !== cfg.port && cfg.port) {
-            _httpServer?.close();
-            _httpServer = _express.listen(cfg.port);
-            _rpcClient.updateNgConfig(cfg.port + 1);
+            _rpcClient.updateNgConfig(cfg.port);
         }
 
         _config = cfg;
@@ -102,7 +93,6 @@ function createNgHelperServer(): NgHelperServer {
 
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {
-                    _httpServer?.close();
                     _rpcClient.dispose();
                     initLogger.info('close http server.');
                 }
@@ -179,13 +169,4 @@ function buildGetCoreContextFunc({ info, logger, modules }: ProjectInfo & { logg
             logger,
         };
     }
-}
-
-function initHttpServer() {
-    const app = express();
-    app.use(express.json());
-
-    configApi(app);
-
-    return app;
 }

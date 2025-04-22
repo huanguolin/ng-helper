@@ -2,7 +2,7 @@ import type { InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 import type tsserver from 'typescript/lib/tsserverlibrary';
 
-import { ngHelperServer } from '../ngHelperServer';
+import { ngHelperTsService } from '../ngHelperTsService';
 import { PluginContext } from '../type';
 import { getPropValueByName } from '../utils/common';
 import {
@@ -30,8 +30,8 @@ export function overrideGetSemanticDiagnostics({
 }) {
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
-        const checkMode = ngHelperServer.getConfig()?.injectionCheckMode;
-        if (!ngHelperServer.isExtensionActivated() || !isValidCheckMode(checkMode)) {
+        const checkMode = ngHelperTsService.getConfig()?.injectionCheckMode;
+        if (!ngHelperTsService.isExtensionActivated() || !isValidCheckMode(checkMode)) {
             return prior;
         }
 
@@ -39,7 +39,7 @@ export function overrideGetSemanticDiagnostics({
             return prior;
         }
 
-        const ctx = ngHelperServer.getContext(fileName);
+        const ctx = ngHelperTsService.getContext(fileName);
         if (!ctx || !isAngularFile(ctx)) {
             return prior;
         }

@@ -25,11 +25,10 @@ export async function activate(context: ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('======= "ng-helper" is now active ========');
 
-    const rpcServer = new RpcServer(config.port + 1);
-    console.log('rpcServer listen on port: ', config.port + 1);
-    context.subscriptions.push(rpcServer);
-
+    const rpcServer = new RpcServer(config.port);
     const tsService = new TsService(rpcServer);
+
+    context.subscriptions.push(rpcServer);
 
     // command
     registerCommand(context, config);
