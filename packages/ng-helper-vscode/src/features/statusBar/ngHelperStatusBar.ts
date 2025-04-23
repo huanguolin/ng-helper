@@ -1,6 +1,6 @@
 import { StatusBarAlignment, window } from 'vscode';
 
-import { RpcServerStatus, type RpcServer } from '../../service/rpcServer';
+import { type RpcServer } from '../../service/rpcServer';
 
 export function ngHelperStatusBar(rpcServer: RpcServer) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
@@ -8,11 +8,10 @@ export function ngHelperStatusBar(rpcServer: RpcServer) {
     lostConnection();
     statusBarItem.show();
 
-    rpcServer.onStatusChange((status) => {
-        console.log('ng-helper status:', status);
-        if (status === RpcServerStatus.Ready) {
+    rpcServer.onStatusChange((isReady) => {
+        if (isReady) {
             ready();
-        } else if (status === RpcServerStatus.Disconnected) {
+        } else {
             lostConnection();
         }
     });
