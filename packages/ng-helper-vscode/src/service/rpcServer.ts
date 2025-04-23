@@ -174,14 +174,14 @@ export class RpcServer implements Disposable {
     }
 
     private logDebug(...args: unknown[]) {
-        log('D', `RpcServer(status: ${this.status}): `, ...args);
+        log('D', `RpcServer(status: ${this.status}):`, ...args);
     }
 
     private logInfo(...args: unknown[]) {
-        log('I', `RpcServer(status: ${this.status}): `, ...args);
+        log('I', `RpcServer(status: ${this.status}):`, ...args);
     }
 
     private logError(...args: unknown[]) {
-        log('E', `RpcServer(status: ${this.status}) Error: `, ...args);
+        log('E', `RpcServer(status: ${this.status}) Error:`, ...args);
     }
 }

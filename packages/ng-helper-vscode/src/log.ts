@@ -1,6 +1,19 @@
+export type LogLevel = 'E' | 'I' | 'D'; // E: error, I: info, D: debug
+
+const levelWeightMap: Record<LogLevel, number> = {
+    E: 3,
+    I: 2,
+    D: 1,
+};
+
+const minLevel = 'I';
+
 export function log(level: 'E' | 'I' | 'D', ...rest: unknown[]) {
-    // TODO: 级别控制
-    const args = [`[${level}] `, ...rest];
+    if (levelWeightMap[level] < levelWeightMap[minLevel]) {
+        return;
+    }
+
+    const args = [`[${level}]`, ...rest];
     switch (level) {
         case 'D':
             console.debug(...args);
