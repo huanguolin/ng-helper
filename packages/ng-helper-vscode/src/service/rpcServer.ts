@@ -21,9 +21,8 @@ interface Ws extends WebSocket {
 export class RpcServer implements Disposable {
     private _wss: WebSocket.Server;
     private _ws: Ws | null = null;
-    private _isConnecting: boolean = false;
-    private _statusListener?: (status: RpcServerStatus) => void;
-    private _lastStatus?: RpcServerStatus;
+    private _lastIsReady = false;
+    private _statusListener?: (isReady: boolean) => void;
     private _rpcQueryCenter?: RpcQueryCenter;
 
     constructor(port: number) {
@@ -31,20 +30,14 @@ export class RpcServer implements Disposable {
         this.initServer();
     }
 
-    onStatusChange(listener: (status: RpcServerStatus) => void) {
+    onStatusChange(listener: (isReady: boolean) => void) {
         this._statusListener = listener;
         // 首次无条件调用
-        this._statusListener(this.status);
+        this._statusListener(this.isReady);
     }
 
-    get status() {
-        if (this._ws !== null) {
-            return RpcServerStatus.Ready;
-        }
-        if (this._isConnecting) {
-            return RpcServerStatus.Connecting;
-        }
-        return RpcServerStatus.Disconnected;
+    get isReady() {
+        return this._ws !== null;
     }
 
     async query<TResult, TParams extends NgRequest = NgRequest>(
@@ -53,8 +46,8 @@ export class RpcServer implements Disposable {
         apiName: string,
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
-        if (this.status !== RpcServerStatus.Ready) {
-            this.logError('status is not ready, query failed.');
+        if (!this.isReady) {
+            this.logError('is not ready, query failed.');
             return;
         }
 
@@ -165,23 +158,23 @@ export class RpcServer implements Disposable {
     }
 
     private callStatusListener() {
-        const currentStatus = this.status;
-        if (this._lastStatus !== currentStatus) {
-            this.logInfo(`Status changed from ${this._lastStatus} to ${currentStatus}`);
+        const currentStatus = this.isReady;
+        if (this._lastIsReady !== currentStatus) {
+            this.logInfo(`Status changed from ${this._lastIsReady} to ${currentStatus}`);
             this._statusListener?.(currentStatus);
         }
-        this._lastStatus = currentStatus;
+        this._lastIsReady = currentStatus;
     }
 
     private logDebug(...args: unknown[]) {
-        log('D', `RpcServer(status: ${this.status}):`, ...args);
+        log('D', `RpcServer(isReady: ${this.isReady}):`, ...args);
     }
 
     private logInfo(...args: unknown[]) {
-        log('I', `RpcServer(status: ${this.status}):`, ...args);
+        log('I', `RpcServer(isReady: ${this.isReady}):`, ...args);
     }
 
     private logError(...args: unknown[]) {
-        log('E', `RpcServer(status: ${this.status}) Error:`, ...args);
+        log('E', `RpcServer(isReady: ${this.isReady}) Error:`, ...args);
     }
 }
