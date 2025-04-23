@@ -7,25 +7,22 @@ import { log } from '../log';
 import { normalizePath, time } from '../utils';
 
 import { RpcQueryCenter } from './rpcQueryCenter';
-
-export enum RpcServerStatus {
-    Disconnected = 0,
-    Connecting = 1,
-    Ready = 2,
-}
+import type { TsServerTrigger } from './tsServerTrigger';
 
 interface Ws extends WebSocket {
     serveType?: RpcServeType;
 }
 
 export class RpcServer implements Disposable {
+    private _tsServerTrigger: TsServerTrigger;
     private _wss: WebSocket.Server;
     private _ws: Ws | null = null;
     private _lastIsReady = false;
     private _statusListener?: (isReady: boolean) => void;
     private _rpcQueryCenter?: RpcQueryCenter;
 
-    constructor(port: number) {
+    constructor(port: number, tsServerTrigger: TsServerTrigger) {
+        this._tsServerTrigger = tsServerTrigger;
         this._wss = new WebSocket.Server({ port });
         this.initServer();
     }
@@ -47,6 +44,7 @@ export class RpcServer implements Disposable {
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
         if (!this.isReady) {
+            this._tsServerTrigger.trigger(params.fileName, 'rpcServer');
             this.logError('is not ready, query failed.');
             return;
         }
@@ -122,7 +120,7 @@ export class RpcServer implements Disposable {
             this._rpcQueryCenter.updateWs(ws);
         } else {
             this.logInfo(`new RpcQueryCenter`);
-            this._rpcQueryCenter = new RpcQueryCenter(ws);
+            this._rpcQueryCenter = new RpcQueryCenter(ws, this._tsServerTrigger);
         }
     }
 
@@ -157,11 +155,16 @@ export class RpcServer implements Disposable {
         });
     }
 
+    // TODO: 把 _ws 赋值改成 get/set, 在 set 时调用 listener
     private callStatusListener() {
         const currentStatus = this.isReady;
         if (this._lastIsReady !== currentStatus) {
             this.logInfo(`Status changed from ${this._lastIsReady} to ${currentStatus}`);
             this._statusListener?.(currentStatus);
+
+            if (currentStatus) {
+                this._tsServerTrigger.setDone('rpcServer');
+            }
         }
         this._lastIsReady = currentStatus;
     }

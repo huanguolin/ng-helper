@@ -41,7 +41,7 @@ export class RpcRouter implements RpcRequestHandler {
 
         const ctx = this.resolveCtx(ngRequest, config.isCoreCtx);
         if (!ctx) {
-            return this.rpcError(id, 'NO_CONTEXT', `No context for "${method}"`);
+            return this.rpcError(id, 'NO_CONTEXT', `No context for "${method}"`, ngRequest.fileName);
         }
 
         ctx.logger.startGroup();
@@ -60,13 +60,14 @@ export class RpcRouter implements RpcRequestHandler {
         }
     }
 
-    private rpcError(requestId: string, errorKey: RpcErrorKey, errorMessage: string): RpcResponse {
+    private rpcError(requestId: string, errorKey: RpcErrorKey, errorMessage: string, data?: unknown): RpcResponse {
         return {
             requestId,
             success: false,
             error: {
                 errorKey,
                 errorMessage,
+                data,
             },
         };
     }

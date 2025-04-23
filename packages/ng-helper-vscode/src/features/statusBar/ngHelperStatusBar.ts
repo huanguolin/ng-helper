@@ -9,6 +9,7 @@ export function ngHelperStatusBar(rpcServer: RpcServer) {
     statusBarItem.show();
 
     rpcServer.onStatusChange((isReady) => {
+        // TODO: Connecting
         if (isReady) {
             ready();
         } else {
