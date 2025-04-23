@@ -3,15 +3,19 @@ import { packRpcMessage, parseRpcMessage } from '@ng-helper/shared/lib/rpc';
 import type { CancellationToken } from 'vscode';
 import type WebSocket from 'ws';
 
+import type { TsServerTrigger } from './tsServerTrigger';
+
 const RPC_TIMEOUT = 500;
 
 export class RpcQueryCenter {
-    private _id = 0;
     private _ws: WebSocket;
+    private _tsServerTrigger: TsServerTrigger;
+    private _id = 0;
     private _cbMap = new Map<string, (result: string | undefined) => void>();
 
-    constructor(ws: WebSocket) {
+    constructor(ws: WebSocket, tsServerTrigger: TsServerTrigger) {
         this._ws = ws;
+        this._tsServerTrigger = tsServerTrigger;
         this.updateWs(ws);
     }
 
@@ -30,8 +34,11 @@ export class RpcQueryCenter {
                     this._cbMap.delete(requestId);
                 }
                 if (!success) {
-                    // TODO: No context 处理
                     console.error(`RpcQueryCenter ws response error(${error?.errorKey}): ${error?.errorMessage}`);
+                    if (error?.errorKey === 'NO_CONTEXT') {
+                        // TODO: setDone for this
+                        this._tsServerTrigger.trigger(error.data as string, 'NO_CONTEXT');
+                    }
                 }
             }
         });

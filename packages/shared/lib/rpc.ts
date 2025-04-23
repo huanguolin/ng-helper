@@ -17,6 +17,7 @@ export interface RpcRequest {
 export interface RpcError {
     errorKey: RpcErrorKey;
     errorMessage: string;
+    data?: unknown;
 }
 
 export interface RpcResponse {
