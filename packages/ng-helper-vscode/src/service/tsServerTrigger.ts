@@ -8,36 +8,30 @@ export class TsServerTrigger {
     private _pluginStartAt: number;
     private _busy = false;
     private _timeout?: NodeJS.Timeout;
-    private _flag?: string;
 
     constructor(pluginStartAt: number) {
         this._pluginStartAt = pluginStartAt;
     }
 
-    trigger(filePath: string, flag: string) {
+    trigger(filePath: string) {
         if (this.busy) {
             return;
         }
 
-        this._flag = flag;
         this._busy = true;
+
+        const setDone = () => {
+            clearTimeout(this._timeout);
+            this._busy = false;
+        };
 
         // 至少在插件启动一段时间后才能去触发。
         this._timeout = setTimeout(() => {
-            this._timeout = setTimeout(() => {
-                this.setDone(flag);
-            }, AUTO_BACK_TIMEOUT);
+            this._timeout = setTimeout(setDone, AUTO_BACK_TIMEOUT);
             void triggerTsServerByProject(filePath);
         }, this.getDelay());
-    }
 
-    setDone(flag: string) {
-        if (flag !== this._flag) {
-            return;
-        }
-
-        clearTimeout(this._timeout);
-        this._busy = false;
+        return setDone;
     }
 
     get busy() {

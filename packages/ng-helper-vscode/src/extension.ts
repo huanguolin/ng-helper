@@ -11,7 +11,7 @@ import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
 import { registerStatusBar } from './features/statusBar';
 import { RpcServer } from './service/rpcServer';
-import { TsServerTrigger } from './service/tsServerTrigger';
+import { StateControl } from './service/stateControl';
 import { TsService } from './service/tsService';
 
 // This method is called when your extension is activated
@@ -27,8 +27,8 @@ export async function activate(context: ExtensionContext) {
     console.log('======= "ng-helper" is now active ========');
 
     const pluginStartAt = Date.now();
-    const tsServerTrigger = new TsServerTrigger(pluginStartAt);
-    const rpcServer = new RpcServer(config.port, tsServerTrigger);
+    const stateControl = new StateControl(pluginStartAt);
+    const rpcServer = new RpcServer(config.port, stateControl);
     const tsService = new TsService(rpcServer);
 
     context.subscriptions.push(rpcServer);
@@ -37,7 +37,7 @@ export async function activate(context: ExtensionContext) {
     registerCommand(context, config);
 
     // status bar
-    registerStatusBar(context, rpcServer);
+    registerStatusBar(context, stateControl);
 
     // completion
     registerCompletion(context, tsService);

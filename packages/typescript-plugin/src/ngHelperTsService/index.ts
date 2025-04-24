@@ -75,6 +75,7 @@ function createNgHelperTsService(): NgHelperServer {
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();
         initLogger.info('project root from ts server:', projectRoot);
+        _rpcClient.report('addProject', projectRoot);
 
         const getCoreContext = buildGetCoreContextFunc({ info, logger, modules });
 
@@ -90,6 +91,7 @@ function createNgHelperTsService(): NgHelperServer {
             if (projectRoot) {
                 _getContextMap.delete(projectRoot);
                 _cacheMap.delete(projectRoot);
+                _rpcClient.report('removeProject', projectRoot);
 
                 initLogger.info('dispose:', projectRoot);
                 if (_getContextMap.size === 0) {

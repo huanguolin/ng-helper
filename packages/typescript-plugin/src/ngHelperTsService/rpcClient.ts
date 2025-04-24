@@ -2,6 +2,7 @@ import {
     packRpcMessage,
     parseRpcMessage,
     RPC_HEARTBEAT_INTERVAL,
+    type RpcReportType,
     type RpcRequest,
     type RpcResponse,
 } from '@ng-helper/shared/lib/rpc';
@@ -36,6 +37,20 @@ export class RpcClient {
         this._port = port;
     }
 
+    report(type: RpcReportType, projectRoot: string) {
+        if (this._isDispose) {
+            return;
+        }
+
+        if (!this._ws) {
+            setTimeout(() => {
+                this.report(type, projectRoot);
+            }, this._delay + MIN_DELAY);
+        } else {
+            this._ws.send(packRpcMessage('report', { type, projectRoot }));
+        }
+    }
+
     dispose(): void {
         this._isDispose = true;
         this._ws?.terminate();
@@ -60,6 +75,7 @@ export class RpcClient {
 
     private auth() {
         this._ws?.once('open', () => {
+            this._delay = MIN_DELAY;
             this._ws?.send(packRpcMessage('auth', { serveType: 'srv' }));
         });
     }

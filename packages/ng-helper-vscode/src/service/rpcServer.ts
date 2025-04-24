@@ -7,34 +7,22 @@ import { log } from '../log';
 import { normalizePath, time } from '../utils';
 
 import { RpcQueryCenter } from './rpcQueryCenter';
-import type { TsServerTrigger } from './tsServerTrigger';
+import type { StateControl } from './stateControl';
 
 interface Ws extends WebSocket {
     serveType?: RpcServeType;
 }
 
 export class RpcServer implements Disposable {
-    private _tsServerTrigger: TsServerTrigger;
+    private _stateControl: StateControl;
     private _wss: WebSocket.Server;
     private _ws: Ws | null = null;
-    private _lastIsReady = false;
-    private _statusListener?: (isReady: boolean) => void;
     private _rpcQueryCenter?: RpcQueryCenter;
 
-    constructor(port: number, tsServerTrigger: TsServerTrigger) {
-        this._tsServerTrigger = tsServerTrigger;
+    constructor(port: number, stateControl: StateControl) {
+        this._stateControl = stateControl;
         this._wss = new WebSocket.Server({ port });
         this.initServer();
-    }
-
-    onStatusChange(listener: (isReady: boolean) => void) {
-        this._statusListener = listener;
-        // 首次无条件调用
-        this._statusListener(this.isReady);
-    }
-
-    get isReady() {
-        return this._ws !== null;
     }
 
     async query<TResult, TParams extends NgRequest = NgRequest>(
@@ -43,8 +31,8 @@ export class RpcServer implements Disposable {
         apiName: string,
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
-        if (!this.isReady) {
-            this._tsServerTrigger.trigger(params.fileName, 'rpcServer');
+        if (!this.ws) {
+            this._stateControl.updateState('disconnect');
             this.logError('is not ready, query failed.');
             return;
         }
@@ -66,6 +54,15 @@ export class RpcServer implements Disposable {
 
     dispose() {
         this._wss.close();
+    }
+
+    private get ws() {
+        return this._ws;
+    }
+
+    private set ws(v) {
+        this._ws = v;
+        this._stateControl.updateState(v ? 'connected' : 'disconnect');
     }
 
     private initServer() {
@@ -98,11 +95,10 @@ export class RpcServer implements Disposable {
     }
 
     private initTargetWs(ws: Ws) {
-        this._ws?.terminate();
+        this.ws?.terminate();
 
-        this._ws = ws;
+        this.ws = ws;
         this.initOrUpdateRpcQueryCenter(ws);
-        this.callStatusListener();
 
         this.handleWsHeartbeat(ws);
 
@@ -120,15 +116,14 @@ export class RpcServer implements Disposable {
             this._rpcQueryCenter.updateWs(ws);
         } else {
             this.logInfo(`new RpcQueryCenter`);
-            this._rpcQueryCenter = new RpcQueryCenter(ws, this._tsServerTrigger);
+            this._rpcQueryCenter = new RpcQueryCenter(ws, this._stateControl);
         }
     }
 
     private removeTargetWs() {
         this.logInfo(`remove target ws`);
-        this._ws?.terminate();
-        this._ws = null;
-        this.callStatusListener();
+        this.ws?.terminate();
+        this.ws = null;
     }
 
     private handleWsHeartbeat(ws: Ws): void {
@@ -155,29 +150,15 @@ export class RpcServer implements Disposable {
         });
     }
 
-    // TODO: 把 _ws 赋值改成 get/set, 在 set 时调用 listener
-    private callStatusListener() {
-        const currentStatus = this.isReady;
-        if (this._lastIsReady !== currentStatus) {
-            this.logInfo(`Status changed from ${this._lastIsReady} to ${currentStatus}`);
-            this._statusListener?.(currentStatus);
-
-            if (currentStatus) {
-                this._tsServerTrigger.setDone('rpcServer');
-            }
-        }
-        this._lastIsReady = currentStatus;
-    }
-
     private logDebug(...args: unknown[]) {
-        log('D', `RpcServer(isReady: ${this.isReady}):`, ...args);
+        log('D', `RpcServer:`, ...args);
     }
 
     private logInfo(...args: unknown[]) {
-        log('I', `RpcServer(isReady: ${this.isReady}):`, ...args);
+        log('I', `RpcServer:`, ...args);
     }
 
     private logError(...args: unknown[]) {
-        log('E', `RpcServer(isReady: ${this.isReady}) Error:`, ...args);
+        log('E', `RpcServer Error:`, ...args);
     }
 }
