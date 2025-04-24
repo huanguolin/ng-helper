@@ -1,25 +1,33 @@
 import { StatusBarAlignment, window } from 'vscode';
 
-import { type RpcServer } from '../../service/rpcServer';
+import type { StateControl } from '../../service/stateControl';
 
-export function ngHelperStatusBar(rpcServer: RpcServer) {
+export function ngHelperStatusBar(stateControl: StateControl) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
 
-    lostConnection();
+    disconnected();
     statusBarItem.show();
 
-    rpcServer.onStatusChange((isReady) => {
-        // TODO: Connecting
-        if (isReady) {
-            ready();
-        } else {
-            lostConnection();
+    stateControl.notifyStatusBar((status, _projectStateMap) => {
+        switch (status) {
+            case 'disconnect':
+                disconnected();
+                break;
+            case 'loading':
+                loading();
+                break;
+            case 'connected':
+                ready();
+                break;
+            default:
+                break;
         }
+        // TODO: update tooltip
     });
 
     return statusBarItem;
 
-    function lostConnection() {
+    function disconnected() {
         statusBarItem.text = '$(plug) Disconnect';
         statusBarItem.tooltip = '[ng-helper] Lost connection to tsserver.';
         statusBarItem.color = '#F00';
@@ -31,9 +39,9 @@ export function ngHelperStatusBar(rpcServer: RpcServer) {
         statusBarItem.color = '#FFF';
     }
 
-    // function connecting() {
-    //     statusBarItem.text = '$(sync~spin) Connecting';
-    //     statusBarItem.tooltip = '[ng-helper] Connecting to tsserver...';
-    //     statusBarItem.color = '#FFF';
-    // }
+    function loading() {
+        statusBarItem.text = '$(sync~spin) Loading';
+        statusBarItem.tooltip = '[ng-helper] Loading ...';
+        statusBarItem.color = '#FFF';
+    }
 }

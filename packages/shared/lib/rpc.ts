@@ -1,11 +1,17 @@
 export const RPC_HEARTBEAT_INTERVAL = 5000;
 
-export type RpcMessageType = 'request' | 'response' | 'auth';
+export type RpcMessageType = 'request' | 'response' | 'auth' | 'report';
 export type RpcServeType = 'srv' | 'hc';
 export type RpcErrorKey = 'METHOD_NOT_FOUND' | 'PARSE_PARAMS_ERROR' | 'NO_CONTEXT' | 'INTERNAL_ERROR';
+export type RpcReportType = 'addProject' | 'removeProject';
 
 export interface RpcAuth {
     serveType: RpcServeType;
+}
+
+export interface RpcReport {
+    type: RpcReportType;
+    projectRoot: string;
 }
 
 export interface RpcRequest {
@@ -35,11 +41,13 @@ export interface RpcPackMessage<TypeT extends RpcMessageType, DataT> {
 
 export type RpcData<T extends RpcMessageType> = T extends 'auth'
     ? RpcAuth
-    : T extends 'request'
-      ? RpcRequest
-      : T extends 'response'
-        ? RpcResponse
-        : never;
+    : T extends 'report'
+      ? RpcReport
+      : T extends 'request'
+        ? RpcRequest
+        : T extends 'response'
+          ? RpcResponse
+          : never;
 
 export type RpcMessage<T extends RpcMessageType> = RpcPackMessage<T, RpcData<T>>;
 
