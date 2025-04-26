@@ -1,6 +1,7 @@
 import { StatusBarAlignment, window } from 'vscode';
 
 import type { StateControl } from '../../service/stateControl';
+import { getLastFolderName } from '../../utils';
 
 export function ngHelperStatusBar(stateControl: StateControl) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
@@ -8,7 +9,7 @@ export function ngHelperStatusBar(stateControl: StateControl) {
     disconnected();
     statusBarItem.show();
 
-    stateControl.notifyStatusBar((status, _projectStateMap) => {
+    stateControl.notifyStatusBar((status, projectRoots) => {
         switch (status) {
             case 'disconnect':
                 disconnected();
@@ -17,12 +18,11 @@ export function ngHelperStatusBar(stateControl: StateControl) {
                 loading();
                 break;
             case 'connected':
-                ready();
+                ready(projectRoots);
                 break;
             default:
                 break;
         }
-        // TODO: update tooltip
     });
 
     return statusBarItem;
@@ -33,9 +33,10 @@ export function ngHelperStatusBar(stateControl: StateControl) {
         statusBarItem.color = '#F00';
     }
 
-    function ready() {
+    function ready(projectRoots: string[]) {
+        const projectNames = getProjectNames(projectRoots).join(', ');
         statusBarItem.text = '$(check) Ready';
-        statusBarItem.tooltip = '[ng-helper] Ready.';
+        statusBarItem.tooltip = `[ng-helper] Ready. (Projects: ${projectNames})`;
         statusBarItem.color = '#FFF';
     }
 
@@ -44,4 +45,8 @@ export function ngHelperStatusBar(stateControl: StateControl) {
         statusBarItem.tooltip = '[ng-helper] Loading ...';
         statusBarItem.color = '#FFF';
     }
+}
+
+function getProjectNames(projectRoots: string[]): string[] {
+    return projectRoots.map((p) => getLastFolderName(p));
 }
