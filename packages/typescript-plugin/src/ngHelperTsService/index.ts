@@ -13,7 +13,7 @@ import { getCtxOfCoreCtx } from './utils';
 export const ngHelperTsService = createNgHelperTsService();
 
 function createNgHelperTsService(): NgHelperServer {
-    const _rpcClient = new RpcClient(new RpcRouter(_resolveCtx, methodMapping));
+    const _rpcClient = new RpcClient(new RpcRouter(_resolveCtx, methodMapping, _log), _log);
     let _config: Partial<NgPluginConfiguration> | undefined;
 
     const _getContextMap = new Map<string, GetCoreContextFn>();
@@ -36,6 +36,17 @@ function createNgHelperTsService(): NgHelperServer {
         return isCoreCtx ? getCoreContext(ngRequest.fileName) : getContext(ngRequest.fileName);
     }
 
+    function _log(msg: string, ...info: unknown[]) {
+        // log record
+        if (_getContextMap.size > 0) {
+            const { value: getCoreContext } = _getContextMap.values().next() as {
+                value: GetCoreContextFn;
+                done: boolean;
+            };
+            getCoreContext()?.logger.info(msg, ...info);
+        }
+    }
+
     function isExtensionActivated() {
         return !!_config?.port;
     }
@@ -51,14 +62,7 @@ function createNgHelperTsService(): NgHelperServer {
 
         _config = cfg;
 
-        // log record
-        if (_getContextMap.size > 0) {
-            const { value: getCoreContext } = _getContextMap.values().next() as {
-                value: GetCoreContextFn;
-                done: boolean;
-            };
-            getCoreContext()?.logger.info('updateConfig(): config:', cfg);
-        }
+        _log('updateConfig(): config:', cfg);
     }
 
     function addProject(projectInfo: ProjectInfo): () => void {

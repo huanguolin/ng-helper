@@ -26,6 +26,7 @@ export class RpcQueryCenter {
             const msgStr = message.toString('utf8');
 
             const response = parseRpcMessage('response', msgStr);
+            console.log('response >>>', response, msgStr);
             if (response) {
                 const { requestId, success, result, error } = response.data;
                 const cb = this._cbMap.get(requestId);
