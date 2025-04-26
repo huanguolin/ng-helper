@@ -10,7 +10,8 @@ import WebSocket from 'ws';
 
 type Ws = WebSocket & { pingTimeout?: NodeJS.Timeout };
 
-export type ErrorHandler = (error: unknown) => void;
+export type Log = (msg: string, ...info: unknown[]) => void;
+
 export interface RpcRequestHandler {
     handleRequest(rpcRequest: RpcRequest): RpcResponse;
 }
@@ -26,7 +27,7 @@ export class RpcClient {
 
     constructor(
         private _rpcRequestHandler: RpcRequestHandler,
-        private _onError?: ErrorHandler,
+        private _log: Log,
     ) {}
 
     updateNgConfig(port?: number) {
@@ -42,12 +43,12 @@ export class RpcClient {
             return;
         }
 
-        if (!this._ws) {
+        if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+            this._ws.send(packRpcMessage('report', { type, projectRoot }));
+        } else {
             setTimeout(() => {
                 this.report(type, projectRoot);
-            }, this._delay + MIN_DELAY);
-        } else {
-            this._ws.send(packRpcMessage('report', { type, projectRoot }));
+            }, MIN_DELAY);
         }
     }
 
@@ -75,6 +76,8 @@ export class RpcClient {
 
     private auth() {
         this._ws?.once('open', () => {
+            this._log('[rpc client] Ws open.');
+
             this._delay = MIN_DELAY;
             this._ws?.send(packRpcMessage('auth', { serveType: 'srv' }));
         });
@@ -84,6 +87,8 @@ export class RpcClient {
         this._ws?.once('open', () => this.heartbeat(this._ws!));
         this._ws?.on('ping', () => this.heartbeat(this._ws!));
         this._ws?.on('close', () => {
+            this._log('[rpc client] Ws close.');
+
             clearTimeout(this._ws?.pingTimeout);
             this._ws = undefined;
 
@@ -101,6 +106,8 @@ export class RpcClient {
         } else {
             this._delay *= 2;
         }
+
+        this._log('[rpc client] Reconnection() delay:', this._delay);
 
         setTimeout(() => {
             this.createWs(this._port);
@@ -120,7 +127,7 @@ export class RpcClient {
     }
 
     private handleError() {
-        this._ws?.on('error', (error) => this._onError?.(error));
+        this._ws?.on('error', (error) => this._log('[rpc client] Ws error:', error));
     }
 
     private handleMessage() {
@@ -132,7 +139,7 @@ export class RpcClient {
                     this._ws?.send(packRpcMessage('response', rpcResponse));
                 }
             } catch (error) {
-                this._onError?.(error);
+                this._log('[rpc client] Handle request error:', error);
             }
         });
     }

@@ -3,7 +3,7 @@ import type { RpcErrorKey, RpcRequest, RpcResponse } from '@ng-helper/shared/lib
 
 import type { CorePluginContext, PluginContext } from '../type';
 
-import type { RpcRequestHandler } from './rpcClient';
+import type { Log, RpcRequestHandler } from './rpcClient';
 
 export type RpcMethodConfig = {
     isCoreCtx: boolean;
@@ -14,8 +14,9 @@ export type ResolveCtx = (ngRequest: NgRequest, isCoreCtx: boolean) => CorePlugi
 
 export class RpcRouter implements RpcRequestHandler {
     constructor(
-        private resolveCtx: ResolveCtx,
-        private methodMapping: Record<string, RpcMethodConfig>,
+        private _resolveCtx: ResolveCtx,
+        private _methodMapping: Record<string, RpcMethodConfig>,
+        private _log: Log,
     ) {}
 
     handleRequest(rpcRequest: RpcRequest): RpcResponse {
@@ -29,7 +30,7 @@ export class RpcRouter implements RpcRequestHandler {
     private dispatchRequest(rpcRequest: RpcRequest): RpcResponse {
         const { method, params, id } = rpcRequest;
 
-        const config = this.methodMapping[method];
+        const config = this._methodMapping[method];
         if (!config) {
             return this.rpcError(id, 'METHOD_NOT_FOUND', `Method not found: ${method}`);
         }
@@ -39,7 +40,7 @@ export class RpcRouter implements RpcRequestHandler {
             return this.rpcError(id, 'PARSE_PARAMS_ERROR', `Failed to parse params: ${params}`);
         }
 
-        const ctx = this.resolveCtx(ngRequest, config.isCoreCtx);
+        const ctx = this._resolveCtx(ngRequest, config.isCoreCtx);
         if (!ctx) {
             return this.rpcError(id, 'NO_CONTEXT', `No context for "${method}"`, ngRequest.fileName);
         }
@@ -61,7 +62,7 @@ export class RpcRouter implements RpcRequestHandler {
     }
 
     private rpcError(requestId: string, errorKey: RpcErrorKey, errorMessage: string, data?: unknown): RpcResponse {
-        return {
+        const result = {
             requestId,
             success: false,
             error: {
@@ -70,12 +71,17 @@ export class RpcRouter implements RpcRequestHandler {
                 data,
             },
         };
+
+        this._log('[rpc router] Send error message:', result);
+
+        return result;
     }
 
     private parseNgRequest(params: string): NgRequest | null {
         try {
             return JSON.parse(params) as NgRequest;
         } catch (error) {
+            this._log('[rpc router] parseNgRequest() error:', error);
             return null;
         }
     }
