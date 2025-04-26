@@ -32,7 +32,7 @@ export class RpcServer implements Disposable {
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
         if (!this.ws) {
-            this._stateControl.updateState('disconnect');
+            this._stateControl.updateState('canNotQuery', params.fileName);
             this.logError('is not ready, query failed.');
             return;
         }

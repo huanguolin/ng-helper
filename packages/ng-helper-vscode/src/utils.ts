@@ -1,4 +1,4 @@
-import { normalize } from 'node:path';
+import { basename, normalize, parse } from 'node:path';
 
 import { cursorAt } from '@ng-helper/shared/lib/cursorAt';
 import type { Cursor } from '@ng-helper/shared/lib/html';
@@ -199,4 +199,17 @@ export function time(): string {
     const seconds = String(date.getSeconds()).padStart(2, '0');
 
     return `${hours}:${minutes}:${seconds}`;
+}
+
+export function getLastFolderName(p: string): string {
+    const normalizedPath = normalize(p); // 标准化，比如去掉多余的斜杠
+    const parsed = parse(normalizedPath);
+
+    if (parsed.ext) {
+        // 如果有扩展名，说明是文件，返回上一级文件夹
+        return basename(parsed.dir);
+    } else {
+        // 如果是文件夹，直接返回最后一段
+        return basename(normalizedPath);
+    }
 }
