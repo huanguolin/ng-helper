@@ -26,10 +26,10 @@ export function setupChaiSnapshotPlugin() {
     );
 }
 
-export async function activate() {
+export async function activate(waitSeconds: number = 1) {
     // enable tsserver
     await vscode.window.showTextDocument(vscode.Uri.file(BAR_FOO_COMPONENT_TS_PATH), { preview: false });
-    await sleep(1000);
+    await sleep(1000 * waitSeconds);
 
     // show the document
     await vscode.window.showTextDocument(vscode.Uri.file(BAR_FOO_COMPONENT_HTML_PATH));

@@ -14,7 +14,11 @@ describe('Semantic', () => {
     setupChaiSnapshotPlugin();
 
     before(async () => {
-        await activate();
+        // 这里给 3s 延时，是因为：
+        // 1. 这个测试目前被排到第一个执行
+        // 2. 加上使用 ws，导致去查询 semantic 信息太早，而 tsserver 那边还没有准备好
+        // 所以查不到信息，最终导致测试失败
+        await activate(3);
     });
 
     it('html semantic', async () => {
