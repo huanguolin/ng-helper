@@ -109,7 +109,7 @@ export class SExpr implements INodeVisitor<string, Programs> {
             return `"${node.value}"`;
         }
         return Token.shouldHaveValue(node.literalTokenKind)
-            ? node.value ?? ''
+            ? (node.value ?? '')
             : Token.createEmpty(node.literalTokenKind).toString();
     }
 }
