@@ -28,20 +28,20 @@ export function ngHelperStatusBar(stateControl: StateControl) {
     return statusBarItem;
 
     function disconnected() {
-        statusBarItem.text = '$(plug) Disconnect';
+        statusBarItem.text = '$(plug) NgHelper';
         statusBarItem.tooltip = '[ng-helper] Lost connection to tsserver.';
         statusBarItem.color = '#F00';
     }
 
     function ready(projectRoots: string[]) {
         const projectNames = getProjectNames(projectRoots).join(', ');
-        statusBarItem.text = '$(check) Ready';
+        statusBarItem.text = '$(check) NgHelper';
         statusBarItem.tooltip = `[ng-helper] Ready. (Projects: ${projectNames})`;
         statusBarItem.color = '#FFF';
     }
 
     function loading() {
-        statusBarItem.text = '$(sync~spin) Loading';
+        statusBarItem.text = '$(sync~spin) NgHelper';
         statusBarItem.tooltip = '[ng-helper] Loading ...';
         statusBarItem.color = '#FFF';
     }
