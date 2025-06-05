@@ -8,6 +8,12 @@ const MAX_LOADING_TIME = 5000;
 // 至少启动3秒后才能去触发
 const BASE_START_TIME = 3000;
 
+/**
+ * 状态控制器: 主要是将 rpc 和 tsService 的状态转换为 vscode状态栏的状态。
+ *
+ * rpc 和 tsService 的状态见 {@link State}；
+ * 状态栏显示的状态见 {@link BarStatus}；
+ */
 export class StateControl {
     private _notifyStatusBar?: ListenForStatusBar;
     private _pluginStartAt: number;
@@ -22,16 +28,25 @@ export class StateControl {
     }
 
     updateState(state: State, path?: string) {
+        // 状态出现的顺序是:
+        // 1. 插件第一次启动：
+        // disconnect -> canNotQuery -> connected -> addProject
+        // 2. 插件启动后，打开新项目：
+        // -> noContext -> addProject
+        // 3. 插件启动后，关闭项目：
+        // -> removeProject
+        // 4. 插件启动后，断开连接：
+        // -> disconnect
         switch (state) {
             case 'disconnect':
                 this._isRpcServerReady = false;
                 break;
+            case 'canNotQuery':
+                this.triggerTsProjectLoading(path!, 'canNotQuery');
+                break;
             case 'connected':
                 this._isRpcServerReady = true;
                 this.closeLoading('canNotQuery');
-                break;
-            case 'canNotQuery':
-                this.triggerTsProjectLoading(path!, 'canNotQuery');
                 break;
             case 'noContext':
                 this.triggerTsProjectLoading(path!, path!);
