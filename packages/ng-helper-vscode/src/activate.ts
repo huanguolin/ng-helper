@@ -2,6 +2,7 @@ import type { InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
 import { Uri, commands, workspace } from 'vscode';
 
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
+import { logger } from './logger';
 import { configTsPluginConfiguration } from './service/configTsPlugin';
 import { getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt } from './utils';
 
@@ -42,7 +43,7 @@ export async function readConfig(): Promise<NgHelperConfig> {
         const userConfig = JSON.parse(jsonText || '{}') as NgHelperConfig;
         config = Object.assign(config, userConfig);
     } catch (error) {
-        console.error('ng-helper.json is not a valid JSON file: ', jsonText);
+        logger.logError('ng-helper.json is not a valid JSON file: ', jsonText);
     }
     return normalizeConfig(config);
 }

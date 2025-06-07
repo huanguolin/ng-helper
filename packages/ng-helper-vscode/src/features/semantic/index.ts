@@ -19,6 +19,7 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
+import { logger } from '../../logger';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { intersect, uniq } from '../../utils';
 import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
@@ -69,7 +70,7 @@ export async function htmlSemanticProvider({
 
     const scriptFilePath = await getCorrespondingScriptFileName(document);
     if (!scriptFilePath) {
-        console.warn('scriptFilePath not found!');
+        logger.logWarning('htmlSemanticProvider() "scriptFilePath" not found!');
         return;
     }
 

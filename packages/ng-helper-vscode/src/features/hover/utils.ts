@@ -2,6 +2,7 @@ import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/sha
 import type { MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import type { TextDocument } from 'vscode';
 
+import { logger } from '../../logger';
 import {
     isComponentTagName,
     isNgBuiltinDirective,
@@ -60,7 +61,7 @@ export async function onTypeHover<T>({
         // typeString 给 hover 用。
         // location 给 definition 用。
         if (onHoverLocalType && (type === 'hover' ? contextString.typeString : contextString.location)) {
-            console.log('onHoverLocalType: ', contextString);
+            logger.logInfo('onTypeHover(): onHoverLocalType: ', contextString);
             return onHoverLocalType(contextString);
         }
 

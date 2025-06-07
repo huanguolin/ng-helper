@@ -10,6 +10,7 @@ import { camelCase } from 'change-case';
 import fuzzysort from 'fuzzysort';
 import { Range, TextDocument, Uri, type Position } from 'vscode';
 
+import { logger } from '../logger';
 import { getScriptFiles, isFileExistsOnWorkspace, normalizePath } from '../utils';
 
 export function isInlinedHtml(document: TextDocument): boolean {
@@ -83,7 +84,7 @@ export async function getCorrespondingScriptFileName(
         const result = fuzzysort.go(searchKey, scriptFiles, { limit: 1 });
         if (result.length) {
             const scriptFilePath = result[0].target;
-            console.log('getCorrespondingTsFileName() fuzzy search result:', scriptFilePath);
+            logger.logInfo('getCorrespondingTsFileName() fuzzy search result:', scriptFilePath);
             return scriptFilePath;
         }
     }
