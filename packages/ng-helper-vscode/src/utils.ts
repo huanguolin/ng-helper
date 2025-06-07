@@ -81,6 +81,20 @@ export async function getFiles(
         predicate: options?.predicate,
         limit: options?.limit,
         recursive: true,
+        /**
+         * 这里要使用深度优先搜索（DFS）。为什么？
+         * 举一个实际 bug:
+         * cloud/client/xxx-biz 目录是某个业务的代码，如果切换的一个以前的分支，这个目录不存在，
+         * 编辑器中还显示的是 cloud/client/xxx-biz/y.html, 虽然这个文件已经被删除了。
+         * 但是在关掉该文件前，还是可以去做触发 ng-helper 查询 tsserver 信息的操作(如：hover ctrl)。
+         * 由于默认是广度优先搜索（BFS），会先去查找 cloud/client/xxx-biz/y.ts 文件，
+         * 由于文件不存在，会向父文件夹继续查找，这样很容易找到并返回项目下的一些工具配置文件(比如 .eslintrc.js)。
+         * 而这些文件并没有在 tsconfig.json 的项目配置范围内，那么最终得到的 projectRoot 会是
+         * vscode 打开的 ${workspace} 目录(即根目录)。
+         * 这样导致后续的任何文件都能归集到该项目下，导致 html 文件触发的 ng-helper 查询 tsserver 信息操作,
+         * 无法产生 'noContext' 状态, 从而无法调用 triggerTsServerByProject，使得 ng-helper 处于半瘫痪状态。
+         */
+        DFS: true,
     });
     if (files.length) {
         return files;
@@ -97,8 +111,17 @@ export async function listFiles(
         excludePaths?: string[];
         limit?: number;
         recursive?: boolean;
+        /**
+         * 是否使用深度优先搜索, 如果开启，则默认 recursive 为 true。
+         */
+        DFS?: boolean;
     },
 ): Promise<string[]> {
+    if (options.DFS) {
+        // DFS 开启时，recursive 默认是 true
+        options.recursive = true;
+    }
+
     const result: string[] = [];
 
     // 避免遍历 node_modules
@@ -114,32 +137,46 @@ export async function listFiles(
         return result;
     }
 
-    const subDirNames: string[] = [];
     const excludePaths = options.excludePaths?.map((path) => normalizePath(path)) ?? [];
-    for (const [name, fileType] of files) {
-        if (options.limit && result.length >= options.limit) {
-            break;
-        }
 
-        if (fileType === FileType.File) {
-            if (options.suffix && !options.suffix.some((suffix) => name.endsWith(suffix))) {
-                continue;
+    const subDirNames: string[] = [];
+    // DFS，则先找符合条件的子文件夹
+    if (options.DFS) {
+        const dirs = files.filter(
+            ([name, type]) =>
+                type === FileType.Directory && !excludePaths.some((path) => `${dirPath}/${name}`.startsWith(path)),
+        );
+        subDirNames.push(...dirs.map(([name]) => name));
+    }
+
+    // 如果没有子目录（这里包含了 DFS 找不到目录和非 DFS 初始 subDirNames 就是为空），就优先处理当前目录下的文件
+    if (!subDirNames.length) {
+        for (const [name, fileType] of files) {
+            if (options.limit && result.length >= options.limit) {
+                break;
             }
 
-            const filePath = `${dirPath}/${name}`;
-            if (options.predicate && !options.predicate(filePath)) {
-                continue;
-            }
+            if (fileType === FileType.File && (!options.DFS || !subDirNames.length)) {
+                if (options.suffix && !options.suffix.some((suffix) => name.endsWith(suffix))) {
+                    continue;
+                }
 
-            result.push(filePath);
-        } else if (options.recursive && fileType === FileType.Directory) {
-            if (options.excludePaths && excludePaths.some((path) => `${dirPath}/${name}`.startsWith(path))) {
-                continue;
+                const filePath = `${dirPath}/${name}`;
+                if (options.predicate && !options.predicate(filePath)) {
+                    continue;
+                }
+
+                result.push(filePath);
+            } else if (options.recursive && fileType === FileType.Directory) {
+                if (excludePaths.some((path) => `${dirPath}/${name}`.startsWith(path))) {
+                    continue;
+                }
+                subDirNames.push(name);
             }
-            subDirNames.push(name);
         }
     }
 
+    // 记住：DFS 开启时，recursive 默认是 true
     if (options.recursive && subDirNames.length) {
         for (const subDirName of subDirNames) {
             const subFiles = await listFiles(`${dirPath}/${subDirName}`, options);
