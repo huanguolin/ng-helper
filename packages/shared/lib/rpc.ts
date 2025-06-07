@@ -1,4 +1,4 @@
-export const RPC_HEARTBEAT_INTERVAL = 5000;
+export const RPC_HEARTBEAT_INTERVAL = 30000;
 
 export type RpcMessageType = 'request' | 'response' | 'auth' | 'report';
 export type RpcServeType = 'srv'; // 保留扩展可能性，当前只支持 'srv'
