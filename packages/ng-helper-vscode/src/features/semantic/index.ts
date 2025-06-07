@@ -19,14 +19,14 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { intersect, uniq } from '../../utils';
 import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
 
-export function registerSemantic(context: ExtensionContext, tsService: TsService) {
+export function registerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
@@ -34,7 +34,7 @@ export function registerSemantic(context: ExtensionContext, tsService: TsService
                 const tokenSource = createCancellationTokenSource(token);
                 return withTimeoutAndMeasure(
                     'provideSemantic',
-                    () => htmlSemanticProvider({ document, tsService, token: tokenSource.token }),
+                    () => htmlSemanticProvider({ document, rpcApi, token: tokenSource.token }),
                     {
                         cancelTokenSource: tokenSource,
                         silent: true,
@@ -50,11 +50,11 @@ export function registerSemantic(context: ExtensionContext, tsService: TsService
 
 export async function htmlSemanticProvider({
     document,
-    tsService,
+    rpcApi,
     token,
 }: {
     document: TextDocument;
-    tsService: TsService;
+    rpcApi: RpcApi;
     token: CancellationToken;
 }) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
@@ -85,7 +85,7 @@ export async function htmlSemanticProvider({
     if (componentNames.length) {
         promiseArr.push(
             (async () => {
-                const componentsStringAttrs = await tsService.listComponentsStringAttrs({
+                const componentsStringAttrs = await rpcApi.listComponentsStringAttrs({
                     cancelToken: token,
                     params: { componentNames, fileName: scriptFilePath },
                 });
@@ -103,7 +103,7 @@ export async function htmlSemanticProvider({
     if (maybeDirectiveNames.length) {
         promiseArr.push(
             (async () => {
-                const directivesStringAttrs = await tsService.listDirectivesStringAttrs({
+                const directivesStringAttrs = await rpcApi.listDirectivesStringAttrs({
                     cancelToken: token,
                     params: { maybeDirectiveNames, fileName: scriptFilePath },
                 });

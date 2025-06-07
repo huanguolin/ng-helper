@@ -1,7 +1,7 @@
 export const RPC_HEARTBEAT_INTERVAL = 5000;
 
 export type RpcMessageType = 'request' | 'response' | 'auth' | 'report';
-export type RpcServeType = 'srv' | 'hc';
+export type RpcServeType = 'srv'; // 保留扩展可能性，当前只支持 'srv'
 export type RpcErrorKey = 'METHOD_NOT_FOUND' | 'PARSE_PARAMS_ERROR' | 'NO_CONTEXT' | 'INTERNAL_ERROR';
 export type RpcReportType = 'addProject' | 'removeProject';
 

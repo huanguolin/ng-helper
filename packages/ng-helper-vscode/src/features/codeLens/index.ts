@@ -1,9 +1,9 @@
 import { ExtensionContext } from 'vscode';
 
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 
 import { searchUseOfComponentOrDirective } from './useOfComponentOrDirective';
 
-export function registerCodeLens(context: ExtensionContext, tsService: TsService) {
-    context.subscriptions.push(searchUseOfComponentOrDirective(tsService));
+export function registerCodeLens(context: ExtensionContext, rpcApi: RpcApi) {
+    context.subscriptions.push(searchUseOfComponentOrDirective(rpcApi));
 }

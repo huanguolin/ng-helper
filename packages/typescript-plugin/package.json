@@ -6,9 +6,9 @@
   "license": "MIT",
   "private": "true",
   "scripts": {
-    "compile": "yarn run tsc && yarn run lint && node esbuild.js --production",
-    "compile:e2e": "node esbuild.js",
-    "watch:esbuild": "node esbuild.js --watch",
+    "compile": "yarn run tsc && yarn run lint && node scripts/esbuild.js --production",
+    "compile:e2e": "node scripts/esbuild.js",
+    "watch:esbuild": "node scripts/esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint src --ext ts",
     "test": "jest",

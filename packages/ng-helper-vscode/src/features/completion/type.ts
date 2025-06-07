@@ -15,7 +15,7 @@ import {
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import {
     getContextString,
     getControllerNameInfo,
@@ -33,7 +33,7 @@ import type { CompletionParamObj } from '.';
 export async function templateOrAttrValueCompletion({
     document,
     position,
-    tsService,
+    rpcApi,
     cancelToken,
     cursorAtInfo,
     context,
@@ -52,14 +52,14 @@ export async function templateOrAttrValueCompletion({
             document,
             cursorAtInfo,
             contextString: value,
-            tsService,
+            rpcApi,
             cancelToken: cancelToken,
         });
     } else if (isUndefinedTriggerChar) {
         if (type === 'filterName') {
             return await getFilterNameCompletion({
                 document,
-                tsService,
+                rpcApi,
                 cancelToken,
             });
         } else if (type === 'identifier') {
@@ -70,7 +70,7 @@ export async function templateOrAttrValueCompletion({
                 const ctrlAsItem = await getComponentCtrlAsCompletion({
                     document,
                     cursorAtInfo,
-                    tsService,
+                    rpcApi,
                     cancelToken,
                 });
                 if (ctrlAsItem) {
@@ -86,13 +86,13 @@ async function getTypeCompletion({
     document,
     cursorAtInfo,
     contextString,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
     contextString: string;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }) {
     const isComponent = isComponentHtml(document);
@@ -108,7 +108,7 @@ async function getTypeCompletion({
             isNgBuiltinDirective(cursorAtInfo.attrName) ||
             isNgUserCustomAttr(cursorAtInfo.attrName));
     if (isTemplateValue || isAttrValueAndCompletable) {
-        return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, tsService, cancelToken });
+        return await getTypeCompletionQuery({ document, ctrlInfo, prefix: contextString, rpcApi, cancelToken });
     }
 }
 
@@ -116,13 +116,13 @@ async function getTypeCompletionQuery({
     document,
     ctrlInfo,
     prefix,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     document: TextDocument;
     ctrlInfo?: NgCtrlInfo;
     prefix: string;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }) {
     const scriptFilePath = await getCorrespondingScriptFileName(document, ctrlInfo?.controllerName);
@@ -133,11 +133,11 @@ async function getTypeCompletionQuery({
     checkCancellation(cancelToken);
 
     const res = ctrlInfo
-        ? await tsService.getControllerTypeCompletionApi({
+        ? await rpcApi.getControllerTypeCompletionApi({
               cancelToken,
               params: { fileName: scriptFilePath, prefix, ...ctrlInfo },
           })
-        : await tsService.getComponentTypeCompletionApi({
+        : await rpcApi.getComponentTypeCompletionApi({
               cancelToken,
               params: { fileName: scriptFilePath, prefix },
           });
@@ -184,23 +184,23 @@ function buildCompletionList(res: NgTypeInfo[]) {
 async function getComponentCtrlAsCompletion({
     document,
     cursorAtInfo,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }): Promise<CompletionItem | undefined> {
     let ctrlAs: string | undefined;
     if (cursorAtInfo.type === 'template') {
-        ctrlAs = await getComponentControllerAsCompletion(document, tsService, cancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, rpcApi, cancelToken);
     } else if (
         isComponentTagName(cursorAtInfo.tagName) ||
         isNgBuiltinDirective(cursorAtInfo.attrName) ||
         isNgUserCustomAttr(cursorAtInfo.attrName)
     ) {
-        ctrlAs = await getComponentControllerAsCompletion(document, tsService, cancelToken);
+        ctrlAs = await getComponentControllerAsCompletion(document, rpcApi, cancelToken);
     }
 
     if (!ctrlAs) {
@@ -242,7 +242,7 @@ function buildLocalVarsCompletion(items: CompletionItem[], position: Position): 
 
 async function getComponentControllerAsCompletion(
     document: TextDocument,
-    tsService: TsService,
+    rpcApi: RpcApi,
     cancelToken: CancellationToken,
 ): Promise<string | undefined> {
     const scriptFilePath = await getCorrespondingScriptFileName(document);
@@ -253,7 +253,7 @@ async function getComponentControllerAsCompletion(
         return;
     }
 
-    return await tsService.getComponentControllerAsApi({
+    return await rpcApi.getComponentControllerAsApi({
         params: { fileName: scriptFilePath },
         cancelToken,
     });
@@ -261,11 +261,11 @@ async function getComponentControllerAsCompletion(
 
 async function getFilterNameCompletion({
     document,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     document: TextDocument;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }): Promise<CompletionList | undefined> {
     const builtinList = builtinFilterNameCompletion();
@@ -277,7 +277,7 @@ async function getFilterNameCompletion({
 
     checkCancellation(cancelToken);
 
-    const res = await tsService.getFilterNameCompletionApi({ cancelToken, params: { fileName: scriptFilePath } });
+    const res = await rpcApi.getFilterNameCompletionApi({ cancelToken, params: { fileName: scriptFilePath } });
     if (res) {
         const custom = buildCompletionList(res);
         return new CompletionList(builtinList.concat(custom.items), false);

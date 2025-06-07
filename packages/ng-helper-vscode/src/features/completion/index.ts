@@ -11,7 +11,7 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -25,7 +25,7 @@ interface BaseCompletionParam {
     document: TextDocument;
     cancelToken: CancellationToken;
     context: CompletionContext;
-    tsService: TsService;
+    rpcApi: RpcApi;
 }
 
 interface CompletionParam extends BaseCompletionParam {
@@ -40,7 +40,7 @@ export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefin
 
 export const triggerChars = [SPACE, '<', '.'];
 
-export function registerCompletion(context: ExtensionContext, tsService: TsService) {
+export function registerCompletion(context: ExtensionContext, rpcApi: RpcApi) {
     context.subscriptions.push(
         languages.registerCompletionItemProvider(
             'html',
@@ -55,7 +55,7 @@ export function registerCompletion(context: ExtensionContext, tsService: TsServi
                                 position,
                                 cancelToken: cancelTokenSource.token,
                                 context,
-                                tsService,
+                                rpcApi,
                             }),
                         { cancelTokenSource },
                     );
@@ -66,13 +66,13 @@ export function registerCompletion(context: ExtensionContext, tsService: TsServi
     );
 }
 
-export async function completion({ document, position, cancelToken, context, tsService }: CompletionParam) {
+export async function completion({ document, position, cancelToken, context, rpcApi }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
     checkCancellation(cancelToken);
 
-    const obj = { document, cursor, tsService, cancelToken, context };
+    const obj = { document, cursor, rpcApi, cancelToken, context };
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':

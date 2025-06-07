@@ -27,18 +27,18 @@ import {
 } from '@ng-helper/shared/lib/plugin';
 import type { CancellationToken } from 'vscode';
 
-import type { RpcServer } from './rpcServer';
+import type { RpcQueryControl } from './rpcQueryControl';
 
 interface ApiInput<T> {
     params: T;
     cancelToken: CancellationToken;
 }
 
-export class TsService {
-    constructor(private _rpcServer: RpcServer) {}
+export class RpcApi {
+    constructor(private _rpcQueryControl: RpcQueryControl) {}
 
     getFilterNameDefinitionApi({ params, cancelToken }: ApiInput<NgFilterNameDefinitionRequest>) {
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/filter/name',
             params,
             'getFilterNameDefinitionApi',
@@ -47,7 +47,7 @@ export class TsService {
     }
 
     listDirectivesStringAttrs({ params, cancelToken }: ApiInput<NgListDirectivesStringAttrsRequest>) {
-        return this._rpcServer.query<NgDirectivesStringAttrsResponse>(
+        return this._rpcQueryControl.query<NgDirectivesStringAttrsResponse>(
             'attrs/string/directives',
             params,
             'listDirectivesStringAttrs',
@@ -56,7 +56,7 @@ export class TsService {
     }
 
     listComponentsStringAttrs({ params, cancelToken }: ApiInput<NgListComponentsStringAttrsRequest>) {
-        return this._rpcServer.query<NgComponentsStringAttrsResponse>(
+        return this._rpcQueryControl.query<NgComponentsStringAttrsResponse>(
             'attrs/string/components',
             params,
             'listComponentsStringAttrs',
@@ -65,7 +65,7 @@ export class TsService {
     }
 
     getControllerNameDefinitionApi({ params, cancelToken }: ApiInput<NgControllerNameDefinitionRequest>) {
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/controller/name',
             params,
             'getControllerNameDefinitionApi',
@@ -74,7 +74,7 @@ export class TsService {
     }
 
     getDirectiveDefinitionApi({ params, cancelToken }: ApiInput<NgDirectiveDefinitionRequest>) {
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/directive',
             params,
             'getDirectiveDefinitionApi',
@@ -83,7 +83,7 @@ export class TsService {
     }
 
     getControllerTypeDefinitionApi({ params, cancelToken }: ApiInput<NgCtrlTypeDefinitionRequest>) {
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/controller/type',
             params,
             'getControllerTypeDefinitionApi',
@@ -92,7 +92,7 @@ export class TsService {
     }
 
     getComponentTypeDefinitionApi({ params, cancelToken }: ApiInput<NgTypeDefinitionRequest>) {
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/component/type',
             params,
             'getComponentTypeDefinitionApi',
@@ -105,7 +105,7 @@ export class TsService {
         cancelToken,
     }: ApiInput<NgComponentNameOrAttrNameDefinitionRequest>) {
         const path = params.hoverInfo.type === 'attrName' ? 'definition/component/attr' : 'definition/component/name';
-        return this._rpcServer.query<NgDefinitionResponse>(
+        return this._rpcQueryControl.query<NgDefinitionResponse>(
             path,
             params,
             'getComponentNameOrAttrNameDefinitionApi',
@@ -114,7 +114,7 @@ export class TsService {
     }
 
     getControllerTypeHoverApi({ params, cancelToken }: ApiInput<NgCtrlHoverRequest>) {
-        return this._rpcServer.query<NgHoverResponse>(
+        return this._rpcQueryControl.query<NgHoverResponse>(
             'hover/controller/type',
             params,
             'getControllerTypeHoverApi',
@@ -123,7 +123,7 @@ export class TsService {
     }
 
     getComponentTypeHoverApi({ params, cancelToken }: ApiInput<NgHoverRequest>) {
-        return this._rpcServer.query<NgHoverResponse>(
+        return this._rpcQueryControl.query<NgHoverResponse>(
             'hover/component/type',
             params,
             'getComponentTypeHoverApi',
@@ -133,15 +133,25 @@ export class TsService {
 
     getComponentNameOrAttrNameHoverApi({ params, cancelToken }: ApiInput<NgComponentNameOrAttrNameHoverRequest>) {
         const path = params.hoverInfo.type === 'attrName' ? 'hover/component/attr' : 'hover/component/name';
-        return this._rpcServer.query<NgHoverResponse>(path, params, 'getComponentNameOrAttrNameHoverApi', cancelToken);
+        return this._rpcQueryControl.query<NgHoverResponse>(
+            path,
+            params,
+            'getComponentNameOrAttrNameHoverApi',
+            cancelToken,
+        );
     }
 
     getDirectiveHoverApi({ params, cancelToken }: ApiInput<NgDirectiveHoverRequest>) {
-        return this._rpcServer.query<NgHoverResponse>('hover/directive', params, 'getDirectiveHoverApi', cancelToken);
+        return this._rpcQueryControl.query<NgHoverResponse>(
+            'hover/directive',
+            params,
+            'getDirectiveHoverApi',
+            cancelToken,
+        );
     }
 
     getFilterNameHoverApi({ params, cancelToken }: ApiInput<NgHoverRequest>) {
-        return this._rpcServer.query<NgHoverResponse>(
+        return this._rpcQueryControl.query<NgHoverResponse>(
             'hover/filter/name',
             params,
             'getFilterNameHoverApi',
@@ -150,7 +160,7 @@ export class TsService {
     }
 
     getFilterNameCompletionApi({ params, cancelToken }: ApiInput<NgRequest>) {
-        return this._rpcServer.query<NgTypeCompletionResponse>(
+        return this._rpcQueryControl.query<NgTypeCompletionResponse>(
             'completion/filter/name',
             params,
             'getFilterNameCompletionApi',
@@ -159,7 +169,7 @@ export class TsService {
     }
 
     getControllerTypeCompletionApi({ params, cancelToken }: ApiInput<NgCtrlTypeCompletionRequest>) {
-        return this._rpcServer.query<NgTypeCompletionResponse>(
+        return this._rpcQueryControl.query<NgTypeCompletionResponse>(
             'completion/controller/type',
             params,
             'getControllerTypeCompletionApi',
@@ -168,7 +178,7 @@ export class TsService {
     }
 
     getDirectiveCompletionApi({ params, cancelToken }: ApiInput<NgDirectiveCompletionRequest>) {
-        return this._rpcServer.query<NgDirectiveCompletionResponse>(
+        return this._rpcQueryControl.query<NgDirectiveCompletionResponse>(
             'completion/directive',
             params,
             'getDirectiveCompletionApi',
@@ -177,7 +187,7 @@ export class TsService {
     }
 
     getComponentTypeCompletionApi({ params, cancelToken }: ApiInput<NgTypeCompletionRequest>) {
-        return this._rpcServer.query<NgTypeCompletionResponse>(
+        return this._rpcQueryControl.query<NgTypeCompletionResponse>(
             'completion/component/type',
             params,
             'getComponentTypeCompletionApi',
@@ -186,7 +196,7 @@ export class TsService {
     }
 
     getComponentNameCompletionApi({ params, cancelToken }: ApiInput<NgRequest>) {
-        return this._rpcServer.query<NgComponentNameCompletionResponse>(
+        return this._rpcQueryControl.query<NgComponentNameCompletionResponse>(
             'completion/component/name',
             params,
             'getComponentNameCompletionApi',
@@ -195,7 +205,7 @@ export class TsService {
     }
 
     getComponentAttrCompletionApi({ params, cancelToken }: ApiInput<NgComponentAttrCompletionRequest>) {
-        return this._rpcServer.query<NgComponentAttrCompletionResponse>(
+        return this._rpcQueryControl.query<NgComponentAttrCompletionResponse>(
             'completion/component/attr',
             params,
             'getComponentAttrCompletionApi',
@@ -204,7 +214,7 @@ export class TsService {
     }
 
     getComponentControllerAsApi({ params, cancelToken }: ApiInput<NgRequest>) {
-        return this._rpcServer.query<string | undefined>(
+        return this._rpcQueryControl.query<string | undefined>(
             'controller-as/component',
             params,
             'getComponentControllerAsApi',

@@ -15,7 +15,7 @@ export async function componentNameCompletion({
     cursorAtInfo,
     cancelToken,
     context,
-    tsService,
+    rpcApi,
 }: CompletionParamObj<CursorAtTextInfo>) {
     // working on: no triggerChar or triggerChar is '<'
     if (typeof context.triggerCharacter === 'undefined' || context.triggerCharacter === '<') {
@@ -34,7 +34,7 @@ export async function componentNameCompletion({
 
         checkCancellation(cancelToken);
 
-        let list = await tsService.getComponentNameCompletionApi({
+        let list = await rpcApi.getComponentNameCompletionApi({
             params: { fileName: relatedScriptFile },
             cancelToken,
         });

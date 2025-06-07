@@ -28,6 +28,8 @@ export class StateControl {
     }
 
     updateState(state: State, path?: string) {
+        console.debug(`[StateControl] updateState: ${state}, path: ${path}`);
+
         // 状态出现的顺序是:
         // 1. 插件第一次启动：
         // disconnect -> canNotQuery -> connected -> addProject
@@ -39,13 +41,14 @@ export class StateControl {
         // -> disconnect
         switch (state) {
             case 'disconnect':
-                this._isRpcServerReady = false;
+                this.rpcServerReady = false;
+                this.forceCloseLoading();
                 break;
             case 'canNotQuery':
                 this.triggerTsProjectLoading(path!, 'canNotQuery');
                 break;
             case 'connected':
-                this._isRpcServerReady = true;
+                this.rpcServerReady = true;
                 this.closeLoading('canNotQuery');
                 break;
             case 'noContext':
@@ -68,8 +71,17 @@ export class StateControl {
         this._notifyStatusBar = listener;
     }
 
+    get rpcServerReady() {
+        return this._isRpcServerReady;
+    }
+
+    private set rpcServerReady(value: boolean) {
+        this._isRpcServerReady = value;
+        this.handleStateChange();
+    }
+
     private handleStateChange() {
-        const barStatus = this._isLoading ? 'loading' : this._isRpcServerReady ? 'connected' : 'disconnect';
+        const barStatus = this._isLoading ? 'loading' : this.rpcServerReady ? 'connected' : 'disconnect';
         this._notifyStatusBar?.(barStatus, this._projectRoots);
     }
 
@@ -93,8 +105,13 @@ export class StateControl {
             return;
         }
 
+        this.forceCloseLoading();
+    }
+
+    private forceCloseLoading() {
         clearTimeout(this._loadingTimeout);
         this._isLoading = false;
+        this._loadingFlag = '';
         this.handleStateChange();
     }
 

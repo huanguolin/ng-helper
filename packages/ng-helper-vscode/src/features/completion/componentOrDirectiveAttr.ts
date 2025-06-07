@@ -4,7 +4,7 @@ import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
 import { EXT_MARK } from '../../constants';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -15,7 +15,7 @@ export async function componentOrDirectiveAttrCompletion({
     cursorAtInfo,
     cancelToken,
     context,
-    tsService,
+    rpcApi,
 }: CompletionParamObj<CursorAtStartTagInfo | CursorAtAttrNameInfo>) {
     // 属性补全触发方式有两种: 空格和输入字符。
     if (context.triggerCharacter === SPACE || typeof context.triggerCharacter === 'undefined') {
@@ -40,7 +40,7 @@ export async function componentOrDirectiveAttrCompletion({
             return await handleComponentAttr({
                 relatedScriptFile,
                 cursorAtInfo,
-                tsService,
+                rpcApi,
                 cancelToken,
             });
         } else {
@@ -48,7 +48,7 @@ export async function componentOrDirectiveAttrCompletion({
                 relatedScriptFile,
                 cursorAtInfo,
                 cursor,
-                tsService,
+                rpcApi,
                 cancelToken,
             });
         }
@@ -58,15 +58,15 @@ export async function componentOrDirectiveAttrCompletion({
 async function handleComponentAttr({
     relatedScriptFile,
     cursorAtInfo,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }) {
-    let list = await tsService.getComponentAttrCompletionApi({
+    let list = await rpcApi.getComponentAttrCompletionApi({
         params: { fileName: relatedScriptFile, componentName: camelCase(cursorAtInfo.tagName) },
         cancelToken,
     });
@@ -108,13 +108,13 @@ async function handleDirectiveAttr({
     relatedScriptFile,
     cursorAtInfo,
     cursor,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
     cursor: Cursor;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }) {
     const afterCursorAttrName =
@@ -122,7 +122,7 @@ async function handleDirectiveAttr({
             .sort(([_a, locA], [_b, locB]) => locA.start - locB.start)
             .find(([_, loc]) => loc.start > cursor.at)?.[0] ?? '';
 
-    const list = await tsService.getDirectiveCompletionApi({
+    const list = await rpcApi.getDirectiveCompletionApi({
         params: {
             fileName: relatedScriptFile,
             attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),
