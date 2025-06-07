@@ -31,12 +31,11 @@ async function main() {
     const ctx = await esbuild.context({
         entryPoints: ['src/service/rpcServer/rpcProcess.ts'],
         bundle: true,
-        format: 'cjs',
+        platform: 'node',
         minify: production,
         sourcemap: !production,
         sourcesContent: false,
         outfile: 'dist/ng-helper-rpc-server.js',
-        external: ['vscode'],
         logLevel: 'silent',
         plugins: [
             /* add to the end of plugins array */
