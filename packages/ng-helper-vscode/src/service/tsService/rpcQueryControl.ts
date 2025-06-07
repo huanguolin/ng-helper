@@ -2,11 +2,14 @@ import type { NgRequest } from '@ng-helper/shared/lib/plugin';
 import { packRpcMessage, parseRpcMessage } from '@ng-helper/shared/lib/rpc';
 import type { CancellationToken } from 'vscode';
 
+import { logger } from '../../logger';
 import type { StateControl } from '../stateControl';
 
 import type { RpcControl } from './rpcControl';
 
 const RPC_TIMEOUT = 500;
+
+const myLogger = logger.prefixWith('RpcQueryControl');
 
 export class RpcQueryControl {
     private _rpcControl: RpcControl;
@@ -33,45 +36,63 @@ export class RpcQueryControl {
             return;
         }
 
-        const id = this.getId();
-        const rpcRequest = packRpcMessage('request', {
-            id,
-            method,
-            params: JSON.stringify(params),
-        });
-        this._rpcControl.sendQueryMessage(rpcRequest);
+        try {
+            const id = this.getId();
+            const rpcRequest = packRpcMessage('request', {
+                id,
+                method,
+                params: JSON.stringify(params),
+            });
 
-        const result = await Promise.race([this.timeoutOrCancel(id, cancelToken), this.getQueryResult<TResult>(id)]);
-        return result;
+            myLogger.logInfo(`(${id}) ---> ${apiName}() : ${rpcRequest}`);
+
+            this._rpcControl.sendQueryMessage(rpcRequest);
+
+            const result = await Promise.race([
+                this.timeoutOrCancel(id, cancelToken),
+                this.getQueryResult<TResult>(id),
+            ]);
+            return result;
+        } catch (err) {
+            myLogger.logError(`${apiName}() error:`, err);
+        }
     }
 
     private handleQueryResponse(message: string) {
-        const response = parseRpcMessage('response', message);
-        if (response) {
-            const { requestId, success, result, error } = response.data;
-            const cb = this._cbMap.get(requestId);
-            if (cb) {
-                cb(result);
-                this._cbMap.delete(requestId);
-            }
-            if (!success) {
-                console.error(`RpcQueryControl response error(${error?.errorKey}): ${error?.errorMessage}`);
-                if (error?.errorKey === 'NO_CONTEXT') {
-                    this._stateControl.updateState('noContext', error.data as string);
+        myLogger.logDebug(`Received query response: ${message}`);
+
+        try {
+            const response = parseRpcMessage('response', message, true);
+            if (response) {
+                const { requestId, success, result, error } = response.data;
+                const cb = this._cbMap.get(requestId);
+                if (cb) {
+                    cb(result);
+                    this._cbMap.delete(requestId);
+                }
+                if (!success) {
+                    myLogger.logError(`Query response error(${error?.errorKey}): ${error?.errorMessage}`);
+                    if (error?.errorKey === 'NO_CONTEXT') {
+                        this._stateControl.updateState('noContext', error.data as string);
+                    }
+                }
+            } else {
+                const report = parseRpcMessage('report', message, true);
+                if (report) {
+                    this._stateControl.updateState(report.data.type, report.data.projectRoot);
                 }
             }
-        } else {
-            const report = parseRpcMessage('report', message);
-            if (report) {
-                this._stateControl.updateState(report.data.type, report.data.projectRoot);
-            }
+        } catch (err) {
+            myLogger.logError(`handleQueryResponse() error:`, err);
         }
     }
 
     private getQueryResult<TResult>(id: string): Promise<TResult> {
         return new Promise<TResult>((r) => {
             this.addCb(id, (result: string | undefined) => {
-                r((result ? JSON.parse(result) : undefined) as TResult);
+                const queryResult = (result ? JSON.parse(result) : undefined) as TResult;
+                myLogger.logInfo(`(${id}) <--- :`, queryResult);
+                r(queryResult);
             });
         });
     }

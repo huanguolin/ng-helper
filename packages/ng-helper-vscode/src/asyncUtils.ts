@@ -1,5 +1,7 @@
 import { CancellationToken, CancellationTokenSource } from 'vscode';
 
+import { logger } from './logger';
+
 const countMap = new Map<string, number>();
 
 type TimeoutWithMeasureOptions = {
@@ -32,22 +34,22 @@ export async function withTimeoutAndMeasure<T>(
 
     if (!silent) {
         console.groupCollapsed(`[timeoutWithMeasure] ${label}()#${cnt}`);
-        console.log(`${label}()#${cnt} start...`);
+        logger.logInfo(`${label}()#${cnt} start...`);
     }
     try {
         return await Promise.race([cb(), createTimeoutPromise(timeout, cancelTokenSource)]);
     } catch (error) {
         hasError = true;
-        console.error(`${label}()#${cnt} error:`, error);
+        logger.logError(`${label}()#${cnt} error:`, error);
     } finally {
         if (!hasError) {
             const cost = Date.now() - start;
             if (cost >= slowThreshold) {
-                console.warn(`${label}()#${cnt} cost ${cost}ms`);
+                logger.logWarning(`${label}()#${cnt} cost ${cost}ms`);
             }
         }
         if (!silent) {
-            console.log(`${label}()#${cnt} end.`);
+            logger.logInfo(`${label}()#${cnt} end.`);
             console.groupEnd();
         }
     }

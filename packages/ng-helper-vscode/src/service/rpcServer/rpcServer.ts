@@ -5,6 +5,10 @@ import WebSocket from 'ws';
 import type { ProcessReportData } from '../processMessage';
 import type { State } from '../stateControl';
 
+import { rpcProcessLogger } from './utils';
+
+const logger = rpcProcessLogger.prefixWith('RpcServer');
+
 interface Ws extends WebSocket {
     serveType?: RpcServeType;
 }
@@ -25,12 +29,19 @@ export class RpcServer implements Disposable {
     private _listeners: Map<RpcServerEvent, RpcServerListener<RpcServerEvent>[]> = new Map();
 
     constructor(port: number) {
+        logger.logInfo(`start ws server on port: ${port}`);
         this._wss = new WebSocket.Server({ port });
         this.initServer();
     }
 
     send(message: string) {
-        this.ws?.send(message);
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            logger.logWarning(`Cannot send message, ws is not connected.`);
+            return;
+        }
+
+        logger.logDebug(`Sending message: ${message}`);
+        this.ws.send(message);
     }
 
     addEventListener<T extends RpcServerEvent>(event: T, listener: RpcServerListener<T>) {
@@ -77,12 +88,17 @@ export class RpcServer implements Disposable {
 
     private initServer() {
         this._wss.on('connection', (ws: Ws) => {
+            logger.logDebug(`ws connected!`);
+
             ws.once('message', (message) => {
                 // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 const msgStr = message.toString('utf8');
 
+                logger.logDebug(`Received initial message: ${msgStr}`);
+
                 const msg = parseRpcMessage('auth', msgStr);
                 if (!msg || msg.data.serveType !== 'srv') {
+                    logger.logWarning(`Terminate invalid ws.`);
                     ws.terminate();
                     return;
                 }
@@ -92,7 +108,12 @@ export class RpcServer implements Disposable {
             });
         });
 
+        this._wss.on('error', (error) => {
+            logger.logError(`wss error:`, error);
+        });
+
         this._wss.on('close', () => {
+            logger.logInfo(`wss close!`);
             this.removeTargetWs();
         });
     }
@@ -106,12 +127,15 @@ export class RpcServer implements Disposable {
 
         ws.on('message', (message) => {
             // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            this.receiveMessage(message.toString('utf8'));
+            const msgStr = message.toString('utf8');
+            logger.logDebug(`Received ws message: ${msgStr}`);
+            this.receiveMessage(msgStr);
         });
-        ws.on('error', (_error) => {
-            // TODO: handle error
+        ws.on('error', (error) => {
+            logger.logError(`ws error:`, error);
         });
         ws.on('close', () => {
+            logger.logInfo(`ws closed!`);
             this.removeTargetWs();
         });
     }
@@ -126,12 +150,15 @@ export class RpcServer implements Disposable {
 
         const nextPing = () => {
             if (ws.readyState !== WebSocket.OPEN) {
+                logger.logDebug(`ws is not open!`);
                 return;
             }
 
             setTimeout(() => {
+                logger.logDebug(`Sending ping to ws!`);
                 ws.ping();
                 pingTimeout = setTimeout(() => {
+                    logger.logInfo(`Terminate ws cause heartbeat timeout!`);
                     this.removeTargetWs();
                 }, 500);
             }, RPC_HEARTBEAT_INTERVAL);
@@ -139,6 +166,7 @@ export class RpcServer implements Disposable {
 
         nextPing();
         ws.on('pong', () => {
+            logger.logDebug(`Received pong from ws!`);
             clearTimeout(pingTimeout);
             nextPing();
         });

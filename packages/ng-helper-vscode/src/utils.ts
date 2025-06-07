@@ -4,6 +4,8 @@ import { cursorAt } from '@ng-helper/shared/lib/cursorAt';
 import type { Cursor } from '@ng-helper/shared/lib/html';
 import { window, workspace, Uri, FileType, TextDocument, type Position } from 'vscode';
 
+import { logger } from './logger';
+
 export async function triggerTsServerByProject(filePath: string) {
     let scriptFilePath = filePath;
 
@@ -108,7 +110,7 @@ export async function listFiles(
     try {
         files = await workspace.fs.readDirectory(Uri.file(dirPath));
     } catch (error) {
-        console.error('listFiles() error:', error);
+        logger.logError('listFiles() error:', error);
         return result;
     }
 

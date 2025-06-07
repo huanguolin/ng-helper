@@ -1,10 +1,15 @@
 import type { ProcessReportData, ProcessControlData, ProcessMessage, ProcessMessageType } from '../processMessage';
 
 import { RpcServer } from './rpcServer';
+import { rpcProcessLogger } from './utils';
+
+const logger = rpcProcessLogger;
 
 let rpcServer: RpcServer | null = null;
 
 process.on('message', (message: ProcessMessage) => {
+    logger.logDebug(`Received message from parent process: ${JSON.stringify(message)}`);
+
     if (message.type === 'control') {
         const data = message.data as ProcessControlData;
         if (data.type === 'startWsServer') {
@@ -39,9 +44,11 @@ function sendQueryResponse(message: string): void {
 }
 
 function sendMessageToParent<T>(type: ProcessMessageType, data: T): void {
-    process.send?.({
+    const message: ProcessMessage<T> = {
         type,
         data,
         timestamp: Date.now(),
-    });
+    };
+    logger.logDebug(`Sending message to parent process: ${JSON.stringify(message)}`);
+    process.send?.(message);
 }

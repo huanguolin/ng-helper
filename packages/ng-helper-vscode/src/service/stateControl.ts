@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 import { triggerTsServerByProject } from '../utils';
 
 export type State = 'disconnect' | 'connected' | 'canNotQuery' | 'noContext' | 'addProject' | 'removeProject';
@@ -7,6 +8,8 @@ export type ListenForStatusBar = (status: BarStatus, projectRoots: string[]) => 
 const MAX_LOADING_TIME = 5000;
 // 至少启动3秒后才能去触发
 const BASE_START_TIME = 3000;
+
+const myLogger = logger.prefixWith('StateControl');
 
 /**
  * 状态控制器: 主要是将 rpc 和 tsService 的状态转换为 vscode状态栏的状态。
@@ -28,7 +31,7 @@ export class StateControl {
     }
 
     updateState(state: State, path?: string) {
-        console.debug(`[StateControl] updateState: ${state}, path: ${path}`);
+        myLogger.logInfo(`updateState(): ${state}, path: ${path}`);
 
         // 状态出现的顺序是:
         // 1. 插件第一次启动：
@@ -82,6 +85,7 @@ export class StateControl {
 
     private handleStateChange() {
         const barStatus = this._isLoading ? 'loading' : this.rpcServerReady ? 'connected' : 'disconnect';
+        myLogger.logInfo(`handleStateChange(): barStatus: ${barStatus}`);
         this._notifyStatusBar?.(barStatus, this._projectRoots);
     }
 
@@ -96,6 +100,7 @@ export class StateControl {
         // 至少在插件启动一段时间后才能去触发。
         this._loadingTimeout = setTimeout(() => {
             this._loadingTimeout = setTimeout(() => this.closeLoading(flag), MAX_LOADING_TIME);
+            myLogger.logInfo(`triggerTsProjectLoading(): filePath: ${filePath}, flag: ${flag}`);
             void triggerTsServerByProject(filePath);
         }, this.getDelay());
     }
