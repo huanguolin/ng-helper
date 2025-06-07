@@ -7,7 +7,8 @@
             "label": "watch",
             "dependsOn": [
                 "plugin:watch:esbuild",
-                "watch:esbuild"
+                "ext:watch:esbuild",
+                "rpc:watch:esbuild"
             ],
             "presentation": {
                 "reveal": "never"
@@ -18,14 +19,32 @@
             }
         },
         {
-            "label": "watch:esbuild",
+            "label": "ext:watch:esbuild",
             "type": "shell",
             "command": "yarn",
             "args": [
                 "workspace",
                 "ng-helper",
                 "run",
-                "watch:esbuild"
+                "watch:esbuild:ext"
+            ],
+            "group": "build",
+            "problemMatcher": "$esbuild-watch",
+            "isBackground": true,
+            "presentation": {
+                "group": "watch",
+                "reveal": "never"
+            }
+        },
+        {
+            "label": "rpc:watch:esbuild",
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "workspace",
+                "ng-helper",
+                "run",
+                "watch:esbuild:rpc"
             ],
             "group": "build",
             "problemMatcher": "$esbuild-watch",

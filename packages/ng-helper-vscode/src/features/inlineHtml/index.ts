@@ -15,7 +15,7 @@ import {
     type TextDocument,
 } from 'vscode';
 
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { triggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
@@ -30,17 +30,17 @@ const MAX_COUNT = 5;
 const EXPIRE_TIME = 5 * 60 * 1000;
 const virtualDocumentContents = new Map<string, VirtualDocumentInfo>();
 
-export function supportInlineHtml(context: ExtensionContext, tsService: TsService) {
+export function supportInlineHtml(context: ExtensionContext, rpcApi: RpcApi) {
     registerVirtualDocumentProvider(context);
 
-    providerSemantic(context, tsService);
+    providerSemantic(context, rpcApi);
 
     requestForwardHover(context);
     requestForwardDefinition(context);
     requestForwardCompletion(context);
 }
 
-function providerSemantic(context: ExtensionContext, tsService: TsService) {
+function providerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
     context.subscriptions.push(
         languages.registerDocumentSemanticTokensProvider(
             [
@@ -54,7 +54,7 @@ function providerSemantic(context: ExtensionContext, tsService: TsService) {
                         return;
                     }
 
-                    return await htmlSemanticProvider({ document, tsService, token });
+                    return await htmlSemanticProvider({ document, rpcApi, token });
                 },
             },
             legend,

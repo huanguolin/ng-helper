@@ -21,7 +21,7 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {
@@ -35,7 +35,7 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
-export function registerDefinition(context: ExtensionContext, tsService: TsService): void {
+export function registerDefinition(context: ExtensionContext, rpcApi: RpcApi): void {
     context.subscriptions.push(
         languages.registerDefinitionProvider('html', {
             async provideDefinition(
@@ -65,14 +65,14 @@ export function registerDefinition(context: ExtensionContext, tsService: TsServi
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    tsService,
+                                    rpcApi,
                                     cancelTokenSource.token,
                                 );
                             case 'tagName':
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    tsService,
+                                    rpcApi,
                                     cancelTokenSource.token,
                                 );
 
@@ -82,7 +82,7 @@ export function registerDefinition(context: ExtensionContext, tsService: TsServi
                                     document,
                                     position,
                                     cursorAtInfo,
-                                    tsService,
+                                    rpcApi,
                                     cancelTokenSource.token,
                                 );
                         }
@@ -97,7 +97,7 @@ export function registerDefinition(context: ExtensionContext, tsService: TsServi
 async function handleTagNameOrAttrName(
     cursorAtInfo: CursorAtTagNameInfo | CursorAtAttrNameInfo,
     document: TextDocument,
-    tsService: TsService,
+    rpcApi: RpcApi,
     cancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     if (isComponentTagName(cursorAtInfo.tagName) || cursorAtInfo.attrNames.length) {
@@ -107,14 +107,14 @@ async function handleTagNameOrAttrName(
         }
 
         if (isComponentTagName(cursorAtInfo.tagName)) {
-            const definitionInfo = await tsService.getComponentNameOrAttrNameDefinitionApi({
+            const definitionInfo = await rpcApi.getComponentNameOrAttrNameDefinitionApi({
                 cancelToken,
                 params: { fileName: scriptFilePath, hoverInfo: toNgElementHoverInfo(cursorAtInfo) },
             });
             return await buildDefinition(definitionInfo);
         } else if (cursorAtInfo.type === 'attrName') {
             const cursorAtAttrName = camelCase(cursorAtInfo.cursorAtAttrName);
-            const definitionInfo = await tsService.getDirectiveDefinitionApi({
+            const definitionInfo = await rpcApi.getDirectiveDefinitionApi({
                 cancelToken,
                 params: {
                     fileName: scriptFilePath,
@@ -131,7 +131,7 @@ async function handleTemplateOrAttrValue(
     document: TextDocument,
     position: Position,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
-    tsService: TsService,
+    rpcApi: RpcApi,
     cancelToken: CancellationToken,
 ): Promise<Definition | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
@@ -144,21 +144,21 @@ async function handleTemplateOrAttrValue(
         cursorAtInfo,
         onHoverFilterName: (filterName, scriptFilePath) =>
             handleFilterName({
-                tsService,
+                rpcApi,
                 cancelToken: cancelToken,
                 filterName,
                 scriptFilePath,
             }),
         onHoverType: async (scriptFilePath, contextString, cursorAt) => {
             if (isComponentHtml(document)) {
-                return await tsService.getComponentTypeDefinitionApi({
+                return await rpcApi.getComponentTypeDefinitionApi({
                     cancelToken,
                     params: { fileName: scriptFilePath, contextString, cursorAt },
                 });
             }
             const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
             if (ctrlInfo) {
-                return await tsService.getControllerTypeDefinitionApi({
+                return await rpcApi.getControllerTypeDefinitionApi({
                     cancelToken,
                     params: { fileName: scriptFilePath, contextString, cursorAt, ...ctrlInfo },
                 });
@@ -175,18 +175,18 @@ async function handleTemplateOrAttrValue(
 async function handleFilterName({
     filterName,
     scriptFilePath,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     filterName: string;
     scriptFilePath?: string;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }): Promise<NgDefinitionInfo | undefined> {
     if (isBuiltinFilter(filterName)) {
         return;
     } else if (scriptFilePath) {
-        return await tsService.getFilterNameDefinitionApi({
+        return await rpcApi.getFilterNameDefinitionApi({
             cancelToken,
             params: { fileName: scriptFilePath, filterName },
         });

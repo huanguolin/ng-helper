@@ -4,7 +4,7 @@ import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } 
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 import { getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
 
 import type { CompletionParamObj } from '.';
@@ -14,7 +14,7 @@ export async function customDirectiveNameCompletion({
     cursorAtInfo,
     cancelToken,
     context,
-    tsService,
+    rpcApi,
 }: CompletionParamObj<CursorAtAttrNameInfo>) {
     // 只走没有设置触发字符的那个分支。
     if (typeof context.triggerCharacter === 'undefined') {
@@ -32,7 +32,7 @@ export async function customDirectiveNameCompletion({
         return await handleDirectiveName({
             relatedScriptFile,
             cursorAtInfo,
-            tsService,
+            rpcApi,
             cancelToken,
         });
     }
@@ -41,15 +41,15 @@ export async function customDirectiveNameCompletion({
 async function handleDirectiveName({
     relatedScriptFile,
     cursorAtInfo,
-    tsService,
+    rpcApi,
     cancelToken,
 }: {
     relatedScriptFile: string;
     cursorAtInfo: CursorAtStartTagInfo | CursorAtAttrNameInfo;
-    tsService: TsService;
+    rpcApi: RpcApi;
     cancelToken: CancellationToken;
 }) {
-    const list = await tsService.getDirectiveCompletionApi({
+    const list = await rpcApi.getDirectiveCompletionApi({
         params: {
             fileName: relatedScriptFile,
             attrNames: cursorAtInfo.attrNames.map((x) => camelCase(x)),

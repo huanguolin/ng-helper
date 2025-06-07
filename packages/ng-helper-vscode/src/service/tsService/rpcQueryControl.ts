@@ -1,50 +1,24 @@
 import type { NgRequest } from '@ng-helper/shared/lib/plugin';
 import { packRpcMessage, parseRpcMessage } from '@ng-helper/shared/lib/rpc';
 import type { CancellationToken } from 'vscode';
-import type WebSocket from 'ws';
 
-import type { StateControl } from './stateControl';
+import type { StateControl } from '../stateControl';
+
+import type { RpcControl } from './rpcControl';
 
 const RPC_TIMEOUT = 500;
 
-export class RpcQueryCenter {
-    private _ws: WebSocket;
+export class RpcQueryControl {
+    private _rpcControl: RpcControl;
     private _stateControl: StateControl;
     private _id = 0;
     private _cbMap = new Map<string, (result: string | undefined) => void>();
 
-    constructor(ws: WebSocket, stateControl: StateControl) {
-        this._ws = ws;
+    constructor(rpcControl: RpcControl, stateControl: StateControl) {
+        this._rpcControl = rpcControl;
         this._stateControl = stateControl;
-        this.updateWs(ws);
-    }
-
-    updateWs(ws: WebSocket) {
-        this._ws = ws;
-        ws.on('message', (message) => {
-            // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            const msgStr = message.toString('utf8');
-
-            const response = parseRpcMessage('response', msgStr);
-            if (response) {
-                const { requestId, success, result, error } = response.data;
-                const cb = this._cbMap.get(requestId);
-                if (cb) {
-                    cb(result);
-                    this._cbMap.delete(requestId);
-                }
-                if (!success) {
-                    console.error(`RpcQueryCenter ws response error(${error?.errorKey}): ${error?.errorMessage}`);
-                    if (error?.errorKey === 'NO_CONTEXT') {
-                        this._stateControl.updateState('noContext', error.data as string);
-                    }
-                }
-            } else {
-                const report = parseRpcMessage('report', msgStr);
-                if (report) {
-                    this._stateControl.updateState(report.data.type, report.data.projectRoot);
-                }
-            }
+        this._rpcControl.listenQueryMessage((message) => {
+            this.handleQueryResponse(message);
         });
     }
 
@@ -54,16 +28,44 @@ export class RpcQueryCenter {
         apiName: string,
         cancelToken?: CancellationToken,
     ): Promise<TResult | undefined> {
+        if (!this._stateControl.rpcServerReady) {
+            this._stateControl.updateState('canNotQuery', params.fileName);
+            return;
+        }
+
         const id = this.getId();
         const rpcRequest = packRpcMessage('request', {
             id,
             method,
             params: JSON.stringify(params),
         });
-        this._ws.send(rpcRequest);
+        this._rpcControl.sendQueryMessage(rpcRequest);
 
         const result = await Promise.race([this.timeoutOrCancel(id, cancelToken), this.getQueryResult<TResult>(id)]);
         return result;
+    }
+
+    private handleQueryResponse(message: string) {
+        const response = parseRpcMessage('response', message);
+        if (response) {
+            const { requestId, success, result, error } = response.data;
+            const cb = this._cbMap.get(requestId);
+            if (cb) {
+                cb(result);
+                this._cbMap.delete(requestId);
+            }
+            if (!success) {
+                console.error(`RpcQueryControl response error(${error?.errorKey}): ${error?.errorMessage}`);
+                if (error?.errorKey === 'NO_CONTEXT') {
+                    this._stateControl.updateState('noContext', error.data as string);
+                }
+            }
+        } else {
+            const report = parseRpcMessage('report', message);
+            if (report) {
+                this._stateControl.updateState(report.data.type, report.data.projectRoot);
+            }
+        }
     }
 
     private getQueryResult<TResult>(id: string): Promise<TResult> {

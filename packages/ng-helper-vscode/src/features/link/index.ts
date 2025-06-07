@@ -1,6 +1,6 @@
 import { type ExtensionContext, languages, type TextDocument, type DocumentLink, type CancellationToken } from 'vscode';
 
-import type { TsService } from '../../service/tsService';
+import type { RpcApi } from '../../service/tsService/rpcApi';
 
 import { findControllerNameLink, resolveControllerNameLink } from './controllerNameLink';
 import { findTemplateUrlLink, resolveTemplateUrlLink } from './templateUrlLink';
@@ -11,7 +11,7 @@ export type MyLink = DocumentLink & {
     url: string;
 };
 
-export function registerLink(context: ExtensionContext, tsService: TsService) {
+export function registerLink(context: ExtensionContext, rpcApi: RpcApi) {
     context.subscriptions.push(
         languages.registerDocumentLinkProvider(
             [
@@ -31,7 +31,7 @@ export function registerLink(context: ExtensionContext, tsService: TsService) {
                         case 'templateUrl':
                             return await resolveTemplateUrlLink(link);
                         case 'controllerName':
-                            return await resolveControllerNameLink(link, token, tsService);
+                            return await resolveControllerNameLink(link, token, rpcApi);
                     }
                 },
             },
