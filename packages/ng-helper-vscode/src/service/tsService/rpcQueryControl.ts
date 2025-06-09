@@ -3,6 +3,7 @@ import { packRpcMessage, parseRpcMessage } from '@ng-helper/shared/lib/rpc';
 import type { CancellationToken } from 'vscode';
 
 import { logger } from '../../logger';
+import { normalizePath } from '../../utils';
 import type { StateControl } from '../stateControl';
 
 import type { RpcControl } from './rpcControl';
@@ -38,6 +39,7 @@ export class RpcQueryControl {
 
         try {
             const id = this.getId();
+            params.fileName = normalizePath(params.fileName);
             const rpcRequest = packRpcMessage('request', {
                 id,
                 method,
