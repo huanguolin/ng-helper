@@ -59,7 +59,9 @@ export class StateControl {
                 break;
             case 'addProject':
                 this.closeLoading(path!);
-                this._projectRoots.push(path!);
+                if (!this._projectRoots.includes(path!)) {
+                    this._projectRoots.push(path!);
+                }
                 break;
             case 'removeProject':
                 this._projectRoots = this._projectRoots.filter((x) => x !== path!);
