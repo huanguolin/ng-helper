@@ -14,6 +14,8 @@ export async function activateExt(): Promise<NgHelperConfigWithPort | undefined>
 
     const config = await readConfig();
 
+    logger.logInfo('====> config: ', config);
+
     const port = await configTsPluginConfiguration(defaultPort, config);
     if (!port) {
         return;
@@ -35,16 +37,14 @@ async function canActivate(): Promise<boolean> {
 export async function readConfig(): Promise<NgHelperConfig> {
     const uri = getConfigUri()!;
     const uint8Array = await workspace.fs.readFile(uri);
-    // uint8Array to string
     const jsonText = new TextDecoder().decode(uint8Array);
 
     let config = getDefaultConfig();
-    try {
-        const userConfig = JSON.parse(jsonText || '{}') as NgHelperConfig;
-        config = Object.assign(config, userConfig);
-    } catch (error) {
-        logger.logError('ng-helper.json is not a valid JSON file: ', jsonText);
-    }
+    const userConfig = JSON.parse(jsonText || '{}') as NgHelperConfig;
+    config = Object.assign(config, userConfig);
+
+    // TODO：校验 config，如果有问题提醒用户
+
     return normalizeConfig(config);
 }
 
@@ -61,6 +61,9 @@ function normalizeConfig(config: NgHelperConfig): NgHelperConfig {
         componentStyleFileExt: normalizeFileExt(config.componentStyleFileExt),
         componentScriptFileExt: normalizeFileExt(config.componentScriptFileExt),
         injectionCheckMode: config.injectionCheckMode,
+        angularJsProjects: config.angularJsProjects,
+        typescriptProjects: config.typescriptProjects,
+        projectMapping: config.projectMapping,
     };
 }
 
@@ -82,6 +85,22 @@ export interface NgHelperConfig {
      */
     componentScriptFileExt: string;
     injectionCheckMode: InjectionCheckMode;
+    /**
+     * AngularJS projects configuration with their paths (optional)
+     * Key: project name, Value: project path
+     */
+    angularJsProjects?: Record<string, string>;
+    /**
+     * TypeScript projects configuration with their paths (optional)
+     * Key: project name, Value: project path
+     */
+    typescriptProjects?: Record<string, string>;
+    /**
+     * Mapping between TypeScript and AngularJS projects (optional)
+     * Key: TypeScript project name, Value: Array of AngularJS project names
+     * If not provided, the extension will auto mapping.
+     */
+    projectMapping?: Record<string, string[]>;
 }
 
 export interface NgHelperConfigWithPort extends NgHelperConfig {

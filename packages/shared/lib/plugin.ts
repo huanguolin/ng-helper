@@ -20,6 +20,13 @@ export type InjectionCheckMode = 'strict_equal' | 'ignore_case_word_match' | 'co
 export interface NgPluginConfiguration {
     port: number;
     injectionCheckMode: InjectionCheckMode;
+    /**
+     * Ts 项目到 AngularJS 项目的映射。
+     */
+    projectMappings?: Array<{
+        tsProjectPath: string;
+        angularJsProjectPaths: string[];
+    }>;
 }
 
 export interface NgRequest {
