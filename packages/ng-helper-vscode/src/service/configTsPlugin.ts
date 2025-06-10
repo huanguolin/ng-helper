@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 
 import type { NgHelperConfig } from '../activate';
 import { pluginId, typeScriptExtensionId } from '../constants';
+import { logger } from '../logger';
+import { getWorkspacePath, normalizePath } from '../utils';
 
 /**
  * see https://github.com/Microsoft/vscode/blob/main/extensions/typescript-language-features/src/api.ts
@@ -46,6 +48,16 @@ export async function configTsPluginConfiguration(
         port,
         injectionCheckMode: config.injectionCheckMode,
     };
+    if (config.projectMapping) {
+        const workspacePath = getWorkspacePath()!.fsPath;
+        configuration.projectMappings = Array.from(Object.entries(config.projectMapping)).map(([tsName, ngNames]) => ({
+            tsProjectPath: normalizePath(workspacePath + '/' + config.typescriptProjects![tsName]),
+            angularJsProjectPaths: ngNames.map((ngName) =>
+                normalizePath(workspacePath + '/' + config.angularJsProjects![ngName]),
+            ),
+        }));
+    }
+    logger.logInfo('====> ts plugin config: ', configuration);
     api.configurePlugin(pluginId, configuration);
 
     return port;

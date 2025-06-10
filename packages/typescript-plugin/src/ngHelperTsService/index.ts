@@ -146,6 +146,15 @@ function createNgHelperTsService(): NgHelperServer {
 
     function getProjectRoot(filePath: string): string | undefined {
         const paths = Array.from(_getContextMap.keys());
+        if (Array.isArray(_config?.projectMappings)) {
+            for (const { tsProjectPath, angularJsProjectPaths } of _config.projectMappings) {
+                if (angularJsProjectPaths.some((p) => filePath.startsWith(p))) {
+                    return tsProjectPath;
+                }
+            }
+            return undefined;
+        }
+
         paths.sort((a, b) => b.length - a.length);
         for (const projectRoot of paths) {
             if (filePath.startsWith(projectRoot)) {
