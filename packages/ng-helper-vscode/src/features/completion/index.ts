@@ -65,7 +65,7 @@ export function registerCompletion(ngContext: NgContext) {
     );
 }
 
-export async function completion({ document, position, cancelToken, ngContext, completionContext }: CompletionParam) {
+async function completion({ document, position, cancelToken, ngContext, completionContext }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 

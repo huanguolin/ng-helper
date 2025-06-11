@@ -9,4 +9,9 @@ export class NgContext {
         public config: NgHelperConfig,
         public rpcApi: RpcApi,
     ) {}
+
+    isNgProjectFile(_filePath: string) {
+        // TODO: impl
+        return true;
+    }
 }
