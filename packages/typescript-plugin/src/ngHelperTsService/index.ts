@@ -75,14 +75,17 @@ function createNgHelperTsService(): NgHelperServer {
         _log('updateConfig(): config:', cfg);
 
         // 注意:
-        // 这里的 info.config 不一定包含 client 那边传递的配置。
-        // 只有包含 client 那边的配置时，才更新 _config.
-        if (cfg.port) {
+        // 这里的 info.config 不一定包含 ng-helper-vscode 那边传递的配置。
+        // 通过判断有没有 port 可以确定是从 ng-helper-vscode 传递过来的。
+        const isNgHelperConfig = !!cfg.port;
+        const isUpdateRpcPort = isNgHelperConfig && _config?.port !== cfg.port;
+
+        if (isNgHelperConfig) {
             _config = cfg;
         }
 
-        if (_config?.port !== cfg.port && cfg.port) {
-            _rpcClient.updateNgConfig(cfg.port);
+        if (isUpdateRpcPort) {
+            _rpcClient.updatePort(cfg.port);
         }
     }
 
@@ -96,8 +99,8 @@ function createNgHelperTsService(): NgHelperServer {
 
         // 更新 config
         // 注意:
-        // 这里的 info.config 不一定包含 client 那边传递的配置。
-        // 具体有没有取决于 client 那边 set config 与这里执行的先后。
+        // 这里的 info.config 不一定包含 ng-helper-vscode 那边传递的配置。
+        // 具体有没有取决于 ng-helper-vscode 那边 set config 与这里执行的先后。
         updateConfig(info.config as Partial<NgPluginConfiguration>);
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();

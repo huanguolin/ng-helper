@@ -30,7 +30,7 @@ export class RpcClient {
         private _log: Log,
     ) {}
 
-    updateNgConfig(port?: number) {
+    updatePort(port?: number) {
         if (this._port !== port) {
             this.createWs(port);
         }
