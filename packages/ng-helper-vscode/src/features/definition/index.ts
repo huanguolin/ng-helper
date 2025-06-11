@@ -14,13 +14,13 @@ import {
     languages,
     workspace,
     type Definition,
-    type ExtensionContext,
     TextDocument,
     Position,
     CancellationToken,
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
+import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { buildCursor } from '../../utils';
 import { onTypeHover } from '../hover/utils';
@@ -35,8 +35,8 @@ import {
     toNgElementHoverInfo,
 } from '../utils';
 
-export function registerDefinition(context: ExtensionContext, rpcApi: RpcApi): void {
-    context.subscriptions.push(
+export function registerDefinition(ngContext: NgContext): void {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerDefinitionProvider('html', {
             async provideDefinition(
                 document: TextDocument,
@@ -65,14 +65,14 @@ export function registerDefinition(context: ExtensionContext, rpcApi: RpcApi): v
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                 );
                             case 'tagName':
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                 );
 
@@ -82,7 +82,7 @@ export function registerDefinition(context: ExtensionContext, rpcApi: RpcApi): v
                                     document,
                                     position,
                                     cursorAtInfo,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                 );
                         }

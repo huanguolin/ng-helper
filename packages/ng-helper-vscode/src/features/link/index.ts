@@ -1,6 +1,6 @@
-import { type ExtensionContext, languages, type TextDocument, type DocumentLink, type CancellationToken } from 'vscode';
+import { languages, type TextDocument, type DocumentLink, type CancellationToken } from 'vscode';
 
-import type { RpcApi } from '../../service/tsService/rpcApi';
+import type { NgContext } from '../../ngContext';
 
 import { findControllerNameLink, resolveControllerNameLink } from './controllerNameLink';
 import { findTemplateUrlLink, resolveTemplateUrlLink } from './templateUrlLink';
@@ -11,8 +11,8 @@ export type MyLink = DocumentLink & {
     url: string;
 };
 
-export function registerLink(context: ExtensionContext, rpcApi: RpcApi) {
-    context.subscriptions.push(
+export function registerLink(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerDocumentLinkProvider(
             [
                 { scheme: 'file', language: 'javascript' },
@@ -31,7 +31,7 @@ export function registerLink(context: ExtensionContext, rpcApi: RpcApi) {
                         case 'templateUrl':
                             return await resolveTemplateUrlLink(link);
                         case 'controllerName':
-                            return await resolveControllerNameLink(link, token, rpcApi);
+                            return await resolveControllerNameLink(link, token, ngContext.rpcApi);
                     }
                 },
             },

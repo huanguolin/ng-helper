@@ -13,13 +13,13 @@ import {
     SemanticTokensBuilder,
     Range,
     languages,
-    type ExtensionContext,
     type TextDocument,
     type CancellationToken,
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import { logger } from '../../logger';
+import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { intersect, uniq } from '../../utils';
 import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
@@ -27,7 +27,7 @@ import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
 
-export function registerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
+export function registerSemantic(ngContext: NgContext) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
@@ -35,7 +35,7 @@ export function registerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
                 const tokenSource = createCancellationTokenSource(token);
                 return withTimeoutAndMeasure(
                     'provideSemantic',
-                    () => htmlSemanticProvider({ document, rpcApi, token: tokenSource.token }),
+                    () => htmlSemanticProvider({ document, rpcApi: ngContext.rpcApi, token: tokenSource.token }),
                     {
                         cancelTokenSource: tokenSource,
                         silent: true,
@@ -46,7 +46,7 @@ export function registerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
         legend,
     );
 
-    context.subscriptions.push(disposable);
+    ngContext.vscodeContext.subscriptions.push(disposable);
 }
 
 export async function htmlSemanticProvider({

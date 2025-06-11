@@ -31,7 +31,7 @@ export function overrideGetSemanticDiagnostics({
     proxy.getSemanticDiagnostics = (fileName: string) => {
         const prior = info.languageService.getSemanticDiagnostics(fileName);
         const checkMode = ngHelperTsService.getConfig()?.injectionCheckMode;
-        if (!ngHelperTsService.isExtensionActivated() || !isValidCheckMode(checkMode)) {
+        if (!ngHelperTsService.isNgHelperCanHandled(info, fileName) || !isValidCheckMode(checkMode)) {
             return prior;
         }
 

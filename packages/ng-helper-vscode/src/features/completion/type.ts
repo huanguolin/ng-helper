@@ -33,10 +33,10 @@ import type { CompletionParamObj } from '.';
 export async function templateOrAttrValueCompletion({
     document,
     position,
-    rpcApi,
     cancelToken,
     cursorAtInfo,
-    context,
+    ngContext,
+    completionContext,
 }: CompletionParamObj<CursorAtTemplateInfo | CursorAtAttrValueInfo> & { position: Position }): Promise<
     CompletionList<CompletionItem> | undefined
 > {
@@ -44,22 +44,22 @@ export async function templateOrAttrValueCompletion({
 
     checkCancellation(cancelToken);
 
-    const isPropAccessTriggerChar = context.triggerCharacter === '.';
-    const isUndefinedTriggerChar = typeof context.triggerCharacter === 'undefined';
+    const isPropAccessTriggerChar = completionContext.triggerCharacter === '.';
+    const isUndefinedTriggerChar = typeof completionContext.triggerCharacter === 'undefined';
 
     if (isPropAccessTriggerChar && type === 'propertyAccess') {
         return await getTypeCompletion({
             document,
             cursorAtInfo,
             contextString: value,
-            rpcApi,
+            rpcApi: ngContext.rpcApi,
             cancelToken: cancelToken,
         });
     } else if (isUndefinedTriggerChar) {
         if (type === 'filterName') {
             return await getFilterNameCompletion({
                 document,
-                rpcApi,
+                rpcApi: ngContext.rpcApi,
                 cancelToken,
             });
         } else if (type === 'identifier') {
@@ -70,7 +70,7 @@ export async function templateOrAttrValueCompletion({
                 const ctrlAsItem = await getComponentCtrlAsCompletion({
                     document,
                     cursorAtInfo,
-                    rpcApi,
+                    rpcApi: ngContext.rpcApi,
                     cancelToken,
                 });
                 if (ctrlAsItem) {

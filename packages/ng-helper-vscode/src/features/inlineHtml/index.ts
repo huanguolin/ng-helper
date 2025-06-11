@@ -9,13 +9,12 @@ import {
     workspace,
     type CompletionList,
     type Definition,
-    type ExtensionContext,
     type Hover,
     type Position,
     type TextDocument,
 } from 'vscode';
 
-import type { RpcApi } from '../../service/tsService/rpcApi';
+import type { NgContext } from '../../ngContext';
 import { triggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
@@ -30,18 +29,18 @@ const MAX_COUNT = 5;
 const EXPIRE_TIME = 5 * 60 * 1000;
 const virtualDocumentContents = new Map<string, VirtualDocumentInfo>();
 
-export function supportInlineHtml(context: ExtensionContext, rpcApi: RpcApi) {
-    registerVirtualDocumentProvider(context);
+export function supportInlineHtml(ngContext: NgContext) {
+    registerVirtualDocumentProvider(ngContext);
 
-    providerSemantic(context, rpcApi);
+    providerSemantic(ngContext);
 
-    requestForwardHover(context);
-    requestForwardDefinition(context);
-    requestForwardCompletion(context);
+    requestForwardHover(ngContext);
+    requestForwardDefinition(ngContext);
+    requestForwardCompletion(ngContext);
 }
 
-function providerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
-    context.subscriptions.push(
+function providerSemantic(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerDocumentSemanticTokensProvider(
             [
                 { scheme: 'file', language: 'typescript' },
@@ -54,7 +53,7 @@ function providerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
                         return;
                     }
 
-                    return await htmlSemanticProvider({ document, rpcApi, token });
+                    return await htmlSemanticProvider({ document, rpcApi: ngContext.rpcApi, token });
                 },
             },
             legend,
@@ -62,8 +61,8 @@ function providerSemantic(context: ExtensionContext, rpcApi: RpcApi) {
     );
 }
 
-function requestForwardHover(context: ExtensionContext) {
-    context.subscriptions.push(
+function requestForwardHover(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerHoverProvider(
             [
                 { scheme: 'file', language: 'typescript' },
@@ -91,8 +90,8 @@ function requestForwardHover(context: ExtensionContext) {
     );
 }
 
-function requestForwardDefinition(context: ExtensionContext) {
-    context.subscriptions.push(
+function requestForwardDefinition(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerDefinitionProvider(
             [
                 { scheme: 'file', language: 'typescript' },
@@ -118,8 +117,8 @@ function requestForwardDefinition(context: ExtensionContext) {
     );
 }
 
-function requestForwardCompletion(context: ExtensionContext) {
-    context.subscriptions.push(
+function requestForwardCompletion(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerCompletionItemProvider(
             [
                 { scheme: 'file', language: 'typescript' },
@@ -147,8 +146,8 @@ function requestForwardCompletion(context: ExtensionContext) {
     );
 }
 
-function registerVirtualDocumentProvider(context: ExtensionContext) {
-    context.subscriptions.push(
+function registerVirtualDocumentProvider(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         workspace.registerTextDocumentContentProvider('embedded-content', {
             provideTextDocumentContent: (uri) => {
                 const originalUri = getOriginalFileName(uri.path);

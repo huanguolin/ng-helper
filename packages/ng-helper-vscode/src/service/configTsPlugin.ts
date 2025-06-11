@@ -41,24 +41,30 @@ export async function configTsPluginConfiguration(
         return;
     }
 
-    const port = await getPort({
-        port: defaultPort,
-    });
+    const port = await getPort({ port: defaultPort });
+    const configuration = buildTsPluginConfiguration(port, config);
+
+    logger.logInfo('====> ts plugin config: ', configuration);
+
+    api.configurePlugin(pluginId, configuration);
+
+    return port;
+}
+
+function buildTsPluginConfiguration(port: number, config: NgHelperConfig): NgPluginConfiguration {
     const configuration: NgPluginConfiguration = {
         port,
         injectionCheckMode: config.injectionCheckMode,
     };
+
     if (config.projectMapping) {
         const workspacePath = getWorkspacePath()!.fsPath;
+        const normalizeProjectPath = (p: string) => normalizePath(workspacePath + '/' + p);
         configuration.projectMappings = Array.from(Object.entries(config.projectMapping)).map(([tsName, ngNames]) => ({
-            tsProjectPath: normalizePath(workspacePath + '/' + config.typescriptProjects![tsName]),
-            angularJsProjectPaths: ngNames.map((ngName) =>
-                normalizePath(workspacePath + '/' + config.angularJsProjects![ngName]),
-            ),
+            tsProjectPath: normalizeProjectPath(config.typescriptProjects![tsName]),
+            ngProjectPaths: ngNames.map((ngName) => normalizeProjectPath(config.angularJsProjects![ngName])),
         }));
     }
-    logger.logInfo('====> ts plugin config: ', configuration);
-    api.configurePlugin(pluginId, configuration);
 
-    return port;
+    return configuration;
 }

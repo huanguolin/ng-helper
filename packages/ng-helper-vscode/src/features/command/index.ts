@@ -1,9 +1,9 @@
-import { ExtensionContext } from 'vscode';
-
-import type { NgHelperConfigWithPort } from '../../activate';
+import type { NgContext } from '../../ngContext';
 
 import { createComponentCommand } from './createComponent';
 
-export function registerCommand(context: ExtensionContext, config: NgHelperConfigWithPort) {
-    context.subscriptions.push(createComponentCommand(config.componentStyleFileExt, config.componentScriptFileExt));
+export function registerCommand(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
+        createComponentCommand(ngContext.config.componentStyleFileExt, ngContext.config.componentScriptFileExt),
+    );
 }

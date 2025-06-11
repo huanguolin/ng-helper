@@ -4,17 +4,12 @@ import type ts from 'typescript/lib/tsserverlibrary';
 import { overrideGetDefinitionAtPosition } from './definition';
 import { overrideGetSemanticDiagnostics } from './diagnostic';
 import { ngHelperTsService } from './ngHelperTsService';
-import { isAngularJsDependentTsProject } from './ngHelperTsService/utils';
 
 export = init;
 
 function init(modules: { typescript: typeof import('typescript/lib/tsserverlibrary') }): ts.server.PluginModule {
     return {
         create(info: ts.server.PluginCreateInfo) {
-            if (!isAngularJsDependentTsProject(info)) {
-                return info.languageService;
-            }
-
             const removeProject = ngHelperTsService.addProject({ info, modules });
 
             // Set up decorator object

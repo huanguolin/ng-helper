@@ -385,7 +385,7 @@ export function overrideGetDefinitionAtPosition({
 }) {
     proxy.getDefinitionAndBoundSpan = (fileName: string, position: number) => {
         const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position);
-        if (prior || isDtsFile(fileName) || !ngHelperTsService.isExtensionActivated()) {
+        if (prior || isDtsFile(fileName) || !ngHelperTsService.isNgHelperCanHandled(info, fileName)) {
             return prior;
         }
 

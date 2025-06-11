@@ -20,7 +20,7 @@ function createNgHelperTsService(): NgHelperServer {
     const _cacheMap = new Map<string, NgCache>();
 
     return {
-        isExtensionActivated,
+        isNgHelperCanHandled,
         getConfig,
         updateConfig,
         addProject,
@@ -47,8 +47,24 @@ function createNgHelperTsService(): NgHelperServer {
         }
     }
 
-    function isExtensionActivated() {
-        return !!_config?.port;
+    function isNgHelperCanHandled(info: ts.server.PluginCreateInfo, filePath: string) {
+        // config 还没有，则还没有准备好，统一返回 false
+        if (!_config || !_config.port) {
+            return false;
+        }
+
+        if (!Array.isArray(_config.projectMappings)) {
+            // 没有配置，则都是
+            return true;
+        }
+
+        // 按照配置来决定
+        const tsProjectRootPath = info.project.getCurrentDirectory();
+        const projectConfig = _config.projectMappings.find((x) => x.tsProjectPath === tsProjectRootPath);
+        if (!projectConfig) {
+            return false;
+        }
+        return projectConfig.ngProjectPaths.some((p) => filePath.startsWith(p));
     }
 
     function getConfig() {
@@ -56,13 +72,18 @@ function createNgHelperTsService(): NgHelperServer {
     }
 
     function updateConfig(cfg: Partial<NgPluginConfiguration>) {
+        _log('updateConfig(): config:', cfg);
+
+        // 注意:
+        // 这里的 info.config 不一定包含 client 那边传递的配置。
+        // 只有包含 client 那边的配置时，才更新 _config.
+        if (cfg.port) {
+            _config = cfg;
+        }
+
         if (_config?.port !== cfg.port && cfg.port) {
             _rpcClient.updateNgConfig(cfg.port);
         }
-
-        _config = cfg;
-
-        _log('updateConfig(): config:', cfg);
     }
 
     function addProject(projectInfo: ProjectInfo): () => void {
@@ -73,9 +94,11 @@ function createNgHelperTsService(): NgHelperServer {
         initLogger.startGroup();
         initLogger.info('start with info.config:', info.config);
 
-        if (!_config) {
-            updateConfig(info.config as Partial<NgPluginConfiguration>);
-        }
+        // 更新 config
+        // 注意:
+        // 这里的 info.config 不一定包含 client 那边传递的配置。
+        // 具体有没有取决于 client 那边 set config 与这里执行的先后。
+        updateConfig(info.config as Partial<NgPluginConfiguration>);
 
         const projectRoot = projectInfo.info.project.getCurrentDirectory();
         initLogger.info('project root from ts server:', projectRoot);
@@ -147,8 +170,8 @@ function createNgHelperTsService(): NgHelperServer {
     function getProjectRoot(filePath: string): string | undefined {
         const paths = Array.from(_getContextMap.keys());
         if (Array.isArray(_config?.projectMappings)) {
-            for (const { tsProjectPath, angularJsProjectPaths } of _config.projectMappings) {
-                if (angularJsProjectPaths.some((p) => filePath.startsWith(p))) {
+            for (const { tsProjectPath, ngProjectPaths } of _config.projectMappings) {
+                if (ngProjectPaths.some((p) => filePath.startsWith(p))) {
                     return tsProjectPath;
                 }
             }
