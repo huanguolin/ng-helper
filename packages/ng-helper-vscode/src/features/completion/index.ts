@@ -65,13 +65,19 @@ export function registerCompletion(ngContext: NgContext) {
     );
 }
 
-export async function completion({ document, position, cancelToken, ngContext }: CompletionParam) {
+export async function completion({ document, position, cancelToken, ngContext, completionContext }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
     checkCancellation(cancelToken);
 
-    const obj = { document, cursor, cancelToken, ngContext } as CompletionParamObj<CursorAtInfo | undefined>;
+    const obj = {
+        document,
+        cursor,
+        cancelToken,
+        ngContext,
+        completionContext,
+    } as CompletionParamObj<CursorAtInfo | undefined>;
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':
