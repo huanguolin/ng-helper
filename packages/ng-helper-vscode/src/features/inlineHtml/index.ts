@@ -19,6 +19,8 @@ import { triggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
 
+import { EMBEDDED_CONTENT_FLAG } from './utils';
+
 type VirtualDocumentInfo = {
     timestamp: number;
     documentText: string;
@@ -148,7 +150,7 @@ function requestForwardCompletion(ngContext: NgContext) {
 
 function registerVirtualDocumentProvider(ngContext: NgContext) {
     ngContext.vscodeContext.subscriptions.push(
-        workspace.registerTextDocumentContentProvider('embedded-content', {
+        workspace.registerTextDocumentContentProvider(EMBEDDED_CONTENT_FLAG, {
             provideTextDocumentContent: (uri) => {
                 const originalUri = getOriginalFileName(uri.path);
                 const decodedUri = decodeURIComponent(originalUri);
@@ -166,7 +168,7 @@ function prepareVirtualDocument(document: TextDocument, vDocText: string) {
         documentText: vDocText,
     });
     gc();
-    const vDocUriStr = `embedded-content://html/${encodeURIComponent(originalUri)}.html`;
+    const vDocUriStr = `${EMBEDDED_CONTENT_FLAG}://html/${encodeURIComponent(originalUri)}.html`;
     const vDocUri = Uri.parse(vDocUriStr);
     return vDocUri;
 }
