@@ -2,7 +2,6 @@ import { getCursorAtInfo, type CursorAtInfo } from '@ng-helper/shared/lib/cursor
 import { SPACE, type Cursor } from '@ng-helper/shared/lib/html';
 import {
     CompletionList,
-    ExtensionContext,
     languages,
     type CancellationToken,
     type CompletionContext,
@@ -11,7 +10,7 @@ import {
 } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
-import type { RpcApi } from '../../service/tsService/rpcApi';
+import type { NgContext } from '../../ngContext';
 import { buildCursor } from '../../utils';
 import { isComponentTagName } from '../utils';
 
@@ -24,8 +23,8 @@ import { templateOrAttrValueCompletion } from './type';
 interface BaseCompletionParam {
     document: TextDocument;
     cancelToken: CancellationToken;
-    context: CompletionContext;
-    rpcApi: RpcApi;
+    ngContext: NgContext;
+    completionContext: CompletionContext;
 }
 
 interface CompletionParam extends BaseCompletionParam {
@@ -40,12 +39,12 @@ export interface CompletionParamObj<T extends CursorAtInfo | undefined = undefin
 
 export const triggerChars = [SPACE, '<', '.'];
 
-export function registerCompletion(context: ExtensionContext, rpcApi: RpcApi) {
-    context.subscriptions.push(
+export function registerCompletion(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerCompletionItemProvider(
             'html',
             {
-                provideCompletionItems(document, position, token, context) {
+                provideCompletionItems(document, position, token, completionContext) {
                     const cancelTokenSource = createCancellationTokenSource(token);
                     return withTimeoutAndMeasure(
                         'provideCompletion',
@@ -54,8 +53,8 @@ export function registerCompletion(context: ExtensionContext, rpcApi: RpcApi) {
                                 document,
                                 position,
                                 cancelToken: cancelTokenSource.token,
-                                context,
-                                rpcApi,
+                                ngContext,
+                                completionContext,
                             }),
                         { cancelTokenSource },
                     );
@@ -66,13 +65,13 @@ export function registerCompletion(context: ExtensionContext, rpcApi: RpcApi) {
     );
 }
 
-export async function completion({ document, position, cancelToken, context, rpcApi }: CompletionParam) {
+export async function completion({ document, position, cancelToken, ngContext }: CompletionParam) {
     const cursor = buildCursor(document, position, false);
     const cursorAtInfo = getCursorAtInfo(document.getText(), cursor);
 
     checkCancellation(cancelToken);
 
-    const obj = { document, cursor, rpcApi, cancelToken, context };
+    const obj = { document, cursor, cancelToken, ngContext } as CompletionParamObj<CursorAtInfo | undefined>;
     switch (cursorAtInfo.type) {
         case 'endTag':
         case 'tagName':

@@ -10,12 +10,13 @@ import { supportInlineHtml } from './features/inlineHtml';
 import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
 import { registerStatusBar } from './features/statusBar';
+import { NgContext } from './ngContext';
 import { StateControl } from './service/stateControl';
 import { TsService } from './service/tsService/tsService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export async function activate(context: ExtensionContext) {
+export async function activate(vsCodeContext: ExtensionContext) {
     const config = await activateExt();
     if (!config) {
         return;
@@ -28,39 +29,40 @@ export async function activate(context: ExtensionContext) {
     const stateControl = new StateControl(pluginStartAt);
     const tsService = new TsService(stateControl);
     const rpcApi = tsService.start(config.port);
+    const ngContext = new NgContext(vsCodeContext, config, rpcApi);
 
-    context.subscriptions.push(tsService);
+    vsCodeContext.subscriptions.push(tsService);
 
     // TODO：
     // 1. config 在 client 要限定插件起效的文件范围
     // 2. status bar 显示配置的 project 状态
 
     // command
-    registerCommand(context, config);
+    registerCommand(ngContext);
 
     // status bar
-    registerStatusBar(context, stateControl);
+    registerStatusBar(ngContext, stateControl);
 
     // completion
-    registerCompletion(context, rpcApi);
+    registerCompletion(ngContext);
 
     // hover
-    registerHover(context, rpcApi);
+    registerHover(ngContext);
 
     // definition
-    registerDefinition(context, rpcApi);
+    registerDefinition(ngContext);
 
     // semantic
-    registerSemantic(context, rpcApi);
+    registerSemantic(ngContext);
 
     // code lens
-    registerCodeLens(context, rpcApi);
+    registerCodeLens(ngContext);
 
     // link
-    registerLink(context, rpcApi);
+    registerLink(ngContext);
 
     // inline html
-    supportInlineHtml(context, rpcApi);
+    supportInlineHtml(ngContext);
 }
 
 // This method is called when your extension is deactivated

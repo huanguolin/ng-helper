@@ -13,11 +13,11 @@ export async function customDirectiveNameCompletion({
     document,
     cursorAtInfo,
     cancelToken,
-    context,
-    rpcApi,
+    ngContext,
+    completionContext,
 }: CompletionParamObj<CursorAtAttrNameInfo>) {
     // 只走没有设置触发字符的那个分支。
-    if (typeof context.triggerCharacter === 'undefined') {
+    if (typeof completionContext.triggerCharacter === 'undefined') {
         const relatedScriptFile =
             (await getCorrespondingScriptFileName(
                 document,
@@ -32,7 +32,7 @@ export async function customDirectiveNameCompletion({
         return await handleDirectiveName({
             relatedScriptFile,
             cursorAtInfo,
-            rpcApi,
+            rpcApi: ngContext.rpcApi,
             cancelToken,
         });
     }

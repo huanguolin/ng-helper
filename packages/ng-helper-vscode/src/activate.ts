@@ -14,7 +14,7 @@ export async function activateExt(): Promise<NgHelperConfigWithPort | undefined>
 
     const config = await readConfig();
 
-    logger.logInfo('====> config: ', config);
+    logger.logInfo('====> ng-helper config: ', config);
 
     const port = await configTsPluginConfiguration(defaultPort, config);
     if (!port) {

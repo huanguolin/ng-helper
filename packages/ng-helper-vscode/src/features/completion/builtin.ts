@@ -26,9 +26,9 @@ const defaultNgConfigStr: BuiltinConfig = {
 };
 
 export function builtinDirectiveNameCompletion({
-    context,
+    completionContext,
 }: CompletionParamObj<CursorAtAttrNameInfo>): CompletionItem[] | undefined {
-    if (typeof context.triggerCharacter === 'undefined') {
+    if (typeof completionContext.triggerCharacter === 'undefined') {
         return getNgDirectiveConfigList()
             .map(([name, configs]) =>
                 configs.length > 0

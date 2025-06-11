@@ -1,9 +1,7 @@
-import { ExtensionContext } from 'vscode';
-
-import type { RpcApi } from '../../service/tsService/rpcApi';
+import type { NgContext } from '../../ngContext';
 
 import { searchUseOfComponentOrDirective } from './useOfComponentOrDirective';
 
-export function registerCodeLens(context: ExtensionContext, rpcApi: RpcApi) {
-    context.subscriptions.push(searchUseOfComponentOrDirective(rpcApi));
+export function registerCodeLens(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(searchUseOfComponentOrDirective(ngContext.rpcApi));
 }

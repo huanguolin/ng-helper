@@ -7,9 +7,10 @@ import {
 } from '@ng-helper/shared/lib/cursorAt';
 import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
-import { ExtensionContext, Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
+import { Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
 
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
+import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { buildCursor } from '../../utils';
 import {
@@ -26,8 +27,8 @@ import {
 import { genBuiltinFilterHoverInfo } from './builtin';
 import { onTypeHover } from './utils';
 
-export function registerHover(context: ExtensionContext, rpcApi: RpcApi): void {
-    context.subscriptions.push(
+export function registerHover(ngContext: NgContext): void {
+    ngContext.vscodeContext.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
                 const cancelTokenSource = createCancellationTokenSource(token);
@@ -50,14 +51,14 @@ export function registerHover(context: ExtensionContext, rpcApi: RpcApi): void {
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                 );
                             case 'tagName':
                                 return await handleTagNameOrAttrName(
                                     cursorAtInfo,
                                     document,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                 );
 
@@ -66,7 +67,7 @@ export function registerHover(context: ExtensionContext, rpcApi: RpcApi): void {
                                 return await handleTemplateOrAttrValue(
                                     document,
                                     position,
-                                    rpcApi,
+                                    ngContext.rpcApi,
                                     cancelTokenSource.token,
                                     cursorAtInfo,
                                 );

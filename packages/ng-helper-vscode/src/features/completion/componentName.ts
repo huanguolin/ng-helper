@@ -14,11 +14,11 @@ export async function componentNameCompletion({
     document,
     cursorAtInfo,
     cancelToken,
-    context,
-    rpcApi,
+    ngContext,
+    completionContext,
 }: CompletionParamObj<CursorAtTextInfo>) {
     // working on: no triggerChar or triggerChar is '<'
-    if (typeof context.triggerCharacter === 'undefined' || context.triggerCharacter === '<') {
+    if (typeof completionContext.triggerCharacter === 'undefined' || completionContext.triggerCharacter === '<') {
         return await componentNameCompletionImpl();
     }
 
@@ -34,7 +34,7 @@ export async function componentNameCompletion({
 
         checkCancellation(cancelToken);
 
-        let list = await rpcApi.getComponentNameCompletionApi({
+        let list = await ngContext.rpcApi.getComponentNameCompletionApi({
             params: { fileName: relatedScriptFile },
             cancelToken,
         });
@@ -59,7 +59,7 @@ export async function componentNameCompletion({
             }
         }
 
-        const preChar = context.triggerCharacter === '<' ? '' : '<';
+        const preChar = completionContext.triggerCharacter === '<' ? '' : '<';
         const items = list.map((x) => buildCompletionItem(x));
 
         if (matchTransclude && matchTransclude.transclude && typeof matchTransclude.transclude !== 'boolean') {

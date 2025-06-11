@@ -22,10 +22,17 @@ export interface NgPluginConfiguration {
     injectionCheckMode: InjectionCheckMode;
     /**
      * Ts 项目到 AngularJS 项目的映射。
+     * ts plugin 这边主要用这个做两件事：
+     * 1. 控制某个项目是否启用注入到 ts language service 中的功能（像依赖注入检查、service 名字跳转等），并控制它们作用的文件范围；
+     * 2. 控制 client 查询时，需要去哪个 ts project 中查询。
+     * 如果没有配置这个，则使用之前的自动处理的方案。
+     * 自动处理的问题，就是对应上面的两点：
+     * 1. 可能处理了不该处理的项目；
+     * 2. 项目查找可能会错。
      */
     projectMappings?: Array<{
         tsProjectPath: string;
-        angularJsProjectPaths: string[];
+        ngProjectPaths: string[];
     }>;
 }
 

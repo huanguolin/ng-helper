@@ -53,7 +53,7 @@ export type NgHelperServer = {
     addProject: (projectInfo: ProjectInfo) => () => void;
     getContext: GetContextFnViaFilePath;
     getCoreContext: GetCoreContextFnViaFilePath;
-    isExtensionActivated: () => boolean;
+    isNgHelperCanHandled: (info: ts.server.PluginCreateInfo, filePath: string) => boolean;
     getCache: (filePath: string) => NgCache | undefined;
 };
 

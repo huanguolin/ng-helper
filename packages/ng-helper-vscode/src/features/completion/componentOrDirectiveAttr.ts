@@ -14,11 +14,11 @@ export async function componentOrDirectiveAttrCompletion({
     cursor,
     cursorAtInfo,
     cancelToken,
-    context,
-    rpcApi,
+    ngContext,
+    completionContext,
 }: CompletionParamObj<CursorAtStartTagInfo | CursorAtAttrNameInfo>) {
     // 属性补全触发方式有两种: 空格和输入字符。
-    if (context.triggerCharacter === SPACE || typeof context.triggerCharacter === 'undefined') {
+    if (completionContext.triggerCharacter === SPACE || typeof completionContext.triggerCharacter === 'undefined') {
         if (cursorAtInfo.type === 'startTag') {
             // 只有是 'startTag' 时才需要看这个
             const tagTextBeforeCursor = document.getText().slice(cursorAtInfo.start, cursor.at);
@@ -40,7 +40,7 @@ export async function componentOrDirectiveAttrCompletion({
             return await handleComponentAttr({
                 relatedScriptFile,
                 cursorAtInfo,
-                rpcApi,
+                rpcApi: ngContext.rpcApi,
                 cancelToken,
             });
         } else {
@@ -48,7 +48,7 @@ export async function componentOrDirectiveAttrCompletion({
                 relatedScriptFile,
                 cursorAtInfo,
                 cursor,
-                rpcApi,
+                rpcApi: ngContext.rpcApi,
                 cancelToken,
             });
         }
