@@ -122,7 +122,7 @@ function getPublicMembersTypeInfoViaType(ctx: PluginContext, type: ts.Type): NgT
     const result = type
         .getApparentProperties()
         .map((x) => buildTypeInfo(ctx, x))
-        .filter((x) => !!x) as NgTypeInfo[];
+        .filter((x) => !!x);
     return result;
 }
 
