@@ -1,4 +1,4 @@
-import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
+import { NgPluginConfiguration, type InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
 import getPort from 'get-port';
 import * as vscode from 'vscode';
 
@@ -54,7 +54,7 @@ export async function configTsPluginConfiguration(
 function buildTsPluginConfiguration(port: number, config: NgHelperUserConfig): NgPluginConfiguration {
     const configuration: NgPluginConfiguration = {
         port,
-        injectionCheckMode: config.injectionCheckMode,
+        injectionCheckMode: config.injectionCheckMode as InjectionCheckMode,
     };
 
     if (config.projectMapping) {

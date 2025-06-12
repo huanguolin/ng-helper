@@ -137,7 +137,7 @@
     "fuzzysort": "^3.0.2",
     "get-port": "^6.1.2",
     "ws": "^7.5.10",
-    "zod": "^3.25.63"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/chai": "^5.0.1",
