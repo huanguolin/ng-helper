@@ -2,7 +2,7 @@ import { NgPluginConfiguration } from '@ng-helper/shared/lib/plugin';
 import getPort from 'get-port';
 import * as vscode from 'vscode';
 
-import type { NgHelperConfig } from '../activate';
+import type { NgHelperUserConfig } from '../config';
 import { pluginId, typeScriptExtensionId } from '../constants';
 import { logger } from '../logger';
 import { getWorkspacePath, normalizePath } from '../utils';
@@ -23,7 +23,7 @@ interface Api {
 
 export async function configTsPluginConfiguration(
     defaultPort: number,
-    config: NgHelperConfig,
+    config: NgHelperUserConfig,
 ): Promise<number | undefined> {
     const extension = vscode.extensions.getExtension<Api>(typeScriptExtensionId);
     if (!extension) {
@@ -51,7 +51,7 @@ export async function configTsPluginConfiguration(
     return port;
 }
 
-function buildTsPluginConfiguration(port: number, config: NgHelperConfig): NgPluginConfiguration {
+function buildTsPluginConfiguration(port: number, config: NgHelperUserConfig): NgPluginConfiguration {
     const configuration: NgPluginConfiguration = {
         port,
         injectionCheckMode: config.injectionCheckMode,
