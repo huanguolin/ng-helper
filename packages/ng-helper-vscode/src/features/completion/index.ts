@@ -44,9 +44,13 @@ export function registerCompletion(ngContext: NgContext) {
         languages.registerCompletionItemProvider(
             'html',
             {
-                provideCompletionItems(document, position, token, completionContext) {
+                async provideCompletionItems(document, position, token, completionContext) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
                     const cancelTokenSource = createCancellationTokenSource(token);
-                    return withTimeoutAndMeasure(
+                    return await withTimeoutAndMeasure(
                         'provideCompletion',
                         () =>
                             completion({

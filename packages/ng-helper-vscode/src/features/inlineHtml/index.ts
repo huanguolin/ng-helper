@@ -19,13 +19,12 @@ import { triggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
 import { getOriginalFileName } from '../utils';
 
-import { EMBEDDED_CONTENT_FLAG } from './utils';
-
 type VirtualDocumentInfo = {
     timestamp: number;
     documentText: string;
 };
 
+const EMBEDDED_CONTENT_FLAG = 'embedded-content';
 const NG_TPL_REG = /\btemplate\s*:\s*(['"`])[\s\S]*?(?!\\)(\1)/g;
 const MAX_COUNT = 5;
 const EXPIRE_TIME = 5 * 60 * 1000;
@@ -50,6 +49,10 @@ function providerSemantic(ngContext: NgContext) {
             ],
             {
                 async provideDocumentSemanticTokens(document, token) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
                     const vDocText = resolveVirtualDocText(document);
                     if (!vDocText) {
                         return;
@@ -72,6 +75,10 @@ function requestForwardHover(ngContext: NgContext) {
             ],
             {
                 async provideHover(document, position) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
                     const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;
@@ -101,6 +108,10 @@ function requestForwardDefinition(ngContext: NgContext) {
             ],
             {
                 async provideDefinition(document, position) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
                     const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;
@@ -128,6 +139,10 @@ function requestForwardCompletion(ngContext: NgContext) {
             ],
             {
                 async provideCompletionItems(document, position, _, ctx) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
                     const vDocText = resolveVirtualDocText(document, position);
                     if (!vDocText) {
                         return;

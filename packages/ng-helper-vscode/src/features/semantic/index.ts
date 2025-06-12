@@ -31,9 +31,13 @@ export function registerSemantic(ngContext: NgContext) {
     const disposable = languages.registerDocumentSemanticTokensProvider(
         'html',
         {
-            provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
+            async provideDocumentSemanticTokens(document, token): Promise<SemanticTokens | undefined> {
+                if (!ngContext.isNgProjectDocument(document)) {
+                    return;
+                }
+
                 const tokenSource = createCancellationTokenSource(token);
-                return withTimeoutAndMeasure(
+                return await withTimeoutAndMeasure(
                     'provideSemantic',
                     () => htmlSemanticProvider({ document, rpcApi: ngContext.rpcApi, token: tokenSource.token }),
                     {

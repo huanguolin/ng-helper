@@ -43,6 +43,10 @@ export function registerDefinition(ngContext: NgContext): void {
                 position: Position,
                 token: CancellationToken,
             ): Promise<Definition | undefined> {
+                if (!ngContext.isNgProjectDocument(document)) {
+                    return;
+                }
+
                 const cancelTokenSource = createCancellationTokenSource(token);
                 return await withTimeoutAndMeasure(
                     'provideDefinition',
