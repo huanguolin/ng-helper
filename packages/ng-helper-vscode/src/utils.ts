@@ -6,7 +6,7 @@ import { window, workspace, Uri, FileType, TextDocument, type Position } from 'v
 
 import { logger } from './logger';
 
-export async function triggerTsServerByProject(filePath: string) {
+export async function triggerTsServerByProject(filePath: string): Promise<boolean> {
     let scriptFilePath = filePath;
 
     if (!scriptFilePath.endsWith('.ts') && !scriptFilePath.endsWith('.js')) {
@@ -16,7 +16,7 @@ export async function triggerTsServerByProject(filePath: string) {
     if (!(await isFileExistsOnWorkspace(Uri.file(scriptFilePath)))) {
         const path = await getOneScriptFile(filePath);
         if (!path) {
-            return;
+            return false;
         }
         scriptFilePath = path;
     }
@@ -29,7 +29,10 @@ export async function triggerTsServerByProject(filePath: string) {
         // 目前只能通过打开 ts/js 文档来确保，tsserver 真正运行起来，这样插件才能跑起来。
         const document = await workspace.openTextDocument(Uri.file(scriptFilePath));
         await window.showTextDocument(document);
+        return true;
     }
+
+    return false;
 
     async function getOneScriptFile(filePath: string): Promise<string | undefined> {
         const files = await getScriptFiles(filePath, { limit: 1 });
