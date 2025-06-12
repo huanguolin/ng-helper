@@ -31,6 +31,10 @@ export function registerHover(ngContext: NgContext): void {
     ngContext.vscodeContext.subscriptions.push(
         languages.registerHoverProvider('html', {
             async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
+                if (!ngContext.isNgProjectDocument(document)) {
+                    return;
+                }
+
                 const cancelTokenSource = createCancellationTokenSource(token);
                 return await withTimeoutAndMeasure(
                     'provideHover',

@@ -20,6 +20,10 @@ export function registerLink(ngContext: NgContext) {
             ],
             {
                 provideDocumentLinks: function (document: TextDocument): MyLink[] {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return [];
+                    }
+
                     const text = document.getText();
                     return [...findControllerNameLink(text, document), ...findTemplateUrlLink(text, document)];
                 },

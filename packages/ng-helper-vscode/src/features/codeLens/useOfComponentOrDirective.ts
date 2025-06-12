@@ -1,16 +1,20 @@
 import { kebabCase } from 'change-case';
 import { languages, TextDocument, CodeLens, Range } from 'vscode';
 
-import type { RpcApi } from '../../service/tsService/rpcApi';
+import type { NgContext } from '../../ngContext';
 
 const STRING_REGEX = `(['"])(\\.|(?!\\1).)*?\\1`;
 const MATCH_DIRECTIVE = new RegExp(`\\.directive\\(\\s*${STRING_REGEX}`, 'g');
 const MATCH_COMPONENT = new RegExp(`\\.component\\(\\s*${STRING_REGEX}`, 'g');
 const MATCH_NAME = new RegExp(STRING_REGEX);
 
-export function searchUseOfComponentOrDirective(_rpcApi: RpcApi) {
+export function searchUseOfComponentOrDirective(ngContext: NgContext) {
     return languages.registerCodeLensProvider(['typescript', 'javascript'], {
         provideCodeLenses(document: TextDocument): CodeLens[] {
+            if (!ngContext.isNgProjectDocument(document)) {
+                return [];
+            }
+
             const codeLenses: CodeLens[] = [];
             const text = document.getText();
             let match: RegExpExecArray | null;
