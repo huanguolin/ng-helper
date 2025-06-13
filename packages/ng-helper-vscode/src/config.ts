@@ -1,11 +1,11 @@
 import type { InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
-import { Uri, workspace } from 'vscode';
+import { Uri, window, workspace } from 'vscode';
 import z from 'zod';
 
 import { EXT_CONF_PATH } from './constants';
 import { getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt, normalizePath } from './utils';
 
-const ALLOW_SCRIPT_FILE_EXTS = ['js', 'ts'] as const;
+const ALLOW_SCRIPT_FILE_EXTS = ['js', 'ts', '.js', '.ts'] as const;
 const ALLOW_INJECTION_CHECK_MODE = [
     'strict_equal',
     'ignore_case_word_match',
@@ -18,8 +18,6 @@ const NgHelperUserConfigScheme = z.object({
      * like 'less', 'scss', 'css' etc, default is 'css';
      */
     componentStyleFileExt: z.string().optional(),
-    // TODO: componentScriptFileExt, injectionCheckMode 可以先定义为 string, 后续
-    // 使用严格模式检查，不是要求的值取默认值，并报错。
     /**
      * 'js' or 'ts', default is 'js';
      */
@@ -82,18 +80,20 @@ export class NgHelperConfig {
     }
 }
 
-export async function readNgHelperUserConfig(): Promise<NgHelperUserConfig> {
-    const uri = getNgHelperUserConfigUri()!;
+export async function readUserConfig(): Promise<NgHelperUserConfig> {
+    const uri = getUserConfigFileUri()!;
     const uint8Array = await workspace.fs.readFile(uri);
     const jsonText = new TextDecoder().decode(uint8Array);
 
-    // TODO: error handle
-    const { ok: config } = await parseAndValidateUserConfig(jsonText);
+    const { ok: config, error: errors } = await parseAndValidateUserConfig(jsonText);
+    if (errors) {
+        await showUserConfigErrors(errors);
+    }
 
     return config!;
 }
 
-export function getNgHelperUserConfigUri(): Uri | undefined {
+export function getUserConfigFileUri(): Uri | undefined {
     const rootWorkspaceUri = getWorkspacePath();
     if (!rootWorkspaceUri) {
         return;
@@ -101,20 +101,86 @@ export function getNgHelperUserConfigUri(): Uri | undefined {
     return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
 }
 
+export async function showUserConfigErrors(errors: string[] | undefined) {
+    if (!errors || !errors.length) {
+        return;
+    }
+
+    const errorListStr = errors.map((error, index) => `${index + 1}. ${error}`).join('\n');
+    const selection = await window.showWarningMessage(
+        `The ng-helper configuration is invalid, please check the errors: \n${errorListStr}`,
+        'OK',
+    );
+    if (selection === 'OK') {
+        // 打开配置文件。
+        const document = await workspace.openTextDocument(getUserConfigFileUri()!);
+        await window.showTextDocument(document);
+    }
+}
+
 async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHelperUserConfig, string[]>> {
+    // 解析和标准化基本配置
+    const baseConfigResult = parseBaseConfig(jsonText);
+    if (baseConfigResult.error) {
+        return baseConfigResult;
+    }
+    let config = baseConfigResult.ok!;
+
+    // 验证项目结构的基本逻辑
+    const structureValidationResult = validateProjectsStructure(config);
+    if (structureValidationResult.error) {
+        return structureValidationResult;
+    }
+    config = structureValidationResult.ok!;
+
+    // 从这以后的错误，尽量容忍
+    const errors: string[] = [];
+
+    // 验证 AngularJS 项目配置
+    if (config.angularJsProjects) {
+        const angularJsResult = await validateAngularJsProjects(config);
+        config = angularJsResult.ok!;
+        if (angularJsResult.error) {
+            errors.push(...angularJsResult.error);
+        }
+    }
+
+    // 验证 TypeScript 项目配置
+    if (config.typescriptProjects) {
+        const typescriptResult = await validateTypescriptProjects(config, errors);
+        config = typescriptResult.ok!;
+        if (typescriptResult.error) {
+            errors.push(...typescriptResult.error);
+        }
+    }
+
+    // 验证项目映射配置
+    if (config.projectMapping) {
+        const mappingResult = validateProjectMapping(config, errors);
+        config = mappingResult.ok!;
+        if (mappingResult.error) {
+            errors.push(...mappingResult.error);
+        }
+    }
+
+    return { ok: config, error: errors.length > 0 ? errors : undefined };
+}
+
+function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig, string[]> {
     const defaultConfig = getDefaultConfig();
 
     let config: NgHelperUserConfig;
     try {
-        const userConfig = NgHelperUserConfigScheme.parse(jsonText || '{}');
+        const userConfig = NgHelperUserConfigScheme.parse(JSON.parse(jsonText || '{}'));
         config = Object.assign(defaultConfig, userConfig);
     } catch (err) {
         return {
             ok: defaultConfig,
-            error: [err instanceof Error ? err.message : `${err as string}`],
+            error: [`Parse user config failed: ${err instanceof Error ? err.message : `${err as string}`}`],
         };
     }
 
+    // 标准化文件扩展名
     if (config.componentStyleFileExt) {
         config.componentStyleFileExt = normalizeFileExt(config.componentStyleFileExt);
     }
@@ -122,132 +188,159 @@ async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHe
         config.componentScriptFileExt = normalizeFileExt(config.componentScriptFileExt) as 'js' | 'ts';
     }
 
+    return { ok: config };
+}
+
+function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperUserConfig, string[]> {
     const isRecordEmpty = (record?: Record<string, unknown>) => !record || !Array.from(Object.keys(record)).length;
     const isNgProjectEmpty = isRecordEmpty(config.angularJsProjects);
     const isTsProjectEmpty = isRecordEmpty(config.typescriptProjects);
     const isMappingEmpty = isRecordEmpty(config.projectMapping);
     const needNgProject = !isTsProjectEmpty || !isMappingEmpty;
+
     if (needNgProject && isNgProjectEmpty) {
         config.angularJsProjects = undefined;
         config.typescriptProjects = undefined;
         config.projectMapping = undefined;
         return {
             ok: config,
-            error: ['If set "projectMapping" or "typescriptProjects", then "angularJsProjects" is required.'],
+            error: ['If "projectMapping" or "typescriptProjects" is set, then "angularJsProjects" is required.'],
         };
     }
 
-    // 从这以后的错误，尽量容忍
-    const errors: string[] = [];
     if ((isMappingEmpty && !isTsProjectEmpty) || (!isMappingEmpty && isTsProjectEmpty)) {
         config.typescriptProjects = undefined;
         config.projectMapping = undefined;
-        errors.push('Can not set "projectMapping" or "typescriptProjects" without each other.');
+        return {
+            ok: config,
+            error: ['Cannot set "projectMapping" or "typescriptProjects" without the other.'],
+        };
     }
 
+    return { ok: config };
+}
+
+async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig, string[]>> {
     const workdir = getWorkspacePath()!.fsPath;
-    const normalizeProjectPath = (p: string) => normalizePath(p + '/' + workdir);
+    const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
 
-    if (config.angularJsProjects) {
-        const clearAndPackResult = (error: string) => {
-            config.angularJsProjects = undefined;
-            config.typescriptProjects = undefined;
-            config.projectMapping = undefined;
-            return {
-                ok: config,
-                error: [...errors, error],
-            };
+    const clearAndPackResult = (error: string) => {
+        const clearedConfig = { ...config };
+        clearedConfig.angularJsProjects = undefined;
+        clearedConfig.typescriptProjects = undefined;
+        clearedConfig.projectMapping = undefined;
+        return {
+            ok: clearedConfig,
+            error: [error],
         };
+    };
 
-        for (const [name, path] of Object.entries(config.angularJsProjects)) {
-            let p = normalizePath(path);
-            if (!p.startsWith('/')) {
-                p = normalizeProjectPath(p);
-            }
-            if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
-                return clearAndPackResult(`The angularJs project (name: ${name}) path not exists: ${path}`);
-            }
-            config.angularJsProjects[name] = p;
+    for (const [name, path] of Object.entries(config.angularJsProjects!)) {
+        let p = normalizePath(path);
+        if (!p.startsWith('/')) {
+            p = normalizeProjectPath(p);
         }
-
-        const error = findOverlapPaths(config.angularJsProjects);
-        if (error) {
-            return clearAndPackResult(error);
+        if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
+            return clearAndPackResult(`The AngularJS project (name: ${name}) path does not exist: ${path}`);
         }
+        config.angularJsProjects![name] = p;
     }
 
-    if (config.typescriptProjects) {
-        const clearAndPackResult = (error: string) => {
-            config.typescriptProjects = undefined;
-            config.projectMapping = undefined;
-            return {
-                ok: config,
-                error: [...errors, error],
-            };
+    const error = findOverlapPaths(config.angularJsProjects!);
+    if (error) {
+        return clearAndPackResult(error);
+    }
+
+    return { ok: config };
+}
+
+async function validateTypescriptProjects(
+    config: NgHelperUserConfig,
+    existingErrors: string[],
+): Promise<Result<NgHelperUserConfig, string[]>> {
+    const workdir = getWorkspacePath()!.fsPath;
+    const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
+
+    const clearAndPackResult = (error: string) => {
+        const clearedConfig = { ...config };
+        clearedConfig.typescriptProjects = undefined;
+        clearedConfig.projectMapping = undefined;
+        return {
+            ok: clearedConfig,
+            error: [...existingErrors, error],
         };
+    };
 
-        for (const [name, path] of Object.entries(config.typescriptProjects)) {
-            let p = normalizePath(path);
-            if (!p.startsWith('/')) {
-                p = normalizeProjectPath(p);
-            }
-            if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
-                return clearAndPackResult(`The typescript project (name: ${name}) path not exists: ${path}`);
-            }
-            config.typescriptProjects[name] = p;
+    for (const [name, path] of Object.entries(config.typescriptProjects!)) {
+        let p = normalizePath(path);
+        if (!p.startsWith('/')) {
+            p = normalizeProjectPath(p);
         }
-
-        const error = findOverlapPaths(config.typescriptProjects);
-        if (error) {
-            return clearAndPackResult(error);
+        if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
+            return clearAndPackResult(`The TypeScript project (name: ${name}) path does not exist: ${path}`);
         }
+        config.typescriptProjects![name] = p;
     }
 
-    if (config.projectMapping) {
-        const localErrors: string[] = [];
-        const ngProjectNames = Array.from(Object.keys(config.angularJsProjects!));
-        const tsProjectNames = Array.from(Object.keys(config.typescriptProjects!));
-        const ngProjectNamesFromMapping = Array.from(Object.values(config.projectMapping)).flat();
-        const tsProjectNamesFromMapping = Array.from(Object.keys(config.projectMapping));
-
-        // 名字不存在
-        const notConfigNgProjectNames = findMissingElements(ngProjectNames, ngProjectNamesFromMapping);
-        const notConfigTsProjectNames = findMissingElements(tsProjectNames, tsProjectNamesFromMapping);
-        if (notConfigNgProjectNames.length) {
-            localErrors.push(
-                `AngularJs project names: ${notConfigNgProjectNames.join(',')}, they are config in "angularJsProjects".`,
-            );
-        }
-        if (notConfigTsProjectNames.length) {
-            localErrors.push(
-                `Typescript project names: ${notConfigTsProjectNames.join(',')}, they are config in "typescriptProjects".`,
-            );
-        }
-
-        // 名字重复使用(注意：ts 的名字在 mapping 中做 key, 不可能重复)
-        const duplicateUsedNgProjectNames = findDuplicateStrings(ngProjectNamesFromMapping);
-        if (duplicateUsedNgProjectNames.length) {
-            localErrors.push(
-                `Duplicate used angularJs project names: ${notConfigTsProjectNames.join(',')} in "typescriptProjects".`,
-            );
-        }
-
-        // ts project name 必须都用上，否则配置它没有意义
-        const notUsedTsProjectNames = findMissingElements(tsProjectNamesFromMapping, tsProjectNames);
-        if (notUsedTsProjectNames.length) {
-            localErrors.push(`Not used typescript project names: ${notConfigTsProjectNames.join(',')}.`);
-        }
-
-        if (localErrors.length) {
-            config.projectMapping = undefined;
-            return {
-                ok: config,
-                error: [...errors, ...localErrors],
-            };
-        }
+    const error = findOverlapPaths(config.typescriptProjects!);
+    if (error) {
+        return clearAndPackResult(error);
     }
 
-    return { ok: config, error: errors };
+    return { ok: config };
+}
+
+function validateProjectMapping(
+    config: NgHelperUserConfig,
+    existingErrors: string[],
+): Result<NgHelperUserConfig, string[]> {
+    const localErrors: string[] = [];
+
+    const ngProjectNames = Array.from(Object.keys(config.angularJsProjects!));
+    const tsProjectNames = Array.from(Object.keys(config.typescriptProjects!));
+    const ngProjectNamesFromMapping = Array.from(Object.values(config.projectMapping!)).flat();
+    const tsProjectNamesFromMapping = Array.from(Object.keys(config.projectMapping!));
+
+    // 检查名字不存在的情况
+    const notConfigNgProjectNames = findMissingElements(ngProjectNames, ngProjectNamesFromMapping);
+    const notConfigTsProjectNames = findMissingElements(tsProjectNames, tsProjectNamesFromMapping);
+    if (notConfigNgProjectNames.length) {
+        localErrors.push(
+            `AngularJS project names: ${notConfigNgProjectNames.join(',')}, they are not configured in "angularJsProjects".`,
+        );
+    }
+    if (notConfigTsProjectNames.length) {
+        localErrors.push(
+            `TypeScript project names: ${notConfigTsProjectNames.join(',')}, they are not configured in "typescriptProjects".`,
+        );
+    }
+
+    // 检查名字重复使用的情况(注意：ts 的名字在 mapping 中做 key, 不可能重复)
+    const duplicateUsedNgProjectNames = findDuplicateStrings(ngProjectNamesFromMapping);
+    if (duplicateUsedNgProjectNames.length) {
+        localErrors.push(
+            `Duplicate AngularJS project names: ${duplicateUsedNgProjectNames.join(',')} are not allowed in "projectMapping".`,
+        );
+    }
+
+    // ts project name 必须都用上，否则配置它没有意义
+    const notUsedTsProjectNames = findMissingElements(tsProjectNamesFromMapping, tsProjectNames);
+    if (notUsedTsProjectNames.length) {
+        localErrors.push(
+            `Unused TypeScript project names: ${notUsedTsProjectNames.join(',')} are not allowed in "projectMapping".`,
+        );
+    }
+
+    if (localErrors.length) {
+        const clearedConfig = { ...config };
+        clearedConfig.projectMapping = undefined;
+        return {
+            ok: clearedConfig,
+            error: [...existingErrors, ...localErrors],
+        };
+    }
+
+    return { ok: config };
 }
 
 function findMissingElements(sourceArr: string[], targetArr: string[]): string[] {
