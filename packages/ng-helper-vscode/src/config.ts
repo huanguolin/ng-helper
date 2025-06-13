@@ -85,9 +85,10 @@ export async function readUserConfig(): Promise<NgHelperUserConfig> {
     const uint8Array = await workspace.fs.readFile(uri);
     const jsonText = new TextDecoder().decode(uint8Array);
 
-    const { ok: config, error: errors } = await parseAndValidateUserConfig(jsonText);
-    if (errors) {
-        await showUserConfigErrors(errors);
+    const { ok: config, error } = await parseAndValidateUserConfig(jsonText);
+    if (error) {
+        // 不等待，避免阻塞插件启动进程
+        void showUserConfigErrors(error);
     }
 
     return config!;
@@ -101,14 +102,13 @@ export function getUserConfigFileUri(): Uri | undefined {
     return Uri.joinPath(rootWorkspaceUri, EXT_CONF_PATH);
 }
 
-export async function showUserConfigErrors(errors: string[] | undefined) {
-    if (!errors || !errors.length) {
+export async function showUserConfigErrors(error: string | undefined) {
+    if (!error) {
         return;
     }
 
-    const errorListStr = errors.map((error, index) => `${index + 1}. ${error}`).join('\n');
     const selection = await window.showWarningMessage(
-        `The ng-helper configuration is invalid, please check the errors: \n${errorListStr}`,
+        `The ng-helper configuration is invalid, please check the error: ${error}.`,
         'OK',
     );
     if (selection === 'OK') {
@@ -118,7 +118,7 @@ export async function showUserConfigErrors(errors: string[] | undefined) {
     }
 }
 
-async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHelperUserConfig, string[]>> {
+async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHelperUserConfig>> {
     // 解析和标准化基本配置
     const baseConfigResult = parseBaseConfig(jsonText);
     if (baseConfigResult.error) {
@@ -133,40 +133,37 @@ async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHe
     }
     config = structureValidationResult.ok!;
 
-    // 从这以后的错误，尽量容忍
-    const errors: string[] = [];
-
     // 验证 AngularJS 项目配置
     if (config.angularJsProjects) {
         const angularJsResult = await validateAngularJsProjects(config);
-        config = angularJsResult.ok!;
         if (angularJsResult.error) {
-            errors.push(...angularJsResult.error);
+            return angularJsResult;
         }
+        config = angularJsResult.ok!;
     }
 
     // 验证 TypeScript 项目配置
     if (config.typescriptProjects) {
-        const typescriptResult = await validateTypescriptProjects(config, errors);
-        config = typescriptResult.ok!;
+        const typescriptResult = await validateTypescriptProjects(config);
         if (typescriptResult.error) {
-            errors.push(...typescriptResult.error);
+            return typescriptResult;
         }
+        config = typescriptResult.ok!;
     }
 
     // 验证项目映射配置
     if (config.projectMapping) {
-        const mappingResult = validateProjectMapping(config, errors);
-        config = mappingResult.ok!;
+        const mappingResult = validateProjectMapping(config);
         if (mappingResult.error) {
-            errors.push(...mappingResult.error);
+            return mappingResult;
         }
+        config = mappingResult.ok!;
     }
 
-    return { ok: config, error: errors.length > 0 ? errors : undefined };
+    return { ok: config };
 }
 
-function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig, string[]> {
+function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig> {
     const defaultConfig = getDefaultConfig();
 
     let config: NgHelperUserConfig;
@@ -176,7 +173,7 @@ function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig, string[]>
     } catch (err) {
         return {
             ok: defaultConfig,
-            error: [`Parse user config failed: ${err instanceof Error ? err.message : `${err as string}`}`],
+            error: `Parse user config failed: ${err instanceof Error ? err.message : `${err as string}`}`,
         };
     }
 
@@ -191,7 +188,7 @@ function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig, string[]>
     return { ok: config };
 }
 
-function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperUserConfig, string[]> {
+function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperUserConfig> {
     const isRecordEmpty = (record?: Record<string, unknown>) => !record || !Array.from(Object.keys(record)).length;
     const isNgProjectEmpty = isRecordEmpty(config.angularJsProjects);
     const isTsProjectEmpty = isRecordEmpty(config.typescriptProjects);
@@ -204,7 +201,7 @@ function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperU
         config.projectMapping = undefined;
         return {
             ok: config,
-            error: ['If "projectMapping" or "typescriptProjects" is set, then "angularJsProjects" is required.'],
+            error: 'If "projectMapping" or "typescriptProjects" is set, then "angularJsProjects" is required',
         };
     }
 
@@ -213,14 +210,14 @@ function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperU
         config.projectMapping = undefined;
         return {
             ok: config,
-            error: ['Cannot set "projectMapping" or "typescriptProjects" without the other.'],
+            error: 'Cannot set "projectMapping" or "typescriptProjects" without the other',
         };
     }
 
     return { ok: config };
 }
 
-async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig, string[]>> {
+async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig>> {
     const workdir = getWorkspacePath()!.fsPath;
     const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
 
@@ -231,7 +228,7 @@ async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Re
         clearedConfig.projectMapping = undefined;
         return {
             ok: clearedConfig,
-            error: [error],
+            error,
         };
     };
 
@@ -239,6 +236,9 @@ async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Re
         let p = normalizePath(path);
         if (!p.startsWith('/')) {
             p = normalizeProjectPath(p);
+        }
+        if (!p.startsWith(workdir)) {
+            return clearAndPackResult(`The AngularJS project (name: ${name}) path is out of vscode workspace`);
         }
         if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
             return clearAndPackResult(`The AngularJS project (name: ${name}) path does not exist: ${path}`);
@@ -248,16 +248,13 @@ async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Re
 
     const error = findOverlapPaths(config.angularJsProjects!);
     if (error) {
-        return clearAndPackResult(error);
+        return clearAndPackResult('In "angularJsProjects", ' + error);
     }
 
     return { ok: config };
 }
 
-async function validateTypescriptProjects(
-    config: NgHelperUserConfig,
-    existingErrors: string[],
-): Promise<Result<NgHelperUserConfig, string[]>> {
+async function validateTypescriptProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig>> {
     const workdir = getWorkspacePath()!.fsPath;
     const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
 
@@ -267,7 +264,7 @@ async function validateTypescriptProjects(
         clearedConfig.projectMapping = undefined;
         return {
             ok: clearedConfig,
-            error: [...existingErrors, error],
+            error,
         };
     };
 
@@ -275,6 +272,9 @@ async function validateTypescriptProjects(
         let p = normalizePath(path);
         if (!p.startsWith('/')) {
             p = normalizeProjectPath(p);
+        }
+        if (!p.startsWith(workdir)) {
+            return clearAndPackResult(`The TypeScript project (name: ${name}) path is out of vscode workspace`);
         }
         if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
             return clearAndPackResult(`The TypeScript project (name: ${name}) path does not exist: ${path}`);
@@ -284,16 +284,13 @@ async function validateTypescriptProjects(
 
     const error = findOverlapPaths(config.typescriptProjects!);
     if (error) {
-        return clearAndPackResult(error);
+        return clearAndPackResult('In "typescriptProjects", ' + error);
     }
 
     return { ok: config };
 }
 
-function validateProjectMapping(
-    config: NgHelperUserConfig,
-    existingErrors: string[],
-): Result<NgHelperUserConfig, string[]> {
+function validateProjectMapping(config: NgHelperUserConfig): Result<NgHelperUserConfig> {
     const localErrors: string[] = [];
 
     const ngProjectNames = Array.from(Object.keys(config.angularJsProjects!));
@@ -305,30 +302,26 @@ function validateProjectMapping(
     const notConfigNgProjectNames = findMissingElements(ngProjectNames, ngProjectNamesFromMapping);
     const notConfigTsProjectNames = findMissingElements(tsProjectNames, tsProjectNamesFromMapping);
     if (notConfigNgProjectNames.length) {
-        localErrors.push(
-            `AngularJS project names: ${notConfigNgProjectNames.join(',')}, they are not configured in "angularJsProjects".`,
-        );
+        const namesStr = notConfigNgProjectNames.map((n) => `"${n}"`).join(',');
+        localErrors.push(`AngularJS project names: ${namesStr}, they are not configured in "angularJsProjects"`);
     }
     if (notConfigTsProjectNames.length) {
-        localErrors.push(
-            `TypeScript project names: ${notConfigTsProjectNames.join(',')}, they are not configured in "typescriptProjects".`,
-        );
+        const namesStr = notConfigTsProjectNames.map((n) => `"${n}"`).join(',');
+        localErrors.push(`TypeScript project names: ${namesStr}, they are not configured in "typescriptProjects"`);
     }
 
     // 检查名字重复使用的情况(注意：ts 的名字在 mapping 中做 key, 不可能重复)
     const duplicateUsedNgProjectNames = findDuplicateStrings(ngProjectNamesFromMapping);
     if (duplicateUsedNgProjectNames.length) {
-        localErrors.push(
-            `Duplicate AngularJS project names: ${duplicateUsedNgProjectNames.join(',')} are not allowed in "projectMapping".`,
-        );
+        const namesStr = duplicateUsedNgProjectNames.map((n) => `"${n}"`).join(',');
+        localErrors.push(`Duplicate AngularJS project names: ${namesStr} are not allowed in "projectMapping"`);
     }
 
     // ts project name 必须都用上，否则配置它没有意义
     const notUsedTsProjectNames = findMissingElements(tsProjectNamesFromMapping, tsProjectNames);
     if (notUsedTsProjectNames.length) {
-        localErrors.push(
-            `Unused TypeScript project names: ${notUsedTsProjectNames.join(',')} are not allowed in "projectMapping".`,
-        );
+        const namesStr = notUsedTsProjectNames.map((n) => `"${n}"`).join(',');
+        localErrors.push(`Unused TypeScript project names: ${namesStr} are not allowed in "projectMapping"`);
     }
 
     if (localErrors.length) {
@@ -336,7 +329,7 @@ function validateProjectMapping(
         clearedConfig.projectMapping = undefined;
         return {
             ok: clearedConfig,
-            error: [...existingErrors, ...localErrors],
+            error: localErrors.join(';'),
         };
     }
 
@@ -376,7 +369,7 @@ function findOverlapPaths(projectConfig: Record<string, string>): string | undef
             if (isPathOverlap(p1, p2)) {
                 const n1 = names[i];
                 const n2 = names[j];
-                return `the path of project '${n1}' overlaps the project '${n2}'`;
+                return `the path of project "${n1}" overlaps the project "${n2}"`;
             }
         }
     }
