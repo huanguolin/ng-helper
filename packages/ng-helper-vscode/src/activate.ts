@@ -1,6 +1,6 @@
 import { commands } from 'vscode';
 
-import { NgHelperConfig, readNgHelperUserConfig, getNgHelperUserConfigUri } from './config';
+import { NgHelperConfig, readUserConfig, getUserConfigFileUri } from './config';
 import { EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { logger } from './logger';
 import { configTsPluginConfiguration } from './service/configTsPlugin';
@@ -12,7 +12,7 @@ export async function activateExt(): Promise<NgHelperConfig | undefined> {
         return;
     }
 
-    const userConfig = await readNgHelperUserConfig();
+    const userConfig = await readUserConfig();
 
     logger.logInfo('====> ng-helper user config: ', userConfig);
 
@@ -27,7 +27,7 @@ export async function activateExt(): Promise<NgHelperConfig | undefined> {
 }
 
 async function canActivate(): Promise<boolean> {
-    const confUri = getNgHelperUserConfigUri();
+    const confUri = getUserConfigFileUri();
     if (!confUri) {
         return false;
     }
