@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import type { NgHelperUserConfig } from '../config';
 import { pluginId, typeScriptExtensionId } from '../constants';
 import { logger } from '../logger';
-import { getWorkspacePath, normalizePath } from '../utils';
+import { findMissingElements, getWorkspacePath, normalizePath } from '../utils';
 
 /**
  * see https://github.com/Microsoft/vscode/blob/main/extensions/typescript-language-features/src/api.ts
@@ -58,12 +58,28 @@ function buildTsPluginConfiguration(port: number, config: NgHelperUserConfig): N
     };
 
     if (config.projectMapping) {
-        const workspacePath = getWorkspacePath()!.fsPath;
-        const normalizeProjectPath = (p: string) => normalizePath(workspacePath + '/' + p);
-        configuration.projectMappings = Array.from(Object.entries(config.projectMapping)).map(([tsName, ngNames]) => ({
-            tsProjectPath: normalizeProjectPath(config.typescriptProjects![tsName]),
-            ngProjectPaths: ngNames.map((ngName) => normalizeProjectPath(config.angularJsProjects![ngName])),
-        }));
+        const workspacePath = normalizePath(getWorkspacePath()!.fsPath);
+
+        const mappingList: NgPluginConfiguration['projectMappings'] = [];
+        const mappingNgNames: string[] = [];
+        for (const [tsName, ngNames] of Object.entries(config.projectMapping)) {
+            mappingList.push({
+                tsProjectPath: config.typescriptProjects![tsName],
+                ngProjectPaths: ngNames.map((ngName) => config.angularJsProjects![ngName]),
+            });
+            mappingNgNames.push(...ngNames);
+        }
+
+        const allNgNames = Array.from(Object.keys(config.angularJsProjects!));
+        const diffNames = findMissingElements(mappingNgNames, allNgNames);
+        if (diffNames.length) {
+            mappingList.push({
+                tsProjectPath: workspacePath,
+                ngProjectPaths: diffNames,
+            });
+        }
+
+        configuration.projectMappings = mappingList;
     }
 
     return configuration;

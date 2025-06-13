@@ -3,7 +3,13 @@ import { Uri, window, workspace } from 'vscode';
 import z from 'zod';
 
 import { EXT_CONF_PATH } from './constants';
-import { getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt, normalizePath } from './utils';
+import {
+    findMissingElements,
+    getWorkspacePath,
+    isFileExistsOnWorkspace,
+    normalizeFileExt,
+    normalizePath,
+} from './utils';
 
 const ALLOW_SCRIPT_FILE_EXTS = ['js', 'ts', '.js', '.ts'] as const;
 const ALLOW_INJECTION_CHECK_MODE = [
@@ -334,10 +340,6 @@ function validateProjectMapping(config: NgHelperUserConfig): Result<NgHelperUser
     }
 
     return { ok: config };
-}
-
-function findMissingElements(sourceArr: string[], targetArr: string[]): string[] {
-    return targetArr.filter((item) => !sourceArr.includes(item));
 }
 
 function findDuplicateStrings(arr: string[]): string[] {
