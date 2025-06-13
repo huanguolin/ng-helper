@@ -34,7 +34,6 @@ export async function activate(vsCodeContext: ExtensionContext) {
     vsCodeContext.subscriptions.push(tsService);
 
     // TODO：
-    // 1. config 在 client 要限定插件起效的文件范围
     // 2. status bar 显示配置的 project 状态
 
     // command

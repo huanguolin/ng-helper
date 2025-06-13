@@ -13,16 +13,6 @@ export class NgContext {
 
     isNgProjectDocument(document: TextDocument): boolean {
         const filePath = getNormalizedPathFromDocument(document);
-        return this.isNgProjectFile(filePath);
-    }
-
-    isNgProjectFile(filePath: string): boolean {
-        const ngProjects = this.config.userConfig.angularJsProjects;
-        if (!ngProjects) {
-            return true;
-        }
-
-        const ngProjectPaths = Array.from(Object.values(ngProjects));
-        return ngProjectPaths.some((p) => filePath.startsWith(p));
+        return this.config.isNgProjectFile(filePath);
     }
 }

@@ -75,13 +75,25 @@ export class NgHelperConfig {
     constructor(
         public userConfig: NgHelperUserConfig,
         public port: number,
-    ) {}
+    ) {
+        this._ngProjects = userConfig.angularJsProjects && this.buildProjects(userConfig.angularJsProjects);
+        this._tsProjects = userConfig.typescriptProjects && this.buildProjects(userConfig.typescriptProjects);
+    }
+
+    isNgProjectFile(filePath: string): boolean {
+        if (!this._ngProjects) {
+            return true;
+        }
+
+        return !!this._ngProjects?.some((x) => filePath.startsWith(x.absolutePath));
+    }
 
     private buildProjects(config: Record<string, string>): ProjectInfo[] {
+        const workspaceDir = normalizePath(getWorkspacePath()!.fsPath);
         return Array.from(Object.entries(config)).map(([name, path]) => ({
             name,
-            relativePath: path,
-            absolutePath: path, // TODO
+            relativePath: path.slice(workspaceDir.length + 1), // + 1 for '/'
+            absolutePath: path,
         }));
     }
 }
