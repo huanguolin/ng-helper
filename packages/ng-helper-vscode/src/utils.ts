@@ -255,3 +255,7 @@ export function getLastFolderName(p: string): string {
         return basename(normalizedPath);
     }
 }
+
+export function findMissingElements(sourceArr: string[], targetArr: string[]): string[] {
+    return targetArr.filter((item) => !sourceArr.includes(item));
+}

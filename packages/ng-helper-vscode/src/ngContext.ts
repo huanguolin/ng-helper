@@ -3,7 +3,6 @@ import type { ExtensionContext, TextDocument } from 'vscode';
 import type { NgHelperConfig } from './config';
 import { getNormalizedPathFromDocument } from './features/utils';
 import type { RpcApi } from './service/tsService/rpcApi';
-import { getWorkspacePath, normalizePath } from './utils';
 
 export class NgContext {
     constructor(
@@ -23,9 +22,7 @@ export class NgContext {
             return true;
         }
 
-        const workspacePath = getWorkspacePath()!.fsPath;
-        const normalizeProjectPath = (p: string) => normalizePath(workspacePath + '/' + p);
-        const ngProjectPaths = Array.from(Object.values(ngProjects)).map((p) => normalizeProjectPath(p));
+        const ngProjectPaths = Array.from(Object.values(ngProjects));
         return ngProjectPaths.some((p) => filePath.startsWith(p));
     }
 }
