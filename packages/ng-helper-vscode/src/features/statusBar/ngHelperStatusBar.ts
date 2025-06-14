@@ -47,8 +47,8 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     }
 
     function renderBarItem() {
-        statusBarItem.hide();
         if (!visible) {
+            statusBarItem.hide();
             return;
         }
 
@@ -86,8 +86,8 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
         } else {
             statusBarItem.tooltip = 'Load TypeScript project.';
         }
-        statusBarItem.color = new ThemeColor('statusBar.foreground');
-        statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
+        statusBarItem.color = new ThemeColor('statusBarItem.foreground');
+        statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
     }
 
     function setStatusByCurrentNgProject() {
@@ -99,14 +99,13 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
             const readStr = !currentNgProjectName ? 'Ready' : `Ready for "${currentNgProjectName}"`;
             statusBarItem.text = '$(check) NgHelper';
             statusBarItem.tooltip = `${readStr}. ${loadedTsProjectStr}.`;
-            statusBarItem.color = new ThemeColor('statusBar.foreground');
-            statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
+            statusBarItem.color = new ThemeColor('statusBarItem.foreground');
+            statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
         } else {
             statusBarItem.text = '$(alert) NgHelper';
             statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". ${loadedTsProjectStr}.`;
-            // 不知道为什么这里设置 warning 的颜色不起效
-            statusBarItem.color = new ThemeColor('statusBar.warningForeground');
-            statusBarItem.backgroundColor = new ThemeColor('statusBar.warningBackground');
+            statusBarItem.color = new ThemeColor('statusBarItem.warningForeground');
+            statusBarItem.backgroundColor = new ThemeColor('statusBarItem.warningBackground');
         }
     }
 
