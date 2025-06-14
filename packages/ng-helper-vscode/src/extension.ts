@@ -33,9 +33,6 @@ export async function activate(vsCodeContext: ExtensionContext) {
 
     vsCodeContext.subscriptions.push(tsService);
 
-    // TODO：
-    // 2. status bar 显示配置的 project 状态
-
     // command
     registerCommand(ngContext);
 
