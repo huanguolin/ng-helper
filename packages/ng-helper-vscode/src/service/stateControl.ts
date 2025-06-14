@@ -20,11 +20,11 @@ const myLogger = logger.prefixWith('StateControl');
 export class StateControl {
     private _notifyStatusBar?: ListenForStatusBar;
     private _pluginStartAt: number;
-    private _loadingTimeout?: NodeJS.Timeout;
-    private _isLoading = false;
-    private _loadingFlag = '';
     private _isRpcServerReady = false;
+    private _isLoading = false;
     private _projectRoots: string[] = [];
+    private _loadingTimeout?: ReturnType<typeof setTimeout>;
+    private _hasPopupWarning = false;
 
     constructor(pluginStartAt: number) {
         this._pluginStartAt = pluginStartAt;
@@ -32,6 +32,7 @@ export class StateControl {
 
     updateState(state: State, path?: string) {
         myLogger.logInfo(`updateState(): ${state}, path: ${path}`);
+        this.logSnapshot();
 
         // 状态出现的顺序是:
         // 1. 插件第一次启动：
@@ -44,32 +45,29 @@ export class StateControl {
         // -> disconnect
         switch (state) {
             case 'disconnect':
-                this.rpcServerReady = false;
-                this.forceCloseLoading();
+                this.setRpcServerReady(false);
+                this.setIsLoading(false);
                 break;
             case 'canNotQuery':
-                this.triggerTsProjectLoading(path!, 'canNotQuery');
+                this.triggerTsProjectLoading(path!);
                 break;
             case 'connected':
-                this.rpcServerReady = true;
-                this.closeLoading('canNotQuery');
+                this.setRpcServerReady(true);
+                this.setIsLoading(false);
                 break;
             case 'noContext':
-                this.triggerTsProjectLoading(path!, path!);
+                this.triggerTsProjectLoading(path!);
                 break;
             case 'addProject':
-                this.closeLoading(path!);
-                if (!this._projectRoots.includes(path!)) {
-                    this._projectRoots.push(path!);
-                }
+                this.addProjectRoot(path!);
+                this.setIsLoading(false);
                 break;
             case 'removeProject':
-                this._projectRoots = this._projectRoots.filter((x) => x !== path!);
+                this.removeProjectRoot(path!);
                 break;
             default:
                 break;
         }
-        this.handleStateChange();
     }
 
     notifyStatusBar(listener: ListenForStatusBar) {
@@ -80,46 +78,71 @@ export class StateControl {
         return this._isRpcServerReady;
     }
 
-    private set rpcServerReady(value: boolean) {
+    private setRpcServerReady(value: boolean) {
         this._isRpcServerReady = value;
+        this.handleStateChange();
+    }
+
+    private setIsLoading(value: boolean) {
+        if (value) {
+            this._loadingTimeout = setTimeout(() => this.setIsLoading(false), MAX_LOADING_TIME);
+        } else {
+            clearTimeout(this._loadingTimeout);
+        }
+        this._isLoading = value;
+        this.handleStateChange();
+    }
+
+    private addProjectRoot(rootPath: string) {
+        if (this._projectRoots.includes(rootPath)) {
+            return;
+        }
+        this._projectRoots.push(rootPath);
+        this.handleStateChange();
+    }
+
+    private removeProjectRoot(rootPath: string) {
+        this._projectRoots = this._projectRoots.filter((x) => x !== rootPath);
         this.handleStateChange();
     }
 
     private handleStateChange() {
         const barStatus = this._isLoading ? 'loading' : this.rpcServerReady ? 'connected' : 'disconnect';
         myLogger.logInfo(`handleStateChange(): barStatus: ${barStatus}`);
+        this.logSnapshot();
         this._notifyStatusBar?.(barStatus, this._projectRoots);
     }
 
-    private triggerTsProjectLoading(filePath: string, flag: string) {
-        if (this._isLoading) {
-            return;
-        }
-
-        this._isLoading = true;
-        this._loadingFlag = flag;
-
+    private triggerTsProjectLoading(filePath: string) {
         // 至少在插件启动一段时间后才能去触发。
-        this._loadingTimeout = setTimeout(() => {
-            this._loadingTimeout = setTimeout(() => this.closeLoading(flag), MAX_LOADING_TIME);
-            myLogger.logInfo(`triggerTsProjectLoading(): filePath: ${filePath}, flag: ${flag}`);
-            void triggerTsServerByProject(filePath);
-        }, this.getDelay());
-    }
-
-    private closeLoading(flag: string) {
-        if (!this._loadingFlag.startsWith(flag)) {
+        if (this.getDelay() > 0) {
             return;
         }
 
-        this.forceCloseLoading();
+        if (this._isLoading || this._hasPopupWarning) {
+            return;
+        }
+
+        this._hasPopupWarning = true;
+        void triggerTsServerByProject(filePath)
+            .then((ok) => {
+                if (ok) {
+                    this.setIsLoading(true);
+                }
+            })
+            .finally(() => {
+                this._hasPopupWarning = false;
+            });
     }
 
-    private forceCloseLoading() {
-        clearTimeout(this._loadingTimeout);
-        this._isLoading = false;
-        this._loadingFlag = '';
-        this.handleStateChange();
+    private logSnapshot() {
+        const snapshot: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(this)) {
+            if (typeof value !== 'function') {
+                snapshot[key] = value;
+            }
+        }
+        myLogger.logDebug('snapshot: ', snapshot);
     }
 
     private getDelay() {

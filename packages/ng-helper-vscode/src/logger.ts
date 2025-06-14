@@ -3,7 +3,7 @@ export type LogLevel = 'E' | 'W' | 'I' | 'D'; // E: error, W: warning, I: info, 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function logFilter(level: LogLevel, prefix: string[], logContent: unknown[]): boolean {
     // 在这里可以实现日志过滤逻辑
-    if (level === 'D') {
+    if (level === 'D' && !prefix.includes('StateControl')) {
         // 排除 debug 级别的日志
         return false;
     }
