@@ -256,6 +256,11 @@ export function getLastFolderName(p: string): string {
     }
 }
 
+export function getFileName(filePath: string): string {
+    const normalizedPath = normalize(filePath); // 标准化，比如去掉多余的斜杠
+    return basename(normalizedPath);
+}
+
 export function findMissingElements(sourceArr: string[], targetArr: string[]): string[] {
     return targetArr.filter((item) => !sourceArr.includes(item));
 }

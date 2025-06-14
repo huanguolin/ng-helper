@@ -5,6 +5,7 @@ import z from 'zod';
 import { EXT_CONF_PATH } from './constants';
 import {
     findMissingElements,
+    getFileName,
     getWorkspacePath,
     isFileExistsOnWorkspace,
     normalizeFileExt,
@@ -80,12 +81,60 @@ export class NgHelperConfig {
         this._tsProjects = userConfig.typescriptProjects && this.buildProjects(userConfig.typescriptProjects);
     }
 
-    isNgProjectFile(filePath: string): boolean {
-        if (!this._ngProjects) {
+    get ngProjects() {
+        return this._ngProjects;
+    }
+
+    get tsProjects() {
+        return this._tsProjects;
+    }
+
+    get hasProjectMapping(): boolean {
+        return !!this.userConfig.projectMapping;
+    }
+
+    getMatchedNgProjectNames(tsProjectName: string): string[] | undefined {
+        return this.userConfig.projectMapping?.[tsProjectName];
+    }
+
+    getMatchedTsProjectName(ngProjectName: string): string | undefined {
+        if (!this.hasProjectMapping) {
+            return;
+        }
+
+        for (const [tsName, ngNames] of Object.entries(this.userConfig.projectMapping!)) {
+            if (ngNames.includes(ngProjectName)) {
+                return tsName;
+            }
+        }
+    }
+
+    getNgProject(absolutePilePath: string): ProjectInfo | undefined {
+        return this.ngProjects?.find((x) => absolutePilePath.startsWith(x.absolutePath));
+    }
+
+    getTsProject(absolutePilePath: string): ProjectInfo | undefined {
+        return this.tsProjects?.find((x) => absolutePilePath.startsWith(x.absolutePath));
+    }
+
+    isNgProjectFile(absolutePilePath: string): boolean {
+        const fileName = getFileName(absolutePilePath);
+
+        // 文件名以点开头的文件，往往是配置文件（如: .eslintrc.js），排除掉
+        if (fileName.startsWith('.')) {
+            return false;
+        }
+
+        // 该插件只关心 html/js/ts 文件
+        if (!fileName.endsWith('.html') && !fileName.endsWith('.js') && !fileName.endsWith('.ts')) {
+            return false;
+        }
+
+        if (!this.ngProjects) {
             return true;
         }
 
-        return !!this._ngProjects?.some((x) => filePath.startsWith(x.absolutePath));
+        return !!this.getNgProject(absolutePilePath);
     }
 
     private buildProjects(config: Record<string, string>): ProjectInfo[] {
