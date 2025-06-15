@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
 import type { NgHelperUserConfig } from '../config';
 import { pluginId, typeScriptExtensionId } from '../constants';
 import { logger } from '../logger';
-import { findMissingElements, getWorkspacePath, normalizePath } from '../utils';
 
 /**
  * see https://github.com/Microsoft/vscode/blob/main/extensions/typescript-language-features/src/api.ts
@@ -57,25 +56,12 @@ function buildTsPluginConfiguration(port: number, config: NgHelperUserConfig): N
         injectionCheckMode: config.injectionCheckMode as InjectionCheckMode,
     };
 
-    if (config.projectMapping) {
-        const workspacePath = normalizePath(getWorkspacePath()!.fsPath);
-
+    if (config.ngProjects) {
         const mappingList: NgPluginConfiguration['projectMappings'] = [];
-        const mappingNgNames: string[] = [];
-        for (const [tsName, ngNames] of Object.entries(config.projectMapping)) {
+        for (const p of config.ngProjects) {
             mappingList.push({
-                tsProjectPath: config.typescriptProjects![tsName],
-                ngProjectPaths: ngNames.map((ngName) => config.angularJsProjects![ngName]),
-            });
-            mappingNgNames.push(...ngNames);
-        }
-
-        const allNgNames = Array.from(Object.keys(config.angularJsProjects!));
-        const diffNames = findMissingElements(mappingNgNames, allNgNames);
-        if (diffNames.length) {
-            mappingList.push({
-                tsProjectPath: workspacePath,
-                ngProjectPaths: diffNames,
+                tsProjectPath: p.dependOnTsProjectPath!,
+                ngProjectPath: p.path,
             });
         }
 

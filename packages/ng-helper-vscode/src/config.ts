@@ -3,14 +3,7 @@ import { Uri, window, workspace } from 'vscode';
 import z from 'zod';
 
 import { EXT_CONF_PATH } from './constants';
-import {
-    findMissingElements,
-    getFileName,
-    getWorkspacePath,
-    isFileExistsOnWorkspace,
-    normalizeFileExt,
-    normalizePath,
-} from './utils';
+import { getFileName, getWorkspacePath, isFileExistsOnWorkspace, normalizeFileExt, normalizePath } from './utils';
 
 const ALLOW_SCRIPT_FILE_EXTS = ['js', 'ts', '.js', '.ts'] as const;
 const ALLOW_INJECTION_CHECK_MODE = [
@@ -19,6 +12,28 @@ const ALLOW_INJECTION_CHECK_MODE = [
     'count_match',
     'off',
 ] as const satisfies InjectionCheckMode[];
+
+const NgProjectScheme = z.object({
+    /**
+     * 名字。
+     */
+    name: z.string(),
+    /**
+     * AngularJS 工程的路径，它限定了 NgHelper 的工作范围。
+     * 此路径下的 html/js/ts 是让 NgHelper 工作的文件。
+     */
+    path: z.string(),
+    /**
+     * AngularJS 工程依赖的 TypeScript 工程路径（一般它的目录有 tsconfig.json 文件）。
+     * 如果没有使用 TypeScript, 就不用配置该项目。
+     * 使用了 TypeScript 就必须配置，即使路径和 AngularJS 工程一样也要配置。
+     *
+     * 注意：
+     * TypeScript 工程路径可以包含 AngularJS 工程，但 AngularJS 工程不能包含 TypeScript 工程。
+     * 两个一样是可以的。
+     */
+    dependOnTsProjectPath: z.string().optional(),
+});
 
 const NgHelperUserConfigScheme = z.object({
     /**
@@ -29,92 +44,40 @@ const NgHelperUserConfigScheme = z.object({
      * 'js' or 'ts', default is 'js';
      */
     componentScriptFileExt: z.enum(ALLOW_SCRIPT_FILE_EXTS).optional(),
+    /**
+     * default is 'count_match'
+     */
     injectionCheckMode: z.enum(ALLOW_INJECTION_CHECK_MODE).optional(),
     /**
-     * AngularJS projects configuration with their paths (optional)
-     * Key: project name, Value: project path
+     * 没有配置的话，会自动判断，但有的情况会匹配错误。
      */
-    angularJsProjects: z.record(z.string(), z.string()).optional(),
-    /**
-     * TypeScript projects configuration with their paths (optional)
-     * Key: project name, Value: project path
-     */
-    typescriptProjects: z.record(z.string(), z.string()).optional(),
-    /**
-     * Mapping between TypeScript and AngularJS projects (optional)
-     * Key: TypeScript project name, Value: Array of AngularJS project names
-     * If not provided, the extension will auto mapping.
-     */
-    projectMapping: z.record(z.string(), z.array(z.string())).optional(),
+    ngProjects: z.array(NgProjectScheme).optional(),
 });
 
+export type NgProjectConfig = z.infer<typeof NgProjectScheme>;
 export type NgHelperUserConfig = z.infer<typeof NgHelperUserConfigScheme>;
 
-type ProjectInfo = {
-    name: string;
-    /**
-     * 相对于 vscode workdir 的路径，且已经 normalized.
-     */
-    relativePath: string;
-    /**
-     * 绝对路劲，已经 normalized.
-     */
-    absolutePath: string;
-};
-
-/**
- * 与 rust 不同，这里 ok 和 error 可以同时存在。
- */
-type Result<T, E = string> = {
-    ok?: T;
-    error?: E;
+type Result<T> = {
+    ok: T;
+    error?: string;
 };
 
 export class NgHelperConfig {
-    private _ngProjects?: ProjectInfo[];
-    private _tsProjects?: ProjectInfo[];
     constructor(
         public userConfig: NgHelperUserConfig,
         public port: number,
-    ) {
-        this._ngProjects = userConfig.angularJsProjects && this.buildProjects(userConfig.angularJsProjects);
-        this._tsProjects = userConfig.typescriptProjects && this.buildProjects(userConfig.typescriptProjects);
+    ) {}
+
+    get hasProjectConfig(): boolean {
+        return !!this.userConfig.ngProjects;
     }
 
-    get ngProjects() {
-        return this._ngProjects;
+    getNgProject(absolutePilePath: string): NgProjectConfig | undefined {
+        return this.userConfig.ngProjects?.find((c) => absolutePilePath.startsWith(c.path));
     }
 
-    get tsProjects() {
-        return this._tsProjects;
-    }
-
-    get hasProjectMapping(): boolean {
-        return !!this.userConfig.projectMapping;
-    }
-
-    getMatchedNgProjectNames(tsProjectName: string): string[] | undefined {
-        return this.userConfig.projectMapping?.[tsProjectName];
-    }
-
-    getMatchedTsProjectName(ngProjectName: string): string | undefined {
-        if (!this.hasProjectMapping) {
-            return;
-        }
-
-        for (const [tsName, ngNames] of Object.entries(this.userConfig.projectMapping!)) {
-            if (ngNames.includes(ngProjectName)) {
-                return tsName;
-            }
-        }
-    }
-
-    getNgProject(absolutePilePath: string): ProjectInfo | undefined {
-        return this.ngProjects?.find((x) => absolutePilePath.startsWith(x.absolutePath));
-    }
-
-    getTsProject(absolutePilePath: string): ProjectInfo | undefined {
-        return this.tsProjects?.find((x) => absolutePilePath.startsWith(x.absolutePath));
+    getNgProjectByTsProjectPath(absolutePilePath: string): NgProjectConfig | undefined {
+        return this.userConfig.ngProjects?.find((c) => c.dependOnTsProjectPath === absolutePilePath);
     }
 
     isNgProjectFile(absolutePilePath: string): boolean {
@@ -130,20 +93,11 @@ export class NgHelperConfig {
             return false;
         }
 
-        if (!this.ngProjects) {
+        if (!this.hasProjectConfig) {
             return true;
         }
 
         return !!this.getNgProject(absolutePilePath);
-    }
-
-    private buildProjects(config: Record<string, string>): ProjectInfo[] {
-        const workspaceDir = normalizePath(getWorkspacePath()!.fsPath);
-        return Array.from(Object.entries(config)).map(([name, path]) => ({
-            name,
-            relativePath: path.slice(workspaceDir.length + 1), // + 1 for '/'
-            absolutePath: path,
-        }));
     }
 }
 
@@ -152,13 +106,13 @@ export async function readUserConfig(): Promise<NgHelperUserConfig> {
     const uint8Array = await workspace.fs.readFile(uri);
     const jsonText = new TextDecoder().decode(uint8Array);
 
-    const { ok: config, error } = await parseAndValidateUserConfig(jsonText);
+    const { ok: config, error } = await parseUserConfig(jsonText);
     if (error) {
         // 不等待，避免阻塞插件启动进程
         void showUserConfigErrors(error);
     }
 
-    return config!;
+    return config;
 }
 
 export function getUserConfigFileUri(): Uri | undefined {
@@ -185,52 +139,7 @@ export async function showUserConfigErrors(error: string | undefined) {
     }
 }
 
-async function parseAndValidateUserConfig(jsonText: string): Promise<Result<NgHelperUserConfig>> {
-    // 解析和标准化基本配置
-    const baseConfigResult = parseBaseConfig(jsonText);
-    if (baseConfigResult.error) {
-        return baseConfigResult;
-    }
-    let config = baseConfigResult.ok!;
-
-    // 验证项目结构的基本逻辑
-    const structureValidationResult = validateProjectsStructure(config);
-    if (structureValidationResult.error) {
-        return structureValidationResult;
-    }
-    config = structureValidationResult.ok!;
-
-    // 验证 AngularJS 项目配置
-    if (config.angularJsProjects) {
-        const angularJsResult = await validateAngularJsProjects(config);
-        if (angularJsResult.error) {
-            return angularJsResult;
-        }
-        config = angularJsResult.ok!;
-    }
-
-    // 验证 TypeScript 项目配置
-    if (config.typescriptProjects) {
-        const typescriptResult = await validateTypescriptProjects(config);
-        if (typescriptResult.error) {
-            return typescriptResult;
-        }
-        config = typescriptResult.ok!;
-    }
-
-    // 验证项目映射配置
-    if (config.projectMapping) {
-        const mappingResult = validateProjectMapping(config);
-        if (mappingResult.error) {
-            return mappingResult;
-        }
-        config = mappingResult.ok!;
-    }
-
-    return { ok: config };
-}
-
-function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig> {
+async function parseUserConfig(jsonText: string): Promise<Result<NgHelperUserConfig>> {
     const defaultConfig = getDefaultConfig();
 
     let config: NgHelperUserConfig;
@@ -252,187 +161,125 @@ function parseBaseConfig(jsonText: string): Result<NgHelperUserConfig> {
         config.componentScriptFileExt = normalizeFileExt(config.componentScriptFileExt) as 'js' | 'ts';
     }
 
-    return { ok: config };
+    const errors: string[] = [];
+    if (config.ngProjects) {
+        const { ok, error } = await validateAndNormalizeNgProjects(config.ngProjects);
+        config.ngProjects = ok;
+        if (error) {
+            errors.push(error);
+        }
+    }
+
+    return { ok: config, error: errors.join(';') };
 }
 
-function validateProjectsStructure(config: NgHelperUserConfig): Result<NgHelperUserConfig> {
-    const isRecordEmpty = (record?: Record<string, unknown>) => !record || !Array.from(Object.keys(record)).length;
-    const isNgProjectEmpty = isRecordEmpty(config.angularJsProjects);
-    const isTsProjectEmpty = isRecordEmpty(config.typescriptProjects);
-    const isMappingEmpty = isRecordEmpty(config.projectMapping);
-    const needNgProject = !isTsProjectEmpty || !isMappingEmpty;
+async function validateAndNormalizeNgProjects(
+    ngProjects: NgProjectConfig[],
+): Promise<Result<NgProjectConfig[] | undefined>> {
+    const errors: string[] = [];
 
-    if (needNgProject && isNgProjectEmpty) {
-        config.angularJsProjects = undefined;
-        config.typescriptProjects = undefined;
-        config.projectMapping = undefined;
-        return {
-            ok: config,
-            error: 'If "projectMapping" or "typescriptProjects" is set, then "angularJsProjects" is required',
-        };
+    const duplicatedName = findDuplicated(ngProjects.map((c) => c.name));
+    if (duplicatedName) {
+        errors.push(`Duplicate project name: "${duplicatedName}"`);
     }
 
-    if ((isMappingEmpty && !isTsProjectEmpty) || (!isMappingEmpty && isTsProjectEmpty)) {
-        config.typescriptProjects = undefined;
-        config.projectMapping = undefined;
-        return {
-            ok: config,
-            error: 'Cannot set "projectMapping" or "typescriptProjects" without the other',
-        };
+    const newNgProjects: NgProjectConfig[] = [];
+    const newNgProjectIndexList: number[] = [];
+    for (let i = 0; i < ngProjects.length; i++) {
+        const ngProject = ngProjects[i];
+        const { ok: newNgProject, error } = await validateAndNormalizeNgProject(ngProject);
+        if (error) {
+            errors.push(error);
+        }
+        if (newNgProject) {
+            newNgProjects.push(newNgProject);
+            newNgProjectIndexList.push(i);
+        }
     }
 
-    return { ok: config };
+    const ngProjectOverlap = findOverlapPaths(newNgProjects.map((c) => c.path));
+    if (ngProjectOverlap) {
+        const [i, j] = ngProjectOverlap;
+        const p1 = ngProjects[i];
+        const p2 = ngProjects[j];
+        errors.push(`The path of the AngularJS project "${p1.name}" overlaps the AngularJS project "${p2.name}"`);
+    }
+
+    const tsProjectOverlap = findOverlapPaths(newNgProjects.map((c) => c.dependOnTsProjectPath!));
+    if (tsProjectOverlap) {
+        const [i, j] = tsProjectOverlap;
+        const p1 = ngProjects[i];
+        const p2 = ngProjects[j];
+        errors.push(`The path of the TypeScript project "${p1.name}" overlaps the TypeScript project "${p2.name}"`);
+    }
+
+    // 这个有错误，一整个都不能使用了，直接退回自动匹配
+    return { ok: errors.length ? undefined : newNgProjects, error: errors.join(';') };
 }
 
-async function validateAngularJsProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig>> {
-    const workdir = getWorkspacePath()!.fsPath;
-    const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
+async function validateAndNormalizeNgProject(ngProject: NgProjectConfig): Promise<Result<NgProjectConfig | undefined>> {
+    const workspaceDir = getWorkspacePath()!.fsPath;
+    const normalizeProjectPath = (p: string) =>
+        p.startsWith('/') ? normalizePath(p) : normalizePath(workspaceDir + '/' + p);
 
-    const clearAndPackResult = (error: string) => {
-        const clearedConfig = { ...config };
-        clearedConfig.angularJsProjects = undefined;
-        clearedConfig.typescriptProjects = undefined;
-        clearedConfig.projectMapping = undefined;
-        return {
-            ok: clearedConfig,
-            error,
-        };
-    };
+    const config = { ...ngProject };
 
-    for (const [name, path] of Object.entries(config.angularJsProjects!)) {
-        let p = normalizePath(path);
-        if (!p.startsWith('/')) {
-            p = normalizeProjectPath(p);
-        }
-        if (!p.startsWith(workdir)) {
-            return clearAndPackResult(`The AngularJS project (name: ${name}) path is out of vscode workspace`);
-        }
-        if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
-            return clearAndPackResult(`The AngularJS project (name: ${name}) path does not exist: ${path}`);
-        }
-        config.angularJsProjects![name] = p;
+    // normalize path
+    config.path = normalizeProjectPath(config.path);
+
+    // exists or not
+    if (!(await isFileExistsOnWorkspace(Uri.file(config.path)))) {
+        // 注意：报错使用的信息要用用户输入的原始信息
+        return { ok: undefined, error: `The AngularJS project path does not exist: ${ngProject.path}` };
     }
 
-    const error = findOverlapPaths(config.angularJsProjects!);
-    if (error) {
-        return clearAndPackResult('In "angularJsProjects", ' + error);
-    }
+    if (!config.dependOnTsProjectPath) {
+        // 没有配置则默认取 vscode workspace 文件夹。
+        config.dependOnTsProjectPath = workspaceDir;
+    } else {
+        config.dependOnTsProjectPath = normalizeProjectPath(config.dependOnTsProjectPath);
 
-    return { ok: config };
-}
-
-async function validateTypescriptProjects(config: NgHelperUserConfig): Promise<Result<NgHelperUserConfig>> {
-    const workdir = getWorkspacePath()!.fsPath;
-    const normalizeProjectPath = (p: string) => normalizePath(workdir + '/' + p);
-
-    const clearAndPackResult = (error: string) => {
-        const clearedConfig = { ...config };
-        clearedConfig.typescriptProjects = undefined;
-        clearedConfig.projectMapping = undefined;
-        return {
-            ok: clearedConfig,
-            error,
-        };
-    };
-
-    for (const [name, path] of Object.entries(config.typescriptProjects!)) {
-        let p = normalizePath(path);
-        if (!p.startsWith('/')) {
-            p = normalizeProjectPath(p);
+        if (!(await isFileExistsOnWorkspace(Uri.file(config.dependOnTsProjectPath)))) {
+            // 注意：报错使用的信息要用用户输入的原始信息
+            return {
+                ok: undefined,
+                error: `The TypeScript project path does not exist: ${ngProject.dependOnTsProjectPath}`,
+            };
         }
-        if (!p.startsWith(workdir)) {
-            return clearAndPackResult(`The TypeScript project (name: ${name}) path is out of vscode workspace`);
-        }
-        if (!(await isFileExistsOnWorkspace(Uri.file(p)))) {
-            return clearAndPackResult(`The TypeScript project (name: ${name}) path does not exist: ${path}`);
-        }
-        config.typescriptProjects![name] = p;
-    }
 
-    const error = findOverlapPaths(config.typescriptProjects!);
-    if (error) {
-        return clearAndPackResult('In "typescriptProjects", ' + error);
+        // TypeScript 工程路径可以包含 AngularJS 工程，但 AngularJS 工程不能包含 TypeScript 工程。
+        // 两个一样是可以的。
+        if (config.dependOnTsProjectPath !== config.path && config.dependOnTsProjectPath.startsWith(config.path)) {
+            // 注意：报错使用的信息要用用户输入的原始信息
+            return {
+                ok: undefined,
+                error: `The AngularJS project path(${ngProject.path}) cannot contains the TypeScript project path(${ngProject.dependOnTsProjectPath})`,
+            };
+        }
     }
 
     return { ok: config };
 }
 
-function validateProjectMapping(config: NgHelperUserConfig): Result<NgHelperUserConfig> {
-    const localErrors: string[] = [];
-
-    const ngProjectNames = Array.from(Object.keys(config.angularJsProjects!));
-    const tsProjectNames = Array.from(Object.keys(config.typescriptProjects!));
-    const ngProjectNamesFromMapping = Array.from(Object.values(config.projectMapping!)).flat();
-    const tsProjectNamesFromMapping = Array.from(Object.keys(config.projectMapping!));
-
-    // 检查名字不存在的情况
-    const notConfigNgProjectNames = findMissingElements(ngProjectNames, ngProjectNamesFromMapping);
-    const notConfigTsProjectNames = findMissingElements(tsProjectNames, tsProjectNamesFromMapping);
-    if (notConfigNgProjectNames.length) {
-        const namesStr = notConfigNgProjectNames.map((n) => `"${n}"`).join(',');
-        localErrors.push(`AngularJS project names: ${namesStr}, they are not configured in "angularJsProjects"`);
+function findDuplicated(list: string[]): string | undefined {
+    const set = new Set<string>();
+    for (const e of list) {
+        if (set.has(e)) {
+            return e;
+        } else {
+            set.add(e);
+        }
     }
-    if (notConfigTsProjectNames.length) {
-        const namesStr = notConfigTsProjectNames.map((n) => `"${n}"`).join(',');
-        localErrors.push(`TypeScript project names: ${namesStr}, they are not configured in "typescriptProjects"`);
-    }
-
-    // 检查名字重复使用的情况(注意：ts 的名字在 mapping 中做 key, 不可能重复)
-    const duplicateUsedNgProjectNames = findDuplicateStrings(ngProjectNamesFromMapping);
-    if (duplicateUsedNgProjectNames.length) {
-        const namesStr = duplicateUsedNgProjectNames.map((n) => `"${n}"`).join(',');
-        localErrors.push(`Duplicate AngularJS project names: ${namesStr} are not allowed in "projectMapping"`);
-    }
-
-    // ts project name 必须都用上，否则配置它没有意义
-    const notUsedTsProjectNames = findMissingElements(tsProjectNamesFromMapping, tsProjectNames);
-    if (notUsedTsProjectNames.length) {
-        const namesStr = notUsedTsProjectNames.map((n) => `"${n}"`).join(',');
-        localErrors.push(`Unused TypeScript project names: ${namesStr} are not allowed in "projectMapping"`);
-    }
-
-    if (localErrors.length) {
-        const clearedConfig = { ...config };
-        clearedConfig.projectMapping = undefined;
-        return {
-            ok: clearedConfig,
-            error: localErrors.join(';'),
-        };
-    }
-
-    return { ok: config };
+    return undefined;
 }
 
-function findDuplicateStrings(arr: string[]): string[] {
-    const countMap = new Map<string, number>();
-
-    // 统计每个字符串出现的次数
-    for (const item of arr) {
-        countMap.set(item, (countMap.get(item) || 0) + 1);
-    }
-
-    // 过滤出现次数大于1的字符串
-    return Array.from(countMap.entries())
-        .filter(([_, count]) => count > 1)
-        .map(([str]) => str);
-}
-
-function findOverlapPaths(projectConfig: Record<string, string>): string | undefined {
-    const names: string[] = [];
-    const paths: string[] = [];
-    for (const [name, path] of Object.entries(projectConfig)) {
-        names.push(name);
-        paths.push(path);
-    }
-
+function findOverlapPaths(paths: string[]): [number, number] | undefined {
     for (let i = 0; i < paths.length - 1; i++) {
         for (let j = i + 1; j < paths.length; j++) {
             const p1 = paths[i];
             const p2 = paths[j];
             if (isPathOverlap(p1, p2)) {
-                const n1 = names[i];
-                const n2 = names[j];
-                return `the path of project "${n1}" overlaps the project "${n2}"`;
+                return [i, j];
             }
         }
     }

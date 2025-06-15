@@ -219,7 +219,11 @@ export function normalizeFileExt(ext: string): string {
 
 export function normalizePath(filePath: string): string {
     filePath = normalize(filePath);
-    return filePath.replace(/\\/g, '/');
+    filePath = filePath.replace(/\\/g, '/');
+    if (filePath.endsWith('/')) {
+        return filePath.slice(0, -1);
+    }
+    return filePath;
 }
 
 export function uniq<T>(arr: T[]): T[] {

@@ -64,7 +64,7 @@ function createNgHelperTsService(): NgHelperServer {
         if (!projectConfig) {
             return false;
         }
-        return projectConfig.ngProjectPaths.some((p) => filePath.startsWith(p));
+        return filePath.startsWith(projectConfig.ngProjectPath);
     }
 
     function getConfig() {
@@ -173,8 +173,8 @@ function createNgHelperTsService(): NgHelperServer {
     function getProjectRoot(filePath: string): string | undefined {
         const paths = Array.from(_getContextMap.keys());
         if (Array.isArray(_config?.projectMappings)) {
-            for (const { tsProjectPath, ngProjectPaths } of _config.projectMappings) {
-                if (ngProjectPaths.some((p) => filePath.startsWith(p))) {
+            for (const { tsProjectPath, ngProjectPath } of _config.projectMappings) {
+                if (filePath.startsWith(ngProjectPath)) {
                     return tsProjectPath;
                 }
             }

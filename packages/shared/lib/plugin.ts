@@ -32,7 +32,7 @@ export interface NgPluginConfiguration {
      */
     projectMappings?: Array<{
         tsProjectPath: string;
-        ngProjectPaths: string[];
+        ngProjectPath: string;
     }>;
 }
 
