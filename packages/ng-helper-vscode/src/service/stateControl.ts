@@ -6,8 +6,8 @@ export type BarStatus = 'disconnect' | 'connected' | 'loading';
 export type ListenForStatusBar = (status: BarStatus, projectRoots: string[]) => void;
 
 const MAX_LOADING_TIME = 10000;
-// 至少启动3秒后才能去触发
-const BASE_START_TIME = 3000;
+// 至少启动多久才能去触发
+const BASE_START_TIME = 0;
 
 const myLogger = logger.prefixWith('StateControl');
 
