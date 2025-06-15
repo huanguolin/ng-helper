@@ -3,7 +3,6 @@ import { StatusBarAlignment, ThemeColor, window, type TextEditor } from 'vscode'
 import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import type { BarStatus, StateControl } from '../../service/stateControl';
-import { getLastFolderName } from '../../utils';
 import { getNormalizedPathFromDocument } from '../utils';
 
 const myLogger = logger.prefixWith('ngHelperStatusBar');
@@ -76,12 +75,8 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     }
 
     function setLoading() {
-        const tsProjectName = ngContext.config.getMatchedTsProjectName(currentNgProjectName);
-
         statusBarItem.text = '$(sync~spin) NgHelper';
-        if (currentNgProjectName && tsProjectName) {
-            statusBarItem.tooltip = `Load TypeScript project "${tsProjectName}" for AngularJS project "${currentNgProjectName}".`;
-        } else if (currentNgProjectName) {
+        if (currentNgProjectName) {
             statusBarItem.tooltip = `Load the TypeScript project for AngularJS project "${currentNgProjectName}".`;
         } else {
             statusBarItem.tooltip = 'Load TypeScript project.';
@@ -91,40 +86,34 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     }
 
     function setStatusByCurrentNgProject() {
-        const { tsProjectNames, ngProjectNames } = getActivatedProjects(loadedTsProjectRootPaths);
+        const ngProjectNames = getLoadedProjectNames(loadedTsProjectRootPaths);
 
-        const loadedTsProjectStr = `Loaded TypeScript projects: ${tsProjectNames.map((n) => `"${n}"`).join(',')}`;
+        const loadedProjectStr = `Loaded projects: ${ngProjectNames.map((n) => `"${n}"`).join(',')}`;
 
-        if (!currentNgProjectName || ngProjectNames.includes(currentNgProjectName)) {
-            const readStr = !currentNgProjectName ? 'Ready' : `Ready for "${currentNgProjectName}"`;
+        if (!currentNgProjectName) {
             statusBarItem.text = '$(check) NgHelper';
-            statusBarItem.tooltip = `${readStr}. ${loadedTsProjectStr}.`;
+            statusBarItem.tooltip = 'Ready.';
+            statusBarItem.color = new ThemeColor('statusBarItem.foreground');
+            statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
+        } else if (ngProjectNames.includes(currentNgProjectName)) {
+            statusBarItem.text = '$(check) NgHelper';
+            statusBarItem.tooltip = `Ready for "${currentNgProjectName}". ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.foreground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
         } else {
             statusBarItem.text = '$(alert) NgHelper';
-            statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". ${loadedTsProjectStr}.`;
+            statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.warningForeground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.warningBackground');
         }
     }
 
-    function getActivatedProjects(tsProjectRoots: string[]): ActivatedProjects {
-        if (ngContext.config.hasProjectMapping) {
-            const tsProjectNames = tsProjectRoots
-                .map((p) => ngContext.config.getTsProject(p)?.name)
+    function getLoadedProjectNames(tsProjectRoots: string[]): string[] {
+        if (ngContext.config.hasProjectConfig) {
+            return tsProjectRoots
+                .map((p) => ngContext.config.getNgProjectByTsProjectPath(p)?.name)
                 .filter((x) => !!x) as string[];
-            const ngProjectNames = tsProjectNames.map((n) => ngContext.config.getMatchedNgProjectNames(n)!).flat();
-            return { tsProjectNames, ngProjectNames };
         }
-        return {
-            tsProjectNames: tsProjectRoots.map((p) => getLastFolderName(p)),
-            ngProjectNames: [],
-        };
+        return [];
     }
 }
-
-type ActivatedProjects = {
-    tsProjectNames: string[];
-    ngProjectNames: string[];
-};
