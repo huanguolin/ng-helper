@@ -3,6 +3,7 @@ import { StatusBarAlignment, ThemeColor, window, type TextEditor } from 'vscode'
 import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import type { BarStatus, StateControl } from '../../service/stateControl';
+import { getLastFolderName } from '../../utils';
 import { getNormalizedPathFromDocument } from '../utils';
 
 const myLogger = logger.prefixWith('ngHelperStatusBar');
@@ -88,21 +89,21 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     function setStatusByCurrentNgProject() {
         const ngProjectNames = getLoadedProjectNames(loadedTsProjectRootPaths);
 
-        const loadedProjectStr = `Loaded projects: ${ngProjectNames.map((n) => `"${n}"`).join(',')}`;
+        const loadedProjectStr = ngProjectNames.map((n) => `"${n}"`).join(',');
 
         if (!currentNgProjectName) {
             statusBarItem.text = '$(check) NgHelper';
-            statusBarItem.tooltip = 'Ready.';
+            statusBarItem.tooltip = `Ready. Loaded js/ts projects: ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.foreground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
         } else if (ngProjectNames.includes(currentNgProjectName)) {
             statusBarItem.text = '$(check) NgHelper';
-            statusBarItem.tooltip = `Ready for "${currentNgProjectName}". ${loadedProjectStr}.`;
+            statusBarItem.tooltip = `Ready for "${currentNgProjectName}". Loaded projects: ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.foreground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.background');
         } else {
             statusBarItem.text = '$(alert) NgHelper';
-            statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". ${loadedProjectStr}.`;
+            statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". Loaded projects: ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.warningForeground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.warningBackground');
         }
@@ -113,7 +114,8 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
             return tsProjectRoots
                 .map((p) => ngContext.config.getNgProjectByTsProjectPath(p)?.name)
                 .filter((x) => !!x) as string[];
+        } else {
+            return tsProjectRoots.map((p) => getLastFolderName(p));
         }
-        return [];
     }
 }
