@@ -37,15 +37,15 @@ const NgProjectScheme = z.object({
 
 const NgHelperUserConfigScheme = z.object({
     /**
-     * like 'less', 'scss', 'css' etc, default is 'css';
+     * Like 'less', 'scss', 'css', etc. Default is 'css'.
      */
     componentStyleFileExt: z.string().optional(),
     /**
-     * 'js' or 'ts', default is 'js';
+     * 'js' or 'ts'. Default is 'js'.
      */
     componentScriptFileExt: z.enum(ALLOW_SCRIPT_FILE_EXTS).optional(),
     /**
-     * default is 'count_match'
+     * Default is 'count_match'.
      */
     injectionCheckMode: z.enum(ALLOW_INJECTION_CHECK_MODE).optional(),
     /**
@@ -129,7 +129,7 @@ export async function showUserConfigErrors(error: string | undefined) {
     }
 
     const selection = await window.showWarningMessage(
-        `The ng-helper configuration is invalid, please check the error: ${error}.`,
+        `The ng-helper configuration is invalid. Please check the error: ${error}`,
         'OK',
     );
     if (selection === 'OK') {
@@ -149,7 +149,7 @@ async function parseUserConfig(jsonText: string): Promise<Result<NgHelperUserCon
     } catch (err) {
         return {
             ok: defaultConfig,
-            error: `Parse user config failed: ${err instanceof Error ? err.message : `${err as string}`}`,
+            error: `Failed to parse user config: ${err instanceof Error ? err.message : `${err as string}`}`,
         };
     }
 
@@ -202,7 +202,7 @@ async function validateAndNormalizeNgProjects(
         const [i, j] = ngProjectOverlap;
         const p1 = ngProjects[i];
         const p2 = ngProjects[j];
-        errors.push(`The path of the AngularJS project "${p1.name}" overlaps the AngularJS project "${p2.name}"`);
+        errors.push(`The AngularJS project "${p1.name}" path overlaps with the AngularJS project "${p2.name}" path`);
     }
 
     const tsProjectOverlap = findOverlapPaths(newNgProjects.map((c) => c.dependOnTsProjectPath!));
@@ -210,7 +210,7 @@ async function validateAndNormalizeNgProjects(
         const [i, j] = tsProjectOverlap;
         const p1 = ngProjects[i];
         const p2 = ngProjects[j];
-        errors.push(`The path of the TypeScript project "${p1.name}" overlaps the TypeScript project "${p2.name}"`);
+        errors.push(`The TypeScript project "${p1.name}" path overlaps with the TypeScript project "${p2.name}" path`);
     }
 
     // 这个有错误，一整个都不能使用了，直接退回自动匹配
@@ -253,7 +253,7 @@ async function validateAndNormalizeNgProject(ngProject: NgProjectConfig): Promis
             // 注意：报错使用的信息要用用户输入的原始信息
             return {
                 ok: undefined,
-                error: `The AngularJS project path(${ngProject.path}) cannot contains the TypeScript project path(${ngProject.dependOnTsProjectPath})`,
+                error: `The AngularJS project path (${ngProject.path}) cannot contain the TypeScript project path (${ngProject.dependOnTsProjectPath})`,
             };
         }
     }
