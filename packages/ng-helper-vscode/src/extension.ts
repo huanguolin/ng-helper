@@ -16,8 +16,8 @@ import { TsService } from './service/tsService/tsService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export async function activate(vsCodeContext: ExtensionContext) {
-    const config = await activateExt();
+export async function activate(vscodeContext: ExtensionContext) {
+    const config = await activateExt(vscodeContext);
     if (!config) {
         return;
     }
@@ -29,9 +29,9 @@ export async function activate(vsCodeContext: ExtensionContext) {
     const stateControl = new StateControl(pluginStartAt);
     const tsService = new TsService(stateControl);
     const rpcApi = tsService.start(config.port);
-    const ngContext = new NgContext(vsCodeContext, config, rpcApi);
+    const ngContext = new NgContext(vscodeContext, config, rpcApi);
 
-    vsCodeContext.subscriptions.push(tsService);
+    vscodeContext.subscriptions.push(tsService);
 
     // command
     registerCommand(ngContext);
