@@ -24,19 +24,19 @@
 - [x] Navigate from 'templateUrl' to the corresponding HTML file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif))
 - [x] ✨🆕 Navigate from controller name to its implementation file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
 - [x] ✨🆕 Navigate to service implementation by its name ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/service-jump-demo.gif))
-- [x] Click to search for 'directive'/'component' where to use ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
+- [x] Click to search for 'directive'/'component' usage locations ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
 - [x] Create components via context menu ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif))
 
 ## Requirements
 
-* vscode 1.80.0+
+* VS Code 1.80.0+
 * TypeScript 3.5.3+ (Some features require this, see above) 
 
 ## Installation
 
 1. Install the extension
-2. Create an empty `ng-helper.json` file in the `.vscode` directory of your workspace(***This file is a plugin startup flag, without which the plugin will not start***)
-3. Restart vscode
+2. Create an empty `ng-helper.json` file in the `.vscode` directory of your workspace (***This file is a plugin activation flag - the plugin will not start without it***)
+3. Reload VS Code window
 
 ## Extension Settings
 

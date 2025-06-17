@@ -28,7 +28,7 @@
 
 ## Requirements
 
-* vscode 1.80.0+
+* VS Code 1.80.0+
 * TypeScript 3.5.3+ (有些功能需要配合 TypeScript 才能使用，具体见上文)
 
 
@@ -36,7 +36,7 @@
 
 1. 安装插件
 2. 在 workspace 下的 .vscode 目录中，创建一个 `ng-helper.json` 空文件（***这个文件是插件启动的标志， 没有的话插件不会启动***）
-3. 重启 vscode
+3. 重新加载 VS Code (Reload Window)
 
 ## Extension Settings
 
