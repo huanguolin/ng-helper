@@ -1,10 +1,10 @@
 import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
-import type { Element, DocumentFragment } from 'parse5/dist/tree-adapters/default';
+import type { Element, DocumentFragment, TextNode, ChildNode } from 'parse5/dist/tree-adapters/default';
 
 import { LRUCache } from './lruCache';
 
-export { DocumentFragment, Attribute, Location, Element };
+export { DocumentFragment, Attribute, Location, Element, TextNode, ChildNode };
 
 type HtmlAstCache = {
     version: number;
