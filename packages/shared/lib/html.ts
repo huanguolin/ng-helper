@@ -2,7 +2,43 @@ import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
 import type { Element, DocumentFragment } from 'parse5/dist/tree-adapters/default';
 
-export { parseFragment, DocumentFragment, Attribute, Location, Element };
+import { LRUCache } from './lruCache';
+
+export { DocumentFragment, Attribute, Location, Element };
+
+type HtmlAstCache = {
+    version: number;
+    ast: DocumentFragment;
+};
+
+export type HtmlAstCacheMeta = {
+    filePath: string;
+    version: number;
+};
+
+const htmlAstCache = new LRUCache<HtmlAstCacheMeta, HtmlAstCache>(10);
+
+/**
+ * 解析 HTML 片段，并缓存结果。
+ * @param htmlText - 要解析的 HTML 文本。
+ * @param key - 缓存的键。
+ * @param version - 缓存的版本。
+ * @returns 解析后的 HTML 片段。
+ */
+export function parseHtmlFragmentWithCache(htmlText: string, meta?: HtmlAstCacheMeta): DocumentFragment {
+    if (!meta) {
+        return parseFragment(htmlText, { sourceCodeLocationInfo: true });
+    }
+
+    const cache = htmlAstCache.get(meta);
+    if (cache && cache.version === meta.version) {
+        return cache.ast;
+    }
+
+    const ast = parseFragment(htmlText, { sourceCodeLocationInfo: true });
+    htmlAstCache.put(meta, { version: meta.version, ast });
+    return ast;
+}
 
 /**
  * Represents a span of text with its starting position.

@@ -39,7 +39,11 @@ export function registerHover(ngContext: NgContext): void {
                 return await withTimeoutAndMeasure(
                     'provideHover',
                     async () => {
-                        const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position));
+                        const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position), {
+                            filePath: document.uri.toString(),
+                            version: document.version,
+                        });
+
                         checkCancellation(cancelTokenSource.token);
                         switch (cursorAtInfo.type) {
                             case 'endTag':
