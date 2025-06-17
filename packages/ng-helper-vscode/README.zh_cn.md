@@ -45,6 +45,26 @@
 * `componentStyleFileExt`: 创建 component 时，样式文件的后缀，如 `less`, `sass` 等，默认为 `css`。
 * `componentScriptFileExt`: `js` 或者 `ts`. 默认值是 `js`.
 * `injectionCheckMode`: 依赖注入检查的模式，值有 `strict_equal`, `ignore_case_word_match`, `count_match`, `off`, 约束从强到无，默认值是 `count_match`。
+* `ngProjects`: 手动指定 AngularJS 项目。如果不配置，插件会自动检测，但在使用 TypeScript 时有时可能匹配错误。每个项目应包含：
+  * `name`: 项目名称（会显示在插件状态栏上，便于了解插件状态）
+  * `path`: AngularJS 工程的路径，它限定了 NgHelper 的工作范围。此路径下的 HTML/JS/TS 文件将被 NgHelper 处理。
+  * `dependOnTsProjectPath` (可选): AngularJS 工程依赖的 TypeScript 工程路径（通常是包含 tsconfig.json 的目录）。如果使用 TypeScript，即使路径与 AngularJS 工程相同也必须配置。
+
+配置示例:
+```json
+{
+  "componentStyleFileExt": "less",
+  "componentScriptFileExt": "ts", 
+  "injectionCheckMode": "count_match",
+  "ngProjects": [
+    {
+      "name": "my-ng-app",
+      "path": "./src/app",
+      "dependOnTsProjectPath": "./src"
+    }
+  ]
+}
+```
 
 ## Known Issues
 
