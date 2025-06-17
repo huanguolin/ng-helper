@@ -1,10 +1,10 @@
 import {
     getAttrValueStart,
-    parseFragment,
     type Location,
     type Attribute,
     type DocumentFragment,
     type Element,
+    parseHtmlFragmentWithCache,
 } from '@ng-helper/shared/lib/html';
 import { camelCase } from 'change-case';
 import {
@@ -64,7 +64,10 @@ export async function htmlSemanticProvider({
 }) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
-    const htmlAst = parseFragment(document.getText(), { sourceCodeLocationInfo: true });
+    const htmlAst = parseHtmlFragmentWithCache(document.getText(), {
+        filePath: document.uri.toString(),
+        version: document.version,
+    });
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
     if (!componentNodes.length && !maybeDirectiveNodes.length) {
         return;

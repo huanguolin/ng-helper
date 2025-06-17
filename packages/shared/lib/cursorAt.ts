@@ -1,5 +1,4 @@
 import type { NgAttrName } from '@ng-helper/ng-parser/src/types';
-import { parseFragment } from 'parse5';
 import type { Attribute, Location } from 'parse5/dist/common/token';
 import type {
     ChildNode,
@@ -10,7 +9,14 @@ import type {
     TextNode,
 } from 'parse5/dist/tree-adapters/default';
 
-import { ensureInputValid, getAttrValueStart, getTextInTemplate, type Cursor } from './html';
+import {
+    ensureInputValid,
+    getAttrValueStart,
+    getTextInTemplate,
+    parseHtmlFragmentWithCache,
+    type Cursor,
+    type HtmlAstCacheMeta,
+} from './html';
 
 export interface SimpleLocation {
     start: number;
@@ -162,12 +168,12 @@ export function cursorAt(at: number, isHover = true): Cursor {
     return { at, isHover };
 }
 
-export function getCursorAtInfo(htmlText: string, cursor: Cursor): CursorAtInfo {
+export function getCursorAtInfo(htmlText: string, cursor: Cursor, meta?: HtmlAstCacheMeta): CursorAtInfo {
     ensureInputValid(htmlText, cursor);
 
     const cursorAt = cursor.at - (cursor.isHover ? 0 : 1);
 
-    const htmlFragment = parseFragment(htmlText, { sourceCodeLocationInfo: true });
+    const htmlFragment = parseHtmlFragmentWithCache(htmlText, meta);
     const targetNode = findCursorAtNode(htmlFragment, cursorAt)!;
     if (!targetNode) {
         // 找不到节点时，可以认为光标在 text 节点上, 可以简化 getCursorAtInfo(） 的使用。

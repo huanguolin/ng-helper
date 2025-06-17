@@ -1,4 +1,4 @@
-import { parseFragment } from '@ng-helper/shared/lib/html';
+import { parseHtmlFragmentWithCache } from '@ng-helper/shared/lib/html';
 import type { Diagnostic, DiagnosticCollection, TextDocument } from 'vscode';
 
 export function validate(diagnosticCollection: DiagnosticCollection, document: TextDocument) {
@@ -6,7 +6,7 @@ export function validate(diagnosticCollection: DiagnosticCollection, document: T
     const text = document.getText();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const htmlAst = parseFragment(text, { sourceCodeLocationInfo: true });
+    const htmlAst = parseHtmlFragmentWithCache(text, { filePath: document.uri.toString(), version: document.version });
     // TODO：
     // 1. 遍历语法树
     // 2. 找需要检查的节点
