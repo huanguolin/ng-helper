@@ -5,6 +5,7 @@ export function validate(diagnosticCollection: DiagnosticCollection, document: T
     const diagnostics: Diagnostic[] = [];
     const text = document.getText();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const htmlAst = parseFragment(text, { sourceCodeLocationInfo: true });
     // TODO：
     // 1. 遍历语法树
