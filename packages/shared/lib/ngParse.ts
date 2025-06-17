@@ -3,7 +3,7 @@ import { type NgAttrName, type ProgramResult, type Programs } from '@ng-helper/n
 
 import { LRUCache } from './lruCache';
 
-const cache = new LRUCache<string, Programs>(30);
+const cache = new LRUCache<string, Programs>(100);
 
 export function ngParse<T extends NgAttrName>(ngExprStr: string, attrName?: T): ProgramResult<T> {
     const cacheKey = `${ngExprStr}-${attrName ?? ''}`;
