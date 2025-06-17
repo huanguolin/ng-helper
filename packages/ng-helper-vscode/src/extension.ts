@@ -53,7 +53,7 @@ export async function activate(vscodeContext: ExtensionContext) {
     registerSemantic(ngContext);
 
     // diagnostic
-    registerDiagnostic(context, config.port);
+    registerDiagnostic(ngContext);
 
     // code lens
     registerCodeLens(ngContext);
