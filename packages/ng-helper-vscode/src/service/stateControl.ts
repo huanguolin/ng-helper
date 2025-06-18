@@ -5,7 +5,7 @@ export type State = 'disconnect' | 'connected' | 'canNotQuery' | 'noContext' | '
 export type BarStatus = 'disconnect' | 'connected' | 'loading';
 export type ListenForStatusBar = (status: BarStatus, projectRoots: string[]) => void;
 
-const MAX_LOADING_TIME = 10000;
+const MAX_LOADING_TIME = 20000;
 // 至少启动多久才能去触发
 const BASE_START_TIME = 0;
 
