@@ -1,12 +1,13 @@
 import type { CursorAtTextInfo } from '@ng-helper/shared/lib/cursorAt';
 import { SPACE } from '@ng-helper/shared/lib/html';
+import { isComponentTagName } from '@ng-helper/shared/lib/ngUtils';
 import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
 import { CompletionItem, CompletionList, SnippetString } from 'vscode';
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
-import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
+import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
 
 import type { CompletionParamObj } from '.';
 

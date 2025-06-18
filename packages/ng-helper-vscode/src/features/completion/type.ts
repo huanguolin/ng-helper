@@ -1,6 +1,7 @@
 import type { CursorAtAttrValueInfo, CursorAtContext, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import { SPACE } from '@ng-helper/shared/lib/html';
 import { getNgScopes } from '@ng-helper/shared/lib/ngScope';
+import { isComponentTagName, isNgBuiltinDirective, isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
 import { NgCtrlInfo, NgTypeInfo } from '@ng-helper/shared/lib/plugin';
 import {
     CancellationToken,
@@ -16,15 +17,7 @@ import {
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import {
-    getContextString,
-    getControllerNameInfo,
-    getCorrespondingScriptFileName,
-    isComponentHtml,
-    isComponentTagName,
-    isNgBuiltinDirective,
-    isNgUserCustomAttr,
-} from '../utils';
+import { getContextString, getControllerNameInfo, getCorrespondingScriptFileName, isComponentHtml } from '../utils';
 
 import { builtinFilterNameCompletion } from './builtin';
 

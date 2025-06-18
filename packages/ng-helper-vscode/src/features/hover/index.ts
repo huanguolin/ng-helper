@@ -5,6 +5,7 @@ import {
     type CursorAtTagNameInfo,
     type CursorAtTemplateInfo,
 } from '@ng-helper/shared/lib/cursorAt';
+import { isComponentTagName, isNgBuiltinDirective } from '@ng-helper/shared/lib/ngUtils';
 import { NgHoverInfo, type NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import { Hover, languages, MarkdownString, TextDocument, Position, CancellationToken } from 'vscode';
@@ -18,9 +19,7 @@ import {
     getCorrespondingScriptFileName,
     isBuiltinFilter,
     isComponentHtml,
-    isComponentTagName,
     isHoverValidIdentifierChar,
-    isNgBuiltinDirective,
     toNgElementHoverInfo,
 } from '../utils';
 

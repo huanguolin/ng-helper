@@ -1,15 +1,10 @@
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import type { MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
+import { isComponentTagName, isNgBuiltinDirective, isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
 import type { TextDocument } from 'vscode';
 
 import { logger } from '../../logger';
-import {
-    isComponentTagName,
-    isNgBuiltinDirective,
-    isNgUserCustomAttr,
-    getContextString,
-    getCorrespondingScriptFileName,
-} from '../utils';
+import { getContextString, getCorrespondingScriptFileName } from '../utils';
 
 type OnHoverFilterName<T> = (filterName: string, scriptFilePath?: string) => Promise<T | undefined>;
 type OnHoverType<T> = (
