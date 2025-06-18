@@ -2,7 +2,6 @@ import os from 'node:os';
 
 import type { CursorAtAttrValueInfo, CursorAtTemplateInfo } from '@ng-helper/shared/lib/cursorAt';
 import type { CursorAtContext, CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
-import { isHtmlTagName } from '@ng-helper/shared/lib/html';
 import { getMinNgSyntaxInfo, isAttrHasScope, type MinNgSyntaxInfo } from '@ng-helper/shared/lib/minNgSyntax';
 import { getNgScopes } from '@ng-helper/shared/lib/ngScope';
 import { NgCtrlInfo, NgElementHoverInfo } from '@ng-helper/shared/lib/plugin';
@@ -119,19 +118,6 @@ export function getComponentName(document: TextDocument): string | undefined {
     return kebabName ? camelCase(kebabName) : undefined;
 }
 
-export function isNgBuiltinDirective(attrName: string): boolean {
-    return attrName.startsWith('ng-');
-}
-
-export function isNgUserCustomAttr(attrName: string): boolean {
-    return (
-        !isNgBuiltinDirective(attrName) &&
-        attrName.includes('-') &&
-        !attrName.startsWith('data-') &&
-        attrName !== 'accept-charset'
-    );
-}
-
 export const BUILTIN_FILTER_NAMES = [
     'currency',
     'date',
@@ -164,10 +150,6 @@ export function isHoverValidIdentifierChar(document: TextDocument, position: Pos
 
 export function getCursorAtChar(document: TextDocument, position: Position): string {
     return document.getText(new Range(position, position.translate(0, 1)));
-}
-
-export function isComponentTagName(name: string): boolean {
-    return name.includes('-') || !isHtmlTagName(name);
 }
 
 export function toNgElementHoverInfo(cursorAtInfo: CursorAtInfo): NgElementHoverInfo {

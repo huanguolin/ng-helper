@@ -83,7 +83,11 @@ export interface CursorTextSpan extends TextSpan {
 
 export const SPACE = '\u0020';
 
-export function getAttrValueStart(attr: Attribute, location: Location, htmlText: string): number | undefined {
+export function getAttrValueStart(
+    attr: Attribute,
+    location: { startOffset: number; endOffset: number },
+    htmlText: string,
+): number | undefined {
     const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
     const guessedAttrText = guessAttrText(attr, '"');
     if (realAttrText.length === guessedAttrText.length) {

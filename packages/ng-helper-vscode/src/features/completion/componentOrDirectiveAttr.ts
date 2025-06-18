@@ -1,11 +1,12 @@
 import type { CursorAtAttrNameInfo, CursorAtStartTagInfo } from '@ng-helper/shared/lib/cursorAt';
 import { Cursor, SPACE, canCompletionHtmlAttr } from '@ng-helper/shared/lib/html';
+import { isComponentTagName } from '@ng-helper/shared/lib/ngUtils';
 import { camelCase, kebabCase } from 'change-case';
 import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
 
 import { EXT_MARK } from '../../constants';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import { getControllerNameInfo, getCorrespondingScriptFileName, isComponentTagName } from '../utils';
+import { getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
 
 import type { CompletionParamObj } from '.';
 

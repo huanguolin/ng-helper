@@ -6,6 +6,7 @@ import {
     type Element,
     parseHtmlFragmentWithCache,
 } from '@ng-helper/shared/lib/html';
+import { isComponentTagName, isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
@@ -22,7 +23,7 @@ import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { intersect, uniq } from '../../utils';
-import { getCorrespondingScriptFileName, isComponentTagName, isNgUserCustomAttr } from '../utils';
+import { getCorrespondingScriptFileName } from '../utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);

@@ -5,6 +5,7 @@ import {
     type CursorAtTagNameInfo,
     type CursorAtTemplateInfo,
 } from '@ng-helper/shared/lib/cursorAt';
+import { isComponentTagName, isNgBuiltinDirective } from '@ng-helper/shared/lib/ngUtils';
 import type { NgDefinitionInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase } from 'change-case';
 import {
@@ -29,9 +30,7 @@ import {
     getCorrespondingScriptFileName,
     isBuiltinFilter,
     isComponentHtml,
-    isComponentTagName,
     isHoverValidIdentifierChar,
-    isNgBuiltinDirective,
     toNgElementHoverInfo,
 } from '../utils';
 

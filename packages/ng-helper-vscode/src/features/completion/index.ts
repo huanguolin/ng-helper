@@ -1,5 +1,6 @@
 import { getCursorAtInfo, type CursorAtInfo } from '@ng-helper/shared/lib/cursorAt';
 import { SPACE, type Cursor } from '@ng-helper/shared/lib/html';
+import { isComponentTagName } from '@ng-helper/shared/lib/ngUtils';
 import {
     CompletionList,
     languages,
@@ -12,7 +13,6 @@ import {
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import type { NgContext } from '../../ngContext';
 import { buildCursor } from '../../utils';
-import { isComponentTagName } from '../utils';
 
 import { builtinDirectiveNameCompletion } from './builtin';
 import { componentNameCompletion } from './componentName';

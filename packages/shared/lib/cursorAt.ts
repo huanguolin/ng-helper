@@ -266,7 +266,7 @@ function getStartTagInfo(element: Element, htmlText: string): CursorAtStartTagIn
     };
 }
 
-function getAttrLocations(element: Element) {
+export function getAttrLocations(element: Element) {
     const attrLocations: Record<string, SimpleLocation> = {};
     if (element.sourceCodeLocation!.attrs) {
         for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs)) {
@@ -388,12 +388,12 @@ function findCursorAtNode(htmlFragment: DocumentFragment, cursorAt: number): Tex
     }
 }
 
-function isTextNode(node: ChildNode): node is TextNode {
+export function isTextNode(node: ChildNode): node is TextNode {
     return node.nodeName === '#text';
 }
 
 const notElementNodeNames = ['#document', '#document-fragment', '#documentType', '#comment', 'template', '#text'];
-function isElement(node?: Node | null): node is Element {
+export function isElement(node?: Node | null): node is Element {
     return !!node && !notElementNodeNames.includes(node.nodeName);
 }
 
