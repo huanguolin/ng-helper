@@ -1,8 +1,8 @@
 import { NgPluginConfiguration, type InjectionCheckMode } from '@ng-helper/shared/lib/plugin';
+import type { NgHelperUserConfig } from '@ng-helper/shared/lib/userConfig';
 import getPort from 'get-port';
 import * as vscode from 'vscode';
 
-import type { NgHelperUserConfig } from '../config';
 import { pluginId, typeScriptExtensionId } from '../constants';
 import { logger } from '../logger';
 

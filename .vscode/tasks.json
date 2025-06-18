@@ -71,6 +71,24 @@
                 "group": "watch",
                 "reveal": "never"
             }
+        },
+        {
+            "label": "ng-lint-cli",
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "workspace",
+                "@ng-helper/ng-lint-cli",
+                "run",
+                "debug"
+            ],
+            "group": "build",
+            "problemMatcher": "$esbuild-watch",
+            "isBackground": true,
+            "presentation": {
+                "group": "watch",
+                "reveal": "never"
+            }
         }
     ]
 }
