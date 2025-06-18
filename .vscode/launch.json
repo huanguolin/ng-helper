@@ -6,7 +6,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Run Extension",
+			"name": "Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
@@ -35,6 +35,22 @@
 			"outFiles": [
 				"${workspaceFolder}/packages/ng-helper-vscode/dist/**/*.js",
 				"${workspaceFolder}/packages/ng-helper-vscode/tests/dist/**/*.js"
+			]
+		},
+		{
+			"name": "ng-lint-cli",
+			"type": "node",
+			"request": "launch",
+			"preLaunchTask": "ng-lint-cli",
+			"program": "${workspaceFolder}/packages/ng-lint-cli/src/index.ts",
+			"args": [
+				"d:\\workdir\\leyserkids\\.vscode\\ng-helper.json"
+			],
+			"outFiles": [
+				"${workspaceFolder}/packages/ng-lint-cli/dist/**/*.js"
+			],
+			"skipFiles": [
+				"<node_internals>/**"
 			]
 		}
 	]

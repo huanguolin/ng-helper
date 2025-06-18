@@ -1,23 +1,25 @@
 {
-  "name": "@ng-helper/shared",
+  "name": "@ng-helper/ng-lint-cli",
   "version": "0.0.1",
   "license": "MIT",
-  "main": "lib",
+  "main": "src",
   "scripts": {
+    "compile": "yarn run tsc && yarn run lint && node scripts/esbuild.js --production",
+    "debug": "yarn run tsc && node scripts/esbuild.js --watch",
     "tsc": "tsc --noEmit",
     "lint": "eslint . --ext ts",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@ng-helper/ng-parser": "^0.0.1",
-    "parse5": "^7.3.0",
-    "zod": "^3.24.2"
+    "@ng-helper/shared": "^0.0.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
     "@types/jest": "^29.5.12",
+    "esbuild": "^0.21.4",
     "jest": "^29.7.0",
     "typescript": "~5.5.4"
   }
