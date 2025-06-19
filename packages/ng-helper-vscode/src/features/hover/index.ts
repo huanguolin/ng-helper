@@ -13,7 +13,7 @@ import { Hover, languages, MarkdownString, TextDocument, Position, CancellationT
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import { buildCursor } from '../../utils';
+import { buildCursor, normalizePath } from '../../utils';
 import {
     getControllerNameInfo,
     getCorrespondingScriptFileName,
@@ -39,7 +39,7 @@ export function registerHover(ngContext: NgContext): void {
                     'provideHover',
                     async () => {
                         const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position), {
-                            filePath: document.uri.toString(),
+                            filePath: normalizePath(document.uri.fsPath), // 注意：这里的处理方式要一致，否则缓存会失效
                             version: document.version,
                         });
 

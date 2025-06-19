@@ -13,8 +13,8 @@ import type {
     NgComponentAttrCompletionRequest,
     NgDirectiveCompletionRequest,
     NgCtrlTypeCompletionRequest,
-    NgListDirectivesStringAttrsRequest,
-    NgListComponentsStringAttrsRequest,
+    NgListDirectivesAttrsRequest,
+    NgListComponentsAttrsRequest,
 } from '@ng-helper/shared/lib/plugin';
 
 import {
@@ -41,7 +41,12 @@ import {
     getDirectiveHoverInfo,
     getFilterNameHoverInfo,
 } from '../hover';
-import { getComponentsStringAttrsInfo, getDirectivesStringAttrsInfo } from '../other';
+import {
+    getComponentsExpressionAttrsInfo,
+    getComponentsStringAttrsInfo,
+    getDirectivesExpressionAttrsInfo,
+    getDirectivesStringAttrsInfo,
+} from '../other';
 import type { PluginContext } from '../type';
 
 import type { RpcMethodConfig } from './RpcRouter';
@@ -150,11 +155,19 @@ const otherMethods = {
     },
     'attrs/string/components': {
         isCoreCtx: true,
-        handler: (ctx, ngRequest) => getComponentsStringAttrsInfo(ctx, ngRequest as NgListComponentsStringAttrsRequest),
+        handler: (ctx, ngRequest) => getComponentsStringAttrsInfo(ctx, ngRequest as NgListComponentsAttrsRequest),
     },
     'attrs/string/directives': {
         isCoreCtx: true,
-        handler: (ctx, ngRequest) => getDirectivesStringAttrsInfo(ctx, ngRequest as NgListDirectivesStringAttrsRequest),
+        handler: (ctx, ngRequest) => getDirectivesStringAttrsInfo(ctx, ngRequest as NgListDirectivesAttrsRequest),
+    },
+    'attrs/expression/components': {
+        isCoreCtx: true,
+        handler: (ctx, ngRequest) => getComponentsExpressionAttrsInfo(ctx, ngRequest as NgListComponentsAttrsRequest),
+    },
+    'attrs/expression/directives': {
+        isCoreCtx: true,
+        handler: (ctx, ngRequest) => getDirectivesExpressionAttrsInfo(ctx, ngRequest as NgListDirectivesAttrsRequest),
     },
 } satisfies Record<string, RpcMethodConfig>;
 

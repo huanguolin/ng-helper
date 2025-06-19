@@ -10,6 +10,7 @@
     "tsc:plugin": "cd packages/typescript-plugin && yarn run tsc",
     "tsc:shared": "cd packages/shared && yarn run tsc",
     "tsc:ng-parser": "cd packages/ng-parser && yarn run tsc",
+    "tsc:ng-lint-cli": "cd packages/ng-lint-cli && yarn run tsc",
     "lint": "eslint . --ext .ts",
     "test": "npm-run-all -p test:*",
     "test:plugin": "cd packages/typescript-plugin && yarn test",

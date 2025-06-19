@@ -2,11 +2,10 @@ import {
     getAttrValueStart,
     type Location,
     type Attribute,
-    type DocumentFragment,
     type Element,
     parseHtmlFragmentWithCache,
 } from '@ng-helper/shared/lib/html';
-import { isComponentTagName, isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
+import { isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
 import { camelCase } from 'change-case';
 import {
     SemanticTokensLegend,
@@ -22,8 +21,10 @@ import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure
 import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import { intersect, uniq } from '../../utils';
+import { intersect, normalizePath, uniq } from '../../utils';
 import { getCorrespondingScriptFileName } from '../utils';
+
+import { getComponentNodesAndDirectiveNodes } from './utils';
 
 const tokenTypes = ['string'];
 export const legend = new SemanticTokensLegend(tokenTypes);
@@ -66,7 +67,7 @@ export async function htmlSemanticProvider({
     const tokensBuilder = new SemanticTokensBuilder(legend);
 
     const htmlAst = parseHtmlFragmentWithCache(document.getText(), {
-        filePath: document.uri.toString(),
+        filePath: normalizePath(document.uri.fsPath), // 注意：这里的处理方式要一致，否则缓存会失效
         version: document.version,
     });
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
@@ -133,36 +134,6 @@ export async function htmlSemanticProvider({
     checkCancellation(token);
 
     return tokensBuilder.build();
-}
-
-function getComponentNodesAndDirectiveNodes(htmlAst: DocumentFragment): {
-    componentNodes: Element[];
-    maybeDirectiveNodes: Element[];
-} {
-    const componentNodes: Element[] = [];
-    const maybeDirectiveNodes: Element[] = [];
-    iter(htmlAst.childNodes);
-    return { componentNodes, maybeDirectiveNodes };
-
-    function iter(nodes: DocumentFragment['childNodes']) {
-        for (const node of nodes) {
-            const e = node as Element;
-            if (e.attrs?.length) {
-                if (isComponentTagName(e.tagName)) {
-                    componentNodes.push(e);
-                } else {
-                    const maybeDirectiveNames = e.attrs.filter((x) => isNgUserCustomAttr(x.name)).map((x) => x.name);
-                    if (maybeDirectiveNames.length) {
-                        maybeDirectiveNodes.push(e);
-                    }
-                }
-            }
-
-            if (e.childNodes?.length) {
-                iter(e.childNodes);
-            }
-        }
-    }
 }
 
 function fillComponentSemanticTokens({
