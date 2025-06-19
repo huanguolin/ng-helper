@@ -109,9 +109,10 @@ async function handleTagNameOrAttrName(
 
 function handleBuiltinDirective(cursorAtAttrName: string): Hover | undefined {
     const ngAttrName = camelCase(cursorAtAttrName);
+    const urlSuffix = ngAttrName.startsWith('ngOn') ? 'ngOn' : ngAttrName;
     return buildHoverResult({
         formattedTypeString: `(directive) ${ngAttrName}`,
-        document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${ngAttrName}).`,
+        document: `Angular.js built-in directive, see [document](https://docs.angularjs.org/api/ng/directive/${urlSuffix}).`,
     });
 }
 
