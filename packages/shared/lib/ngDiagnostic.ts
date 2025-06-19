@@ -9,7 +9,7 @@ import {
     type HtmlAstCacheMeta,
 } from './html';
 import { ngParse } from './ngParse';
-import { isComponentTagName, isNgBuiltinDirective, isNgBuiltinExpressionDirective } from './ngUtils';
+import { isComponentTagName, isNgBuiltinExpressionDirective } from './ngUtils';
 
 export interface NgDiagnostic extends NgLocation {
     message: string;
@@ -131,7 +131,7 @@ export function getNgDiagnosticResult(
         for (const attr of element.attrs) {
             const { start: startOffset, end: endOffset } = attrLocations[attr.name];
             const attrValueStart = getAttrValueStart(attr, { startOffset, endOffset }, htmlText) ?? 0;
-            if (isNgBuiltinDirective(attr.name)) {
+            if (isNgBuiltinExpressionDirective(attr.name)) {
                 validateNgExpression(attr.value, attrValueStart, attr.name);
             } else if (hasNgTemplate(attr.value)) {
                 checkNgTemplate(attr.value, attrValueStart, attr.name);
