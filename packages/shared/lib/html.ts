@@ -112,7 +112,7 @@ export function getAttrValueStart(
      * 所以要统一为小写比较。
      */
     function isSame(t1: string | undefined, t2: string | undefined) {
-        return t1?.toLowerCase() === t2?.toLocaleLowerCase();
+        return t1?.toLowerCase() === t2?.toLowerCase();
     }
 }
 

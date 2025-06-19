@@ -1,9 +1,10 @@
 import type { NgAttrName, Location as NgLocation } from '@ng-helper/ng-parser/src/types';
 
-import { getAttrLocations, isElement, isTextNode } from './cursorAt';
+import { getAttrLocations, isElement, isTextNode, type SimpleLocation } from './cursorAt';
 import {
     getAttrValueStart,
     parseHtmlFragmentWithCache,
+    type Attribute,
     type ChildNode,
     type Element,
     type HtmlAstCacheMeta,
@@ -101,8 +102,16 @@ export function getNgDiagnosticResult(
         }
 
         for (const attr of element.attrs) {
-            const { start: startOffset, end: endOffset } = attrLocations[attr.name];
-            const attrValueStart = getAttrValueStart(attr, { startOffset, endOffset }, htmlText) ?? 0;
+            const location = getAttrLocation(attrLocations, attr);
+            if (!location) {
+                continue;
+            }
+
+            const attrValueStart = getAttrValueStart(attr, location, htmlText);
+            if (typeof attrValueStart !== 'number') {
+                continue;
+            }
+
             if (isNgBuiltinExpressionDirective(attr.name)) {
                 validateNgExpression(attr.value, attrValueStart, attr.name);
             } else if (hasNgTemplate(attr.value)) {
@@ -129,8 +138,16 @@ export function getNgDiagnosticResult(
         }
 
         for (const attr of element.attrs) {
-            const { start: startOffset, end: endOffset } = attrLocations[attr.name];
-            const attrValueStart = getAttrValueStart(attr, { startOffset, endOffset }, htmlText) ?? 0;
+            const location = getAttrLocation(attrLocations, attr);
+            if (!location) {
+                continue;
+            }
+
+            const attrValueStart = getAttrValueStart(attr, location, htmlText);
+            if (typeof attrValueStart !== 'number') {
+                continue;
+            }
+
             if (isNgBuiltinExpressionDirective(attr.name)) {
                 validateNgExpression(attr.value, attrValueStart, attr.name);
             } else if (hasNgTemplate(attr.value)) {
@@ -177,6 +194,15 @@ export function getNgDiagnosticResult(
             });
         }
     }
+}
+
+function getAttrLocation(
+    attrLocations: Record<string, SimpleLocation>,
+    attr: Attribute,
+): { startOffset: number; endOffset: number } | undefined {
+    const attrName = attr.prefix ? `${attr.prefix}:${attr.name.toLowerCase()}` : attr.name.toLowerCase();
+    const location = attrLocations[attrName];
+    return location ? { startOffset: location.start, endOffset: location.end } : undefined;
 }
 
 function hasNgTemplate(text: string) {

@@ -85,10 +85,10 @@ export async function htmlSemanticProvider({
 
     checkCancellation(token);
 
-    const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName)));
+    const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName.toLowerCase())));
     const maybeDirectiveNames = uniq(
         maybeDirectiveNodes
-            .map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name)))
+            .map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name.toLowerCase())))
             .flat(),
     );
     const promiseArr: Promise<void>[] = [];
