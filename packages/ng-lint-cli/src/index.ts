@@ -2,15 +2,26 @@ import fs from 'fs';
 import path, { normalize } from 'path';
 
 import { getNgDiagnosticResult, type NgDiagnostic } from '@ng-helper/shared/lib/ngDiagnostic';
+import { type NgProjectConfig } from '@ng-helper/shared/lib/userConfig';
 
 import { getProjectsConfig } from './config';
+
+interface ErrorFile {
+    filePath: string;
+    errorCount: number;
+}
+
+interface ProjectResult {
+    projectName: string;
+    errorFiles: ErrorFile[];
+    totalErrors: number;
+}
 
 const defaultProjectPath = process.cwd();
 
 main();
 
 function main() {
-    // 读取配置
     const workRootPath = process.argv[2] || defaultProjectPath;
     const projects = getProjectsConfig(workRootPath);
 
@@ -19,57 +30,123 @@ function main() {
         return;
     }
 
-    let totalDiagnostics = 0;
+    const projectResults = processAllProjects(projects, workRootPath);
+    const totalDiagnostics = calculateTotalDiagnostics(projectResults);
 
-    // 依照项目配置，读取 ngProject 目录下的 html 文件
-    for (const project of projects) {
-        console.log(`\n正在检查项目: ${project.name} (${project.path})`);
-
-        try {
-            // 获取项目目录下的所有 HTML 文件
-            const projectPath = normalizePath(project.path);
-            const projectAbsolutePath = projectPath.startsWith('/')
-                ? projectPath
-                : normalizePath(path.join(workRootPath, projectPath));
-            const htmlFiles = getHtmlFiles(projectAbsolutePath);
-
-            if (htmlFiles.length === 0) {
-                console.log('  未找到 HTML 文件');
-                continue;
-            }
-
-            console.log(`  找到 ${htmlFiles.length} 个 HTML 文件`);
-
-            // 诊断 html 文件
-            for (const htmlFile of htmlFiles) {
-                const relativePath = path.relative(project.path, htmlFile);
-
-                try {
-                    const htmlContent = fs.readFileSync(htmlFile, 'utf-8');
-                    const diagnostics = getNgDiagnosticResult(htmlContent);
-
-                    if (diagnostics.length > 0) {
-                        console.log(`\n  ${relativePath}:`);
-                        outputDiagnostics(diagnostics, htmlContent);
-                        totalDiagnostics += diagnostics.length;
-                    }
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    console.error(`    读取文件失败 ${relativePath}: ${errorMessage}`);
-                }
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.error(`  项目 ${project.name} 处理失败: ${errorMessage}`);
-        }
-    }
-
-    // 输出诊断结果摘要
-    console.log(`\n检查完成，共发现 ${totalDiagnostics} 个问题`);
+    outputSummary(projectResults, totalDiagnostics);
 
     if (totalDiagnostics > 0) {
         process.exit(1);
     }
+}
+
+function processAllProjects(projects: NgProjectConfig[], workRootPath: string): ProjectResult[] {
+    const results: ProjectResult[] = [];
+
+    for (const project of projects) {
+        console.log(`\n正在检查项目: ${project.name} (${project.path})`);
+        const result = processProject(project, workRootPath);
+        results.push(result);
+    }
+
+    return results;
+}
+
+function processProject(project: NgProjectConfig, workRootPath: string): ProjectResult {
+    const errorFiles: ErrorFile[] = [];
+    let totalErrors = 0;
+
+    try {
+        const projectAbsolutePath = getProjectAbsolutePath(project.path, workRootPath);
+        const htmlFiles = getHtmlFiles(projectAbsolutePath);
+
+        if (htmlFiles.length === 0) {
+            console.log('  未找到 HTML 文件');
+            return { projectName: project.name, errorFiles, totalErrors };
+        }
+
+        console.log(`  找到 ${htmlFiles.length} 个 HTML 文件`);
+
+        for (const htmlFile of htmlFiles) {
+            const fileResult = processHtmlFile(htmlFile, project, workRootPath);
+            if (fileResult) {
+                errorFiles.push(fileResult);
+                totalErrors += fileResult.errorCount;
+            }
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`  项目 ${project.name} 处理失败: ${errorMessage}`);
+    }
+
+    return { projectName: project.name, errorFiles, totalErrors };
+}
+
+function processHtmlFile(htmlFile: string, project: NgProjectConfig, workRootPath: string): ErrorFile | null {
+    const relativePath = path.relative(project.path, htmlFile);
+
+    try {
+        const htmlContent = fs.readFileSync(htmlFile, 'utf-8');
+        const diagnostics = getNgDiagnosticResult(htmlContent);
+
+        if (diagnostics.length > 0) {
+            console.log(`\n  ${relativePath}:`);
+            outputDiagnostics(diagnostics, htmlContent);
+
+            const workRelativePath = path.relative(workRootPath, htmlFile);
+            return {
+                filePath: workRelativePath,
+                errorCount: diagnostics.length,
+            };
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`    处理文件失败 ${relativePath}: ${errorMessage}`);
+    }
+
+    return null;
+}
+
+function getProjectAbsolutePath(projectPath: string, workRootPath: string): string {
+    const normalizedProjectPath = normalizePath(projectPath);
+    return normalizedProjectPath.startsWith('/')
+        ? normalizedProjectPath
+        : normalizePath(path.join(workRootPath, normalizedProjectPath));
+}
+
+function calculateTotalDiagnostics(projectResults: ProjectResult[]): number {
+    return projectResults.reduce((total, result) => total + result.totalErrors, 0);
+}
+
+function outputSummary(projectResults: ProjectResult[], totalDiagnostics: number) {
+    const totalErrorFiles = projectResults.reduce((sum, result) => sum + result.errorFiles.length, 0);
+
+    console.log(`\n检查完成，共发现 ${totalDiagnostics} 个问题`);
+
+    if (totalErrorFiles > 0) {
+        outputErrorFilesList(projectResults, totalDiagnostics, totalErrorFiles);
+    }
+}
+
+function outputErrorFilesList(projectResults: ProjectResult[], totalDiagnostics: number, totalErrorFiles: number) {
+    console.log(`\n共${totalDiagnostics}个错误, ${totalErrorFiles}个文件:`);
+    console.log('='.repeat(50));
+
+    for (const result of projectResults) {
+        if (result.errorFiles.length > 0) {
+            outputProjectErrorSummary(result);
+        }
+    }
+
+    console.log('='.repeat(50));
+}
+
+function outputProjectErrorSummary(result: ProjectResult) {
+    console.log(`${result.projectName}(共${result.totalErrors}个错误, ${result.errorFiles.length}个文件):`);
+
+    result.errorFiles.forEach((errorFile) => {
+        console.log(`${errorFile.filePath} (${errorFile.errorCount}个错误)`);
+    });
 }
 
 function getHtmlFiles(dirPath: string): string[] {
@@ -80,8 +157,7 @@ function getHtmlFiles(dirPath: string): string[] {
             const items = fs.readdirSync(currentPath);
 
             for (const item of items) {
-                // 跳过 node_modules 目录
-                if (item === 'node_modules') {
+                if (shouldSkipItem(item)) {
                     continue;
                 }
 
@@ -90,12 +166,11 @@ function getHtmlFiles(dirPath: string): string[] {
 
                 if (stat.isDirectory()) {
                     traverse(fullPath);
-                } else if (stat.isFile() && path.extname(item) === '.html') {
+                } else if (isHtmlFile(item)) {
                     htmlFiles.push(fullPath);
                 }
             }
         } catch (error) {
-            // 忽略无法访问的目录
             console.warn(`无法访问目录: ${currentPath}`);
         }
     }
@@ -104,22 +179,28 @@ function getHtmlFiles(dirPath: string): string[] {
     return htmlFiles;
 }
 
+function shouldSkipItem(item: string): boolean {
+    return item === 'node_modules';
+}
+
+function isHtmlFile(fileName: string): boolean {
+    return path.extname(fileName) === '.html';
+}
+
 function outputDiagnostics(diagnostics: NgDiagnostic[], htmlContent: string) {
     const lines = htmlContent.split('\n');
 
     for (const diagnostic of diagnostics) {
-        const location = getLocationFromOffset(diagnostic.start, htmlContent);
-        const line = lines[location.line - 1] || '';
-
-        console.log(`    第 ${location.line} 行，第 ${location.column} 列: ${diagnostic.message}`);
-        console.log(`      ${line.trim()}`);
-
-        // 添加指示错误位置的标记
-        const spaces = ' '.repeat(6 + location.column - 1);
-        const length = Math.max(1, diagnostic.end - diagnostic.start);
-        const marker = '^'.repeat(length);
-        console.log(`      ${spaces}${marker}`);
+        outputSingleDiagnostic(diagnostic, lines, htmlContent);
     }
+}
+
+function outputSingleDiagnostic(diagnostic: NgDiagnostic, lines: string[], htmlContent: string) {
+    const location = getLocationFromOffset(diagnostic.start, htmlContent);
+    const line = lines[location.line - 1] || '';
+
+    console.log(`    第 ${location.line} 行，第 ${location.column} 列: ${diagnostic.message}`);
+    console.log(`      ${line.trim()}`);
 }
 
 function getLocationFromOffset(offset: number, text: string): { line: number; column: number } {
