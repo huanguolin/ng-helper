@@ -54,7 +54,7 @@ async function getExpressionAttrMaps(
     if (components.length) {
         try {
             const componentsExpressionAttrs = await ngContext.rpcApi.listComponentsExpressionAttrs({
-                params: { componentNames: components.map((x) => camelCase(x)), fileName: filePath },
+                params: { componentNames: components.map((x) => camelCase(x.toLowerCase())), fileName: filePath },
             });
             if (componentsExpressionAttrs) {
                 componentExpressionAttrMap = kebabCaseRecord(componentsExpressionAttrs);
@@ -68,7 +68,10 @@ async function getExpressionAttrMaps(
     if (maybeDirectives.length) {
         try {
             const directivesExpressionAttrs = await ngContext.rpcApi.listDirectivesExpressionAttrs({
-                params: { maybeDirectiveNames: maybeDirectives.map((x) => camelCase(x)), fileName: filePath },
+                params: {
+                    maybeDirectiveNames: maybeDirectives.map((x) => camelCase(x.toLowerCase())),
+                    fileName: filePath,
+                },
             });
             if (directivesExpressionAttrs) {
                 directiveExpressionAttrMap = kebabCaseRecord(directivesExpressionAttrs);

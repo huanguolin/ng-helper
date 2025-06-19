@@ -116,18 +116,26 @@ export const builtinExpressionDirectives = [
 ];
 
 export function isNgBuiltinExpressionDirective(attrName: string): boolean {
+    // 有些时候原始文本中有大小写混杂的情况
+    attrName = attrName.toLowerCase();
     return builtinExpressionDirectives.includes(attrName) || attrName.startsWith('ng-on-');
 }
 
 export function isComponentTagName(name: string): boolean {
+    // 有些时候原始文本中有大小写混杂的情况
+    name = name.toLowerCase();
     return name.includes('-') || !isHtmlTagName(name);
 }
 
 export function isNgBuiltinDirective(attrName: string): boolean {
+    // 有些时候原始文本中有大小写混杂的情况
+    attrName = attrName.toLowerCase();
     return attrName.startsWith('ng-');
 }
 
 export function isNgUserCustomAttr(attrName: string): boolean {
+    // 有些时候原始文本中有大小写混杂的情况
+    attrName = attrName.toLowerCase();
     return (
         !isNgBuiltinDirective(attrName) &&
         attrName.includes('-') &&
