@@ -91,7 +91,7 @@ export function getAttrValueStart(
     const realAttrText = htmlText.slice(location.startOffset, location.endOffset);
     const guessedAttrText = guessAttrText(attr, '"');
     if (realAttrText.length === guessedAttrText.length) {
-        if (guessedAttrText === realAttrText || guessAttrText(attr, "'") === realAttrText) {
+        if (isSame(guessedAttrText, realAttrText) || isSame(guessAttrText(attr, "'"), realAttrText)) {
             return location.startOffset + attr.name.length + '="'.length + '"'.length - 1; // base zero
         } else {
             throw new Error('getAttrValueStart(): Impossible here.');
@@ -105,6 +105,14 @@ export function getAttrValueStart(
 
     function guessAttrText(attr: Attribute, quote: string): string {
         return `${attr.name}=${quote}${attr.value}${quote}`;
+    }
+
+    /**
+     * 由于属性名字经过 parse5 处理后都变成小写了，而原来 html 中可能有大写的。
+     * 所以要统一为小写比较。
+     */
+    function isSame(t1: string | undefined, t2: string | undefined) {
+        return t1?.toLowerCase() === t2?.toLocaleLowerCase();
     }
 }
 

@@ -268,8 +268,10 @@ function getStartTagInfo(element: Element, htmlText: string): CursorAtStartTagIn
 
 export function getAttrLocations(element: Element) {
     const attrLocations: Record<string, SimpleLocation> = {};
-    if (element.sourceCodeLocation!.attrs) {
-        for (const [key, value] of Object.entries(element.sourceCodeLocation!.attrs)) {
+    // 注意：
+    // 有一些虚拟节点，比如 tboday, theader 之类的 element.sourceCodeLocation 为 null
+    if (element.sourceCodeLocation?.attrs) {
+        for (const [key, value] of Object.entries(element.sourceCodeLocation.attrs)) {
             attrLocations[key] = {
                 start: value.startOffset,
                 end: value.endOffset,
