@@ -9,15 +9,44 @@ import {
     type HtmlAstCacheMeta,
 } from './html';
 import { ngParse } from './ngParse';
-import { isComponentTagName, isNgBuiltinDirective, isNgUserCustomAttr } from './ngUtils';
+import { isComponentTagName, isNgBuiltinDirective, isNgBuiltinExpressionDirective } from './ngUtils';
 
 export interface NgDiagnostic extends NgLocation {
     message: string;
 }
 
+export interface NgDiagnosticAdditionalInfo {
+    /**
+     * 组件表达式属性值映射
+     *
+     * 键：组件名称
+     * 值：表达式属性值列表
+     *
+     * 名字都是 kebabCase，比如 `my-component`
+     */
+    componentExpressionAttrMap: Record<string, string[]>;
+    /**
+     * 指令表达式属性值映射
+     *
+     * 键：指令名称
+     * 值：表达式属性值列表
+     *
+     * 名字都是 kebabCase，比如 `my-directive`
+     */
+    directiveExpressionAttrMap: Record<string, string[]>;
+}
+
 const templateRegex = /\{\{([^}]*?)\}\}/g;
 
-export function getNgDiagnosticResult(htmlText: string, meta?: HtmlAstCacheMeta): NgDiagnostic[] {
+export function getNgDiagnosticResult(
+    htmlText: string,
+    options?: {
+        additionalInfo?: NgDiagnosticAdditionalInfo;
+        meta?: HtmlAstCacheMeta;
+    },
+): NgDiagnostic[] {
+    const { additionalInfo, meta } = options ?? {};
+
     const htmlAst = parseHtmlFragmentWithCache(htmlText, meta);
 
     const diagnostics: NgDiagnostic[] = [];
@@ -57,12 +86,28 @@ export function getNgDiagnosticResult(htmlText: string, meta?: HtmlAstCacheMeta)
 
     function checkComponentAttributes(element: Element) {
         const attrLocations = getAttrLocations(element);
+        const componentExprAttrNames = new Set((additionalInfo?.componentExpressionAttrMap ?? {})[element.tagName]);
+        const directiveExprAttrNames = new Set<string>();
+
+        if (additionalInfo && Object.keys(additionalInfo.directiveExpressionAttrMap).length) {
+            for (const attr of element.attrs) {
+                const names = additionalInfo.directiveExpressionAttrMap[attr.name];
+                if (names) {
+                    for (const name of names) {
+                        directiveExprAttrNames.add(name);
+                    }
+                }
+            }
+        }
+
         for (const attr of element.attrs) {
             const { start: startOffset, end: endOffset } = attrLocations[attr.name];
             const attrValueStart = getAttrValueStart(attr, { startOffset, endOffset }, htmlText) ?? 0;
-            if (hasNgTemplate(attr.value)) {
+            if (isNgBuiltinExpressionDirective(attr.name)) {
+                validateNgExpression(attr.value, attrValueStart, attr.name);
+            } else if (hasNgTemplate(attr.value)) {
                 checkNgTemplate(attr.value, attrValueStart, attr.name);
-            } else {
+            } else if (componentExprAttrNames.has(attr.name) || directiveExprAttrNames.has(attr.name)) {
                 validateNgExpression(attr.value, attrValueStart, attr.name);
             }
         }
@@ -70,23 +115,34 @@ export function getNgDiagnosticResult(htmlText: string, meta?: HtmlAstCacheMeta)
 
     function checkDirectiveAttributes(element: Element) {
         const attrLocations = getAttrLocations(element);
+        const directiveExprAttrNames = new Set<string>();
+
+        if (additionalInfo && Object.keys(additionalInfo.directiveExpressionAttrMap).length) {
+            for (const attr of element.attrs) {
+                const names = additionalInfo.directiveExpressionAttrMap[attr.name];
+                if (names) {
+                    for (const name of names) {
+                        directiveExprAttrNames.add(name);
+                    }
+                }
+            }
+        }
+
         for (const attr of element.attrs) {
             const { start: startOffset, end: endOffset } = attrLocations[attr.name];
             const attrValueStart = getAttrValueStart(attr, { startOffset, endOffset }, htmlText) ?? 0;
-            if (isNgBuiltinDirective(attr.name) || isNgUserCustomAttr(attr.name)) {
-                if (hasNgTemplate(attr.value)) {
-                    checkNgTemplate(attr.value, attrValueStart, attr.name);
-                } else {
-                    validateNgExpression(attr.value, attrValueStart, attr.name);
-                }
+            if (isNgBuiltinDirective(attr.name)) {
+                validateNgExpression(attr.value, attrValueStart, attr.name);
             } else if (hasNgTemplate(attr.value)) {
                 checkNgTemplate(attr.value, attrValueStart, attr.name);
+            } else if (directiveExprAttrNames.has(attr.name)) {
+                validateNgExpression(attr.value, attrValueStart, attr.name);
             }
         }
     }
 
     function checkNgTemplate(text: string, offsetAt: number, attrName?: string) {
-        if (hasNgTemplate(text)) {
+        if (text && hasNgTemplate(text)) {
             // 查找所有模板表达式 {{expression}}
             let match;
 

@@ -115,11 +115,11 @@ export interface NgCtrlTypeDefinitionRequest extends NgCtrlHoverRequest {}
 
 export interface NgDirectiveDefinitionRequest extends NgDirectiveHoverRequest {}
 
-export interface NgListComponentsStringAttrsRequest extends NgRequest {
+export interface NgListComponentsAttrsRequest extends NgRequest {
     componentNames: string[];
 }
 
-export interface NgListDirectivesStringAttrsRequest extends NgRequest {
+export interface NgListDirectivesAttrsRequest extends NgRequest {
     maybeDirectiveNames: string[];
 }
 
@@ -153,5 +153,5 @@ export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentNameCompletionResponse = NgComponentNameInfo[] | undefined;
 export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
 export type NgDirectiveCompletionResponse = NgTypeInfo[] | undefined;
-export type NgComponentsStringAttrsResponse = Record<string, string[]> | undefined;
-export type NgDirectivesStringAttrsResponse = NgComponentsStringAttrsResponse;
+export type NgComponentsAttrsResponse = Record<string, string[]> | undefined;
+export type NgDirectivesAttrsResponse = NgComponentsAttrsResponse;

@@ -14,15 +14,15 @@ import {
     type NgDefinitionResponse,
     type NgTypeDefinitionRequest,
     type NgCtrlTypeDefinitionRequest,
-    type NgListComponentsStringAttrsRequest,
-    type NgComponentsStringAttrsResponse,
+    type NgListComponentsAttrsRequest,
+    type NgComponentsAttrsResponse,
     type NgDirectiveCompletionRequest,
     type NgDirectiveCompletionResponse,
     type NgDirectiveHoverRequest,
     type NgDirectiveDefinitionRequest,
     type NgControllerNameDefinitionRequest,
-    type NgListDirectivesStringAttrsRequest,
-    type NgDirectivesStringAttrsResponse,
+    type NgListDirectivesAttrsRequest,
+    type NgDirectivesAttrsResponse,
     type NgFilterNameDefinitionRequest,
 } from '@ng-helper/shared/lib/plugin';
 import type { CancellationToken } from 'vscode';
@@ -31,7 +31,7 @@ import type { RpcQueryControl } from './rpcQueryControl';
 
 interface ApiInput<T> {
     params: T;
-    cancelToken: CancellationToken;
+    cancelToken?: CancellationToken;
 }
 
 export class RpcApi {
@@ -46,8 +46,8 @@ export class RpcApi {
         );
     }
 
-    listDirectivesStringAttrs({ params, cancelToken }: ApiInput<NgListDirectivesStringAttrsRequest>) {
-        return this._rpcQueryControl.query<NgDirectivesStringAttrsResponse>(
+    listDirectivesStringAttrs({ params, cancelToken }: ApiInput<NgListDirectivesAttrsRequest>) {
+        return this._rpcQueryControl.query<NgDirectivesAttrsResponse>(
             'attrs/string/directives',
             params,
             'listDirectivesStringAttrs',
@@ -55,11 +55,29 @@ export class RpcApi {
         );
     }
 
-    listComponentsStringAttrs({ params, cancelToken }: ApiInput<NgListComponentsStringAttrsRequest>) {
-        return this._rpcQueryControl.query<NgComponentsStringAttrsResponse>(
+    listComponentsStringAttrs({ params, cancelToken }: ApiInput<NgListComponentsAttrsRequest>) {
+        return this._rpcQueryControl.query<NgComponentsAttrsResponse>(
             'attrs/string/components',
             params,
             'listComponentsStringAttrs',
+            cancelToken,
+        );
+    }
+
+    listDirectivesExpressionAttrs({ params, cancelToken }: ApiInput<NgListDirectivesAttrsRequest>) {
+        return this._rpcQueryControl.query<NgDirectivesAttrsResponse>(
+            'attrs/expression/directives',
+            params,
+            'listDirectivesExpressionAttrs',
+            cancelToken,
+        );
+    }
+
+    listComponentsExpressionAttrs({ params, cancelToken }: ApiInput<NgListComponentsAttrsRequest>) {
+        return this._rpcQueryControl.query<NgComponentsAttrsResponse>(
+            'attrs/expression/components',
+            params,
+            'listComponentsExpressionAttrs',
             cancelToken,
         );
     }

@@ -23,7 +23,7 @@ import {
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import { buildCursor } from '../../utils';
+import { buildCursor, normalizePath } from '../../utils';
 import { onTypeHover } from '../hover/utils';
 import {
     getControllerNameInfo,
@@ -51,7 +51,7 @@ export function registerDefinition(ngContext: NgContext): void {
                     'provideDefinition',
                     async () => {
                         const cursorAtInfo = getCursorAtInfo(document.getText(), buildCursor(document, position), {
-                            filePath: document.uri.toString(),
+                            filePath: normalizePath(document.uri.fsPath), // 注意：这里的处理方式要一致，否则缓存会失效
                             version: document.version,
                         });
 
