@@ -1,16 +1,18 @@
 import fs from 'fs';
-import path from 'path';
+import path, { normalize } from 'path';
 
 import { getNgDiagnosticResult, type NgDiagnostic } from '@ng-helper/shared/lib/ngDiagnostic';
 
 import { getProjectsConfig } from './config';
 
+const defaultProjectPath = process.cwd();
+
 main();
 
 function main() {
     // 读取配置
-    const configPathFromArg = process.argv[2];
-    const projects = getProjectsConfig(configPathFromArg || undefined);
+    const workRootPath = process.argv[2] || defaultProjectPath;
+    const projects = getProjectsConfig(workRootPath);
 
     if (projects.length === 0) {
         console.log('没有配置任何 Angular 项目');
@@ -25,7 +27,11 @@ function main() {
 
         try {
             // 获取项目目录下的所有 HTML 文件
-            const htmlFiles = getHtmlFiles(project.path);
+            const projectPath = normalizePath(project.path);
+            const projectAbsolutePath = projectPath.startsWith('/')
+                ? projectPath
+                : normalizePath(path.join(workRootPath, projectPath));
+            const htmlFiles = getHtmlFiles(projectAbsolutePath);
 
             if (htmlFiles.length === 0) {
                 console.log('  未找到 HTML 文件');
@@ -122,4 +128,13 @@ function getLocationFromOffset(offset: number, text: string): { line: number; co
         line: lines.length,
         column: lines[lines.length - 1].length + 1,
     };
+}
+
+function normalizePath(filePath: string): string {
+    filePath = normalize(filePath);
+    filePath = filePath.replace(/\\/g, '/');
+    if (filePath.endsWith('/')) {
+        return filePath.slice(0, -1);
+    }
+    return filePath;
 }

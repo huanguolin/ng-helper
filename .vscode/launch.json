@@ -44,7 +44,7 @@
 			"preLaunchTask": "ng-lint-cli",
 			"program": "${workspaceFolder}/packages/ng-lint-cli/src/index.ts",
 			"args": [
-				"d:\\workdir\\leyserkids\\.vscode\\ng-helper.json"
+				"d:\\workdir\\leyserkids"
 			],
 			"outFiles": [
 				"${workspaceFolder}/packages/ng-lint-cli/dist/**/*.js"
