@@ -1,5 +1,6 @@
 import type { DocumentFragment, Element } from '@ng-helper/shared/lib/html';
 import { isComponentTagName, isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
+import { camelCase } from 'change-case';
 
 import { uniq } from '../../utils';
 
@@ -34,11 +35,21 @@ export function getComponentNodesAndDirectiveNodes(htmlAst: DocumentFragment): {
 }
 
 export function getComponentsAndDirectives(htmlAst: DocumentFragment): {
-    components: string[];
-    maybeDirectives: string[];
+    componentNames: string[];
+    maybeDirectiveNames: string[];
 } {
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
 
+    return getComponentsAndDirectivesFromNodes(componentNodes, maybeDirectiveNodes);
+}
+
+export function getComponentsAndDirectivesFromNodes(
+    componentNodes: Element[],
+    maybeDirectiveNodes: Element[],
+): {
+    componentNames: string[];
+    maybeDirectiveNames: string[];
+} {
     const components: string[] = [];
     const maybeDirectives: string[] = [];
 
@@ -60,7 +71,7 @@ export function getComponentsAndDirectives(htmlAst: DocumentFragment): {
     }
 
     return {
-        components: uniq(components),
-        maybeDirectives: uniq(maybeDirectives),
+        componentNames: uniq(components).map((x) => camelCase(x.toLowerCase())),
+        maybeDirectiveNames: uniq(maybeDirectives).map((x) => camelCase(x.toLowerCase())),
     };
 }

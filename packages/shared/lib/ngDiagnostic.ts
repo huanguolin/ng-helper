@@ -87,12 +87,14 @@ export function getNgDiagnosticResult(
 
     function checkComponentAttributes(element: Element) {
         const attrLocations = getAttrLocations(element);
-        const componentExprAttrNames = new Set((additionalInfo?.componentExpressionAttrMap ?? {})[element.tagName]);
+        const componentExprAttrNames = new Set(
+            (additionalInfo?.componentExpressionAttrMap ?? {})[element.tagName.toLowerCase()],
+        );
         const directiveExprAttrNames = new Set<string>();
 
         if (additionalInfo && Object.keys(additionalInfo.directiveExpressionAttrMap).length) {
             for (const attr of element.attrs) {
-                const names = additionalInfo.directiveExpressionAttrMap[attr.name];
+                const names = additionalInfo.directiveExpressionAttrMap[attr.name.toLowerCase()];
                 if (names) {
                     for (const name of names) {
                         directiveExprAttrNames.add(name);
@@ -112,12 +114,13 @@ export function getNgDiagnosticResult(
                 continue;
             }
 
-            if (isNgBuiltinExpressionDirective(attr.name)) {
-                validateNgExpression(attr.value, attrValueStart, attr.name);
+            const attrName = attr.name.toLowerCase();
+            if (isNgBuiltinExpressionDirective(attrName)) {
+                validateNgExpression(attr.value, attrValueStart, attrName);
             } else if (hasNgTemplate(attr.value)) {
-                checkNgTemplate(attr.value, attrValueStart, attr.name);
-            } else if (componentExprAttrNames.has(attr.name) || directiveExprAttrNames.has(attr.name)) {
-                validateNgExpression(attr.value, attrValueStart, attr.name);
+                checkNgTemplate(attr.value, attrValueStart, attrName);
+            } else if (componentExprAttrNames.has(attrName) || directiveExprAttrNames.has(attrName)) {
+                validateNgExpression(attr.value, attrValueStart, attrName);
             }
         }
     }
@@ -128,7 +131,7 @@ export function getNgDiagnosticResult(
 
         if (additionalInfo && Object.keys(additionalInfo.directiveExpressionAttrMap).length) {
             for (const attr of element.attrs) {
-                const names = additionalInfo.directiveExpressionAttrMap[attr.name];
+                const names = additionalInfo.directiveExpressionAttrMap[attr.name.toLowerCase()];
                 if (names) {
                     for (const name of names) {
                         directiveExprAttrNames.add(name);
@@ -148,12 +151,13 @@ export function getNgDiagnosticResult(
                 continue;
             }
 
-            if (isNgBuiltinExpressionDirective(attr.name)) {
-                validateNgExpression(attr.value, attrValueStart, attr.name);
+            const attrName = attr.name.toLowerCase();
+            if (isNgBuiltinExpressionDirective(attrName)) {
+                validateNgExpression(attr.value, attrValueStart, attrName);
             } else if (hasNgTemplate(attr.value)) {
-                checkNgTemplate(attr.value, attrValueStart, attr.name);
-            } else if (directiveExprAttrNames.has(attr.name)) {
-                validateNgExpression(attr.value, attrValueStart, attr.name);
+                checkNgTemplate(attr.value, attrValueStart, attrName);
+            } else if (directiveExprAttrNames.has(attrName)) {
+                validateNgExpression(attr.value, attrValueStart, attrName);
             }
         }
     }
