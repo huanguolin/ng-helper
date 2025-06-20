@@ -60,7 +60,7 @@ function watchUserConfig(vscodeContext: ExtensionContext) {
         }[type];
         const selection = await window.showInformationMessage(message, 'OK', 'Cancel');
         if (selection === 'OK') {
-            await commands.executeCommand('workbench.action.reloadWindow');
+            await commands.executeCommand('workbench.action.quickOpen', '>Developer: Reload Window');
         }
     }
 }
