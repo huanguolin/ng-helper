@@ -54,7 +54,7 @@ function providerSemantic(ngContext: NgContext) {
                         return;
                     }
 
-                    return await htmlSemanticProvider({ document, rpcApi: ngContext.rpcApi, token });
+                    return await htmlSemanticProvider({ document, ngContext, token });
                 },
             },
             legend,

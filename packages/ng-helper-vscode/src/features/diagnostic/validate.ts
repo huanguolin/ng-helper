@@ -1,6 +1,6 @@
 import { parseHtmlFragmentWithCache, type DocumentFragment } from '@ng-helper/shared/lib/html';
 import { getNgDiagnosticResult, type NgDiagnosticAdditionalInfo } from '@ng-helper/shared/lib/ngDiagnostic';
-import { camelCase, kebabCase } from 'change-case';
+import { kebabCase } from 'change-case';
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, Range, TextDocument } from 'vscode';
 
 import { logger } from '../../logger';
@@ -68,13 +68,13 @@ async function getExpressionAttrMaps(
     htmlAst: DocumentFragment,
     filePath: string,
 ): Promise<NgDiagnosticAdditionalInfo | undefined> {
-    const { components, maybeDirectives } = getComponentsAndDirectives(htmlAst);
+    const { componentNames, maybeDirectiveNames } = getComponentsAndDirectives(htmlAst);
 
     let componentExpressionAttrMap: Record<string, string[]> | undefined;
-    if (components.length) {
+    if (componentNames.length) {
         try {
             const componentsExpressionAttrs = await ngContext.rpcApi.listComponentsExpressionAttrs({
-                params: { componentNames: components.map((x) => camelCase(x.toLowerCase())), fileName: filePath },
+                params: { componentNames, fileName: filePath },
             });
             if (componentsExpressionAttrs) {
                 componentExpressionAttrMap = kebabCaseRecord(componentsExpressionAttrs);
@@ -85,13 +85,10 @@ async function getExpressionAttrMaps(
     }
 
     let directiveExpressionAttrMap: Record<string, string[]> | undefined;
-    if (maybeDirectives.length) {
+    if (maybeDirectiveNames.length) {
         try {
             const directivesExpressionAttrs = await ngContext.rpcApi.listDirectivesExpressionAttrs({
-                params: {
-                    maybeDirectiveNames: maybeDirectives.map((x) => camelCase(x.toLowerCase())),
-                    fileName: filePath,
-                },
+                params: { maybeDirectiveNames, fileName: filePath },
             });
             if (directivesExpressionAttrs) {
                 directiveExpressionAttrMap = kebabCaseRecord(directivesExpressionAttrs);

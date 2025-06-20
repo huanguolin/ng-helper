@@ -5,8 +5,7 @@ import {
     type Element,
     parseHtmlFragmentWithCache,
 } from '@ng-helper/shared/lib/html';
-import { isNgUserCustomAttr } from '@ng-helper/shared/lib/ngUtils';
-import { camelCase } from 'change-case';
+import { camelCase, kebabCase } from 'change-case';
 import {
     SemanticTokensLegend,
     type SemanticTokens,
@@ -20,13 +19,15 @@ import {
 import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure } from '../../asyncUtils';
 import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
-import type { RpcApi } from '../../service/tsService/rpcApi';
-import { intersect, normalizePath, uniq } from '../../utils';
+import { intersect, normalizePath } from '../../utils';
 import { getCorrespondingScriptFileName } from '../utils';
 
-import { getComponentNodesAndDirectiveNodes } from './utils';
+import { getComponentNodesAndDirectiveNodes, getComponentsAndDirectivesFromNodes } from './utils';
 
 const tokenTypes = ['string'];
+
+const myLogger = logger.prefixWith('semantic');
+
 export const legend = new SemanticTokensLegend(tokenTypes);
 
 export function registerSemantic(ngContext: NgContext) {
@@ -41,7 +42,7 @@ export function registerSemantic(ngContext: NgContext) {
                 const tokenSource = createCancellationTokenSource(token);
                 return await withTimeoutAndMeasure(
                     'provideSemantic',
-                    () => htmlSemanticProvider({ document, rpcApi: ngContext.rpcApi, token: tokenSource.token }),
+                    () => htmlSemanticProvider({ document, ngContext, token: tokenSource.token }),
                     {
                         cancelTokenSource: tokenSource,
                         silent: true,
@@ -57,11 +58,11 @@ export function registerSemantic(ngContext: NgContext) {
 
 export async function htmlSemanticProvider({
     document,
-    rpcApi,
+    ngContext,
     token,
 }: {
     document: TextDocument;
-    rpcApi: RpcApi;
+    ngContext: NgContext;
     token: CancellationToken;
 }) {
     const tokensBuilder = new SemanticTokensBuilder(legend);
@@ -70,6 +71,7 @@ export async function htmlSemanticProvider({
         filePath: normalizePath(document.uri.fsPath), // 注意：这里的处理方式要一致，否则缓存会失效
         version: document.version,
     });
+
     const { componentNodes, maybeDirectiveNodes } = getComponentNodesAndDirectiveNodes(htmlAst);
     if (!componentNodes.length && !maybeDirectiveNodes.length) {
         return;
@@ -85,74 +87,147 @@ export async function htmlSemanticProvider({
 
     checkCancellation(token);
 
-    const componentNames = uniq(componentNodes.map((x) => camelCase(x.tagName.toLowerCase())));
-    const maybeDirectiveNames = uniq(
-        maybeDirectiveNodes
-            .map((x) => x.attrs.filter((y) => isNgUserCustomAttr(y.name)).map((y) => camelCase(y.name.toLowerCase())))
-            .flat(),
+    const { componentNames, maybeDirectiveNames } = getComponentsAndDirectivesFromNodes(
+        componentNodes,
+        maybeDirectiveNodes,
     );
-    const promiseArr: Promise<void>[] = [];
-    if (componentNames.length) {
-        promiseArr.push(
-            (async () => {
-                const componentsStringAttrs = await rpcApi.listComponentsStringAttrs({
-                    cancelToken: token,
-                    params: { componentNames, fileName: scriptFilePath },
-                });
-                if (componentsStringAttrs) {
-                    fillComponentSemanticTokens({
-                        htmlDocument: document,
-                        tokensBuilder,
-                        componentsStringAttrs,
-                        componentNodes,
-                    });
-                }
-            })(),
-        );
-    }
-    if (maybeDirectiveNames.length) {
-        promiseArr.push(
-            (async () => {
-                const directivesStringAttrs = await rpcApi.listDirectivesStringAttrs({
-                    cancelToken: token,
-                    params: { maybeDirectiveNames, fileName: scriptFilePath },
-                });
-                if (directivesStringAttrs) {
-                    fillDirectiveSemanticTokens({
-                        htmlDocument: document,
-                        tokensBuilder,
-                        directivesStringAttrs,
-                        maybeDirectiveNodes,
-                    });
-                }
-            })(),
-        );
+    const stringAttrMaps = await getStringAttrMaps(
+        ngContext,
+        token,
+        componentNames,
+        maybeDirectiveNames,
+        scriptFilePath,
+    );
+    if (!stringAttrMaps) {
+        return;
     }
 
-    await Promise.all(promiseArr);
+    checkCancellation(token);
+
+    const { componentStringAttrMap, directiveStringAttrMap } = stringAttrMaps;
+    const hasDirectiveStrAttr = Object.keys(directiveStringAttrMap).length > 0;
+    const hasComponentStrAttr = Object.keys(componentStringAttrMap).length > 0;
+    if (hasComponentStrAttr || hasDirectiveStrAttr) {
+        fillComponentSemanticTokens({
+            htmlDocument: document,
+            tokensBuilder,
+            componentStringAttrMap,
+            directiveStringAttrMap,
+            componentNodes,
+        });
+    }
+    if (hasDirectiveStrAttr) {
+        fillDirectiveSemanticTokens({
+            htmlDocument: document,
+            tokensBuilder,
+            directiveStringAttrMap,
+            maybeDirectiveNodes,
+        });
+    }
 
     checkCancellation(token);
 
     return tokensBuilder.build();
 }
 
+async function getStringAttrMaps(
+    ngContext: NgContext,
+    cancelToken: CancellationToken,
+    componentNames: string[],
+    maybeDirectiveNames: string[],
+    filePath: string,
+): Promise<
+    | {
+          componentStringAttrMap: Record<string, string[]>;
+          directiveStringAttrMap: Record<string, string[]>;
+      }
+    | undefined
+> {
+    let componentStringAttrMap: Record<string, string[]> | undefined;
+    if (componentNames.length) {
+        try {
+            const componentsStringAttrs = await ngContext.rpcApi.listComponentsStringAttrs({
+                params: { componentNames, fileName: filePath },
+                cancelToken,
+            });
+            if (componentsStringAttrs) {
+                componentStringAttrMap = kebabCaseRecord(componentsStringAttrs);
+            }
+        } catch (error) {
+            myLogger.logError('listComponentsStringAttrs failed', error);
+        }
+    }
+
+    let directiveStringAttrMap: Record<string, string[]> | undefined;
+    if (maybeDirectiveNames.length) {
+        try {
+            const directivesStringAttrs = await ngContext.rpcApi.listDirectivesStringAttrs({
+                params: { maybeDirectiveNames, fileName: filePath },
+            });
+            if (directivesStringAttrs) {
+                directiveStringAttrMap = kebabCaseRecord(directivesStringAttrs);
+            }
+        } catch (error) {
+            myLogger.logError('listDirectivesStringAttrs failed', error);
+        }
+    }
+
+    if (!componentStringAttrMap && !directiveStringAttrMap) {
+        return undefined;
+    }
+
+    return {
+        componentStringAttrMap: componentStringAttrMap ?? {},
+        directiveStringAttrMap: directiveStringAttrMap ?? {},
+    };
+}
+
+function kebabCaseRecord(record: Record<string, string[]>) {
+    return Object.fromEntries(
+        Object.entries(record).map(([key, value]) => [kebabCase(key), value.map((x) => kebabCase(x))]),
+    );
+}
+
 function fillComponentSemanticTokens({
     htmlDocument,
     tokensBuilder,
-    componentsStringAttrs,
     componentNodes,
+    componentStringAttrMap,
+    directiveStringAttrMap,
 }: {
     htmlDocument: TextDocument;
     tokensBuilder: SemanticTokensBuilder;
-    componentsStringAttrs: Record<string, string[]>;
     componentNodes: Element[];
+    componentStringAttrMap: Record<string, string[]>;
+    directiveStringAttrMap: Record<string, string[]>;
 }): void {
     for (const node of componentNodes) {
-        const attrNames = componentsStringAttrs[camelCase(node.tagName)];
-        if (attrNames) {
+        const componentStrAttrNames = new Set(componentStringAttrMap[camelCase(node.tagName.toLowerCase())] ?? []);
+        const directiveStrAttrNames = new Set<string>();
+
+        if (Object.keys(directiveStringAttrMap).length) {
+            for (const attr of node.attrs) {
+                const names = directiveStringAttrMap[attr.name.toLowerCase()];
+                if (names) {
+                    for (const name of names) {
+                        directiveStrAttrNames.add(name);
+                    }
+                }
+            }
+        }
+
+        if (componentStrAttrNames.size || directiveStrAttrNames.size) {
             const attrsLocation = node.sourceCodeLocation!.attrs!;
             for (const attr of node.attrs) {
-                if (attr.value && attrNames.includes(camelCase(attr.name))) {
+                const attrName = attr.name.toLowerCase();
+                if (attr.value && componentStrAttrNames.has(attrName)) {
+                    fillStringSemanticToken({
+                        htmlDocument,
+                        tokensBuilder,
+                        attrsLocation,
+                        attr,
+                    });
+                } else if (directiveStrAttrNames.has(attrName)) {
                     fillStringSemanticToken({
                         htmlDocument,
                         tokensBuilder,
@@ -168,25 +243,26 @@ function fillComponentSemanticTokens({
 function fillDirectiveSemanticTokens({
     htmlDocument,
     tokensBuilder,
-    directivesStringAttrs,
+    directiveStringAttrMap,
     maybeDirectiveNodes,
 }: {
     htmlDocument: TextDocument;
     tokensBuilder: SemanticTokensBuilder;
-    directivesStringAttrs: Record<string, string[]>;
     maybeDirectiveNodes: Element[];
+    directiveStringAttrMap: Record<string, string[]>;
 }): void {
-    const directiveNames = Object.keys(directivesStringAttrs);
+    const directiveNames = Object.keys(directiveStringAttrMap);
     for (const node of maybeDirectiveNodes) {
         const containsDirectiveNames = intersect(
-            node.attrs.map((x) => camelCase(x.name)),
+            node.attrs.map((x) => x.name.toLowerCase()),
             directiveNames,
         );
-        const directiveStrAttrSet = new Set(containsDirectiveNames.map((x) => directivesStringAttrs[x]).flat());
+        const directiveStrAttrSet = new Set(containsDirectiveNames.map((x) => directiveStringAttrMap[x]).flat());
 
-        const attrsLocation = node.sourceCodeLocation!.attrs!;
+        const attrsLocation = node.sourceCodeLocation?.attrs ?? {};
         for (const attr of node.attrs) {
-            if (directiveStrAttrSet.has(camelCase(attr.name))) {
+            const attrName = attr.name.toLowerCase();
+            if (directiveStrAttrSet.has(attrName)) {
                 fillStringSemanticToken({
                     htmlDocument,
                     tokensBuilder,
@@ -209,9 +285,13 @@ function fillStringSemanticToken({
     attrsLocation: Record<string, Location>;
     attr: Attribute;
 }): void {
-    const attrLocation = attrsLocation[attr.name];
+    const attrLocation = attrsLocation[attr.name.toLowerCase()];
+    if (!attrLocation) {
+        return;
+    }
+
     const attrValueStart = getAttrValueStart(attr, attrLocation, htmlDocument.getText());
-    if (typeof attrValueStart === 'undefined') {
+    if (typeof attrValueStart !== 'number') {
         return;
     }
 
