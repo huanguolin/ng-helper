@@ -14,7 +14,7 @@ angular.module('app.directives').directive('numberCheck', [
 <section>
     <!-- component -->
     <bar-foo bar="1 + 9" foo="text"></bar-foo>
-    <best-xyz x="some text" y="value"></best-xyz>
+    <best-xyz x="some text" y="value" check-time info="test"></best-xyz>
     <!-- directive -->
     <div best-xyz x="hi" y="value"></div>
 </section>
