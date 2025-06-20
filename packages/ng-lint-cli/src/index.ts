@@ -2,9 +2,11 @@ import fs from 'fs';
 import path, { normalize } from 'path';
 
 import { getNgDiagnosticResult, type NgDiagnostic } from '@ng-helper/shared/lib/ngDiagnostic';
+import type { NgAllComponentsExpressionAttrsResponse } from '@ng-helper/shared/lib/plugin';
 import { type NgProjectConfig } from '@ng-helper/shared/lib/userConfig';
 
 import { getProjectsConfig } from './config';
+import { getExportedExpressionAttrsData } from './exportData';
 
 interface ErrorFile {
     filePath: string;
@@ -30,7 +32,11 @@ function main() {
         return;
     }
 
-    const projectResults = processAllProjects(projects, workRootPath);
+    const exportedExpressionAttrsData = getExportedExpressionAttrsData(
+        path.join(workRootPath, 'ng-expression-attrs.json'),
+    );
+
+    const projectResults = processAllProjects(projects, workRootPath, exportedExpressionAttrsData);
     const totalDiagnostics = calculateTotalDiagnostics(projectResults);
 
     outputSummary(projectResults, totalDiagnostics);
@@ -40,19 +46,27 @@ function main() {
     }
 }
 
-function processAllProjects(projects: NgProjectConfig[], workRootPath: string): ProjectResult[] {
+function processAllProjects(
+    projects: NgProjectConfig[],
+    workRootPath: string,
+    exportedExpressionAttrsData?: NgAllComponentsExpressionAttrsResponse,
+): ProjectResult[] {
     const results: ProjectResult[] = [];
 
     for (const project of projects) {
         console.log(`\n正在检查项目: ${project.name} (${project.path})`);
-        const result = processProject(project, workRootPath);
+        const result = processProject(project, workRootPath, exportedExpressionAttrsData);
         results.push(result);
     }
 
     return results;
 }
 
-function processProject(project: NgProjectConfig, workRootPath: string): ProjectResult {
+function processProject(
+    project: NgProjectConfig,
+    workRootPath: string,
+    exportedExpressionAttrsData: NgAllComponentsExpressionAttrsResponse = {},
+): ProjectResult {
     const errorFiles: ErrorFile[] = [];
     let totalErrors = 0;
 
@@ -67,8 +81,9 @@ function processProject(project: NgProjectConfig, workRootPath: string): Project
 
         console.log(`  找到 ${htmlFiles.length} 个 HTML 文件`);
 
+        const exprAttrNamesMap = exportedExpressionAttrsData[projectAbsolutePath];
         for (const htmlFile of htmlFiles) {
-            const fileResult = processHtmlFile(htmlFile, project, workRootPath);
+            const fileResult = processHtmlFile(htmlFile, project, workRootPath, exprAttrNamesMap);
             if (fileResult) {
                 errorFiles.push(fileResult);
                 totalErrors += fileResult.errorCount;
@@ -82,12 +97,23 @@ function processProject(project: NgProjectConfig, workRootPath: string): Project
     return { projectName: project.name, errorFiles, totalErrors };
 }
 
-function processHtmlFile(htmlFile: string, project: NgProjectConfig, workRootPath: string): ErrorFile | null {
+function processHtmlFile(
+    htmlFile: string,
+    project: NgProjectConfig,
+    workRootPath: string,
+    exprAttrNamesMap?: Record<string, string[]>,
+): ErrorFile | null {
     const relativePath = path.relative(project.path, htmlFile);
 
     try {
         const htmlContent = fs.readFileSync(htmlFile, 'utf-8');
-        const diagnostics = getNgDiagnosticResult(htmlContent);
+        const additionalInfo = exprAttrNamesMap
+            ? {
+                  componentExpressionAttrMap: exprAttrNamesMap,
+                  directiveExpressionAttrMap: exprAttrNamesMap,
+              }
+            : undefined;
+        const diagnostics = getNgDiagnosticResult(htmlContent, { additionalInfo });
 
         if (diagnostics.length > 0) {
             console.log(`\n  ${relativePath}:`);

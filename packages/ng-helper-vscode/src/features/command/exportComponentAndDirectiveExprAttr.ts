@@ -1,3 +1,4 @@
+import type { ExportedExpressionAttrsData } from '@ng-helper/shared/lib/exportData';
 import type { NgAllComponentsExpressionAttrsResponse } from '@ng-helper/shared/lib/plugin';
 import { kebabCase } from 'change-case';
 import { Uri, window, workspace } from 'vscode';
@@ -8,16 +9,6 @@ import type { NgContext } from '../../ngContext';
 import { createCommand } from './utils';
 
 const myLogger = logger.prefixWith('exportComponentAndDirectiveExprAttr');
-
-interface ExportData {
-    timestamp: string;
-    expressionAttributes: NgAllComponentsExpressionAttrsResponse;
-    metadata: {
-        totalItems: number;
-        exportType: string;
-        description: string;
-    };
-}
 
 export function exportComponentAndDirectiveExprAttrCommand(ngContext: NgContext) {
     return createCommand('exportComponentAndDirectiveExprAttr', async () => {
@@ -52,7 +43,7 @@ async function exportComponentAndDirectiveExprAttr(ngContext: NgContext) {
     }
 }
 
-async function fetchAllExpressionAttributes(ngContext: NgContext): Promise<ExportData | undefined> {
+async function fetchAllExpressionAttributes(ngContext: NgContext): Promise<ExportedExpressionAttrsData | undefined> {
     return await window.withProgress(
         {
             location: { viewId: 'ng-helper.progressView' },
@@ -99,7 +90,7 @@ async function fetchAllExpressionAttributes(ngContext: NgContext): Promise<Expor
                     description: 'Contains all component and directive expression attributes',
                 },
                 expressionAttributes: allAttrsData,
-            } as ExportData;
+            } as ExportedExpressionAttrsData;
         },
     );
 }
@@ -115,12 +106,12 @@ async function showSaveDialog() {
     });
 }
 
-async function saveExportDataToFile(exportData: ExportData, saveUri: Uri) {
+async function saveExportDataToFile(exportData: ExportedExpressionAttrsData, saveUri: Uri) {
     const jsonContent = JSON.stringify(exportData, null, 2);
     await workspace.fs.writeFile(saveUri, Buffer.from(jsonContent, 'utf8'));
 }
 
-async function showSuccessMessage(exportData: ExportData, saveUri: Uri) {
+async function showSuccessMessage(exportData: ExportedExpressionAttrsData, saveUri: Uri) {
     const message = `Successfully exported ${exportData.metadata.totalItems} component and directive expression attributes to ${saveUri.fsPath}`;
     const action = await window.showInformationMessage(message, 'Open File');
     if (action === 'Open File') {
