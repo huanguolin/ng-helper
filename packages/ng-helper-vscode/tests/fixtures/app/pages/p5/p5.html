@@ -1,15 +1,3 @@
-'use strict';
-angular.module('app.directives').directive('checkTime', [
-    function () {
-        return {
-            restrict : 'A',
-            require : 'ngModel',
-            scope : {
-                min : '?<',
-                max : '?<',
-                info : '@?'
-            },
-            template: `
 <!-- test diagnostic -->
 <!-- error count: 1 -->
 {{>5}}
@@ -27,9 +15,3 @@ angular.module('app.directives').directive('checkTime', [
     <!-- error count: 2 -->
     <div best-xyz x=">hi" y="(9" number-check min="-1/" ></div>
 </section>
-            `,
-            link : function (scope, element, attrs, ctrl) {
-            },
-        };
-    },
-]);

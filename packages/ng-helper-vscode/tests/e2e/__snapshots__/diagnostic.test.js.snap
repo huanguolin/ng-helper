@@ -1,0 +1,267 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Diagnostic html diagnostic 1`] = `
+Array [
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 2,
+        "line": 2,
+      },
+      Object {
+        "character": 3,
+        "line": 2,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 70,
+        "line": 4,
+      },
+      Object {
+        "character": 70,
+        "line": 4,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Identifier expected",
+    "range": Array [
+      Object {
+        "character": 36,
+        "line": 6,
+      },
+      Object {
+        "character": 37,
+        "line": 6,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 24,
+        "line": 8,
+      },
+      Object {
+        "character": 25,
+        "line": 8,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Unexpected character: &",
+    "range": Array [
+      Object {
+        "character": 10,
+        "line": 10,
+      },
+      Object {
+        "character": 11,
+        "line": 10,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 27,
+        "line": 13,
+      },
+      Object {
+        "character": 27,
+        "line": 13,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "')' expected",
+    "range": Array [
+      Object {
+        "character": 31,
+        "line": 15,
+      },
+      Object {
+        "character": 31,
+        "line": 15,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 54,
+        "line": 15,
+      },
+      Object {
+        "character": 54,
+        "line": 15,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+]
+`;
+
+exports[`Diagnostic inline html diagnostic 1`] = `
+Array [
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 2,
+        "line": 14,
+      },
+      Object {
+        "character": 3,
+        "line": 14,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 70,
+        "line": 16,
+      },
+      Object {
+        "character": 70,
+        "line": 16,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Identifier expected",
+    "range": Array [
+      Object {
+        "character": 36,
+        "line": 18,
+      },
+      Object {
+        "character": 37,
+        "line": 18,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 24,
+        "line": 20,
+      },
+      Object {
+        "character": 25,
+        "line": 20,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Unexpected character: &",
+    "range": Array [
+      Object {
+        "character": 10,
+        "line": 22,
+      },
+      Object {
+        "character": 11,
+        "line": 22,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 27,
+        "line": 25,
+      },
+      Object {
+        "character": 27,
+        "line": 25,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "')' expected",
+    "range": Array [
+      Object {
+        "character": 31,
+        "line": 27,
+      },
+      Object {
+        "character": 31,
+        "line": 27,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Expression expected",
+    "range": Array [
+      Object {
+        "character": 54,
+        "line": 27,
+      },
+      Object {
+        "character": 54,
+        "line": 27,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+]
+`;
