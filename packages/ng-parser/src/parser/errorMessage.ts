@@ -8,6 +8,7 @@ export const ErrorMessage = {
     RightBracket_expected: `']' expected`,
     Property_assign_expected: `Property assignment expected`,
     Cannot_assign: `Can not assign a value to a non left-hand-value`,
+    Literal_not_callable: `Literal is not callable`,
     // only for ngRepeat
     Comma_expected: `',' expected`,
     Keyword_expected: `Keyword expected`,

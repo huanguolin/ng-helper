@@ -6,6 +6,7 @@ import { Token } from '../scanner/token';
 import {
     ErrorReporter,
     NodeFlags,
+    SyntaxKind,
     TokenKind,
     type AssignToken,
     type BinaryOperatorToken,
@@ -486,9 +487,17 @@ export class Parser {
                     TokenKind.RightParen,
                     ErrorMessage.RightParen_expected,
                 );
+                // literal is not callable
+                // e.g. 6(1), 'x'() or null()
+                // 注意：
+                // 除了这里定义的关键字 null/undefined/true/false,
+                // 其他的 js 关键字（如： for/return/break 等）可以作为标识符，也就能调用方法。
+                if (primary.is<Literal>(SyntaxKind.Literal)) {
+                    this.reportErrorAt(ErrorMessage.Literal_not_callable, primary);
+                }
                 primary = new CallExpression(primary, token, args, rightParen);
             } else if (token.is<DotToken>(TokenKind.Dot)) {
-                // keywords also can used as identifiers(e.g.: 'foo.null')
+                // keywords also can used as identifiers(e.g. 'foo.null')
                 const name = this.consume<IdentifierToken>(
                     [TokenKind.Identifier, TokenKind.Keyword],
                     ErrorMessage.Identifier_expected,
