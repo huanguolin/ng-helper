@@ -21,6 +21,12 @@ export async function triggerTsServerByProject(filePath: string): Promise<boolea
         scriptFilePath = path;
     }
 
+    // 如果 scriptFilePath 已经打开且是激活的，则直接返回 true
+    const activeFilePath = normalizePath(window.activeTextEditor?.document.uri.fsPath ?? '');
+    if (activeFilePath === normalizePath(scriptFilePath)) {
+        return true;
+    }
+
     const selection = await window.showWarningMessage(
         "To access features like auto-completion, you need to open a TypeScript/JavaScript file at least once per project. Otherwise, the relevant information won't be available. Click 'OK' and we will automatically open one for you.",
         'OK',
