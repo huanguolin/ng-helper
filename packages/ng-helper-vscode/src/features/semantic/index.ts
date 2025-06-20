@@ -5,7 +5,7 @@ import {
     type Element,
     parseHtmlFragmentWithCache,
 } from '@ng-helper/shared/lib/html';
-import { camelCase, kebabCase } from 'change-case';
+import { kebabCase } from 'change-case';
 import {
     SemanticTokensLegend,
     type SemanticTokens,
@@ -202,7 +202,7 @@ function fillComponentSemanticTokens({
     directiveStringAttrMap: Record<string, string[]>;
 }): void {
     for (const node of componentNodes) {
-        const componentStrAttrNames = new Set(componentStringAttrMap[camelCase(node.tagName.toLowerCase())] ?? []);
+        const componentStrAttrNames = new Set(componentStringAttrMap[node.tagName.toLowerCase()] ?? []);
         const directiveStrAttrNames = new Set<string>();
 
         if (Object.keys(directiveStringAttrMap).length) {
