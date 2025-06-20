@@ -33,6 +33,10 @@
       {
         "command": "ng-helper.createComponent",
         "title": "Create Component"
+      },
+      {
+        "command": "ng-helper.exportComponentAndDirectiveExprAttr",
+        "title": "Export Component and Directive Expression Attributes"
       }
     ],
     "menus": {

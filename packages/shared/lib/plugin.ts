@@ -155,3 +155,8 @@ export type NgComponentAttrCompletionResponse = NgTypeInfo[] | undefined;
 export type NgDirectiveCompletionResponse = NgTypeInfo[] | undefined;
 export type NgComponentsAttrsResponse = Record<string, string[]> | undefined;
 export type NgDirectivesAttrsResponse = NgComponentsAttrsResponse;
+export type NgAllComponentsExpressionAttrsResponse = {
+    [projectRoot: string]: {
+        [componentOrDirectiveName: string]: string[];
+    };
+};

@@ -42,6 +42,7 @@ import {
     getFilterNameHoverInfo,
 } from '../hover';
 import {
+    getAllComponentsExpressionAttrsInfo,
     getComponentsExpressionAttrsInfo,
     getComponentsStringAttrsInfo,
     getDirectivesExpressionAttrsInfo,
@@ -168,6 +169,10 @@ const otherMethods = {
     'attrs/expression/directives': {
         isCoreCtx: true,
         handler: (ctx, ngRequest) => getDirectivesExpressionAttrsInfo(ctx, ngRequest as NgListDirectivesAttrsRequest),
+    },
+    'attrs/expression/all': {
+        isCoreCtx: true,
+        handler: (ctx) => getAllComponentsExpressionAttrsInfo(ctx),
     },
 } satisfies Record<string, RpcMethodConfig>;
 
