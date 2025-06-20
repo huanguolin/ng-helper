@@ -59,8 +59,8 @@ Example configuration:
   "ngProjects": [
     {
       "name": "my-ng-app",
-      "path": "./src/app",
-      "dependOnTsProjectPath": "./src"
+      "path": "src/app",
+      "dependOnTsProjectPath": "src"
     }
   ]
 }
