@@ -12,7 +12,9 @@ export async function activateExt(vscodeContext: ExtensionContext): Promise<NgHe
      * 如果变化了，需要重新初始化插件才能生效。
      * 里面简单弹出一个对话框，让用户 reloadWindow。
      */
-    watchUserConfig(vscodeContext);
+    setTimeout(() => {
+        watchUserConfig(vscodeContext);
+    }, 3000); // 延时是避免有时候一打开就认为有变化
 
     const canActivated = await canActivate();
     if (!canActivated) {
