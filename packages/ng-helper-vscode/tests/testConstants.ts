@@ -41,6 +41,7 @@ export const DRAG_SOURCE_COMPONENT_TS_PATH = join(DRAG_SOURCE_DIR, 'drag-source.
 export const APP_DIRECTIVES_DIR = join(APP_DIR, 'directives');
 export const BEST_XYZ_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'best-xyz.directive.js');
 export const NUMBER_CHECK_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'number-check.directive.js');
+export const CHECK_TIME_DIRECTIVE_JS_PATH = join(APP_DIRECTIVES_DIR, 'check-time.directive.js');
 // ---- pages ----
 export const APP_PAGES_DIR = join(APP_DIR, 'pages');
 // p1
@@ -55,3 +56,6 @@ export const APP_PAGES_P3_HTML_PATH = join(APP_PAGES_P3_DIR, 'p3.html');
 // p4
 export const APP_PAGES_P4_DIR = join(APP_PAGES_DIR, 'p4');
 export const APP_PAGES_P4_HTML_PATH = join(APP_PAGES_P4_DIR, 'p4.html');
+// p5
+export const APP_PAGES_P5_DIR = join(APP_PAGES_DIR, 'p5');
+export const APP_PAGES_P5_HTML_PATH = join(APP_PAGES_P5_DIR, 'p5.html');
