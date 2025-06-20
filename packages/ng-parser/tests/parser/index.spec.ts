@@ -242,6 +242,14 @@ describe('Parser', () => {
             ['a(b', '(a b)', err(')', 3, 3)],
             ['a(1+2', '(a (+ 1 2))', err(')', 5, 5)],
             ['a(1+2;b', '(a (+ 1 2));b', err(')', 5, 6)],
+            // literal is not callable
+            // 注意：除了 null/undefined/true/false, 其他的 js 关键字（如： for/return/break 等）可以作为标识符，也就能调用方法
+            ['1(1)', '(1 1)', err('LiteralNotCallable', 0, 1)],
+            ['"x"(1)', '("x" 1)', err('LiteralNotCallable', 0, 3)],
+            ['null(1)', '(null 1)', err('LiteralNotCallable', 0, 4)],
+            ['undefined(1)', '(undefined 1)', err('LiteralNotCallable', 0, 9)],
+            ['true(1)', '(true 1)', err('LiteralNotCallable', 0, 4)],
+            ['false(1)', '(false 1)', err('LiteralNotCallable', 0, 5)],
         ])('error-tolerant %s', (input: string, expected: string, ...errors: ErrorInfo[]) => {
             const program = parse(input);
             compareAstUseSExpr(program, expected);
@@ -770,7 +778,8 @@ function err(
         | 'Keyword'
         | 'InKeyword'
         | 'ByKeyword'
-        | 'Unexpected',
+        | 'Unexpected'
+        | 'LiteralNotCallable',
     start: number,
     end: number,
 ): ErrorInfo {
@@ -805,6 +814,9 @@ function err(
             break;
         case 'NotAssign':
             msg = ErrorMessage.Cannot_assign;
+            break;
+        case 'LiteralNotCallable':
+            msg = ErrorMessage.Literal_not_callable;
             break;
         case 'UnterminatedStr':
             msg = 'Unterminated string' as ErrorMessageType;
