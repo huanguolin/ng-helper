@@ -6,7 +6,9 @@ import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, Range, TextDocume
 import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import { normalizePath } from '../../utils';
+import { resolveVirtualDocText } from '../inlineHtml/utils';
 import { getComponentsAndDirectives } from '../semantic/utils';
+import { isInlinedHtml } from '../utils';
 
 const myLogger = logger.prefixWith('diagnostic');
 
@@ -15,8 +17,25 @@ export async function validate(
     diagnosticCollection: DiagnosticCollection,
     document: TextDocument,
 ) {
-    const diagnostics: Diagnostic[] = [];
-    const text = document.getText();
+    // 注意：
+    // inline html 似乎在提供了 virtualDocumentProvider 后，vscode 会自动触发诊断（返回嵌入式文档）。
+    // 但是这种方式，实时性较差，修改后并不能立即诊断，只有保存后才会触发。
+    // 所以这里不用嵌入式文档来诊断，直接从 js/ts 中提取文本诊断更好。
+    if (isInlinedHtml(document)) {
+        return;
+    }
+
+    let text = '';
+    if (document.languageId === 'html') {
+        text = document.getText();
+    } else if (document.languageId === 'typescript' || document.languageId === 'javascript') {
+        text = resolveVirtualDocText(document) ?? '';
+    }
+
+    if (!text) {
+        return;
+    }
+
     const filePath = normalizePath(document.uri.fsPath); // 注意：这里的处理方式要一致，否则缓存会失效
     const meta = { filePath, version: document.version };
 
@@ -29,6 +48,7 @@ export async function validate(
         meta,
     });
 
+    const diagnostics: Diagnostic[] = [];
     for (const ngDiagnostic of ngDiagnostics) {
         const d = new Diagnostic(
             new Range(document.positionAt(ngDiagnostic.start), document.positionAt(ngDiagnostic.end)),

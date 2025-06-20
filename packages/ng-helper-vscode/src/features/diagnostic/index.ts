@@ -23,7 +23,7 @@ export function registerDiagnostic(ngContext: NgContext): void {
     ngContext.vscodeContext.subscriptions.push(workspace.onDidOpenTextDocument(validateDocument));
 
     function validateDocument(document: TextDocument) {
-        if (document.languageId === 'html' && ngContext.isNgProjectDocument(document)) {
+        if (ngContext.isNgProjectDocument(document)) {
             void validate(ngContext, diagnosticCollection, document);
         }
     }
