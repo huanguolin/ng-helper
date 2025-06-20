@@ -1,4 +1,5 @@
 import type {
+    NgAllComponentsExpressionAttrsResponse,
     NgComponentsAttrsResponse,
     NgDirectivesAttrsResponse,
     NgListComponentsAttrsRequest,
@@ -6,6 +7,7 @@ import type {
 } from '@ng-helper/shared/lib/plugin';
 
 import { ngHelperTsService } from '../ngHelperTsService';
+import type { ComponentInfo, DirectiveInfo } from '../ngHelperTsService/ngCache';
 import type { CorePluginContext } from '../type';
 import { getBindingName, isAttributeDirective, isStringBinding } from '../utils/ng';
 
@@ -149,4 +151,64 @@ export function getDirectivesExpressionAttrsInfo(
     }
 
     return Object.keys(result).length > 0 ? result : undefined;
+}
+
+export function getAllComponentsExpressionAttrsInfo(coreCtx: CorePluginContext) {
+    const logger = coreCtx.logger.prefix('getAllComponentsExpressionAttrsInfo()');
+
+    const config = ngHelperTsService.getConfig();
+    if (!config) {
+        logger.info('config not found!');
+        return;
+    }
+
+    const projectRoots = config.projectMappings?.map((x) => x.ngProjectPath) ?? [];
+    if (projectRoots.length === 0) {
+        logger.info('projectRoots not found!');
+        return;
+    }
+
+    const result: NgAllComponentsExpressionAttrsResponse = {};
+    for (const projectRoot of projectRoots) {
+        const cache = ngHelperTsService.getCache(projectRoot);
+        if (!cache) {
+            logger.info(`cache not found for projectRoot(${projectRoot})!`);
+            continue;
+        }
+
+        // 先初始化，否则后面使用会报错
+        result[projectRoot] = {};
+
+        addExpressionAttrs(projectRoot, true, cache.getComponentMap());
+        addExpressionAttrs(projectRoot, false, cache.getDirectiveMap());
+    }
+
+    return result;
+
+    function addExpressionAttrs(
+        projectRoot: string,
+        isComponent: boolean,
+        map: Map<string, ComponentInfo | DirectiveInfo>,
+    ) {
+        const logger = coreCtx.logger.prefix('addExpressionAttrs()');
+        logger.startGroup();
+        try {
+            for (const [name, info] of map) {
+                const exprAttrNames = isComponent
+                    ? (info as ComponentInfo).bindings
+                          .filter((x) => !isStringBinding(x.value))
+                          .map((x) => getBindingName(x))
+                    : (info as DirectiveInfo).scope
+                          .filter((x) => !isStringBinding(x.value))
+                          .map((x) => getBindingName(x));
+                if (exprAttrNames.length > 0) {
+                    result[projectRoot][name] = exprAttrNames;
+                }
+            }
+        } catch (error) {
+            logger.error(`error: ${error as string}`);
+        } finally {
+            logger.endGroup();
+        }
+    }
 }

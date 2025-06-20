@@ -24,6 +24,7 @@ import {
     type NgListDirectivesAttrsRequest,
     type NgDirectivesAttrsResponse,
     type NgFilterNameDefinitionRequest,
+    type NgAllComponentsExpressionAttrsResponse,
 } from '@ng-helper/shared/lib/plugin';
 import type { CancellationToken } from 'vscode';
 
@@ -78,6 +79,15 @@ export class RpcApi {
             'attrs/expression/components',
             params,
             'listComponentsExpressionAttrs',
+            cancelToken,
+        );
+    }
+
+    listAllComponentsAndDirectivesExpressionAttrs({ params, cancelToken }: ApiInput<NgRequest>) {
+        return this._rpcQueryControl.query<NgAllComponentsExpressionAttrsResponse>(
+            'attrs/expression/all',
+            params,
+            'listAllComponentsAndDirectivesExpressionAttrs',
             cancelToken,
         );
     }

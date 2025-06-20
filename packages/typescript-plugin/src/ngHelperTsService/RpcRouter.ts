@@ -23,7 +23,7 @@ export class RpcRouter implements RpcRequestHandler {
         try {
             return this.dispatchRequest(rpcRequest);
         } catch (error) {
-            return this.rpcError(rpcRequest.id, 'INTERNAL_ERROR', JSON.stringify(error));
+            return this.rpcError(rpcRequest.id, 'INTERNAL_ERROR', `${error as string}`);
         }
     }
 
