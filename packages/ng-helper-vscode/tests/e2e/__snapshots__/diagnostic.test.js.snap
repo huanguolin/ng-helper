@@ -55,11 +55,27 @@ Array [
     "message": "Expression expected",
     "range": Array [
       Object {
-        "character": 24,
+        "character": 23,
         "line": 8,
       },
       Object {
-        "character": 25,
+        "character": 24,
+        "line": 8,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Literal is not callable",
+    "range": Array [
+      Object {
+        "character": 18,
+        "line": 8,
+      },
+      Object {
+        "character": 19,
         "line": 8,
       },
     ],
@@ -188,11 +204,27 @@ Array [
     "message": "Expression expected",
     "range": Array [
       Object {
-        "character": 24,
+        "character": 23,
         "line": 20,
       },
       Object {
-        "character": 25,
+        "character": 24,
+        "line": 20,
+      },
+    ],
+    "severity": "Error",
+    "source": "[ng-helper]",
+  },
+  Object {
+    "code": undefined,
+    "message": "Literal is not callable",
+    "range": Array [
+      Object {
+        "character": 18,
+        "line": 20,
+      },
+      Object {
+        "character": 19,
         "line": 20,
       },
     ],
