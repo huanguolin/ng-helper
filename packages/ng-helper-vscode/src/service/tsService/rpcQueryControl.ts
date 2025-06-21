@@ -26,6 +26,18 @@ export class RpcQueryControl {
         });
     }
 
+    get loadedTsProjectRoots(): string[] {
+        return this._stateControl.loadedTsProjectRoots;
+    }
+
+    get rpcServerReady() {
+        return this._stateControl.rpcServerReady;
+    }
+
+    get status() {
+        return this._stateControl.status;
+    }
+
     async query<TResult, TParams extends NgRequest = NgRequest>(
         method: string,
         params: TParams,
