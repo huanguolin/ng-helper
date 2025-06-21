@@ -10,6 +10,7 @@ const myLogger = logger.prefixWith('ngHelperStatusBar');
 
 export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateControl) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
+    statusBarItem.command = 'ng-helper.showStatusBarMenu';
 
     let visible = false;
     let currentNgProjectName = '';

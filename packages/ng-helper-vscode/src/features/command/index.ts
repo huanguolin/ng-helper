@@ -2,13 +2,14 @@ import type { NgContext } from '../../ngContext';
 
 import { createComponentCommand } from './createComponent';
 import { exportComponentAndDirectiveExprAttrCommand } from './exportComponentAndDirectiveExprAttr';
+import { openConfigFile } from './openConfigFile';
+import { showStatusBarMenu } from './showStatusBarMenu';
 
 export function registerCommand(ngContext: NgContext) {
     ngContext.vscodeContext.subscriptions.push(
-        createComponentCommand(
-            ngContext.config.userConfig.componentStyleFileExt!,
-            ngContext.config.userConfig.componentScriptFileExt!,
-        ),
+        createComponentCommand(ngContext),
+        openConfigFile(ngContext),
         exportComponentAndDirectiveExprAttrCommand(ngContext),
+        showStatusBarMenu(ngContext),
     );
 }

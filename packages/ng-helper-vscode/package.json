@@ -35,8 +35,16 @@
         "title": "Create Component"
       },
       {
+        "command": "ng-helper.openConfigFile",
+        "title": "Open the NgHelper Config File"
+      },
+      {
         "command": "ng-helper.exportComponentAndDirectiveExprAttr",
-        "title": "Export Component and Directive Expression Attributes"
+        "title": "Export All Component and Directive Expression Attributes"
+      },
+      {
+        "command": "ng-helper.showStatusBarMenu",
+        "title": "Show status bar menu"
       }
     ],
     "menus": {
