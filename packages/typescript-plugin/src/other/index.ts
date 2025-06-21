@@ -161,32 +161,30 @@ export function getAllComponentsExpressionAttrsInfo(coreCtx: CorePluginContext) 
         logger.info('config not found!');
         return;
     }
-
-    const projectRoots = config.projectMappings?.map((x) => x.ngProjectPath) ?? [];
-    if (projectRoots.length === 0) {
-        logger.info('projectRoots not found!');
+    if (!config.projectMappings?.length) {
+        logger.info('"projectMappings" not found!');
         return;
     }
 
     const result: NgAllComponentsExpressionAttrsResponse = {};
-    for (const projectRoot of projectRoots) {
-        const cache = ngHelperTsService.getCache(projectRoot);
+    for (const p of config.projectMappings) {
+        const cache = ngHelperTsService.getCache(p.ngProjectPath);
         if (!cache) {
-            logger.info(`cache not found for projectRoot(${projectRoot})!`);
+            logger.info(`cache not found for project(${p.ngProjectName})!`);
             continue;
         }
 
         // 先初始化，否则后面使用会报错
-        result[projectRoot] = {};
+        result[p.ngProjectName] = {};
 
-        addExpressionAttrs(projectRoot, true, cache.getComponentMap());
-        addExpressionAttrs(projectRoot, false, cache.getDirectiveMap());
+        addExpressionAttrs(p.ngProjectName, true, cache.getComponentMap());
+        addExpressionAttrs(p.ngProjectName, false, cache.getDirectiveMap());
     }
 
     return result;
 
     function addExpressionAttrs(
-        projectRoot: string,
+        ngProjectName: string,
         isComponent: boolean,
         map: Map<string, ComponentInfo | DirectiveInfo>,
     ) {
@@ -202,7 +200,7 @@ export function getAllComponentsExpressionAttrsInfo(coreCtx: CorePluginContext) 
                           .filter((x) => !isStringBinding(x.value))
                           .map((x) => getBindingName(x));
                 if (exprAttrNames.length > 0) {
-                    result[projectRoot][name] = exprAttrNames;
+                    result[ngProjectName][name] = exprAttrNames;
                 }
             }
         } catch (error) {

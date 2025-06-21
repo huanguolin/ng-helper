@@ -60,8 +60,9 @@ function buildTsPluginConfiguration(port: number, config: NgHelperUserConfig): N
         const mappingList: NgPluginConfiguration['projectMappings'] = [];
         for (const p of config.ngProjects) {
             mappingList.push({
-                tsProjectPath: p.dependOnTsProjectPath!,
+                ngProjectName: p.name,
                 ngProjectPath: p.path,
+                tsProjectPath: p.dependOnTsProjectPath!,
             });
         }
 
