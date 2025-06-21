@@ -13,7 +13,7 @@
 - [x] `html` 语法高亮，且支持 `inline-html`([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif))
 - [x] 数据绑定（需要 `TypeScript`）: 自动补全, hover 类型提示, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
 - [x] 诊断
-  - [x] ✨🆕 `html` 中 angular.js 表达式诊断
+  - [x] ✨🆕 `html` 中 angular.js 表达式诊断([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/diagnostic-demo.gif))
   - [x] 依赖注入匹配校验 ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif))
     - [x] `TypeScript` 代码
     - [x] `JavaScript` 代码

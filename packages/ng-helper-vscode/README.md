@@ -15,7 +15,7 @@
 - [x] HTML syntax highlighting with inline HTML support ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif))
 - [x] Data binding (TypeScript required): auto-completion, type hints on hover, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
 - [x] Diagnostics
-  - [x] ✨🆕 Angular.js expression diagnostics in HTML
+  - [x] ✨🆕 Angular.js expression diagnostics in HTML([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/diagnostic-demo.gif))
   - [x] Dependency injection validation ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif))
     - [x] TypeScript code
     - [x] JavaScript code
