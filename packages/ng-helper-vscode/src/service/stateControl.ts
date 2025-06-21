@@ -74,8 +74,16 @@ export class StateControl {
         this._notifyStatusBar = listener;
     }
 
+    get loadedTsProjectRoots(): string[] {
+        return this._projectRoots;
+    }
+
     get rpcServerReady() {
         return this._isRpcServerReady;
+    }
+
+    get status() {
+        return this._isLoading ? 'loading' : this.rpcServerReady ? 'connected' : 'disconnect';
     }
 
     private setRpcServerReady(value: boolean) {
@@ -94,7 +102,7 @@ export class StateControl {
     }
 
     private addProjectRoot(rootPath: string) {
-        if (this._projectRoots.includes(rootPath)) {
+        if (this.loadedTsProjectRoots.includes(rootPath)) {
             return;
         }
         this._projectRoots.push(rootPath);
@@ -107,10 +115,10 @@ export class StateControl {
     }
 
     private handleStateChange() {
-        const barStatus = this._isLoading ? 'loading' : this.rpcServerReady ? 'connected' : 'disconnect';
+        const barStatus = this.status;
         myLogger.logInfo(`handleStateChange(): barStatus: ${barStatus}`);
         this.logSnapshot();
-        this._notifyStatusBar?.(barStatus, this._projectRoots);
+        this._notifyStatusBar?.(barStatus, this.loadedTsProjectRoots);
     }
 
     private triggerTsProjectLoading(filePath: string) {

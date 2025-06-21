@@ -38,6 +38,18 @@ interface ApiInput<T> {
 export class RpcApi {
     constructor(private _rpcQueryControl: RpcQueryControl) {}
 
+    get rpcServerReady() {
+        return this._rpcQueryControl.rpcServerReady;
+    }
+
+    get status() {
+        return this._rpcQueryControl.status;
+    }
+
+    get loadedTsProjectRoots(): string[] {
+        return this._rpcQueryControl.loadedTsProjectRoots;
+    }
+
     getFilterNameDefinitionApi({ params, cancelToken }: ApiInput<NgFilterNameDefinitionRequest>) {
         return this._rpcQueryControl.query<NgDefinitionResponse>(
             'definition/filter/name',

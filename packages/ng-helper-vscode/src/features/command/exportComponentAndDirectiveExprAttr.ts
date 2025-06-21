@@ -23,16 +23,20 @@ async function exportComponentAndDirectiveExprAttr(ngContext: NgContext) {
             return;
         }
 
-        // TODO: rpc 没有连上，提示无法导出
+        if (!ngContext.getLoadedProjectNames().length) {
+            await window.showInformationMessage('Cannot export before any project is loaded.');
+            return;
+        }
 
         const exportData = await fetchAllExpressionAttributes(ngContext);
         if (!exportData) {
-            return; // 用户取消了操作
+            await window.showInformationMessage('No data to export.');
+            return;
         }
 
         const saveUri = await showSaveDialog();
         if (!saveUri) {
-            return;
+            return; // 用户取消了操作
         }
 
         await saveExportDataToFile(exportData, saveUri);
@@ -59,10 +63,10 @@ async function fetchAllExpressionAttributes(ngContext: NgContext): Promise<Expor
             // 获取所有组件和指令的 expression attributes
             let allAttrsData: NgAllComponentsExpressionAttrsResponse = {};
             try {
-                const firstProjectRoot = ngContext.config.userConfig.ngProjects![0].path;
+                const activatedProjectRoot = ngContext.getLoadedNgProject()[0].path;
                 const allAttrsResult = await ngContext.rpcApi.listAllComponentsAndDirectivesExpressionAttrs({
                     params: {
-                        fileName: firstProjectRoot, // 这个特殊，直接给一个项目根目录就可以
+                        fileName: activatedProjectRoot, // 这个特殊，直接给一个项目根目录就可以
                     },
                     cancelToken: token,
                 });
