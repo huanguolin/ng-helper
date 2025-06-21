@@ -81,7 +81,7 @@ function processProject(
 
         console.log(`  找到 ${htmlFiles.length} 个 HTML 文件`);
 
-        const exprAttrNamesMap = exportedExpressionAttrsData[projectAbsolutePath];
+        const exprAttrNamesMap = exportedExpressionAttrsData[project.name];
         for (const htmlFile of htmlFiles) {
             const fileResult = processHtmlFile(htmlFile, project, workRootPath, exprAttrNamesMap);
             if (fileResult) {
