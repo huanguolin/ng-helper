@@ -2,6 +2,17 @@
 
 All notable changes to the "ng-helper" extension will be documented in this file.
 
+## [v0.9.0](https://github.com/huanguolin/ng-helper/compare/v0.8.0...v0.9.0) (2025-06-21)
+
+### Feature
+- Support Angular.js expression diagnostics in HTML templates.
+- Added `ngProjects` configuration option for better project management.
+- Enhanced status bar with improved state display and user-friendly interface.
+
+### Fixed
+- Fixed issue where ng-helper becomes unresponsive in certain scenarios (#19).
+- Fixed incorrect semantic highlighting for directive attributes with string values on components.
+
 ## [v0.8.0](https://github.com/huanguolin/ng-helper/compare/v0.7.1...v0.8.0) (2025-03-21)
 
 ### Feature
