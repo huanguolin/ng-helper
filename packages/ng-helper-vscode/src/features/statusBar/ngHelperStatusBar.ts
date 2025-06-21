@@ -1,51 +1,33 @@
-import { StatusBarAlignment, ThemeColor, window, type TextEditor } from 'vscode';
+import { StatusBarAlignment, ThemeColor, window } from 'vscode';
 
-import { logger } from '../../logger';
 import type { NgContext } from '../../ngContext';
 import type { BarStatus, StateControl } from '../../service/stateControl';
-import { getLastFolderName } from '../../utils';
-import { getNormalizedPathFromDocument } from '../utils';
-
-const myLogger = logger.prefixWith('ngHelperStatusBar');
 
 export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateControl) {
     const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 10);
     statusBarItem.command = 'ng-helper.showStatusBarMenu';
 
-    let visible = false;
-    let currentNgProjectName = '';
+    let currentNgProjectName = ngContext.activatedProjectName;
+    let visible = !!currentNgProjectName;
     let currentTsServerStatus: BarStatus = 'disconnect';
-    let loadedTsProjectRootPaths: string[] = [];
 
     // 初始渲染
-    renderWithActiveTextEditor(window.activeTextEditor);
+    renderBarItem();
 
-    // 依据当前激活文件决定是否显示 status bar
-    window.onDidChangeActiveTextEditor(renderWithActiveTextEditor);
+    // 依据当前激活项目决定是否显示 status bar
+    ngContext.onActivatedProjectNameChanged((name) => {
+        currentNgProjectName = name ?? '';
+        visible = !!name;
+        renderBarItem();
+    });
 
     // 订阅 tsserver 状态，并更新 status bar
-    stateControl.notifyStatusBar((tsServerStatus, tsProjectRoots) => {
+    stateControl.notifyStatusBar((tsServerStatus) => {
         currentTsServerStatus = tsServerStatus;
-        loadedTsProjectRootPaths = tsProjectRoots;
         renderBarItem();
     });
 
     return statusBarItem;
-
-    function renderWithActiveTextEditor(editor: TextEditor | undefined) {
-        if (!editor) {
-            visible = false;
-            currentNgProjectName = '';
-        } else {
-            visible = ngContext.isNgProjectDocument(editor.document);
-            const filePath = getNormalizedPathFromDocument(editor.document);
-            currentNgProjectName = ngContext.config.getNgProject(filePath)?.name || '';
-        }
-
-        myLogger.logInfo('currentNgProjectName:', currentNgProjectName);
-
-        renderBarItem();
-    }
 
     function renderBarItem() {
         if (!visible) {
@@ -70,10 +52,11 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     }
 
     function setDisconnected() {
-        statusBarItem.text = '$(x) NgHelper';
+        statusBarItem.text = '$(debug-disconnect) NgHelper';
         statusBarItem.tooltip = 'Lost connection to tsserver.';
-        statusBarItem.color = new ThemeColor('statusBarItem.errorForeground');
-        statusBarItem.backgroundColor = new ThemeColor('statusBarItem.errorBackground');
+        // 这里显示 error 颜色的话，有点太刺眼了，warning 好一点
+        statusBarItem.color = new ThemeColor('statusBarItem.warningForeground');
+        statusBarItem.backgroundColor = new ThemeColor('statusBarItem.warningBackground');
     }
 
     function setLoading() {
@@ -88,7 +71,7 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
     }
 
     function setStatusByCurrentNgProject() {
-        const ngProjectNames = getLoadedProjectNames(loadedTsProjectRootPaths);
+        const ngProjectNames = ngContext.getLoadedProjectNames();
 
         const loadedProjectStr = ngProjectNames.map((n) => `"${n}"`).join(',');
 
@@ -107,16 +90,6 @@ export function ngHelperStatusBar(ngContext: NgContext, stateControl: StateContr
             statusBarItem.tooltip = `Not ready for "${currentNgProjectName}". Loaded projects: ${loadedProjectStr}.`;
             statusBarItem.color = new ThemeColor('statusBarItem.warningForeground');
             statusBarItem.backgroundColor = new ThemeColor('statusBarItem.warningBackground');
-        }
-    }
-
-    function getLoadedProjectNames(tsProjectRoots: string[]): string[] {
-        if (ngContext.config.hasProjectConfig) {
-            return tsProjectRoots
-                .map((p) => ngContext.config.getNgProjectByTsProjectPath(p)?.name)
-                .filter((x) => !!x) as string[];
-        } else {
-            return tsProjectRoots.map((p) => getLastFolderName(p));
         }
     }
 }

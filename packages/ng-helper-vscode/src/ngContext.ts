@@ -5,8 +5,11 @@ import { getNormalizedPathFromDocument } from './features/utils';
 import type { RpcApi } from './service/tsService/rpcApi';
 import { getLastFolderName } from './utils';
 
+type ActivatedProjectNameChangedListener = (name?: string) => void;
+
 export class NgContext {
     private _activatedProjectName?: string;
+    private _activatedProjectNameChangedListeners: ActivatedProjectNameChangedListener[] = [];
 
     constructor(
         public vscodeContext: ExtensionContext,
@@ -14,12 +17,22 @@ export class NgContext {
         public rpcApi: RpcApi,
     ) {
         this.vscodeContext.subscriptions.push(
-            window.onDidChangeActiveTextEditor(this.watchActiveTextEditor.bind(this)),
+            window.onDidChangeActiveTextEditor(this.handleActiveTextEditorChanged.bind(this)),
         );
+        this.handleActiveTextEditorChanged(window.activeTextEditor);
     }
 
     get activatedProjectName() {
         return this._activatedProjectName;
+    }
+
+    onActivatedProjectNameChanged(listener: (name?: string) => void): () => void {
+        this._activatedProjectNameChangedListeners.push(listener);
+        return () => {
+            this._activatedProjectNameChangedListeners = this._activatedProjectNameChangedListeners.filter(
+                (x) => x !== listener,
+            );
+        };
     }
 
     isNgProjectDocument(document: TextDocument): boolean {
@@ -47,12 +60,15 @@ export class NgContext {
         }
     }
 
-    private watchActiveTextEditor(editor: TextEditor | undefined) {
+    private handleActiveTextEditorChanged(editor: TextEditor | undefined) {
         if (editor && this.isNgProjectDocument(editor.document)) {
             const filePath = getNormalizedPathFromDocument(editor.document);
             this._activatedProjectName = this.config.getNgProject(filePath)?.name;
         } else {
             this._activatedProjectName = '';
         }
+        this._activatedProjectNameChangedListeners.forEach((cb) => {
+            cb(this.activatedProjectName);
+        });
     }
 }
