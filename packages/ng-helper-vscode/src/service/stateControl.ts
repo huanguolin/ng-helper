@@ -1,3 +1,4 @@
+import type { NgHelperConfig } from '../config';
 import { logger } from '../logger';
 import { triggerTsServerByProject } from '../utils';
 
@@ -20,14 +21,16 @@ const myLogger = logger.prefixWith('StateControl');
 export class StateControl {
     private _notifyStatusBar?: ListenForStatusBar;
     private _pluginStartAt: number;
+    private _ngConfig: NgHelperConfig;
     private _isRpcServerReady = false;
     private _isLoading = false;
     private _projectRoots: string[] = [];
     private _loadingTimeout?: ReturnType<typeof setTimeout>;
     private _hasPopupWarning = false;
 
-    constructor(pluginStartAt: number) {
+    constructor(pluginStartAt: number, config: NgHelperConfig) {
         this._pluginStartAt = pluginStartAt;
+        this._ngConfig = config;
     }
 
     updateState(state: State, path?: string) {
@@ -134,13 +137,19 @@ export class StateControl {
         this._hasPopupWarning = true;
         void triggerTsServerByProject(filePath)
             .then((ok) => {
-                if (ok) {
+                // 如果已经加载好了，就不用 loading 了。
+                if (ok && !this.isRequestProjectLoaded(filePath)) {
                     this.setIsLoading(true);
                 }
             })
             .finally(() => {
                 this._hasPopupWarning = false;
             });
+    }
+
+    private isRequestProjectLoaded(filePath: string): boolean {
+        const ngProject = this._ngConfig.getNgProject(filePath);
+        return !!ngProject && this.loadedTsProjectRoots.some((x) => ngProject.dependOnTsProjectPath === x);
     }
 
     private logSnapshot() {

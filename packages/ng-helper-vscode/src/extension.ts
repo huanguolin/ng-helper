@@ -27,7 +27,7 @@ export async function activate(vscodeContext: ExtensionContext) {
     console.log('======= "ng-helper" is now active ========');
 
     const pluginStartAt = Date.now();
-    const stateControl = new StateControl(pluginStartAt);
+    const stateControl = new StateControl(pluginStartAt, config);
     const tsService = new TsService(stateControl);
     const rpcApi = tsService.start(config.port);
     const ngContext = new NgContext(vscodeContext, config, rpcApi);
