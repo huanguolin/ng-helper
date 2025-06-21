@@ -13,17 +13,17 @@
 - [x] Custom components: tag/attribute auto-completion, hover documentation, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/components-demo.gif))
 - [x] Custom filters: auto-completion, hover documentation, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/filters-demo.gif))
 - [x] HTML syntax highlighting with inline HTML support ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif))
-- [x] ✨🆕 Data binding (TypeScript required): auto-completion, type hints on hover, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
-- [ ] Diagnostics
-  - [ ] Angular.js expression diagnostics in HTML
+- [x] Data binding (TypeScript required): auto-completion, type hints on hover, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
+- [x] Diagnostics
+  - [x] ✨🆕 Angular.js expression diagnostics in HTML
   - [x] Dependency injection validation ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif))
     - [x] TypeScript code
     - [x] JavaScript code
 
 > Additional utilities:
 - [x] Navigate from 'templateUrl' to the corresponding HTML file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif))
-- [x] ✨🆕 Navigate from controller name to its implementation file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
-- [x] ✨🆕 Navigate to service implementation by its name ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/service-jump-demo.gif))
+- [x] Navigate from controller name to its implementation file ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
+- [x] Navigate to service implementation by its name ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/service-jump-demo.gif))
 - [x] Click to search for 'directive'/'component' usage locations ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
 - [x] Create components via context menu ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif))
 

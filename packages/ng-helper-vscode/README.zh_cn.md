@@ -11,17 +11,17 @@
 - [x] 自定义 `component` 标签/属性: 自动补全, hover 信息提示, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/components-demo.gif))
 - [x] 自定义 `filter`: 自动补全, hover 信息提示, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/filters-demo.gif))
 - [x] `html` 语法高亮，且支持 `inline-html`([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/inline-html-demo.gif))
-- [x] ✨🆕 数据绑定（需要 `TypeScript`）: 自动补全, hover 类型提示, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
-- [ ] 诊断
-  - [ ] `html` 中 angular.js 表达式诊断
+- [x] 数据绑定（需要 `TypeScript`）: 自动补全, hover 类型提示, go to definition ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/data-binding-demo.gif))
+- [x] 诊断
+  - [x] ✨🆕 `html` 中 angular.js 表达式诊断
   - [x] 依赖注入匹配校验 ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/injection-validate-demo.gif))
     - [x] `TypeScript` 代码
     - [x] `JavaScript` 代码
 
 > 实用小工具
 - [x] 从 `templateUrl` 跳转到对应的 `html` ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/template-url-jump-demo.gif))
-- [x] ✨🆕 通过 `controller name` 跳转到 `controller` 的实现文件 ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
-- [x] ✨🆕 对自定义 `service`, 可通过它的名字跳转到它的实现文件（[see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/service-jump-demo.gif)）
+- [x] 通过 `controller name` 跳转到 `controller` 的实现文件 ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/controller-jump-demo.gif))
+- [x] 对自定义 `service`, 可通过它的名字跳转到它的实现文件（[see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/service-jump-demo.gif)）
 - [x] 点击搜索 `directive`/`component` 在哪里使用([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/search-component-use-demo.gif))
 - [x] 右键菜单创建 `component` ([see demo](https://raw.githubusercontent.com/huanguolin/ng-helper/refs/heads/main/resources/create-component-demo.gif))
 
