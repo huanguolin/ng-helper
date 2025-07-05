@@ -8,7 +8,7 @@
     ],
     "repository": {
         "ngAttrBinding": {
-            "begin": "((?:(?!data-)[a-z]+)(?:-[a-z]+)+)(=)(['\"])",
+            "begin": "((?:(?!data-|ng-app|ng-csp|ng-strict-di|ng-src|ng-href|ng-srcset|ng-include|ng-bind-template|ng-form|ng-pattern|ng-minlength|ng-maxlength|ng-list|ng-jq|ng-cloak)[a-z]+)(?:-[a-z]+)+)(=)(['\"])",
             "beginCaptures": {
                 "1": {
                     "name": "entity.other.attribute-name.html"
