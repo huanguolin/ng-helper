@@ -1,10 +1,15 @@
-import { commands, RelativePattern, window, workspace, type ExtensionContext } from 'vscode';
+import { createHash } from 'crypto';
+
+import { commands, RelativePattern, window, workspace, type ExtensionContext, type Uri } from 'vscode';
 
 import { NgHelperConfig, readUserConfig, getUserConfigFileUri } from './config';
 import { EXT_CONF_PATH, EXT_IS_ACTIVATED, defaultPort } from './constants';
 import { logger } from './logger';
 import { configTsPluginConfiguration } from './service/configTsPlugin';
 import { getWorkspacePath, isFileExistsOnWorkspace } from './utils';
+
+// 存储文件内容的哈希值
+let fileContentHash: string = '';
 
 export async function activateExt(vscodeContext: ExtensionContext): Promise<NgHelperConfig | undefined> {
     /**
@@ -13,8 +18,8 @@ export async function activateExt(vscodeContext: ExtensionContext): Promise<NgHe
      * 里面简单弹出一个对话框，让用户 reloadWindow。
      */
     setTimeout(() => {
-        watchUserConfig(vscodeContext);
-    }, 3000); // 延时是避免有时候一打开就认为有变化
+        void watchUserConfig(vscodeContext);
+    }, 1000); // 延时是避免启动太耗时
 
     const canActivated = await canActivate();
     if (!canActivated) {
@@ -43,16 +48,26 @@ async function canActivate(): Promise<boolean> {
     return await isFileExistsOnWorkspace(confUri);
 }
 
-function watchUserConfig(vscodeContext: ExtensionContext) {
+async function watchUserConfig(vscodeContext: ExtensionContext) {
     const watcher = workspace.createFileSystemWatcher(new RelativePattern(getWorkspacePath()!, EXT_CONF_PATH));
 
     vscodeContext.subscriptions.push(watcher);
 
-    watcher.onDidCreate(() => handleFileChange('create'));
-    watcher.onDidDelete(() => handleFileChange('delete'));
-    watcher.onDidChange(() => handleFileChange('change'));
+    const confUri = getUserConfigFileUri();
+    if (confUri) {
+        fileContentHash = await getFileContentHash(confUri);
+    }
 
-    async function handleFileChange(type: 'delete' | 'create' | 'change') {
+    watcher.onDidCreate((e) => handleFileChange('create', e));
+    watcher.onDidDelete((e) => handleFileChange('delete', e));
+    watcher.onDidChange((e) => handleFileChange('change', e));
+
+    async function handleFileChange(type: 'delete' | 'create' | 'change', e: Uri) {
+        // 对于 change 事件，检查文件内容是否真正发生了变化
+        if (type === 'change' && !(await checkFileContentChanged(e))) {
+            return;
+        }
+
         const message = {
             delete: 'The ng-helper configuration file has been deleted. Please reload the window to disable the plugin.',
             create: 'The ng-helper configuration file has been created. Please reload the window to enable the plugin.',
@@ -63,4 +78,30 @@ function watchUserConfig(vscodeContext: ExtensionContext) {
             await commands.executeCommand('ng-helper.showStatusBarMenu', 'reloadWindow');
         }
     }
+}
+
+async function getFileContentHash(fileUri: Uri): Promise<string> {
+    try {
+        const fileContent = await workspace.fs.readFile(fileUri);
+        const contentString = new TextDecoder().decode(fileContent);
+        return createHash('md5').update(contentString).digest('hex');
+    } catch {
+        return '';
+    }
+}
+
+/**
+ * 检查文件内容是否真正发生了变化
+ * @param fileUri 文件URI
+ * @returns 如果文件内容发生了变化返回true，否则返回false
+ */
+async function checkFileContentChanged(fileUri: Uri): Promise<boolean> {
+    // 计算当前内容的哈希值
+    const currentHash = await getFileContentHash(fileUri);
+    // 获取之前存储的哈希值
+    const previousHash = fileContentHash;
+    // 更新哈希值
+    fileContentHash = currentHash;
+
+    return previousHash !== currentHash;
 }
