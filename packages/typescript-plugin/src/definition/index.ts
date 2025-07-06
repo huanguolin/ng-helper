@@ -6,6 +6,8 @@ import {
     type NgDirectiveDefinitionRequest,
     type NgFilterNameDefinitionRequest,
     type NgTypeDefinitionRequest,
+    type ComponentInfo,
+    type DirectiveInfo,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 import type { DefinitionInfoAndBoundSpan } from 'typescript';
@@ -16,7 +18,6 @@ import { getExpressionSyntaxNode, getNodeType } from '../completion/utils';
 import { isAngularFile } from '../diagnostic/utils';
 import { findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from '../hover/utils';
 import { ngHelperTsService } from '../ngHelperTsService';
-import type { ComponentInfo, DirectiveInfo } from '../ngHelperTsService/ngCache';
 import { CorePluginContext, type PluginContext, type SyntaxNodeInfoEx } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
 import { getNodeAtPosition, typeToString } from '../utils/common';
@@ -100,7 +101,7 @@ export function getComponentNameOrAttrNameDefinitionInfo(
     );
 
     if (componentInfo || directiveInfo) {
-        return getDefinitionInfo((componentInfo || directiveInfo)!);
+        return getDefinitionInfo(componentInfo ? componentInfo : directiveInfo!);
     }
 
     function getDefinitionInfo(info: ComponentInfo | DirectiveInfo): NgDefinitionResponse {

@@ -25,6 +25,10 @@ import {
     type NgDirectivesAttrsResponse,
     type NgFilterNameDefinitionRequest,
     type NgAllComponentsExpressionAttrsResponse,
+    type NgComponentInfoRequest,
+    type NgComponentInfoResponse,
+    type NgDirectiveInfoRequest,
+    type NgDirectiveInfoResponse,
 } from '@ng-helper/shared/lib/plugin';
 import type { CancellationToken } from 'vscode';
 
@@ -258,6 +262,24 @@ export class RpcApi {
             'controller-as/component',
             params,
             'getComponentControllerAsApi',
+            cancelToken,
+        );
+    }
+
+    resolveComponentInfoApi({ params, cancelToken }: ApiInput<NgComponentInfoRequest>) {
+        return this._rpcQueryControl.query<NgComponentInfoResponse>(
+            'component/info',
+            params,
+            'resolveComponentInfoApi',
+            cancelToken,
+        );
+    }
+
+    resolveDirectiveInfoApi({ params, cancelToken }: ApiInput<NgDirectiveInfoRequest>) {
+        return this._rpcQueryControl.query<NgDirectiveInfoResponse>(
+            'directive/info',
+            params,
+            'resolveDirectiveInfoApi',
             cancelToken,
         );
     }

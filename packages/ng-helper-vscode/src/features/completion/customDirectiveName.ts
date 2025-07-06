@@ -1,11 +1,15 @@
 import type { CursorAtAttrNameInfo, CursorAtStartTagInfo } from '@ng-helper/shared/lib/cursorAt';
+import { SPACE } from '@ng-helper/shared/lib/html';
 import { camelCase, kebabCase } from 'change-case';
-import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind } from 'vscode';
+import { CancellationToken, CompletionItem, SnippetString, CompletionItemKind, MarkdownString } from 'vscode';
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
+import type { NgContext } from '../../ngContext';
 import type { RpcApi } from '../../service/tsService/rpcApi';
 import { getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
+
+import { addNgHelperInfoToCompletionItem, type NgHelperCompletionItem } from './utils';
 
 import type { CompletionParamObj } from '.';
 
@@ -70,6 +74,45 @@ async function handleDirectiveName({
             .join('\n');
         item.detail = EXT_MARK;
         item.sortText = i.toString().padStart(2, '0');
+        addNgHelperInfoToCompletionItem(item, {
+            type: 'directiveName',
+            name: x.name,
+            filePath: relatedScriptFile,
+        });
         return item;
     });
+}
+
+export async function resolveDirectiveName(
+    ngContext: NgContext,
+    item: NgHelperCompletionItem,
+    cancelToken: CancellationToken,
+): Promise<CompletionItem> {
+    const { filePath, name: directiveName } = item.ngHelperInfo;
+
+    const info = await ngContext.rpcApi.resolveDirectiveInfoApi({
+        cancelToken,
+        params: {
+            fileName: filePath,
+            directiveName,
+        },
+    });
+    if (!info) {
+        return item;
+    }
+
+    if (info.formattedTypeString) {
+        const md = new MarkdownString();
+        md.appendCodeblock(info.formattedTypeString, 'typescript');
+        item.documentation = md;
+    }
+
+    if (info.requiredAttrNames.length) {
+        const directive = kebabCase(directiveName);
+
+        const attrStr = info.requiredAttrNames.map((x, i) => `${kebabCase(x)}="$${i + 1}"`).join(SPACE);
+
+        item.insertText = new SnippetString(`${directive} ${attrStr}$0`);
+    }
+    return item;
 }

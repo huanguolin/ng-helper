@@ -1,6 +1,6 @@
-import type { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import type { NgTypeInfo, DirectiveInfo } from '@ng-helper/shared/lib/plugin';
 
-import type { DirectiveInfo, NgCache } from '../ngHelperTsService/ngCache';
+import type { NgCache } from '../ngHelperTsService/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperTsService/utils';
 import type { CorePluginContext } from '../type';
 

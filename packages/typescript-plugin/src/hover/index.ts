@@ -3,29 +3,35 @@ import {
     NgCtrlHoverRequest,
     NgHoverRequest,
     NgHoverResponse,
-    NgTypeInfo,
     NgDirectiveHoverRequest,
+    type ComponentInfo,
 } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import { resolveCtrlCtx } from '../completion';
 import { getNodeType, getExpressionSyntaxNode } from '../completion/utils';
 import { ngHelperTsService } from '../ngHelperTsService';
-import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
-import { getCtxOfCoreCtx } from '../ngHelperTsService/utils';
 import { CorePluginContext, PluginContext, type SyntaxNodeInfo } from '../type';
 import { findMatchedDirectives } from '../utils/biz';
-import { formatParameters, getPropertyType, getPublicMembersTypeInfoOfType, typeToString } from '../utils/common';
+import { formatParameters, getPropertyType, typeToString } from '../utils/common';
 import {
     getControllerType,
     getBindingType,
-    INDENT,
     getComponentControllerType,
     getBindingTypeInfo,
     getBindingName,
 } from '../utils/ng';
 
-import { beautifyTypeString, buildHoverInfo, findComponentOrDirectiveInfo, getMinSyntaxNodeForHover } from './utils';
+import {
+    beautifyTypeString,
+    buildHoverInfo,
+    findComponentOrDirectiveInfo,
+    getComponentAttrHoverInfo,
+    getComponentNameHoverInfo,
+    getDirectiveAttrHoverInfo,
+    getDirectiveNameHoverInfo,
+    getMinSyntaxNodeForHover,
+} from './utils';
 
 /**
  * 获取组件(包含指令用作元素时)或属性名称悬停信息
@@ -81,150 +87,6 @@ export function getComponentNameOrAttrNameHoverInfo(
             document: '',
         };
     }
-}
-
-function getComponentNameHoverInfo(coreCtx: CorePluginContext, componentInfo: ComponentInfo) {
-    const component = `(component) ${componentInfo.name}`;
-
-    const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
-    const bindings = formatLiteralObj(
-        'bindings',
-        componentInfo.bindings,
-        (x) => bindingTypeMap.get(x.name)?.typeString ?? '',
-    );
-    const transclude = formatTransclude(componentInfo.transclude);
-
-    return {
-        formattedTypeString: [component, bindings, transclude].filter((x) => !!x).join('\n'),
-        document: '',
-    };
-}
-
-function getComponentAttrHoverInfo(coreCtx: CorePluginContext, attrName: string, componentInfo: ComponentInfo) {
-    const binding = componentInfo.bindings.find((x) => getBindingName(x) === attrName);
-    if (!binding) {
-        return;
-    }
-
-    const bindingTypeInfo = getBindingTypeInfo(binding, true);
-    const result = {
-        formattedTypeString: `(property) ${attrName}: ${bindingTypeInfo.typeString}`,
-        document: bindingTypeInfo.document, // document 放着 binding 的配置
-    };
-
-    const bindingTypeMap = getComponentBindingTypeMap(coreCtx, componentInfo) ?? new Map<string, NgTypeInfo>();
-    if (bindingTypeMap.has(binding.name)) {
-        const typeInfo = bindingTypeMap.get(binding.name)!;
-        result.formattedTypeString = `(property) ${attrName}: ${beautifyTypeString(typeInfo.typeString)}`;
-        if (typeInfo.document) {
-            result.document += `\n${typeInfo.document}`;
-        }
-    }
-
-    return result;
-}
-
-function getComponentBindingTypeMap(coreCtx: CorePluginContext, componentInfo: ComponentInfo) {
-    if (componentInfo.bindings.length === 0) {
-        return;
-    }
-
-    const ctx = getCtxOfCoreCtx(coreCtx, componentInfo.filePath);
-    if (!ctx) {
-        return;
-    }
-
-    const controllerType = getComponentControllerType(ctx, componentInfo.name);
-    if (!controllerType) {
-        return;
-    }
-
-    const types = getPublicMembersTypeInfoOfType(ctx, controllerType);
-    if (!types) {
-        return;
-    }
-
-    return new Map(types.map((x) => [x.name, x]));
-}
-
-function getDirectiveAttrHoverInfo(attrName: string, directiveInfo: DirectiveInfo, isAttrDirectiveStyle: boolean) {
-    const attr = directiveInfo.scope.find((x) => getBindingName(x) === attrName);
-    if (!attr) {
-        return;
-    }
-
-    const prefix = isAttrDirectiveStyle ? `attribute of [${directiveInfo.name}]` : 'property';
-    const attrInfo = `(${prefix}) ${attr.name}: ${getBindingType(attr.value, true)}`;
-    const scopeInfo = `scope configs: "${attr.value}"`;
-
-    return {
-        formattedTypeString: attrInfo,
-        document: scopeInfo,
-    };
-}
-
-function getDirectiveNameHoverInfo(directiveInfo: DirectiveInfo) {
-    const directive = `(directive) ${directiveInfo.name}`;
-    const others = getOtherProps(['restrict', 'replace', 'require', 'priority', 'terminal']);
-    const formattedTypeString = [
-        directive,
-        ...others,
-        formatLiteralObj('scope', directiveInfo.scope),
-        formatTransclude(directiveInfo.transclude),
-    ]
-        .filter((x) => !!x)
-        .join('\n');
-
-    return {
-        formattedTypeString,
-        document: '',
-    };
-
-    function getOtherProps(propNames: (keyof DirectiveInfo)[]): string[] {
-        return propNames.map((p) => {
-            const v = directiveInfo[p] as string | boolean | number;
-            if (!v) {
-                return '';
-            } else if (typeof v === 'string') {
-                return `${p}: "${v}"`;
-            } else {
-                return `${p}: ${v}`;
-            }
-        });
-    }
-}
-
-function formatLiteralObj(objName: string, objProps: Property[], getComment?: (prop: Property) => string) {
-    if (objProps.length === 0) {
-        return `${objName}: { }`;
-    }
-    return `${objName}: {\n${formatLiteralObjProps(objProps, getComment)}\n}`;
-}
-
-function formatLiteralObjProps(objProps: Property[], getComment?: (prop: Property) => string) {
-    return objProps
-        .map((p) => {
-            const basicPart = `${INDENT}${p.name}: "${p.value}"`;
-            let comment = '';
-            if (getComment) {
-                const c = getComment(p).trim();
-                if (c) {
-                    comment = ` // ${c}`;
-                }
-            }
-            return basicPart + comment;
-        })
-        .join('\n');
-}
-
-function formatTransclude(transclude: DirectiveInfo['transclude']) {
-    let transcludeString = '';
-    if (Array.isArray(transclude)) {
-        transcludeString = `transclude: {\n${formatLiteralObjProps(transclude)}\n}`;
-    } else if (transclude) {
-        transcludeString = `transclude: true`;
-    }
-    return transcludeString;
 }
 
 export function getComponentTypeHoverInfo(

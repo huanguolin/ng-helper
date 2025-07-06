@@ -1,8 +1,8 @@
 import { SPACE } from '@ng-helper/shared/lib/html';
 import { NgTypeInfo } from '@ng-helper/shared/lib/plugin';
+import type { ComponentInfo, DirectiveInfo, Property } from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
-import type { DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
 import { PluginContext } from '../type';
 
 import { getPropValueByName, isTypeOfType } from './common';
@@ -382,6 +382,28 @@ export function isElementDirective(directiveInfo: DirectiveInfo): boolean {
 
 export function isAttributeDirective(directiveInfo: DirectiveInfo): boolean {
     return directiveInfo.restrict.includes('A');
+}
+
+export function isRequiredAttr(prop: Property): boolean {
+    return !prop.value.includes('?');
+}
+
+export function getRequiredAttrs(info: ComponentInfo | DirectiveInfo): Property[] {
+    const props = 'restrict' in info ? info.scope : info.bindings;
+    return props.filter((p) => isRequiredAttr(p));
+}
+
+export function getRequiredAttrNames(info: ComponentInfo | DirectiveInfo): string[] {
+    const attrs = getRequiredAttrs(info);
+    return attrs.map((x) => getBindingName(x));
+}
+
+export function getRequiredTranscludeNames({ transclude }: ComponentInfo | DirectiveInfo): string[] {
+    return transclude && typeof transclude === 'object'
+        ? Object.values(transclude)
+              .filter((x) => !x.value.includes('?'))
+              .map((x) => x.value.replaceAll('?', ''))
+        : [];
 }
 
 export function isDtsFile(fileName: string): boolean {

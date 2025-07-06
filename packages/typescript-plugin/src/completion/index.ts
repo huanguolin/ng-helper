@@ -7,10 +7,12 @@ import {
     type NgDirectiveCompletionResponse,
     type NgDirectiveCompletionRequest,
     type NgRequest,
+    type ComponentInfo,
+    type DirectiveInfo,
+    type Property,
 } from '@ng-helper/shared/lib/plugin';
 
 import { ngHelperTsService } from '../ngHelperTsService';
-import type { ComponentInfo, DirectiveInfo, Property } from '../ngHelperTsService/ngCache';
 import { getCtxOfCoreCtx } from '../ngHelperTsService/utils';
 import { CorePluginContext, PluginContext } from '../type';
 import { findMatchedDirectives, getDirectivesUsableAsAttributes, getTypeInfosFromDirectiveScope } from '../utils/biz';

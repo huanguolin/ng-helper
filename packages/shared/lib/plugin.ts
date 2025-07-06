@@ -1,3 +1,59 @@
+export interface Location {
+    start: number;
+    end: number;
+}
+
+export interface Property {
+    name: string;
+    value: string;
+    location: Location;
+}
+
+export interface Parameter {
+    name: string;
+    type: string;
+    location: Location;
+}
+
+interface BaseInfo {
+    name: string;
+    filePath: string;
+    location: Location;
+}
+
+export interface ComponentInfo extends BaseInfo {
+    bindings: Property[];
+    controllerAs: {
+        value: string;
+        location?: Location;
+    };
+    transclude?: boolean | Property[];
+}
+
+export interface DirectiveInfo extends BaseInfo {
+    /**
+     * E - Element name (default): <my-directive></my-directive>
+     * A - Attribute (default): <div my-directive="exp"></div>
+     * C - Class: <div class="my-directive: exp;"></div>
+     * M - Comment: <!-- directive: my-directive exp -->
+     */
+    restrict: string;
+    scope: Property[];
+    transclude?: boolean | Property[];
+    require?: string;
+    replace?: boolean;
+    priority?: number;
+    terminal?: boolean;
+}
+
+export interface ControllerInfo extends BaseInfo {}
+
+export interface FilterInfo extends BaseInfo {
+    parameters: Parameter[];
+}
+
+export interface ServiceInfo extends BaseInfo {}
+
 /**
  * 表示与父类型的关系。
  * NgFieldKind 并不是表示 type 的类型分类。
@@ -131,6 +187,13 @@ export interface NgControllerNameDefinitionRequest extends NgRequest {
 export interface NgFilterNameDefinitionRequest extends NgRequest {
     filterName: string;
 }
+export interface NgComponentInfoRequest extends NgRequest {
+    componentName: string;
+}
+
+export interface NgDirectiveInfoRequest extends NgRequest {
+    directiveName: string;
+}
 
 export interface NgHoverInfo {
     formattedTypeString: string;
@@ -148,6 +211,12 @@ export interface NgDefinitionInfo {
     end: number;
 }
 
+export interface NgResolveComponentOrDirectiveInfo {
+    requiredAttrNames: string[];
+    requiredTranscludeNames: string[];
+    formattedTypeString: string;
+}
+
 export type NgDefinitionResponse = NgDefinitionInfo | undefined;
 export type NgHoverResponse = NgHoverInfo | undefined;
 export type NgTypeCompletionResponse = NgTypeInfo[] | undefined;
@@ -161,3 +230,5 @@ export type NgAllComponentsExpressionAttrsResponse = {
         [componentOrDirectiveName: string]: string[];
     };
 };
+export type NgComponentInfoResponse = NgResolveComponentOrDirectiveInfo | undefined;
+export type NgDirectiveInfoResponse = NgComponentInfoResponse;

@@ -15,6 +15,8 @@ import type {
     NgCtrlTypeCompletionRequest,
     NgListDirectivesAttrsRequest,
     NgListComponentsAttrsRequest,
+    NgComponentInfoRequest,
+    NgDirectiveInfoRequest,
 } from '@ng-helper/shared/lib/plugin';
 
 import {
@@ -43,8 +45,10 @@ import {
 } from '../hover';
 import {
     getAllComponentsExpressionAttrsInfo,
+    resolveComponentInfo,
     getComponentsExpressionAttrsInfo,
     getComponentsStringAttrsInfo,
+    resolveDirectiveInfo,
     getDirectivesExpressionAttrsInfo,
     getDirectivesStringAttrsInfo,
 } from '../other';
@@ -173,6 +177,14 @@ const otherMethods = {
     'attrs/expression/all': {
         isCoreCtx: true,
         handler: (ctx) => getAllComponentsExpressionAttrsInfo(ctx),
+    },
+    'component/info': {
+        isCoreCtx: true,
+        handler: (ctx, ngRequest) => resolveComponentInfo(ctx, ngRequest as NgComponentInfoRequest),
+    },
+    'directive/info': {
+        isCoreCtx: true,
+        handler: (ctx, ngRequest) => resolveDirectiveInfo(ctx, ngRequest as NgDirectiveInfoRequest),
     },
 } satisfies Record<string, RpcMethodConfig>;
 

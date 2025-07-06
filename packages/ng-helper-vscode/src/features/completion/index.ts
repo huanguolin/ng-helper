@@ -6,6 +6,7 @@ import {
     languages,
     type CancellationToken,
     type CompletionContext,
+    type CompletionItem,
     type Position,
     type TextDocument,
 } from 'vscode';
@@ -15,10 +16,11 @@ import type { NgContext } from '../../ngContext';
 import { buildCursor } from '../../utils';
 
 import { builtinDirectiveNameCompletion } from './builtin';
-import { componentNameCompletion } from './componentName';
+import { componentNameCompletion, resolveComponentName } from './componentName';
 import { componentOrDirectiveAttrCompletion } from './componentOrDirectiveAttr';
-import { customDirectiveNameCompletion } from './customDirectiveName';
+import { customDirectiveNameCompletion, resolveDirectiveName } from './customDirectiveName';
 import { templateOrAttrValueCompletion } from './type';
+import type { NgHelperCompletionItem } from './utils';
 
 interface BaseCompletionParam {
     document: TextDocument;
@@ -60,6 +62,19 @@ export function registerCompletion(ngContext: NgContext) {
                                 ngContext,
                                 completionContext,
                             }),
+                        { cancelTokenSource },
+                    );
+                },
+                async resolveCompletionItem(item, token) {
+                    if (!('ngHelperInfo' in item)) {
+                        return item;
+                    }
+
+                    const cancelTokenSource = createCancellationTokenSource(token);
+
+                    return await withTimeoutAndMeasure(
+                        'resolveCompletionItem',
+                        () => resolveCompletionItem(ngContext, item as NgHelperCompletionItem, cancelTokenSource.token),
                         { cancelTokenSource },
                     );
                 },
@@ -126,5 +141,20 @@ async function completion({ document, position, cancelToken, ngContext, completi
                 return new CompletionList(builtinList.concat(list), false);
             }
         }
+    }
+}
+
+async function resolveCompletionItem(
+    ngContext: NgContext,
+    ngItem: NgHelperCompletionItem,
+    cancelToken: CancellationToken,
+): Promise<CompletionItem> {
+    switch (ngItem.ngHelperInfo.type) {
+        case 'componentName':
+            return await resolveComponentName(ngContext, ngItem, cancelToken);
+        case 'directiveName':
+            return await resolveDirectiveName(ngContext, ngItem, cancelToken);
+        default:
+            return ngItem;
     }
 }

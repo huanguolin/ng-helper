@@ -3,11 +3,14 @@ import { SPACE } from '@ng-helper/shared/lib/html';
 import { isComponentTagName } from '@ng-helper/shared/lib/ngUtils';
 import { NgComponentNameInfo } from '@ng-helper/shared/lib/plugin';
 import { camelCase, kebabCase } from 'change-case';
-import { CompletionItem, CompletionList, SnippetString } from 'vscode';
+import { CompletionItem, CompletionList, MarkdownString, SnippetString, type CancellationToken } from 'vscode';
 
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
+import type { NgContext } from '../../ngContext';
 import { getComponentName, getControllerNameInfo, getCorrespondingScriptFileName } from '../utils';
+
+import { addNgHelperInfoToCompletionItem, type NgHelperCompletionItem } from './utils';
 
 import type { CompletionParamObj } from '.';
 
@@ -61,7 +64,7 @@ export async function componentNameCompletion({
         }
 
         const preChar = completionContext.triggerCharacter === '<' ? '' : '<';
-        const items = list.map((x) => buildCompletionItem(x));
+        const items = list.map((x) => buildCompletionItem(x, false));
 
         if (matchTransclude && matchTransclude.transclude && typeof matchTransclude.transclude !== 'boolean') {
             let transcludeItems = Object.values(matchTransclude.transclude).map((x) => x.replaceAll('?', ''));
@@ -76,7 +79,7 @@ export async function componentNameCompletion({
             // 构建补全项目，并排在最前面
             const preferItems = transcludeItems.map((x, i) => {
                 const info: NgComponentNameInfo = { componentName: x, transclude: true };
-                const item = buildCompletionItem(info);
+                const item = buildCompletionItem(info, true);
                 item.sortText = i.toString().padStart(2, '0');
                 return item;
             });
@@ -85,12 +88,20 @@ export async function componentNameCompletion({
 
         return new CompletionList(items, false);
 
-        function buildCompletionItem(x: NgComponentNameInfo): CompletionItem {
+        function buildCompletionItem(x: NgComponentNameInfo, isTransclude: boolean): CompletionItem {
             const tag = kebabCase(x.componentName);
             const item = new CompletionItem(tag);
             item.insertText = new SnippetString(buildSnippet());
             item.documentation = buildDocumentation();
             item.detail = EXT_MARK;
+            if (!isTransclude) {
+                addNgHelperInfoToCompletionItem(item, {
+                    type: 'componentName',
+                    name: x.componentName,
+                    filePath: relatedScriptFile,
+                    prefixChar: preChar,
+                });
+            }
             return item;
 
             function buildSnippet() {
@@ -104,12 +115,12 @@ export async function componentNameCompletion({
             function buildCore(cursor: string, prefixChar: string) {
                 if (x.transclude) {
                     if (typeof x.transclude === 'object') {
-                        const requiredItems = Object.values(x.transclude)
+                        const requiredTranscludeItems = Object.values(x.transclude)
                             .filter((x) => !x.includes('?'))
                             .map((x) => kebabCase(x));
                         const indent = SPACE.repeat(4);
-                        if (requiredItems.length) {
-                            const children = requiredItems.map((x) => `${indent}<${x}></${x}>`).join('\n');
+                        if (requiredTranscludeItems.length) {
+                            const children = requiredTranscludeItems.map((x) => `${indent}<${x}></${x}>`).join('\n');
                             return `${prefixChar}${tag}${cursor}>\n${children}\n</${tag}>`;
                         }
                     }
@@ -120,4 +131,62 @@ export async function componentNameCompletion({
             }
         }
     }
+}
+
+export async function resolveComponentName(
+    ngContext: NgContext,
+    item: NgHelperCompletionItem,
+    cancelToken: CancellationToken,
+): Promise<CompletionItem> {
+    const { filePath, name: componentName, prefixChar } = item.ngHelperInfo;
+
+    const info = await ngContext.rpcApi.resolveComponentInfoApi({
+        cancelToken,
+        params: {
+            fileName: filePath,
+            componentName,
+        },
+    });
+    if (!info) {
+        return item;
+    }
+
+    if (info.formattedTypeString) {
+        const md = new MarkdownString();
+        md.appendCodeblock(info.formattedTypeString, 'typescript');
+        item.documentation = md;
+    }
+
+    if (info.requiredAttrNames.length || info.requiredTranscludeNames.length) {
+        const tag = kebabCase(componentName);
+
+        const attrStr = info.requiredAttrNames.map((x, i) => `${kebabCase(x)}="$${i + 1}"`).join(SPACE);
+
+        const indent = SPACE.repeat(4);
+        const transcludeStr = info.requiredTranscludeNames
+            .map((x) => `${indent}<${kebabCase(x)}></${kebabCase(x)}>`)
+            .join('\n');
+
+        const prefix = prefixChar ?? '';
+
+        // 示例 4 情况:
+        // common-button></common-button>
+        // <common-button></common-button>
+        // <common-button title=""></common-button>
+        // <common-panel title="">
+        //      <panel-body></panel-body>
+        // </common-button>
+        let s = prefix + tag;
+        if (attrStr) {
+            s += SPACE + attrStr;
+        }
+        s += '$0>';
+        if (transcludeStr) {
+            s += `\n${transcludeStr}\n`;
+        }
+        s += `</${tag}>`;
+        item.insertText = new SnippetString(s);
+    }
+
+    return item;
 }

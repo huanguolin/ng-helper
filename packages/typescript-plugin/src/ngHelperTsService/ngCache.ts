@@ -1,3 +1,12 @@
+import type {
+    ComponentInfo,
+    ControllerInfo,
+    DirectiveInfo,
+    FilterInfo,
+    Parameter,
+    Property,
+    ServiceInfo,
+} from '@ng-helper/shared/lib/plugin';
 import type ts from 'typescript';
 
 import type { GetCoreContextFn, FileVersion, PluginContext } from '../type';
@@ -29,62 +38,6 @@ export interface FileCacheInfo extends FileVersion {
     services: string[];
     lastScanned: number;
 }
-
-export interface Location {
-    start: number;
-    end: number;
-}
-
-export interface Property {
-    name: string;
-    value: string;
-    location: Location;
-}
-
-export interface Parameter {
-    name: string;
-    type: string;
-    location: Location;
-}
-
-interface BaseInfo {
-    name: string;
-    filePath: string;
-    location: Location;
-}
-
-export interface ComponentInfo extends BaseInfo {
-    bindings: Property[];
-    controllerAs: {
-        value: string;
-        location?: Location;
-    };
-    transclude?: boolean | Property[];
-}
-
-export interface DirectiveInfo extends BaseInfo {
-    /**
-     * E - Element name (default): <my-directive></my-directive>
-     * A - Attribute (default): <div my-directive="exp"></div>
-     * C - Class: <div class="my-directive: exp;"></div>
-     * M - Comment: <!-- directive: my-directive exp -->
-     */
-    restrict: string;
-    scope: Property[];
-    transclude?: boolean | Property[];
-    require?: string;
-    replace?: boolean;
-    priority?: number;
-    terminal?: boolean;
-}
-
-export interface ControllerInfo extends BaseInfo {}
-
-export interface FilterInfo extends BaseInfo {
-    parameters: Parameter[];
-}
-
-export interface ServiceInfo extends BaseInfo {}
 
 export interface NgCache {
     getComponentMap: () => Map<string, ComponentInfo>;

@@ -4,12 +4,25 @@ import type {
     NgDirectivesAttrsResponse,
     NgListComponentsAttrsRequest,
     NgListDirectivesAttrsRequest,
+    ComponentInfo,
+    DirectiveInfo,
+    NgComponentInfoRequest,
+    NgComponentInfoResponse,
+    NgDirectiveInfoRequest,
+    NgDirectiveInfoResponse,
 } from '@ng-helper/shared/lib/plugin';
 
+import { getComponentNameHoverInfo, getDirectiveNameHoverInfo } from '../hover/utils';
 import { ngHelperTsService } from '../ngHelperTsService';
-import type { ComponentInfo, DirectiveInfo } from '../ngHelperTsService/ngCache';
 import type { CorePluginContext } from '../type';
-import { getBindingName, isAttributeDirective, isStringBinding } from '../utils/ng';
+import {
+    getBindingName,
+    getRequiredAttrNames,
+    getRequiredTranscludeNames,
+    isAttributeDirective,
+    isElementDirective,
+    isStringBinding,
+} from '../utils/ng';
 
 // 用于 html 中组件的语义颜色高亮
 export function getComponentsStringAttrsInfo(
@@ -208,5 +221,66 @@ export function getAllComponentsExpressionAttrsInfo(coreCtx: CorePluginContext) 
         } finally {
             logger.endGroup();
         }
+    }
+}
+
+export function resolveComponentInfo(
+    coreCtx: CorePluginContext,
+    { fileName, componentName }: NgComponentInfoRequest,
+): NgComponentInfoResponse {
+    const logger = coreCtx.logger.prefix('resolveComponentInfo()');
+
+    const cache = ngHelperTsService.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
+        return;
+    }
+
+    const componentMap = cache.getComponentMap();
+    if (componentMap.has(componentName)) {
+        const componentInfo = componentMap.get(componentName)!;
+        const hoverInfo = getComponentNameHoverInfo(coreCtx, componentInfo);
+        return {
+            requiredAttrNames: getRequiredAttrNames(componentInfo),
+            requiredTranscludeNames: getRequiredTranscludeNames(componentInfo),
+            formattedTypeString: hoverInfo.formattedTypeString,
+        };
+    }
+
+    const directiveMap = cache.getDirectiveMap();
+    if (directiveMap.has(componentName)) {
+        const directiveInfo = directiveMap.get(componentName)!;
+        if (isElementDirective(directiveInfo)) {
+            const info = getDirectiveNameHoverInfo(directiveInfo);
+            return {
+                requiredAttrNames: getRequiredAttrNames(directiveInfo),
+                requiredTranscludeNames: getRequiredTranscludeNames(directiveInfo),
+                formattedTypeString: info.formattedTypeString,
+            };
+        }
+    }
+}
+
+export function resolveDirectiveInfo(
+    coreCtx: CorePluginContext,
+    { fileName, directiveName }: NgDirectiveInfoRequest,
+): NgDirectiveInfoResponse {
+    const logger = coreCtx.logger.prefix('resolveDirectiveInfo()');
+
+    const cache = ngHelperTsService.getCache(fileName);
+    if (!cache) {
+        logger.info(`cache not found! fileName: ${fileName}`);
+        return;
+    }
+
+    const directiveMap = cache.getDirectiveMap();
+    if (directiveMap.has(directiveName)) {
+        const directiveInfo = directiveMap.get(directiveName)!;
+        const hoverInfo = getDirectiveNameHoverInfo(directiveInfo);
+        return {
+            requiredAttrNames: getRequiredAttrNames(directiveInfo),
+            requiredTranscludeNames: getRequiredTranscludeNames(directiveInfo),
+            formattedTypeString: hoverInfo.formattedTypeString,
+        };
     }
 }
