@@ -241,8 +241,7 @@ exports[`Hover type show hover info on "(ctl.obj.)arr" (controller html) 1`] = `
     arr: {
         id: number;
         name: string;
-    }
-    [];
+    }[];
 }
 \`\`\`
 "
