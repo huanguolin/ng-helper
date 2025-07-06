@@ -2,14 +2,21 @@ import { beautifyTypeString, getMinSyntaxNodeForHover } from '../../src/hover/ut
 import { prepareTestContext } from '../helper';
 
 describe('beautifyTypeString()', () => {
-    it('should beautify a simple type string', () => {
+    it('string', () => {
         const typeString = 'string';
         const expected = 'string';
         const result = beautifyTypeString(typeString);
         expect(result).toBe(expected);
     });
 
-    it('should beautify a complex type string with indentation', () => {
+    it('union type', () => {
+        const typeString = 'string | number';
+        const expected = 'string | number';
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('object type', () => {
         const typeString = 'type A = { prop1: string; prop2: number; }';
         const expected = `type A = {
     prop1: string;
@@ -19,7 +26,7 @@ describe('beautifyTypeString()', () => {
         expect(result).toBe(expected);
     });
 
-    it('should beautify a type string with nested objects', () => {
+    it('nested objects', () => {
         const typeString = 'type A = { prop1: { nestedProp1: string; nestedProp2: number; }; }';
         const expected = `type A = {
     prop1: {
@@ -27,6 +34,59 @@ describe('beautifyTypeString()', () => {
         nestedProp2: number;
     };
 }`;
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('union with object type', () => {
+        const typeString = 'type A = { prop: string; prop: number; } | null';
+        const expected = `type A = {
+    prop: string;
+    prop: number;
+} | null`;
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('array type', () => {
+        const typeString = 'type A = { prop: string; prop: number; }[]';
+        const expected = `type A = {
+    prop: string;
+    prop: number;
+}[]`;
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('generic Array type', () => {
+        const typeString = 'type A = Array<{ prop: string; prop: number; }>';
+        const expected = `type A = Array<{
+    prop: string;
+    prop: number;
+}>`;
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('generic Record type', () => {
+        const typeString = 'type A = Record<string, { prop: string; prop: number; }>';
+        const expected = `type A = Record<string, {
+    prop: string;
+    prop: number;
+}>`;
+        const result = beautifyTypeString(typeString);
+        expect(result).toBe(expected);
+    });
+
+    it('generic type with multiple generic parameters', () => {
+        const typeString = 'type A = Test<{ prop: string; prop: number; }, { prop: string; prop: number; }>';
+        const expected = `type A = Test<{
+    prop: string;
+    prop: number;
+}, {
+    prop: string;
+    prop: number;
+}>`;
         const result = beautifyTypeString(typeString);
         expect(result).toBe(expected);
     });

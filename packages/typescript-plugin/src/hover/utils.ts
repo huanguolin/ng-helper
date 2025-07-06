@@ -1,3 +1,4 @@
+import { SPACE } from '@ng-helper/shared/lib/html';
 import {
     NgHoverInfo,
     type NgElementHoverInfo,
@@ -73,51 +74,53 @@ export function beautifyTypeString(typeString: string): string {
     let indent = 0;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-        const { line, endCh } = getLine();
+        const line = getLine();
         if (!line) {
             break;
         }
 
-        if (endCh === '{') {
-            appendLine(line);
-            indent += indentUnitCnt;
-        } else if (endCh === '}' || endCh === '};') {
+        const lineStartCh = line[0];
+        if (lineStartCh === '}') {
             indent -= indentUnitCnt;
-            appendLine(line);
-        } else {
-            appendLine(line);
+        }
+
+        appendLine(line);
+
+        const lineEndCh = line[line.length - 1];
+        if (lineEndCh === '{') {
+            indent += indentUnitCnt;
         }
     }
     return beautifulLines.join('\n');
 
-    function getLine(): { line: string; endCh: string } {
+    function getLine(): string {
         const start = index;
+        let end = typeString.length;
+
+        // 找到行结束符 '{' 或者 ';'
         while (index < typeString.length) {
             const ch = typeString[index];
-            if (ch === '}' && typeString[index + 1] === ';') {
-                index += 2;
-                return {
-                    line: typeString.slice(start, index),
-                    endCh: '};',
-                };
-            } else if (ch === '{' || ch === '}' || ch === ';') {
-                index += 1;
-                return {
-                    line: typeString.slice(start, index),
-                    endCh: ch,
-                };
-            } else {
-                index += 1;
+            index++;
+            if (ch === '{' || ch === ';') {
+                end = index;
+                break;
             }
         }
-        return {
-            line: typeString.slice(start),
-            endCh: '',
-        };
+
+        // 跳过后续空格, 直到遇到一个非空格
+        while (index < typeString.length) {
+            const ch = typeString[index];
+            if (ch !== SPACE) {
+                break;
+            }
+            index++;
+        }
+
+        return typeString.slice(start, end);
     }
 
     function appendLine(line: string) {
-        beautifulLines.push(' '.repeat(indent) + line.trim());
+        beautifulLines.push(SPACE.repeat(indent) + line.trim());
     }
 }
 
