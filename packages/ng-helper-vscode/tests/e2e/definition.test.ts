@@ -99,27 +99,27 @@ describe('Definition', () => {
 
     describe('inline html', () => {
         it('component name', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 10));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 10));
         });
 
         it('component attr', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 24));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 24));
         });
 
         it('directive name', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 15));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 15));
         });
 
         it('directive attr', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 27));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 27));
         });
 
         it('type', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 71));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(32, 71));
         });
 
         it('filter', async () => {
-            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 62));
+            await testDefinition(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 62));
         });
     });
 });

@@ -207,7 +207,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitFilterExpression(node: FilterExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.name)) {
@@ -225,7 +225,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitAssignExpression(node: AssignExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.left)) {
@@ -236,7 +236,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitConditionalExpression(node: ConditionalExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.condition)) {
@@ -249,7 +249,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitBinaryExpression(node: BinaryExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.left)) {
@@ -260,7 +260,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitUnaryExpression(node: UnaryExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.operand)) {
@@ -269,7 +269,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitArrayLiteralExpression(node: ArrayLiteralExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         for (const element of node.elements) {
@@ -280,7 +280,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitObjectLiteralExpression(node: ObjectLiteralExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         for (const property of node.properties) {
@@ -291,7 +291,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitPropertyAssignment(node: PropertyAssignment): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.property)) {
@@ -307,7 +307,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitPropertyAccessExpression(node: PropertyAccessExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.parent)) {
@@ -318,7 +318,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitElementAccessExpression(node: ElementAccessExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         if (this.isAt(node.elementExpression)) {
@@ -329,7 +329,7 @@ class MinNgSyntaxVisitor implements INodeVisitor<MinNgSyntaxNode | undefined, Pr
     }
     visitCallExpression(node: CallExpression): MinNgSyntaxNode | undefined {
         if (!this.isAt(node)) {
-            return undefined;
+            return;
         }
 
         for (const arg of node.args) {

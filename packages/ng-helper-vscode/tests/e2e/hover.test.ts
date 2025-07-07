@@ -123,32 +123,32 @@ describe('Hover', () => {
 
     describe('inline html', () => {
         it('hover component name', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 10));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 10));
         });
 
         it('hover component attr', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(29, 24));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 24));
         });
 
         it('hover directive name', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 15));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 15));
         });
 
         it('hover directive attr', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 27));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 27));
         });
 
         it('hover ng-*', async () => {
             // ng-modal
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 42));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 42));
         });
 
         it('hover type', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 71));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(32, 71));
         });
 
         it('hover filter', async () => {
-            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(30, 62));
+            await testHover(DRAG_SOURCE_COMPONENT_TS_PATH, new vscode.Position(31, 62));
         });
     });
 });

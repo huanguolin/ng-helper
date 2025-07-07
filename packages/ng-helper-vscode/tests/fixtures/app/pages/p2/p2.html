@@ -7,4 +7,8 @@
     <div ng-repeat="item in ctrl.obj.arr">
         <span>{{i}}</span>
     </div>
+    <!-- test signature: no argument -->
+    <div title="{{ctrl.getInfo()}}"></div>
+    <!-- test signature: one argument -->
+    <div title="{{ctrl.buildDesc(x)}}"></div>
 </section>

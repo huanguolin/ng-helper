@@ -21,6 +21,10 @@ namespace app.components {
                 { id: 5, name: 'item-3' },
             ],
         };
+        fmt = (s: string, option: { lower: boolean, upper: boolean }) => {
+            // ... impl
+            return s;
+        }
     }
 
     angular.module('app.components').component('barFoo', {

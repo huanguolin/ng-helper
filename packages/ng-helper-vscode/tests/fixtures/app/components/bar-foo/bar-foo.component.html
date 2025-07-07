@@ -4,3 +4,7 @@
 <div ng-repeat="item in ctrl.obj.arr">
     <span>{{item.name}}({{$index}})-{{$first.name}}</span>
 </div>
+<!-- test signature: trigger by '(' -->
+<div>{{ctrl.fmt()}}</div>
+<!-- test signature: trigger by ',' -->
+<div>{{ctrl.fmt(ctrl.foo,)}}</div>

@@ -40,10 +40,26 @@ export function buildHoverInfo({
     parentType?: ts.Type;
 }): NgHoverInfo {
     let typeKind = 'property';
+    let parameters:
+        | Array<{
+              name: string;
+              typeString: string;
+              document: string;
+          }>
+        | undefined = undefined;
     if (targetType.isClass()) {
         typeKind = 'class';
     } else if (targetType.getCallSignatures().length > 0) {
         typeKind = 'method';
+        const signature = targetType.getCallSignatures()[0];
+        parameters = signature.parameters.map((x) => {
+            const type = ctx.typeChecker.getTypeOfSymbolAtLocation(x, x.valueDeclaration ?? x.declarations![0]);
+            return {
+                name: x.name,
+                typeString: formatTypeString(ctx, type),
+                document: x.getDocumentationComment(ctx.typeChecker).toString(),
+            };
+        });
     }
 
     let document = '';
@@ -57,6 +73,8 @@ export function buildHoverInfo({
     return {
         formattedTypeString: `(${typeKind}) ${name}: ${formatTypeString(ctx, targetType)}`,
         document,
+        isMethod: typeKind === 'method',
+        parameters,
     };
 }
 

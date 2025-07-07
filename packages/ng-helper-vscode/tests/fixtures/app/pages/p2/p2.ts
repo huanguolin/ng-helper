@@ -16,6 +16,12 @@ namespace app.pages {
                 { id: 5, name: 'item-3' },
             ],
         };
+        getInfo() {
+            return '';
+        }
+        buildDesc(index: number) {
+            return '';
+        }
     }
 
     angular.module('app.pages').controller('P2Controller', P2Controller);

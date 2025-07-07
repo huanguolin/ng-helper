@@ -198,6 +198,12 @@ export interface NgDirectiveInfoRequest extends NgRequest {
 export interface NgHoverInfo {
     formattedTypeString: string;
     document: string;
+    isMethod?: boolean;
+    parameters?: Array<{
+        name: string;
+        typeString: string;
+        document: string;
+    }>;
 }
 
 export interface NgComponentNameInfo {
