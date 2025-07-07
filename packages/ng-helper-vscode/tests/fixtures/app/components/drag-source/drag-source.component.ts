@@ -23,6 +23,7 @@ namespace app.directives {
             dragDropTarget: DragDropTarget;
         }) => void;
         num!: number;
+        fmt!: (s: string, option: { lower: boolean, upper: boolean }) => string;
     }
 
     angular.module('app.directives').component('dragSource', {
@@ -36,6 +37,8 @@ namespace app.directives {
         {{ctrl.}}
         <!-- filter completion -->
         <div ng-if="ctrl.num | s"></div>
+        <!-- test signature: trigger by ',' -->
+        <div>{{ctrl.fmt('xyz',)}}</div>
         `,
         bindings : {
             disabledDrag : '<?',

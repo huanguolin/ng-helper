@@ -228,7 +228,7 @@ describe('Completion', () => {
             // ctrl
             await testCompletion({
                 filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
-                position: new vscode.Position(33, 11),
+                position: new vscode.Position(34, 11),
                 itemsFilter: (item) => item.detail === '[ng-helper]',
                 // 注意：这里不能有 triggerChar，否则结果为空，因为内部实现如果有 triggerChar 就直接返回了。
             });
@@ -236,7 +236,7 @@ describe('Completion', () => {
             // ctrl.*
             await testCompletion({
                 filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
-                position: new vscode.Position(35, 15),
+                position: new vscode.Position(36, 15),
                 triggerChar: '.',
             });
         });
@@ -244,7 +244,7 @@ describe('Completion', () => {
         it('filter', async () => {
             await testCompletion({
                 filePath: DRAG_SOURCE_COMPONENT_TS_PATH,
-                position: new vscode.Position(37, 32),
+                position: new vscode.Position(38, 32),
                 ignoreIsIncomplete: true,
                 itemsFilter: (item) => item.detail?.startsWith('(filter)') ?? false,
             });

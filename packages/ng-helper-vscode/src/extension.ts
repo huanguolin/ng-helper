@@ -10,6 +10,7 @@ import { registerHover } from './features/hover';
 import { supportInlineHtml } from './features/inlineHtml';
 import { registerLink } from './features/link';
 import { registerSemantic } from './features/semantic';
+import { registerSignatureHelp } from './features/signatureHelp';
 import { registerStatusBar } from './features/statusBar';
 import { NgContext } from './ngContext';
 import { StateControl } from './service/stateControl';
@@ -42,6 +43,9 @@ export async function activate(vscodeContext: ExtensionContext) {
 
     // completion
     registerCompletion(ngContext);
+
+    // signature help
+    registerSignatureHelp(ngContext);
 
     // hover
     registerHover(ngContext);

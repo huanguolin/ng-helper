@@ -11,6 +11,7 @@ export const HOVER_COMMAND = 'vscode.executeHoverProvider';
 export const DEFINITION_COMMAND = 'vscode.executeDefinitionProvider';
 export const SEMANTIC_TOKENS_LEGEND_COMMAND = 'vscode.provideDocumentSemanticTokensLegend';
 export const SEMANTIC_TOKENS_COMMAND = 'vscode.provideDocumentSemanticTokens';
+export const SIGNATURE_HELP_COMMAND = 'vscode.executeSignatureHelpProvider';
 
 // ---- project path ----
 // 注意这个路径要按照编译后的文件位置来写，编译后文件在 tests/dist 目录下。

@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SignatureHelp component html trigger by "(" 1`] = `
+Object {
+  "activeParameter": 0,
+  "activeSignature": 0,
+  "signatures": Array [
+    Object {
+      "activeParameter": undefined,
+      "documentation": undefined,
+      "label": "fmt: (s: string, option: {
+    lower: boolean;
+    upper: boolean;
+}) => string",
+      "parameters": Array [
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            6,
+            15,
+          ],
+        },
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            17,
+            68,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`SignatureHelp component html trigger by "," 1`] = `
+Object {
+  "activeParameter": 1,
+  "activeSignature": 0,
+  "signatures": Array [
+    Object {
+      "activeParameter": undefined,
+      "documentation": undefined,
+      "label": "fmt: (s: string, option: {
+    lower: boolean;
+    upper: boolean;
+}) => string",
+      "parameters": Array [
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            6,
+            15,
+          ],
+        },
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            17,
+            68,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`SignatureHelp controller html no argument 1`] = `
+Object {
+  "activeParameter": 0,
+  "activeSignature": 0,
+  "signatures": Array [
+    Object {
+      "activeParameter": undefined,
+      "documentation": undefined,
+      "label": "getInfo: () => string",
+      "parameters": Array [],
+    },
+  ],
+}
+`;
+
+exports[`SignatureHelp controller html one argument 1`] = `
+Object {
+  "activeParameter": 0,
+  "activeSignature": 0,
+  "signatures": Array [
+    Object {
+      "activeParameter": undefined,
+      "documentation": undefined,
+      "label": "buildDesc: (index: number) => string",
+      "parameters": Array [
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            12,
+            25,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`SignatureHelp inline html 1`] = `
+Object {
+  "activeParameter": 1,
+  "activeSignature": 0,
+  "signatures": Array [
+    Object {
+      "activeParameter": undefined,
+      "documentation": undefined,
+      "label": "fmt: (s: string, option: {
+    lower: boolean;
+    upper: boolean;
+}) => string",
+      "parameters": Array [
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            6,
+            15,
+          ],
+        },
+        Object {
+          "documentation": undefined,
+          "label": Array [
+            17,
+            68,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;

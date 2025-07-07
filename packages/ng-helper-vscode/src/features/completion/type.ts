@@ -150,13 +150,7 @@ function buildCompletionList(res: NgTypeInfo[]) {
                   : CompletionItemKind.Field,
         );
 
-        if (x.isFunction) {
-            // 分两段补全，第一段是函数名，第二段是参数
-            let snippet = `${x.name}$1(`;
-            snippet += x.paramNames!.map((x, i) => `\${${i + 2}:${x}}`).join(', ');
-            snippet += ')';
-            item.insertText = new SnippetString(snippet);
-        } else if (x.isFilter && x.paramNames?.length) {
+        if (x.isFilter && x.paramNames?.length) {
             let snippet = x.name + SPACE;
             snippet += x.paramNames.map((x, i) => `:\${${i + 1}:${x}}`).join(' ');
             item.insertText = new SnippetString(snippet);

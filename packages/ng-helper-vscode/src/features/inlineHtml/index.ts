@@ -6,12 +6,14 @@ import {
     type CompletionList,
     type Definition,
     type Hover,
+    type SignatureHelp,
     type TextDocument,
 } from 'vscode';
 
 import type { NgContext } from '../../ngContext';
-import { triggerChars } from '../completion';
+import { triggerChars as completionTriggerChars } from '../completion';
 import { htmlSemanticProvider, legend } from '../semantic';
+import { triggerChars as signatureHelpTriggerChars } from '../signatureHelp';
 import { getOriginalFileName } from '../utils';
 
 import { resolveVirtualDocText } from './utils';
@@ -34,6 +36,7 @@ export function supportInlineHtml(ngContext: NgContext) {
     requestForwardHover(ngContext);
     requestForwardDefinition(ngContext);
     requestForwardCompletion(ngContext);
+    requestForwardSignatureHelp(ngContext);
 }
 
 function providerSemantic(ngContext: NgContext) {
@@ -154,7 +157,40 @@ function requestForwardCompletion(ngContext: NgContext) {
                     return info;
                 },
             },
-            ...triggerChars,
+            ...completionTriggerChars,
+        ),
+    );
+}
+
+function requestForwardSignatureHelp(ngContext: NgContext) {
+    ngContext.vscodeContext.subscriptions.push(
+        languages.registerSignatureHelpProvider(
+            [
+                // 这个只有 ts 才能起作用，js 没有类型信息
+                { scheme: 'file', language: 'typescript' },
+            ],
+            {
+                async provideSignatureHelp(document, position, _, ctx) {
+                    if (!ngContext.isNgProjectDocument(document)) {
+                        return;
+                    }
+
+                    const vDocText = resolveVirtualDocText(document, position);
+                    if (!vDocText) {
+                        return;
+                    }
+
+                    const vDocUri = prepareVirtualDocument(document, vDocText);
+                    const info = await commands.executeCommand<SignatureHelp>(
+                        'vscode.executeSignatureHelpProvider',
+                        vDocUri,
+                        position,
+                        ctx.triggerCharacter,
+                    );
+                    return info;
+                },
+            },
+            ...signatureHelpTriggerChars,
         ),
     );
 }
