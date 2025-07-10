@@ -2,6 +2,16 @@
 
 All notable changes to the "ng-helper" extension will be documented in this file.
 
+## v1.0.0 (https://github.com/huanguolin/ng-helper/compare/v0.9.0...v1.0.0) (2025-07-10)
+
+### Feature
+- When auto-completing components/directives, required attributes are now inserted automatically for a smoother development experience.
+- Added SignatureHelp support: function parameter hints are now available while typing.
+
+### Fixed
+- Fixed issue where a question mark in the regex of ng-pattern in HTML would break subsequent HTML syntax highlighting (#27).
+- Fixed incorrect the format of type information (#13).
+
 ## [v0.9.0](https://github.com/huanguolin/ng-helper/compare/v0.8.0...v0.9.0) (2025-06-21)
 
 ### Feature
