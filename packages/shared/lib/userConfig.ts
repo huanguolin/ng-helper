@@ -42,6 +42,11 @@ export const NgHelperUserConfigScheme = z.object({
      */
     componentScriptFileExt: z.enum(ALLOW_SCRIPT_FILE_EXTS).optional(),
     /**
+     * Component template file suffix. Default is 'component.html'.
+     * Examples: 'component.html', 'template.html'
+     */
+    componentTemplateFileSuffix: z.string().optional(),
+    /**
      * Default is 'count_match'.
      */
     injectionCheckMode: z.enum(ALLOW_INJECTION_CHECK_MODE).optional(),

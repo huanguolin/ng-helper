@@ -97,6 +97,7 @@ The TypeScript plugin (`typescript-plugin`) is registered as a TypeScript server
 Configuration is handled through `.vscode/ng-helper.json` with options for:
 - `componentStyleFileExt`: Style file extension (default: `css`)
 - `componentScriptFileExt`: Script file extension (`js` or `ts`, default: `js`)
+- `componentTemplateFileSuffix`: Template file suffix pattern (default: `component.html`)
 - `injectionCheckMode`: Dependency injection validation mode
 - `ngProjects`: Manual project configuration for complex setups
 

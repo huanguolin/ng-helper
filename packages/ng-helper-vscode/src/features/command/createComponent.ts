@@ -15,7 +15,7 @@ export function createComponentCommand(ngContext: NgContext) {
 }
 
 async function createComponent(path: Uri, ngContext: NgContext) {
-    const { componentStyleFileExt, componentScriptFileExt } = ngContext.config.userConfig;
+    const { componentStyleFileExt, componentScriptFileExt, componentTemplateFileSuffix } = ngContext.config.userConfig;
     const componentName = await window.showInputBox({ prompt: 'Component Name:' });
     if (!componentName) {
         return;
@@ -23,7 +23,7 @@ async function createComponent(path: Uri, ngContext: NgContext) {
 
     // 创建文件夹和文件
     const dir = Uri.joinPath(path, componentName);
-    const html = Uri.joinPath(dir, componentName + '.component.html');
+    const html = Uri.joinPath(dir, componentName + '.' + componentTemplateFileSuffix!);
     const style = Uri.joinPath(dir, componentName + '.component.' + componentStyleFileExt!);
     const script = Uri.joinPath(dir, componentName + '.component.' + componentScriptFileExt!);
     await workspace.fs.createDirectory(dir);

@@ -44,6 +44,7 @@ Create an empty `ng-helper.json` file in your workspace's `.vscode` directory. T
 
 * `componentStyleFileExt`: The file extension for component styles (e.g., `less`, `sass`). Defaults to `css`.
 * `componentScriptFileExt`: Choose between `js` or `ts`. Defaults to `js`.
+* `componentTemplateFileSuffix`: The suffix for component template files (e.g., `template.html`, `view.html`). Defaults to `component.html`.
 * `injectionCheckMode`: Dependency injection validation mode. Available options: `strict_equal`, `ignore_case_word_match`, `count_match`, and `off` (from strictest to no validation). Defaults to `count_match`.
 * `ngProjects`: Manually specify AngularJS projects. If not configured, the extension will automatically detect them, but this may sometimes result in incorrect matches when using TypeScript. Each project should include:
   * `name`: Project name (will be displayed in the extension's status bar to help understand the plugin status)
@@ -54,7 +55,8 @@ Example configuration:
 ```json
 {
   "componentStyleFileExt": "less",
-  "componentScriptFileExt": "ts", 
+  "componentScriptFileExt": "ts",
+  "componentTemplateFileSuffix": "template.html",
   "injectionCheckMode": "count_match",
   "ngProjects": [
     {

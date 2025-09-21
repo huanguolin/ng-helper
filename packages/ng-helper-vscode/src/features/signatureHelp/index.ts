@@ -15,7 +15,7 @@ import { checkCancellation, createCancellationTokenSource, withTimeoutAndMeasure
 import type { NgContext } from '../../ngContext';
 import { buildCursor, normalizePath } from '../../utils';
 import { onTypeHover } from '../hover/utils';
-import { getControllerNameInfo, isComponentHtml } from '../utils';
+import { getControllerNameInfo, isComponentHtmlWithConfig } from '../utils';
 
 export const triggerChars = ['(', ','];
 
@@ -104,6 +104,7 @@ async function getMethodHoverInfo({
     ngContext: NgContext;
     cancelToken: CancellationToken;
 }) {
+    const componentTemplateFileSuffix = ngContext.config.userConfig.componentTemplateFileSuffix!;
     return await onTypeHover({
         type: 'hover',
         document,
@@ -114,7 +115,7 @@ async function getMethodHoverInfo({
         onHoverType: async (scriptFilePath, contextString, cursorAt, hoverPropName) => {
             checkCancellation(cancelToken);
 
-            if (isComponentHtml(document)) {
+            if (isComponentHtmlWithConfig(document, componentTemplateFileSuffix)) {
                 return await ngContext.rpcApi.getComponentTypeHoverApi({
                     cancelToken,
                     params: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName },

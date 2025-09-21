@@ -18,7 +18,7 @@ import {
     getControllerNameInfo,
     getCorrespondingScriptFileName,
     isBuiltinFilter,
-    isComponentHtml,
+    isComponentHtmlWithConfig,
     isHoverValidIdentifierChar,
     toNgElementHoverInfo,
 } from '../utils';
@@ -35,6 +35,7 @@ export function registerHover(ngContext: NgContext): void {
                 }
 
                 const cancelTokenSource = createCancellationTokenSource(token);
+                const componentTemplateFileSuffix = ngContext.config.userConfig.componentTemplateFileSuffix!;
                 return await withTimeoutAndMeasure(
                     'provideHover',
                     async () => {
@@ -77,6 +78,7 @@ export function registerHover(ngContext: NgContext): void {
                                     ngContext.rpcApi,
                                     cancelTokenSource.token,
                                     cursorAtInfo,
+                                    componentTemplateFileSuffix,
                                 );
                         }
                     },
@@ -122,6 +124,7 @@ async function handleTemplateOrAttrValue(
     rpcApi: RpcApi,
     cancelToken: CancellationToken,
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
+    componentTemplateFileSuffix: string,
 ): Promise<Hover | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
@@ -145,7 +148,7 @@ async function handleTemplateOrAttrValue(
         onHoverType: async (scriptFilePath, contextString, cursorAt, hoverPropName) => {
             checkCancellation(cancelToken);
 
-            if (isComponentHtml(document)) {
+            if (isComponentHtmlWithConfig(document, componentTemplateFileSuffix)) {
                 return await rpcApi.getComponentTypeHoverApi({
                     cancelToken,
                     params: { fileName: scriptFilePath, contextString, cursorAt, hoverPropName },

@@ -29,7 +29,7 @@ import {
     getControllerNameInfo,
     getCorrespondingScriptFileName,
     isBuiltinFilter,
-    isComponentHtml,
+    isComponentHtmlWithConfig,
     isHoverValidIdentifierChar,
     toNgElementHoverInfo,
 } from '../utils';
@@ -47,6 +47,7 @@ export function registerDefinition(ngContext: NgContext): void {
                 }
 
                 const cancelTokenSource = createCancellationTokenSource(token);
+                const componentTemplateFileSuffix = ngContext.config.userConfig.componentTemplateFileSuffix!;
                 return await withTimeoutAndMeasure(
                     'provideDefinition',
                     async () => {
@@ -90,6 +91,7 @@ export function registerDefinition(ngContext: NgContext): void {
                                     cursorAtInfo,
                                     ngContext.rpcApi,
                                     cancelTokenSource.token,
+                                    componentTemplateFileSuffix,
                                 );
                         }
                     },
@@ -139,6 +141,7 @@ async function handleTemplateOrAttrValue(
     cursorAtInfo: CursorAtAttrValueInfo | CursorAtTemplateInfo,
     rpcApi: RpcApi,
     cancelToken: CancellationToken,
+    componentTemplateFileSuffix: string,
 ): Promise<Definition | undefined> {
     if (!isHoverValidIdentifierChar(document, position)) {
         return;
@@ -156,7 +159,7 @@ async function handleTemplateOrAttrValue(
                 scriptFilePath,
             }),
         onHoverType: async (scriptFilePath, contextString, cursorAt) => {
-            if (isComponentHtml(document)) {
+            if (isComponentHtmlWithConfig(document, componentTemplateFileSuffix)) {
                 return await rpcApi.getComponentTypeDefinitionApi({
                     cancelToken,
                     params: { fileName: scriptFilePath, contextString, cursorAt },

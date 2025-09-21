@@ -113,6 +113,20 @@ async function parseUserConfig(jsonText: string): Promise<Result<NgHelperUserCon
     }
 
     const errors: string[] = [];
+
+    // 验证模板文件后缀
+    if (config.componentTemplateFileSuffix) {
+        const suffix = config.componentTemplateFileSuffix.trim();
+        if (!suffix) {
+            errors.push('componentTemplateFileSuffix cannot be empty');
+        } else if (!suffix.endsWith('.html')) {
+            errors.push('componentTemplateFileSuffix must end with .html');
+        } else if (suffix.includes('/') || suffix.includes('\\')) {
+            errors.push('componentTemplateFileSuffix cannot contain path separators');
+        } else {
+            config.componentTemplateFileSuffix = suffix;
+        }
+    }
     if (config.ngProjects) {
         const { ok, error } = await validateAndNormalizeNgProjects(config.ngProjects);
         config.ngProjects = ok;
@@ -253,6 +267,7 @@ function getDefaultConfig(): NgHelperUserConfig {
     return {
         componentStyleFileExt: 'css',
         componentScriptFileExt: 'js',
+        componentTemplateFileSuffix: 'component.html',
         injectionCheckMode: 'count_match',
     };
 }

@@ -17,7 +17,12 @@ import {
 import { checkCancellation } from '../../asyncUtils';
 import { EXT_MARK } from '../../constants';
 import type { RpcApi } from '../../service/tsService/rpcApi';
-import { getContextString, getControllerNameInfo, getCorrespondingScriptFileName, isComponentHtml } from '../utils';
+import {
+    getContextString,
+    getControllerNameInfo,
+    getCorrespondingScriptFileName,
+    isComponentHtmlWithConfig,
+} from '../utils';
 
 import { builtinFilterNameCompletion } from './builtin';
 
@@ -47,6 +52,7 @@ export async function templateOrAttrValueCompletion({
             contextString: value,
             rpcApi: ngContext.rpcApi,
             cancelToken: cancelToken,
+            componentTemplateFileSuffix: ngContext.config.userConfig.componentTemplateFileSuffix!,
         });
     } else if (isUndefinedTriggerChar) {
         if (type === 'filterName') {
@@ -59,7 +65,7 @@ export async function templateOrAttrValueCompletion({
             // ctrl 输入第一个字符 c 后，便成为 'identifier' 状态。
             // 其他的类似 ng-repeat 的 item/$index/$first 等，也是 'identifier' 状态。
             const items = getLocalVarsCompletion(cursorAtInfo.context);
-            if (isComponentHtml(document)) {
+            if (isComponentHtmlWithConfig(document, ngContext.config.userConfig.componentTemplateFileSuffix!)) {
                 const ctrlAsItem = await getComponentCtrlAsCompletion({
                     document,
                     cursorAtInfo,
@@ -81,14 +87,16 @@ async function getTypeCompletion({
     contextString,
     rpcApi,
     cancelToken,
+    componentTemplateFileSuffix,
 }: {
     document: TextDocument;
     cursorAtInfo: CursorAtTemplateInfo | CursorAtAttrValueInfo;
     contextString: string;
     rpcApi: RpcApi;
     cancelToken: CancellationToken;
+    componentTemplateFileSuffix: string;
 }) {
-    const isComponent = isComponentHtml(document);
+    const isComponent = isComponentHtmlWithConfig(document, componentTemplateFileSuffix);
     const ctrlInfo = getControllerNameInfo(cursorAtInfo.context);
     if (!isComponent && !ctrlInfo) {
         return;

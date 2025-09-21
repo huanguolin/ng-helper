@@ -18,11 +18,15 @@ export function isInlinedHtml(document: TextDocument): boolean {
 }
 
 export function isComponentHtml(document: TextDocument): boolean {
+    return isComponentHtmlWithConfig(document, 'component.html');
+}
+
+export function isComponentHtmlWithConfig(document: TextDocument, templateFileSuffix: string): boolean {
     const fileName = document.fileName;
     if (isInlinedHtml(document)) {
         return fileName.endsWith('.component.ts.html') || fileName.endsWith('component.js.html');
     }
-    return fileName.endsWith('.component.html');
+    return fileName.endsWith('.' + templateFileSuffix);
 }
 
 export function getControllerNameInfo(cursorAtContext: CursorAtContext[]): NgCtrlInfo | undefined {
@@ -72,17 +76,26 @@ export async function getCorrespondingScriptFileName(
     document: TextDocument,
     searchKey?: string,
 ): Promise<string | undefined> {
+    return await getCorrespondingScriptFileNameWithConfig(document, 'component.html', searchKey);
+}
+
+export async function getCorrespondingScriptFileNameWithConfig(
+    document: TextDocument,
+    templateFileSuffix: string,
+    searchKey?: string,
+): Promise<string | undefined> {
     const filePath = getNormalizedPathFromDocument(document);
 
-    if (isComponentHtml(document)) {
-        // remove .html add .ts
-        const tsFilePath = filePath.slice(0, -5) + '.ts';
+    if (isComponentHtmlWithConfig(document, templateFileSuffix)) {
+        // remove template suffix and add .ts
+        const basePath = filePath.slice(0, -(templateFileSuffix.length + 1)); // +1 for the dot
+        const tsFilePath = basePath + '.component.ts';
         if (await isFileExistsOnWorkspace(Uri.file(tsFilePath))) {
             return tsFilePath;
         }
 
-        // remove .html add .js
-        const jsFilePath = filePath.slice(0, -5) + '.js';
+        // remove template suffix and add .js
+        const jsFilePath = basePath + '.component.js';
         if (await isFileExistsOnWorkspace(Uri.file(jsFilePath))) {
             return jsFilePath;
         }
@@ -108,12 +121,16 @@ export async function getCorrespondingScriptFileName(
  * @returns The component name (camelCase) if the document is a component HTML file, otherwise undefined.
  */
 export function getComponentName(document: TextDocument): string | undefined {
-    if (!isComponentHtml(document)) {
+    return getComponentNameWithConfig(document, 'component.html');
+}
+
+export function getComponentNameWithConfig(document: TextDocument, templateFileSuffix: string): string | undefined {
+    if (!isComponentHtmlWithConfig(document, templateFileSuffix)) {
         return;
     }
 
     const fileName = normalizePath(document.fileName).split('/').pop();
-    const suffix = isInlinedHtml(document) ? '.component.ts.html' : '.component.html';
+    const suffix = isInlinedHtml(document) ? '.component.ts.html' : '.' + templateFileSuffix;
     const kebabName = fileName?.replace(suffix, '');
     return kebabName ? camelCase(kebabName) : undefined;
 }
